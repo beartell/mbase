@@ -1,5 +1,0 @@
-C:/Users/kerem/Desktop/Projects/Personal/mbase-std/out/build/x64-Debug/CMakeFiles/mbase_std.dir
-C:/Users/kerem/Desktop/Projects/Personal/mbase-std/out/build/x64-Debug/CMakeFiles/edit_cache.dir
-C:/Users/kerem/Desktop/Projects/Personal/mbase-std/out/build/x64-Debug/CMakeFiles/rebuild_cache.dir
-C:/Users/kerem/Desktop/Projects/Personal/mbase-std/out/build/x64-Debug/source/CMakeFiles/edit_cache.dir
-C:/Users/kerem/Desktop/Projects/Personal/mbase-std/out/build/x64-Debug/source/CMakeFiles/rebuild_cache.dir
