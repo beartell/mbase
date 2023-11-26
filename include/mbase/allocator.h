@@ -38,7 +38,7 @@ public:
 		return out_data;
 	}
 
-	static MBASE_INLINE_EXPR GENERIC deallocate(pointer src, size_type in_amount) noexcept {
+	static MBASE_INLINE_EXPR GENERIC deallocate(pointer src) noexcept {
 		::operator delete(src);
 	}
 

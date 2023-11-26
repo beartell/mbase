@@ -65,7 +65,7 @@ public:
     character_sequence& operator=(const character_sequence& in_rhs) noexcept {
         if(raw_data)
         {
-            Alloc::deallocate(raw_data, mCapacity);
+            Alloc::deallocate(raw_data);
         }
 
         mSize = in_rhs.mSize;
@@ -79,7 +79,7 @@ public:
     character_sequence& operator=(MSTRING in_rhs) noexcept {
         if (raw_data)
         {
-            Alloc::deallocate(raw_data, mCapacity);
+            Alloc::deallocate(raw_data);
         }
 
         size_type st_length = type_sequence::length(in_rhs);
@@ -298,7 +298,7 @@ private:
 
         IBYTEPTR new_data = Alloc::allocate(in_size, true);
         type_sequence::copy(new_data, raw_data, expectedSize);
-        Alloc::deallocate(raw_data, mSize);
+        Alloc::deallocate(raw_data);
         raw_data = new_data;
         mCapacity = in_size;
         mSize = expectedSize;

@@ -1,9 +1,10 @@
 #ifndef MBASE_VECTOR_H
 #define MBASE_VECTOR_H
 
-#include <mbase/common.h>
-#include <mbase/allocator.h>
-#include <iostream>
+#include <mbase/common.h> // For data types and macros
+#include <mbase/allocator.h> // For allocation routines
+
+#include <initializer_list> // For std::initializer_list
 
 MBASE_STD_BEGIN
 
@@ -21,13 +22,23 @@ MBASE_STD_BEGIN
 template<typename T, typename Allocator = mbase::allocator_simple<T>>
 class vector {
 public:
+	using value_type = T;
+	using size_type = SIZE_T;
+	using difference_type = PTRDIFF;
+	using reference = value_type&;
+	using const_reference = const reference;
+	using move_reference = value_type&&;
+	using pointer = value_type*;
+	using const_pointer = const pointer;
+
 	class vector_iterator : public sequence_iterator<T> {
 	public:
-		vector_iterator(pointer in_ptr) noexcept : sequence_iterator(in_ptr){}
+		vector_iterator(pointer in_ptr) noexcept : sequence_iterator(in_ptr) {}
 
 		MBASE_INLINE pointer operator->() const noexcept {
 			return _ptr;
 		}
+
 		USED_RETURN MBASE_INLINE bool operator==(const vector_iterator& in_rhs) const noexcept {
 			return *_ptr == *in_rhs._ptr;
 		}
@@ -37,19 +48,11 @@ public:
 		}
 	};
 
-	using value_type = T;
-	using size_type = SIZE_T;
-	using difference_type = PTRDIFF;
-	using reference = value_type&;
-	using const_reference = const reference;
-	using move_reference = value_type&&;
-	using pointer = value_type*;
-	using const_pointer = const pointer;
 	using iterator = vector_iterator;
 	using const_iterator = const vector_iterator;
 
-	explicit vector() noexcept : raw_data(nullptr), mSize(0), mCapacity(0) {
-		// DO NOTHING LITERALLY
+	explicit vector() noexcept : raw_data(nullptr), mSize(0), mCapacity(4) {
+		raw_data = Allocator::allocate(mCapacity); // default capacity
 	}
 
 	explicit vector(size_type in_size) noexcept : raw_data(nullptr), mSize(0), mCapacity(0) {
@@ -66,48 +69,105 @@ public:
 		mCapacity = in_list.size() * 2;
 
 		const value_type* currentObj = in_list.begin();
-		raw_data = new value_type[mCapacity];
+		raw_data = Allocator::allocate(mCapacity);
 
 		while(currentObj != in_list.end())
 		{
-			raw_data[mSize++] = *currentObj;
+			Allocator::construct(raw_data + mSize, *currentObj);
 			currentObj++;
+			mSize++;
 		}
 	}
 
 	vector(const vector& in_rhs) noexcept {
-		Allocator::destroy_all(raw_data);
+		clear();
+		
+		if(!in_rhs.mCapacity)
+		{
+			mSize = 0;
+			mCapacity = 0;
+			return;
+		}
 
 		mSize = in_rhs.mSize;
 		mCapacity = in_rhs.mCapacity;
-		if(mCapacity != 0)
+
+		raw_data = Allocator::allocate(mCapacity);
+		for (I32 i = 0; i < mCapacity; i++)
 		{
-			raw_data = new value_type[mCapacity];
-			for (I32 i = 0; i < mCapacity; i++)
-			{
-				new_data[i] = in_rhs.raw_data[i];
-			}
-			raw_data = new_data;
+			Allocator::construct(raw_data + i, in_rhs[i]);
 		}
 	}
 	
+	vector(vector&& in_rhs) noexcept {
+		clear();
+
+		mSize = in_rhs.mSize;
+		mCapacity = in_rhs.mCapacity;
+
+		raw_data = in_rhs.raw_data;
+		in_rhs.raw_data = nullptr;
+	}
+
 	~vector() noexcept {
-		Allocator::destroy_all(raw_data);
+		clear();
+	}
+
+	vector& operator=(const vector& in_rhs) noexcept {
+		clear();
+
+		if (!in_rhs.mCapacity)
+		{
+			mSize = 0;
+			mCapacity = 0;
+			return *this;
+		}
+
+		mSize = in_rhs.mSize;
+		mCapacity = in_rhs.mCapacity;
+
+		raw_data = Allocator::allocate(mCapacity);
+		for (I32 i = 0; i < mCapacity; i++)
+		{
+			Allocator::construct(raw_data + i, in_rhs[i]);
+		}
+		return *this;
+	}
+
+	vector& operator=(vector&& in_rhs) noexcept {
+		clear();
+
+		mSize = in_rhs.mSize;
+		mCapacity = in_rhs.mCapacity;
+
+		raw_data = in_rhs.raw_data;
+		in_rhs.raw_data = nullptr;
+
+		return *this;
+	}
+
+	reference operator[](difference_type in_index) noexcept {
+		return raw_data[in_index];
+	}
+
+	const_reference operator[](difference_type in_index) const noexcept {
+		return raw_data[in_index];
 	}
 
 	MBASE_INLINE_EXPR GENERIC clear() noexcept {
-		Allocator::destroy_all(raw_data);
+		if (raw_data)
+		{
+			for (size_type i = 0; i < mSize; i++)
+			{
+				raw_data[i].~value_type();
+			}
+			Allocator::deallocate(raw_data);
+			raw_data = nullptr;
+		}
 		mSize = 0;
 		mCapacity = 0;
-		raw_data = nullptr;
 	}
-
-	MBASE_INLINE_EXPR GENERIC clear(size_type in_capacity) noexcept {
-		Allocator::destroy_all(raw_data);
-		mSize = 0;
-		mCapacity = in_capacity;
-	}
-
+	
 	MBASE_INLINE_EXPR GENERIC resize(size_type in_size) noexcept {
 		if(in_size > mCapacity)
 		{
@@ -122,15 +182,28 @@ public:
 		{
 			return;
 		}
-		pointer new_data = Allocator::allocate(in_capacity);
-		for(I32 i = 0; i < mSize; i++)
-		{
-			new_data[i] = std::move(raw_data[i]);
-		}
 
+		pointer new_data = Allocator::allocate(in_capacity);
+		difference_type i = 0;
+		for(i; i < mSize; i++)
+		{
+			Allocator::construct(new_data + i, std::move(*(raw_data + i)));
+		}
+		clear();
+		mSize = i;
 		mCapacity = in_capacity;
-		Allocator::destroy_all(raw_data);
 		raw_data = new_data;
+	}
+
+	MBASE_INLINE_EXPR GENERIC erase(iterator in_pos) noexcept {
+		// NOT WORKING RN
+		if (in_pos != end()) {
+			for (iterator iter = in_pos; iter != end() - 1; ++iter) {
+				*iter = *(iter + 1);
+			}
+
+			--mSize;
+		}
 	}
 
 	MBASE_INLINE_EXPR GENERIC push_back(const_reference in_data) noexcept {
@@ -138,7 +211,8 @@ public:
 		{
 			reserve(2 * mCapacity + 1);
 		}
-		raw_data[mSize++] = in_data;
+		pointer curObj = raw_data + mSize++;
+		Allocator::construct(curObj, in_data);
 	}
 
 	MBASE_INLINE_EXPR GENERIC push_back(move_reference in_data) noexcept {
@@ -146,11 +220,13 @@ public:
 		{
 			reserve(2 * mCapacity + 1);
 		}
-		raw_data[mSize++] = std::move(in_data);
+		pointer curObj = raw_data + mSize++;
+		Allocator::construct(curObj, std::move(in_data));
 	}
 
 	MBASE_INLINE_EXPR GENERIC pop_back() noexcept {
-		--mSize;
+		pointer curObj = raw_data + --mSize;
+		curObj->~value_type();
 	}
 
 	MBASE_INLINE_EXPR iterator begin() noexcept {
