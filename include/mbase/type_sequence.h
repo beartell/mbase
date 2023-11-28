@@ -37,32 +37,32 @@ public:
         return *this;
     }
 
-    USED_RETURN MBASE_INLINE sequence_iterator& operator+=(ptrdiff in_rhs) noexcept {
+    MBASE_INLINE sequence_iterator& operator+=(ptrdiff in_rhs) noexcept {
         _ptr += in_rhs;
         return *this;
     }
 
-    USED_RETURN MBASE_INLINE sequence_iterator& operator++() noexcept {
+    MBASE_INLINE sequence_iterator& operator++() noexcept {
         ++_ptr;
         return *this;
     }
 
-    USED_RETURN MBASE_INLINE sequence_iterator& operator++(int) noexcept {
+    MBASE_INLINE sequence_iterator& operator++(int) noexcept {
         ++_ptr;
         return *this;
     }
 
-    USED_RETURN MBASE_INLINE sequence_iterator& operator-(ptrdiff in_rhs) noexcept {
+    MBASE_INLINE sequence_iterator& operator-(ptrdiff in_rhs) noexcept {
         _ptr -= in_rhs;
         return *this;
     }
 
-    USED_RETURN MBASE_INLINE sequence_iterator& operator-=(ptrdiff in_rhs) noexcept {
+    MBASE_INLINE sequence_iterator& operator-=(ptrdiff in_rhs) noexcept {
         _ptr -= in_rhs;
         return *this;
     }
 
-    USED_RETURN MBASE_INLINE sequence_iterator& operator--() noexcept {
+    MBASE_INLINE sequence_iterator& operator--() noexcept {
         --_ptr;
         return *this;
     }

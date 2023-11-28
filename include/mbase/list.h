@@ -3,7 +3,11 @@
 
 #include <mbase/common.h>
 #include <mbase/allocator.h>
+#include <mbase/list_iterator.h>
 #include <initializer_list>
+
+// TODO: Reconsider list_node structure's destructor and constructor
+// TODO: Consider implementing a list_pool
 
 MBASE_STD_BEGIN
 
@@ -25,25 +29,289 @@ public:
 	using size_type = SIZE_T;
 	using difference_type = PTRDIFF;
 	using reference = value_type&;
-	using const_reference = const reference;
+	using const_reference = const T&;
 	using move_reference = value_type&&;
 	using pointer = value_type*;
-	using const_pointer = const pointer;
+	using const_pointer = const T*;
 
 	struct list_node {
 		list_node* prev;
 		list_node* next;
 		pointer data;
+
+		list_node(const_reference in_object) noexcept : prev(nullptr), next(nullptr) {
+			data = Allocator::allocate(1);
+			Allocator::construct(data, in_object);
+		}
+
+		list_node(move_reference in_object) noexcept : prev(nullptr), next(nullptr) {
+			data = Allocator::allocate(1);
+			Allocator::construct(data, std::move(in_object));
+		}
+
+		~list_node() noexcept {
+			// data is guaranteed to be present
+			// so no need to null check
+			data->~value_type();
+			Allocator::deallocate(data);
+		}
 	};
 
-	list(std::initializer_list<value_type> in_list) noexcept {
+	template<typename T, typename DataT>
+	class bi_list_iterator : public forward_list_iterator<T, DataT> {
+	public:
+		bi_list_iterator(pointer in_ptr) noexcept : forward_list_iterator(in_ptr) {}
+		bi_list_iterator(const bi_list_iterator& in_rhs) noexcept : forward_list_iterator(in_rhs._ptr) {}
 
+		MBASE_INLINE bi_list_iterator& operator-=(difference_type in_rhs) noexcept {
+			for (size_type i = 0; i < in_rhs; i++)
+			{
+				_ptr = _ptr->prev;
+			}
+			return *this;
+		}
+
+		MBASE_INLINE bi_list_iterator& operator--() noexcept {
+			_ptr = _ptr->prev;
+			return *this;
+		}
+
+		MBASE_INLINE bi_list_iterator& operator--(int) noexcept {
+			_ptr = _ptr->prev;
+			return *this;
+		}
+
+		friend class list;
+	};
+
+	using iterator = bi_list_iterator<list_node, value_type>;
+	using const_iterator = const bi_list_iterator<list_node, value_type>;
+
+	list() noexcept : firstNode(nullptr), lastNode(nullptr), mSize(0) {}
+
+	list(std::initializer_list<value_type> in_list) noexcept {
+		mSize = in_list.size();
+		const value_type* currentObj = in_list.begin();
+		firstNode = new list_node(*currentObj);
+		list_node* activeNode = firstNode;
+
+		currentObj++;
+
+		while (currentObj != in_list.end())
+		{
+			list_node* freshNode = new list_node(*currentObj);
+			
+			activeNode->next = freshNode;
+			freshNode->prev = activeNode;
+			activeNode = freshNode;
+
+			currentObj++;
+		}
+
+		lastNode = activeNode;
+	}
+
+	~list() noexcept {
+		clear();
+	}
+
+	USED_RETURN MBASE_INLINE_EXPR reference front() noexcept {
+		return *firstNode->data;
+	}
+	
+	USED_RETURN MBASE_INLINE_EXPR const_reference front() const noexcept {
+		return *firstNode->data;
+	}
+
+	USED_RETURN MBASE_INLINE_EXPR reference back() noexcept {
+		return *lastNode->data;
+	}
+
+	USED_RETURN MBASE_INLINE_EXPR const_reference back() const noexcept {
+		return *lastNode->data;
+	}
+
+	USED_RETURN MBASE_INLINE_EXPR bool empty() const noexcept {
+		return mSize == 0;
+	}
+
+	USED_RETURN MBASE_INLINE_EXPR size_type size() const noexcept {
+		return mSize;
+	}
+
+	USED_RETURN MBASE_INLINE_EXPR iterator begin() const noexcept {
+		return iterator(firstNode);
+	}
+
+	USED_RETURN MBASE_INLINE_EXPR iterator end() const noexcept {
+		return iterator(lastNode->next);
+	}
+
+	USED_RETURN MBASE_INLINE_EXPR const_iterator cbegin() const noexcept {
+		return const_iterator(firstNode);
+	}
+
+	USED_RETURN MBASE_INLINE_EXPR const_iterator cend() const noexcept {
+		return const_iterator(lastNode->next);
+	}
+
+	MBASE_INLINE_EXPR GENERIC clear() noexcept {
+		while(mSize)
+		{
+			pop_back();
+		}
+	}
+
+	MBASE_INLINE_EXPR GENERIC push_back(const_reference in_data) noexcept {
+		list_node* newNode = new list_node(in_data);
+		newNode->prev = lastNode;
+		if(lastNode)
+		{
+			// in case of list being empty
+			lastNode->next = newNode;
+		}
+		lastNode = newNode;
+		++mSize;
+	}
+
+	MBASE_INLINE_EXPR GENERIC push_back(move_reference in_data) noexcept {
+		list_node* newNode = new list_node(std::move(in_data));
+		newNode->prev = lastNode;
+		if (lastNode)
+		{
+			// in case of list being empty
+			lastNode->next = newNode;
+		}
+		lastNode = newNode;
+		++mSize;
+	}
+
+	MBASE_INLINE_EXPR GENERIC push_front(const_reference in_data) noexcept {
+		list_node* newNode = new list_node(in_data);
+		newNode->next = firstNode;
+		if(firstNode)
+		{
+			firstNode->prev = newNode;
+		}
+		
+		firstNode = newNode;
+		++mSize;
+	}
+
+	MBASE_INLINE_EXPR GENERIC push_front(move_reference in_data) noexcept {
+		list_node* newNode = new list_node(std::move(in_data));
+		newNode->next = firstNode;
+		if (firstNode)
+		{
+			firstNode->prev = newNode;
+		}
+
+		firstNode = newNode;
+		++mSize;
+	}
+
+	MBASE_INLINE_EXPR GENERIC pop_back() noexcept {
+		if(!(--mSize))
+		{
+			delete lastNode;
+			lastNode = nullptr;
+			firstNode = nullptr;
+			return;
+		}
+		list_node* newLastNode = lastNode->prev;
+		newLastNode->next = nullptr;
+		delete lastNode;
+		lastNode = newLastNode;
+	}
+
+	MBASE_INLINE_EXPR GENERIC pop_front() noexcept {
+		if (!(--mSize))
+		{
+			delete firstNode;
+			lastNode = nullptr;
+			firstNode = nullptr;
+			return;
+		}
+
+		list_node* newFirstNode = firstNode->next;
+		newFirstNode->prev = nullptr;
+		delete firstNode;
+		firstNode = newFirstNode;
+	}
+
+	MBASE_INLINE_EXPR GENERIC insert(const_iterator in_pos, const_reference in_object) noexcept {
+		list_node* mNode = in_pos._ptr;
+		list_node* newNode = new list_node(in_object);
+		newNode->prev = mNode->prev;
+		if(mNode->prev)
+		{
+			mNode->prev->next = newNode;
+		}
+
+		mNode->prev = newNode;
+		newNode->next = mNode;
+		++mSize;
+	}
+
+	MBASE_INLINE_EXPR GENERIC insert(const_iterator in_pos, move_reference in_object) noexcept {
+		list_node* mNode = in_pos._ptr;
+		list_node* newNode = new list_node(std::move(in_object));
+		newNode->prev = mNode->prev;
+		if (mNode->prev)
+		{
+			mNode->prev->next = newNode;
+		}
+
+		else
+		{
+			firstNode = newNode;
+		}
+
+		mNode->prev = newNode;
+		newNode->next = mNode;
+		++mSize;
+	}
+
+	MBASE_INLINE_EXPR GENERIC insert(difference_type in_index, const_reference in_object) noexcept {
+		iterator in_pos = begin();
+		in_pos += in_index;
+
+		insert(in_pos, in_object);
+	}
+
+	MBASE_INLINE_EXPR GENERIC insert(difference_type in_index, move_reference in_object) noexcept {
+		iterator in_pos = begin();
+		in_pos += in_index;
+
+		insert(in_post, std::move(in_object));
+	}
+
+	MBASE_INLINE_EXPR GENERIC erase(const_iterator in_pos) noexcept {
+		list_node* mNode = in_pos._ptr;
+		
+		if(mNode == firstNode)
+		{
+			pop_front();
+		}
+
+		else if(mNode == lastNode)
+		{
+			pop_back();
+		}
+
+		else
+		{
+			mNode->prev->next = mNode->next;
+			mNode->next->prev = mNode->prev;
+			delete mNode;
+			--mSize;
+		}
 	}
 
 private:
 	list_node* firstNode;
+	list_node* lastNode;
 	size_type mSize;
-	size_type mCapacity;
 };
 
 MBASE_STD_END

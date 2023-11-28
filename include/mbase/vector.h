@@ -1,6 +1,8 @@
 #ifndef MBASE_VECTOR_H
 #define MBASE_VECTOR_H
 
+/* DO NOT FORGET TO IMPLEMENT THE ERASE FUNCTION */
+
 #include <mbase/common.h> // For data types and macros
 #include <mbase/allocator.h> // For allocation routines
 
@@ -34,17 +36,18 @@ public:
 	class vector_iterator : public sequence_iterator<T> {
 	public:
 		vector_iterator(pointer in_ptr) noexcept : sequence_iterator(in_ptr) {}
+		vector_iterator(const vector_iterator& in_rhs) noexcept : sequence_iterator(in_rhs._ptr) {}
 
 		MBASE_INLINE pointer operator->() const noexcept {
 			return _ptr;
 		}
 
 		USED_RETURN MBASE_INLINE bool operator==(const vector_iterator& in_rhs) const noexcept {
-			return *_ptr == *in_rhs._ptr;
+			return _ptr == in_rhs._ptr;
 		}
 
 		USED_RETURN MBASE_INLINE bool operator!=(const vector_iterator& in_rhs) const noexcept {
-			return !(*_ptr == *in_rhs._ptr);
+			return !(_ptr == in_rhs._ptr);
 		}
 	};
 
@@ -146,15 +149,22 @@ public:
 		return *this;
 	}
 
-	reference operator[](difference_type in_index) noexcept {
+	USED_RETURN reference operator[](difference_type in_index) noexcept {
 		return raw_data[in_index];
 	}
 
-	const_reference operator[](difference_type in_index) const noexcept {
+	USED_RETURN const_reference operator[](difference_type in_index) const noexcept {
 		return raw_data[in_index];
 	}
 
 	MBASE_INLINE_EXPR GENERIC clear() noexcept {
+		// TODO:
+		// POP_BACK UNTIL THE VECTOR IS EMPTY
+
+		/* PROBLEMS WITH THIS IMPLEMENTATION:
+			IT DEALLOCATES THE VECTOR CAPACITY IN WHICH SHOULD BE OPTIONAL.
+			USER SHOULD MANUALLY CALL SHRINK_TO_FIT MEMBER FUNCTION TO ACHIEVE THAT BEHAVIOUR
+		*/
 		if (raw_data)
 		{
 			for (size_type i = 0; i < mSize; i++)
@@ -229,44 +239,56 @@ public:
 		curObj->~value_type();
 	}
 
-	MBASE_INLINE_EXPR iterator begin() noexcept {
+	USED_RETURN MBASE_INLINE_EXPR iterator begin() noexcept {
 		return iterator(raw_data);
 	}
 
-	MBASE_INLINE_EXPR iterator end() noexcept {
+	USED_RETURN MBASE_INLINE_EXPR iterator end() noexcept {
 		return iterator(raw_data + mSize);
 	}
 
-	MBASE_INLINE_EXPR const_iterator cbegin() const noexcept {
+	USED_RETURN MBASE_INLINE_EXPR const_iterator cbegin() const noexcept {
 		return const_iterator(raw_data);
 	}
 
-	MBASE_INLINE_EXPR const_iterator cend() const noexcept {
+	USED_RETURN MBASE_INLINE_EXPR const_iterator cend() const noexcept {
 		return const_iterator(raw_data + mSize);
 	}
 
-	MBASE_INLINE_EXPR reference back() noexcept {
+	USED_RETURN MBASE_INLINE_EXPR reference back() noexcept {
 		return raw_data[mSize - 1];
 	}
 
-	MBASE_INLINE_EXPR reference front() noexcept {
+	USED_RETURN MBASE_INLINE_EXPR reference front() noexcept {
 		return raw_data[0];
 	}
 
-	MBASE_INLINE_EXPR const_reference back() const noexcept {
+	USED_RETURN MBASE_INLINE_EXPR const_reference back() const noexcept {
 		return raw_data[mSize - 1];
 	}
 
-	MBASE_INLINE_EXPR const_reference front() const noexcept {
+	USED_RETURN MBASE_INLINE_EXPR const_reference front() const noexcept {
 		return raw_data[0];
 	}
 
-	MBASE_INLINE_EXPR pointer data() noexcept {
+	USED_RETURN MBASE_INLINE_EXPR pointer data() noexcept {
 		return raw_data;
 	}
 
-	MBASE_INLINE_EXPR const_pointer data() const noexcept {
+	USED_RETURN MBASE_INLINE_EXPR const_pointer data() const noexcept {
 		return raw_data;
+	}
+
+	USED_RETURN MBASE_INLINE_EXPR size_type size() const noexcept {
+		return mSize;
+	}
+
+	USED_RETURN MBASE_INLINE_EXPR size_type capacity() const noexcept {
+		return mCapacity;
+	}
+
+	USED_RETURN MBASE_INLINE_EXPR bool empty() const noexcept {
+		return mSize == 0;
 	}
 
 private:
