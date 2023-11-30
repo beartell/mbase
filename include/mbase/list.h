@@ -170,7 +170,12 @@ public:
 			// in case of list being empty
 			lastNode->next = newNode;
 		}
-		lastNode = newNode;
+		else
+		{
+			lastNode = newNode;
+			firstNode = lastNode;
+		}
+		
 		++mSize;
 	}
 
@@ -181,6 +186,11 @@ public:
 		{
 			// in case of list being empty
 			lastNode->next = newNode;
+		}
+		else
+		{
+			lastNode = newNode;
+			firstNode = lastNode;
 		}
 		lastNode = newNode;
 		++mSize;
@@ -193,8 +203,13 @@ public:
 		{
 			firstNode->prev = newNode;
 		}
+		else
+		{
+			firstNode = newNode;
+			lastNode = firstNode;
+		}
+
 		
-		firstNode = newNode;
 		++mSize;
 	}
 
@@ -204,6 +219,11 @@ public:
 		if (firstNode)
 		{
 			firstNode->prev = newNode;
+		}
+		else
+		{
+			firstNode = newNode;
+			lastNode = firstNode;
 		}
 
 		firstNode = newNode;
