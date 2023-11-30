@@ -27,11 +27,11 @@ public:
 	using value_type = T;
 	using size_type = SIZE_T;
 	using difference_type = PTRDIFF;
-	using reference = value_type&;
-	using const_reference = const reference;
-	using move_reference = value_type&&;
-	using pointer = value_type*;
-	using const_pointer = const pointer;
+	using reference = T&;
+	using const_reference = const T;
+	using move_reference = T&&;
+	using pointer = T*;
+	using const_pointer = const T;
 
 	class vector_iterator : public sequence_iterator<T> {
 	public:
@@ -47,7 +47,7 @@ public:
 		}
 
 		USED_RETURN MBASE_INLINE bool operator!=(const vector_iterator& in_rhs) const noexcept {
-			return !(_ptr == in_rhs._ptr);
+			return _ptr != in_rhs._ptr;
 		}
 	};
 
@@ -188,7 +188,7 @@ public:
 	}
 
 	MBASE_INLINE_EXPR GENERIC reserve(size_type in_capacity) noexcept {
-		if(in_capacity < mSize)
+		if(in_capacity <= mCapacity)
 		{
 			return;
 		}
@@ -206,17 +206,18 @@ public:
 	}
 
 	MBASE_INLINE_EXPR GENERIC erase(iterator in_pos) noexcept {
-		// NOT WORKING RN
 		if (in_pos != end()) {
+			in_pos->~value_type();
+
 			for (iterator iter = in_pos; iter != end() - 1; ++iter) {
-				*iter = *(iter + 1);
+				*iter = std::move(*(iter + 1));
 			}
 
 			--mSize;
 		}
 	}
 
-	MBASE_INLINE_EXPR GENERIC push_back(const_reference in_data) noexcept {
+	MBASE_INLINE_EXPR GENERIC push_back(const T& in_data) noexcept {
 		if(mSize == mCapacity)
 		{
 			reserve(2 * mCapacity + 1);
@@ -225,7 +226,7 @@ public:
 		Allocator::construct(curObj, in_data);
 	}
 
-	MBASE_INLINE_EXPR GENERIC push_back(move_reference in_data) noexcept {
+	MBASE_INLINE_EXPR GENERIC push_back(T&& in_data) noexcept {
 		if (mSize == mCapacity)
 		{
 			reserve(2 * mCapacity + 1);
@@ -235,6 +236,11 @@ public:
 	}
 
 	MBASE_INLINE_EXPR GENERIC pop_back() noexcept {
+		if(!mSize)
+		{
+			return;
+		}
+
 		pointer curObj = raw_data + --mSize;
 		curObj->~value_type();
 	}

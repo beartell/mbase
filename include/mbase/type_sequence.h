@@ -68,11 +68,11 @@ public:
     }
 
     USED_RETURN MBASE_INLINE bool operator==(const sequence_iterator& in_rhs) const noexcept {
-        return type_sequence<value_type>::is_equal(_ptr, in_rhs._ptr);
+        return _ptr == in_rhs._ptr;
     }
 
     USED_RETURN MBASE_INLINE bool operator!=(const sequence_iterator& in_rhs) const noexcept {
-        return !type_sequence<value_type>::is_equal(_ptr, in_rhs._ptr);
+        return _ptr != in_rhs._ptr;
     }
 
 protected:
