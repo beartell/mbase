@@ -13,7 +13,7 @@ public:
         raw_data = Alloc::allocate(mCapacity, true);
     }
 
-    character_sequence(IBYTEPTR in_data, size_type in_size, size_type in_capacity) noexcept : raw_data(in_data), mSize(in_size), mCapacity(in_capacity) {}
+    character_sequence(IBYTEBUFFER in_data, size_type in_size, size_type in_capacity) noexcept : raw_data(in_data), mSize(in_size), mCapacity(in_capacity) {}
 
     character_sequence(MSTRING in_string) noexcept {
         size_type tmp_st_length = type_sequence::length(in_string);
@@ -228,7 +228,7 @@ public:
             totalCapacity *= 2;
         }
 
-        IBYTEPTR new_data = Alloc::allocate(totalCapacity, true);
+        IBYTEBUFFER new_data = Alloc::allocate(totalCapacity, true);
         type_sequence::concat(new_data, in_lhs.raw_data, in_lhs.mSize);
         type_sequence::concat(new_data + in_lhs.mSize, in_rhs, rhsSize);
 
@@ -243,9 +243,9 @@ public:
         }
 
 
-        IBYTEPTR new_data = Alloc::allocate(totalCapacity, true);
+        IBYTEBUFFER new_data = Alloc::allocate(totalCapacity, true);
         type_sequence::concat(new_data, in_lhs.raw_data, in_lhs.mSize);
-        type_sequence::concat(new_data + in_lhs.mSize, (IBYTEPTR)&in_rhs, 1);
+        type_sequence::concat(new_data + in_lhs.mSize, (IBYTEBUFFER)&in_rhs, 1);
 
         return character_sequence(new_data, in_lhs.mSize + 1, totalCapacity);
     }
@@ -258,7 +258,7 @@ public:
         {
             totalCapacity *= 2;
         }
-        IBYTEPTR new_data = Alloc::allocate(totalCapacity, true);
+        IBYTEBUFFER new_data = Alloc::allocate(totalCapacity, true);
 
         type_sequence::concat(new_data, in_lhs.raw_data, in_lhs.mSize);
         type_sequence::concat(new_data + in_lhs.mSize, in_rhs.raw_data, in_rhs.mSize);
@@ -296,7 +296,7 @@ private:
             expectedSize = in_size;
         }
 
-        IBYTEPTR new_data = Alloc::allocate(in_size, true);
+        IBYTEBUFFER new_data = Alloc::allocate(in_size, true);
         type_sequence::copy(new_data, raw_data, expectedSize);
         Alloc::deallocate(raw_data);
         raw_data = new_data;
@@ -304,7 +304,7 @@ private:
         mSize = expectedSize;
     }
 
-    IBYTEPTR raw_data;
+    IBYTEBUFFER raw_data;
     SIZE_T mCapacity;
     SIZE_T mSize;
 };

@@ -3,7 +3,6 @@
 
 #include <mbase/common.h>
 #include <mbase/allocator.h>
-#include <iostream>
 
 MBASE_STD_BEGIN
 
@@ -87,7 +86,7 @@ public:
     using pointer = T*;
     using const_pointer = const pointer;
     using reference = value_type&;
-    using const_reference = const reference;
+    using const_reference = const T&;
     using move_reference = value_type&&;
     using size_type = SIZE_T;
     using iterator = sequence_iterator<T>;
@@ -126,14 +125,24 @@ public:
     }
 
     static MBASE_INLINE_EXPR pointer fill(pointer in_target, value_type in_value, size_type in_length) noexcept {
-        while (in_length--)
+        memset(in_target, in_value, sizeof(value_type) * in_length);
+        /*while (in_length--)
         {
             *in_target = in_value;
             in_target++;
-        }
+        }*/
 
         return in_target;
     }
+    
+    USED_RETURN static MBASE_INLINE_EXPR I32 to_int32(const_pointer in_target) noexcept {
+        return atoi(in_target);
+    }
+
+    USED_RETURN static MBASE_INLINE_EXPR I64 to_int64(const_pointer in_target) noexcept {
+        return _atoi64(in_target);
+    }
+
 };
 
 MBASE_STD_END

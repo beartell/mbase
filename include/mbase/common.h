@@ -2,6 +2,7 @@
 #define MBASE_STD_COMMON_H
 
 #include <stdint.h>
+#include <stdlib.h>
 
 #ifdef _WIN32
 
