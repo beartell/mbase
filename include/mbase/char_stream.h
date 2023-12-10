@@ -24,11 +24,19 @@ public:
 	explicit char_stream(IBYTEBUFFER in_src, size_type in_length) noexcept : bufferLength(in_length), streamCursor(0), srcBuffer(in_src) {}
 
 	MBASE_INLINE_EXPR GENERIC advance() noexcept {
-		--streamCursor;
+		++streamCursor;
+	}
+
+	MBASE_INLINE_EXPR GENERIC advance(difference_type in_length) noexcept {
+		streamCursor += in_length;
 	}
 
 	MBASE_INLINE_EXPR GENERIC reverse() noexcept {
 		--streamCursor;
+	}
+
+	MBASE_INLINE_EXPR GENERIC reverse(difference_type in_length) noexcept {
+		streamCursor -= in_length;
 	}
 
 	MBASE_INLINE_EXPR GENERIC putc(IBYTE in_byte) noexcept {
@@ -90,6 +98,24 @@ public:
 		return srcBuffer;
 	}
 
+	MBASE_INLINE_EXPR GENERIC set_cursor_pos(difference_type in_pos) noexcept {
+		if(in_pos < 0)
+		{
+			streamCursor = 0;
+			return;
+		}
+
+		streamCursor = in_pos;
+	}
+
+	MBASE_INLINE_EXPR GENERIC set_cursor_front() noexcept {
+		streamCursor = 0;
+	}
+
+	MBASE_INLINE_EXPR GENERIC set_cursor_end() noexcept {
+		streamCursor = bufferLength - 1;
+	}
+
 	friend bool operator==(const char_stream& in_lhs, const char_stream& in_rhs) noexcept {
 		return mbase::type_sequence<IBYTE>::is_equal(in_lhs.srcBuffer, in_rhs.srcBuffer, in_lhs.bufferLength);
 	}
@@ -116,6 +142,13 @@ public:
 		IBYTEBUFFER freshBuffer = static_cast<IBYTEBUFFER>(malloc(bufferLength));
 		copy(freshBuffer, srcBuffer, bufferLength);
 		srcBuffer = freshBuffer;
+	}
+
+	explicit deep_char_stream(size_type in_length) : char_stream() {
+		IBYTEBUFFER freshBuffer = static_cast<IBYTEBUFFER>(malloc(in_length));
+		bufferLength = in_length;
+		srcBuffer = freshBuffer;
+		fill(srcBuffer, 0, bufferLength);
 	}
 
 	deep_char_stream(const deep_char_stream& in_rhs) noexcept {
