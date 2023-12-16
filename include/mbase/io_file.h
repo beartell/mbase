@@ -1,9 +1,9 @@
 #ifndef MBASE_IOFILE_H
 #define MBASE_IOFILE_H
 
-#include <mbase/io_base.h>
-#include <mbase/string.h>
-#include <Windows.h>
+#include <mbase/io_base.h> // mbase::io_base
+#include <mbase/string.h> // mbase::string
+#include <Windows.h> // CreateFileA, SetFilePointer, WriteFile, ReadFile
 
 MBASE_STD_BEGIN
 
@@ -25,9 +25,7 @@ public:
 		OPEN = OPEN_ALWAYS // always succeeds
 	};
 
-	io_file()  noexcept : rawHandle(nullptr) {
-
-	}
+	io_file()  noexcept : rawHandle(nullptr) {}
 
 	io_file(const mbase::string& in_filename, access_mode in_accmode, disposition in_disp = disposition::OPEN) noexcept {
 		rawHandle = CreateFileA(in_filename.c_str(), (DWORD)in_accmode, FILE_SHARE_READ, nullptr, (DWORD)in_disp, FILE_ATTRIBUTE_NORMAL, nullptr);
@@ -49,7 +47,7 @@ public:
 		CloseHandle(rawHandle);
 	}
 
-	GENERIC open_file(const mbase::string& in_filename, access_mode in_accmode, disposition in_disp = disposition::OVERWRITE) noexcept {
+	PTRGENERIC open_file(const mbase::string& in_filename, access_mode in_accmode, disposition in_disp = disposition::OVERWRITE) noexcept {
 		CloseHandle(rawHandle);
 		rawHandle = CreateFileA(in_filename.c_str(), (DWORD)in_accmode, FILE_SHARE_READ, nullptr, (DWORD)in_disp, FILE_ATTRIBUTE_NORMAL, nullptr);
 		if (!rawHandle)
@@ -64,8 +62,12 @@ public:
 				SetFilePointer(rawHandle, 0, nullptr, FILE_END);
 			}
 		}
+		return rawHandle;
 	}
 
+	GENERIC close_file() noexcept {
+		CloseHandle(rawHandle);
+	}
 	size_type write_data(IBYTEBUFFER in_src) override 
 	{
 		DWORD dataWritten = 0;
@@ -116,11 +118,11 @@ public:
 		return dataRead;
 	}
 
-	mbase::string get_file_name() {
+	USED_RETURN mbase::string get_file_name() {
 		return fileName;
 	}
 
-	SIZE_T get_file_size() {
+	USED_RETURN SIZE_T get_file_size() {
 		LARGE_INTEGER lInt;
 		GetFileSizeEx(rawHandle, &lInt);
 		return lInt.QuadPart;

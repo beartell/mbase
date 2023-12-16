@@ -99,6 +99,11 @@ public:
     }
 
     character_sequence& operator=(character_sequence&& in_rhs) noexcept {
+        if (raw_data)
+        {
+            Alloc::deallocate(raw_data);
+        }
+
         mSize = in_rhs.mSize;
         mCapacity = in_rhs.mCapacity;
         raw_data = in_rhs.raw_data;
@@ -310,6 +315,7 @@ private:
 };
 
 using string = character_sequence;
+using string_view = character_sequence; // STRING VIEW WILL BE IMPLEMENTED LATER
 
 MBASE_STD_END
 
