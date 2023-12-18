@@ -5,6 +5,7 @@
 
 #include <mbase/common.h> // For data types and macros
 #include <mbase/allocator.h> // For allocation routines
+#include <mbase/type_sequence.h> // For sequence iterator
 
 #include <initializer_list> // For std::initializer_list
 
@@ -33,7 +34,7 @@ public:
 	using pointer = T*;
 	using const_pointer = const T;
 
-	class vector_iterator : public sequence_iterator<T> {
+	class vector_iterator : public mbase::sequence_iterator<T> {
 	public:
 		vector_iterator(pointer in_ptr) noexcept : sequence_iterator(in_ptr) {}
 		vector_iterator(const vector_iterator& in_rhs) noexcept : sequence_iterator(in_rhs._ptr) {}
