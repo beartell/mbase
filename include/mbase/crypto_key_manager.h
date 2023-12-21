@@ -8,10 +8,6 @@
 
 MBASE_STD_BEGIN
 
-/* NOTE */
-// THIS IS LIBRARY INTERNAL OBJECT
-// USER'S MUST NOT INITIALIZE OR CALL THIS OBJECT
-
 class crypto_key_manager : public non_copyable {
 public:
 	using key_handle = BCRYPT_KEY_HANDLE;
@@ -25,11 +21,17 @@ public:
 	explicit crypto_key_manager(crypto_provider_data& in_provider) noexcept {
 		ULONG writtenByteCount = 0;
 		mProvider = &in_provider;
+		
 		if (!BCryptGetProperty(in_provider.providerHandle, BCRYPT_BLOCK_LENGTH, (PUCHAR)&secretLength, sizeof(U64), &writtenByteCount, 0))
 		{
 			secretBuffer = new IBYTE[secretLength];
 			gen_random_n(secretBuffer, secretLength);
 		}
+	}
+
+	// TO BUILD FROM EXPORTED KEY
+	explicit crypto_key_manager(IBYTEBUFFER in_key_buffer, SIZE_T in_length) noexcept {
+
 	}
 
 	~crypto_key_manager() noexcept {

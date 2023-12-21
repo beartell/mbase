@@ -69,6 +69,12 @@ struct safe_buffer {
 		bfLength = in_rhs.bfLength;
 	}
 
+	GENERIC clear() noexcept {
+		delete[] bfSource;
+		bfLength = 0;
+		bfSource = nullptr;
+	}
+
 	IBYTEBUFFER bfSource = nullptr;
 	SIZE_T bfLength = 0;
 };
