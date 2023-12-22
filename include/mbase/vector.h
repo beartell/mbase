@@ -84,8 +84,6 @@ public:
 	}
 
 	vector(const vector& in_rhs) noexcept {
-		clear();
-		
 		if(!in_rhs.mCapacity)
 		{
 			mSize = 0;
@@ -104,8 +102,6 @@ public:
 	}
 	
 	vector(vector&& in_rhs) noexcept {
-		clear();
-
 		mSize = in_rhs.mSize;
 		mCapacity = in_rhs.mCapacity;
 

@@ -8,7 +8,7 @@
 
 MBASE_STD_BEGIN
 
-class crypto_hash_base : public non_copyable{
+class crypto_hash_base : public non_copyable {
 public:
 	crypto_hash_base(crypto_provider_data& in_provider) noexcept {
 		ULONG pcbRes = 0;
@@ -36,12 +36,42 @@ public:
 		hashSize = calcLength;
 	}
 
+	crypto_hash_base(crypto_hash_base&& in_rhs) noexcept {
+		if(ourHashHandle)
+		{
+			delete[] hashObj;
+			BCryptDestroyHash(ourHashHandle);
+		}
+
+		ourHashHandle = in_rhs.ourHashHandle;
+		hashObj = in_rhs.hashObj;
+
+		in_rhs.ourHashHandle = nullptr;
+		in_rhs.hashObj = nullptr;
+	}
+
 	~crypto_hash_base() noexcept {
 		if(ourHashHandle)
 		{
 			delete[] hashObj;
 			BCryptDestroyHash(ourHashHandle);
 		}
+	}
+
+	crypto_hash_base& operator=(crypto_hash_base&& in_rhs) noexcept {
+		if (ourHashHandle)
+		{
+			delete[] hashObj;
+			BCryptDestroyHash(ourHashHandle);
+		}
+
+		ourHashHandle = in_rhs.ourHashHandle;
+		hashObj = in_rhs.hashObj;
+
+		in_rhs.ourHashHandle = nullptr;
+		in_rhs.hashObj = nullptr;
+		
+		return *this;
 	}
 
 	USED_RETURN MBASE_INLINE crypto_error hash_data(IBYTEBUFFER in_src, SIZE_T in_length, safe_buffer* out_buffer) const noexcept {

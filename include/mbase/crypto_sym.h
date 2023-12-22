@@ -125,7 +125,6 @@ private:
 
 		ULONG pcbRes = 0;
 		
-		// PASS NULL TO CALCULATE SIZE
 		BCryptEncrypt(symko.mkHandle,
 			(PUCHAR)in_src,
 			in_length,
