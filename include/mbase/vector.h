@@ -6,6 +6,8 @@
 #include <mbase/common.h> // For data types and macros
 #include <mbase/allocator.h> // For allocation routines
 #include <mbase/type_sequence.h> // For sequence iterator
+#include <mbase/safe_buffer.h> // For safe buffer
+#include <mbase/container_serializer_helper.h> // For serialize_helper
 
 #include <initializer_list> // For std::initializer_list
 
@@ -40,6 +42,10 @@ public:
 		vector_iterator(const vector_iterator& in_rhs) noexcept : sequence_iterator(in_rhs._ptr) {}
 
 		MBASE_INLINE pointer operator->() const noexcept {
+			return _ptr;
+		}
+
+		MBASE_INLINE pointer get() const noexcept {
 			return _ptr;
 		}
 
@@ -160,7 +166,7 @@ public:
 
 		/* PROBLEMS WITH THIS IMPLEMENTATION:
 			IT DEALLOCATES THE VECTOR CAPACITY IN WHICH SHOULD BE OPTIONAL.
-			USER SHOULD MANUALLY CALL SHRINK_TO_FIT MEMBER FUNCTION TO ACHIEVE THAT BEHAVIOUR
+			USER SHOULD MANUALLY CALL "SHRINK_TO_FIT" MEMBER FUNCTION TO ACHIEVE THAT BEHAVIOUR
 		*/
 		if (raw_data)
 		{
@@ -175,6 +181,20 @@ public:
 		mCapacity = 0;
 	}
 	
+	MBASE_INLINE_EXPR GENERIC deep_clear() noexcept {
+		if (raw_data)
+		{
+			for (size_type i = 0; i < mSize; i++)
+			{
+				raw_data[i].~value_type();
+			}
+			Allocator::deallocate(raw_data);
+			raw_data = nullptr;
+		}
+		mSize = 0;
+		mCapacity = 0;
+	}
+
 	MBASE_INLINE_EXPR GENERIC resize(size_type in_size) noexcept {
 		if(in_size > mCapacity)
 		{
@@ -203,14 +223,33 @@ public:
 	}
 
 	MBASE_INLINE_EXPR GENERIC erase(iterator in_pos) noexcept {
-		if (in_pos != end()) {
-			in_pos->~value_type();
-
-			for (iterator iter = in_pos; iter != end() - 1; ++iter) {
-				*iter = std::move(*(iter + 1));
+		if(in_pos == end())
+		{
+			pop_back();
+		}
+		else
+		{
+			if(mSize)
+			{
+				pointer new_data = Allocator::allocate(in_capacity);
+				difference_type i = 0;
+				for (iterator It = begin(); It != end(); It++)
+				{
+					if (It == in_pos)
+					{
+						It->~value_type();
+					}
+					else
+					{
+						raw_data[i].~value_type();
+						Allocator::construct(new_data + i, std::move(*(raw_data + i)));
+					}
+					++i;
+				}
+				Allocator::deallocate(raw_data);
+				raw_data = new_data;
+				--mSize;
 			}
-
-			--mSize;
 		}
 	}
 
@@ -240,6 +279,26 @@ public:
 
 		pointer curObj = raw_data + --mSize;
 		curObj->~value_type();
+	}
+
+	MBASE_INLINE GENERIC serialize(safe_buffer* out_buffer) noexcept {
+		if(mSize)
+		{
+			mbase::vector<safe_buffer> bfVector(mSize);
+			
+			serialize_helper<value_type> sl;
+			sl.value = cbegin().get();
+			safe_buffer tmpSafeBuffer;
+			
+			size_type totalLength = 0;
+
+			for (iterator It = cbegin(); It != cend(); It++)
+			{
+				sl.serialize(&tmpSafeBuffer);
+				totalLength += tmpSafeBuffer.bfLength;
+				bfVector.push_back(std::move(tmpSafeBuffer));
+			}
+		}
 	}
 
 	USED_RETURN MBASE_INLINE_EXPR iterator begin() noexcept {

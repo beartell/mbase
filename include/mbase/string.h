@@ -291,6 +291,10 @@ public:
         return os;
     }
 
+    MBASE_INLINE GENERIC serialize(safe_buffer* out_buffer) {
+        std::cout << "String serialized" << std::endl;
+    }
+
 private:
 
     MBASE_INLINE GENERIC _resize(SIZE_T in_size) noexcept {

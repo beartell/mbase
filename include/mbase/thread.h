@@ -138,7 +138,7 @@ private:
 			(LPVOID)&tp,
 			0,
 			(LPDWORD)&threadId);
-
+		
 		threadHandle = _threadHandle;
 		if (!threadHandle)
 		{

@@ -8,6 +8,7 @@
 
 // TODO: Reconsider list_node structure's destructor and constructor
 // TODO: Consider implementing a list_pool
+// TODO: Do not forget to implement copy constructor
 
 MBASE_STD_BEGIN
 
