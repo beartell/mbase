@@ -58,6 +58,18 @@ public:
 		_Sc.pop_back();
 	}
 
+	MBASE_INLINE GENERIC serialize(safe_buffer* out_buffer) noexcept {
+		_Sc.serialize(out_buffer);
+	}
+
+	MBASE_INLINE GENERIC deserialize(IBYTEBUFFER in_buffer, SIZE_T in_length) noexcept {
+		_Sc.deserialize(in_buffer, in_length);
+	}
+
+	SourceContainer& getHandler() {
+		return _Sc;
+	}
+
 private:
 	SourceContainer _Sc;
 };

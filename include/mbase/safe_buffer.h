@@ -16,10 +16,6 @@ struct safe_buffer {
 
 	safe_buffer(const safe_buffer& in_rhs) noexcept {
 		bfLength = in_rhs.bfLength;
-		if(bfSource)
-		{
-			delete[] bfSource;
-		}
 
 		if(in_rhs.bfSource)
 		{
@@ -28,13 +24,11 @@ struct safe_buffer {
 	}
 
 	safe_buffer(safe_buffer&& in_rhs) noexcept {
-		if(bfSource)
-		{
-			delete[] bfSource;
-		}
-
 		bfSource = in_rhs.bfSource;
 		bfLength = in_rhs.bfLength;
+
+		in_rhs.bfSource = nullptr;
+		in_rhs.bfLength = 0;
 	}
 
 	~safe_buffer() noexcept {
@@ -67,6 +61,9 @@ struct safe_buffer {
 
 		bfSource = in_rhs.bfSource;
 		bfLength = in_rhs.bfLength;
+
+		in_rhs.bfSource = nullptr;
+		in_rhs.bfLength = 0;
 	}
 
 	GENERIC clear() noexcept {
@@ -75,8 +72,8 @@ struct safe_buffer {
 		bfSource = nullptr;
 	}
 
-	IBYTEBUFFER bfSource = nullptr;
 	SIZE_T bfLength = 0;
+	IBYTEBUFFER bfSource = nullptr;
 };
 
 MBASE_STD_END

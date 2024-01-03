@@ -247,7 +247,6 @@ public:
             totalCapacity *= 2;
         }
 
-
         IBYTEBUFFER new_data = Alloc::allocate(totalCapacity, true);
         type_sequence::concat(new_data, in_lhs.raw_data, in_lhs.mSize);
         type_sequence::concat(new_data + in_lhs.mSize, (IBYTEBUFFER)&in_rhs, 1);
@@ -292,7 +291,17 @@ public:
     }
 
     MBASE_INLINE GENERIC serialize(safe_buffer* out_buffer) {
-        std::cout << "String serialized" << std::endl;
+        if(mSize)
+        {
+            out_buffer->bfLength = mSize;
+            out_buffer->bfSource = new IBYTE[mSize];
+
+            copy(out_buffer->bfSource, raw_data, mSize); // DO NOT INCLUDE NULL TERMINATOR
+        }
+    }
+
+    static MBASE_INLINE character_sequence deserialize(IBYTEBUFFER in_buffer, SIZE_T in_length) {
+        return mbase::character_sequence(in_buffer, in_length);
     }
 
 private:
