@@ -3,6 +3,7 @@
 
 #include <mbase/common.h>
 #include <mbase/char_stream.h>
+#include <mbase/safe_buffer.h>
 
 MBASE_STD_BEGIN
 
@@ -23,6 +24,20 @@ public:
 
 	virtual size_type read_data(IBYTEBUFFER in_src, size_type in_length) = 0;
 	virtual size_type read_data(const char_stream& in_src) = 0;
+
+	/*template<typename T>
+	size_type write_data(T& in_src) {
+		safe_buffer mBuffer;
+		in_src.serialize(&mBuffer);
+		return write_data(mBuffer.bfSource, mBuffer.bfLength);
+	}
+
+	template<typename T>
+	size_type read_data(T& in_target, IBYTEBUFFER in_src, size_type in_length) {
+		size_type readLength = read_data(in_src, in_length);
+		in_target.deserialize(in_src, in_length);
+		return readLength;
+	}*/
 
 	// ASSOCIATE INPUT CHARACTER STREAM
 	GENERIC associate_is(char_stream& in_stream) noexcept {

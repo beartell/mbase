@@ -29,11 +29,6 @@ public:
 		}
 	}
 
-	// TO BUILD FROM EXPORTED KEY
-	explicit crypto_key_manager(IBYTEBUFFER in_key_buffer, SIZE_T in_length) noexcept {
-
-	}
-
 	~crypto_key_manager() noexcept {
 		if (secretBuffer)
 		{

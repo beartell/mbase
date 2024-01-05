@@ -48,6 +48,9 @@ using U16		  = uint16_t;
 using U32		  = uint32_t;
 using U64		  = uint64_t;
 
+using F32 = float;
+using F64 = double;
+
 using SIZE_T	  = U64;
 using PTRDIFF	  = I64;
 
@@ -60,6 +63,9 @@ using PTRU8		  = U8*;
 using PTRU16	  = U16*;
 using PTRU32	  = U32*;
 using PTRU64      = U64*;
+
+using PTRF32	  = F32*;
+using PTRF64	  = F64*;
 
 using IBYTE		  = I8;
 using UBYTE		  = U8;

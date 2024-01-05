@@ -164,6 +164,20 @@ public:
 		return dataRead;
 	}
 
+	template<typename T>
+	size_type write_data(T& in_src) {
+		safe_buffer mBuffer;
+		in_src.serialize(&mBuffer);
+		return write_data(mBuffer.bfSource, mBuffer.bfLength);
+	}
+
+	template<typename T>
+	size_type read_data(T& in_target, IBYTEBUFFER in_src, size_type in_length) {
+		size_type readLength = read_data(in_src, in_length);
+		in_target.deserialize(in_src, in_length);
+		return readLength;
+	}
+
 private:
 	SOCKET rawHandle = INVALID_SOCKET;
 	sockaddr_in sckAddr = {0};

@@ -50,17 +50,21 @@ struct crypto_init {
 		BCryptGetProperty(hash_MD5.providerHandle, BCRYPT_OBJECT_LENGTH, (PBYTE)&hash_MD5.objectSize, sizeof(U64), &pcbResult, 0);
 		BCryptGetProperty(hash_SHA256.providerHandle, BCRYPT_OBJECT_LENGTH, (PBYTE)&hash_SHA256.objectSize, sizeof(U64), &pcbResult, 0);
 		BCryptGetProperty(symm_AES.providerHandle, BCRYPT_OBJECT_LENGTH, (PBYTE)&symm_AES.objectSize, sizeof(U64), &pcbResult, 0);
+
+		// ASYM WILL BE IMPLEMENTED LATER
 	}
 	~crypto_init() noexcept {
-		
+		BCryptCloseAlgorithmProvider(rng_rng.providerHandle, 0);
+		BCryptCloseAlgorithmProvider(asym_RSA.providerHandle, 0);
+		BCryptCloseAlgorithmProvider(symm_AES.providerHandle, 0);
+		BCryptCloseAlgorithmProvider(hash_SHA256.providerHandle, 0);
+		BCryptCloseAlgorithmProvider(hash_MD5.providerHandle, 0);
 	}
 
 	crypto_provider_data hash_MD5 = { 0 };
 	crypto_provider_data hash_SHA256 = { 0 };
-
 	crypto_provider_data symm_AES = { 0 };
 	crypto_provider_data asym_RSA = { 0 };
-	
 	crypto_provider_data rng_rng = { 0 };
 };
 
