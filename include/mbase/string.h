@@ -168,8 +168,38 @@ public:
         return *this;
     }
 
+    USED_RETURN MBASE_INLINE size_type find(const character_sequence& in_src, size_type in_pos = 0) const noexcept {
+        return find(in_src.c_str(), in_pos);
+    }
+
+    USED_RETURN MBASE_INLINE size_type find(MSTRING in_src, size_type in_pos = 0) const noexcept {
+        MSTRING tmpResult = strstr(raw_data + in_pos, in_src);
+        if(tmpResult)
+        {
+            return tmpResult - (raw_data + in_pos);
+        }
+
+        return npos;
+    }
+
+    USED_RETURN MBASE_INLINE size_type find(IBYTE in_char, size_type in_pos = 0) const noexcept {
+        MSTRING tmpResult = strchr(raw_data + in_pos, in_char);
+        if(tmpResult)
+        {
+            return tmpResult - (raw_data + in_pos);
+        }
+
+        return npos;
+    }
+
     USED_RETURN MBASE_INLINE GENERIC resize(size_type in_amount) {
         _resize(in_amount);
+    }
+
+    MBASE_INLINE GENERIC swap(character_sequence& in_src) noexcept {
+        std::swap(raw_data, in_src.raw_data);
+        std::swap(mCapacity, in_src.mCapacity);
+        std::swap(mSize, in_src.mSize);
     }
 
     USED_RETURN MBASE_INLINE iterator begin() const noexcept {
@@ -303,6 +333,8 @@ public:
     static MBASE_INLINE character_sequence deserialize(IBYTEBUFFER in_buffer, SIZE_T in_length) {
         return mbase::character_sequence(in_buffer, in_length);
     }
+
+    static MBASE_INLINE_EXPR const SIZE_T npos = -1;
 
 private:
 

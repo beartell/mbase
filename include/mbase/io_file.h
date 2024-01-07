@@ -3,16 +3,13 @@
 
 #include <mbase/io_base.h> // mbase::io_base
 #include <mbase/string.h> // mbase::string
-#include <Windows.h> // CreateFileA, SetFilePointer, WriteFile, ReadFile
+#include <mbase/behaviors.h> // mbase::non_copymovable
+#include <Windows.h> // CreateFileA, SetFilePointer, WriteFile, ReadFile, CreateIoCompletionPort
 
 MBASE_STD_BEGIN
 
-// TODO
-// DO NOT FORGET OT IMPLEMENT io_file_async
-
-class io_file : public io_base {
+class io_file : public io_base, public non_copymovable {
 public:
-
 	enum class access_mode : U32 {
 		READ_ACCESS = GENERIC_READ,
 		WRITE_ACCESS = GENERIC_WRITE,
@@ -43,11 +40,11 @@ public:
 		}
 	}
 
-	~io_file() {
+	~io_file() noexcept {
 		CloseHandle(rawHandle);
 	}
 
-	PTRGENERIC open_file(const mbase::string& in_filename, access_mode in_accmode, disposition in_disp = disposition::OVERWRITE) noexcept {
+	MBASE_INLINE PTRGENERIC open_file(const mbase::string& in_filename, access_mode in_accmode, disposition in_disp = disposition::OVERWRITE) noexcept {
 		CloseHandle(rawHandle);
 		rawHandle = CreateFileA(in_filename.c_str(), (DWORD)in_accmode, FILE_SHARE_READ, nullptr, (DWORD)in_disp, FILE_ATTRIBUTE_NORMAL, nullptr);
 		if (!rawHandle)
@@ -65,9 +62,10 @@ public:
 		return rawHandle;
 	}
 
-	GENERIC close_file() noexcept {
+	MBASE_INLINE GENERIC close_file() noexcept {
 		CloseHandle(rawHandle);
 	}
+
 	size_type write_data(IBYTEBUFFER in_src) override 
 	{
 		DWORD dataWritten = 0;
@@ -132,11 +130,11 @@ public:
 		return readLength;
 	}
 
-	USED_RETURN mbase::string get_file_name() {
+	USED_RETURN MBASE_INLINE mbase::string get_file_name() const noexcept {
 		return fileName;
 	}
 
-	USED_RETURN SIZE_T get_file_size() {
+	USED_RETURN MBASE_INLINE SIZE_T get_file_size() const noexcept {
 		LARGE_INTEGER lInt;
 		GetFileSizeEx(rawHandle, &lInt);
 		return lInt.QuadPart;

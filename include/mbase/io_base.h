@@ -10,7 +10,7 @@ MBASE_STD_BEGIN
 // IO_BASE IS ABSTRACT CLASS
 struct io_context {
 	PTRGENERIC raw_handle;
-	PTRGENERIC context_body;
+	PTRGENERIC context_body; // NOT USED OFTEN
 };
 
 class io_base {
@@ -61,7 +61,7 @@ public:
 		return rawContext;
 	}
 
-	U32 get_last_error() const noexcept {
+	USED_RETURN U32 get_last_error() const noexcept {
 		return lastError;
 	}
 

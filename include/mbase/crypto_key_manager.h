@@ -18,7 +18,7 @@ public:
 		PUCHAR keyObject = nullptr;
 	};
 
-	explicit crypto_key_manager(crypto_provider_data& in_provider) noexcept {
+	MBASE_STD_EXPLICIT crypto_key_manager(crypto_provider_data& in_provider) noexcept {
 		ULONG writtenByteCount = 0;
 		mProvider = &in_provider;
 		

@@ -351,6 +351,12 @@ public:
 		}
 	}
 
+	MBASE_INLINE_EXPR GENERIC swap(mbase::vector<value_type>& in_src) noexcept {
+		std::swap(raw_data, in_src.raw_data);
+		std::swap(mCapacity, in_src.mCapacity);
+		std::swap(mSize, in_src.mSize);
+	}
+
 	USED_RETURN MBASE_INLINE_EXPR iterator begin() noexcept {
 		return iterator(raw_data);
 	}

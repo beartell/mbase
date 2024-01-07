@@ -18,6 +18,7 @@ MBASE_STD_BEGIN
 // copy constructible
 // equality constructible
 // swappable
+// serializable
 
 /* TYPE REQUIREMENTS */
 // copy insertable
@@ -121,74 +122,10 @@ public:
 		clear();
 	}
 
-	MBASE_INLINE GENERIC serialize(safe_buffer* out_buffer) noexcept {
-		if (mSize)
-		{
-			mbase::vector<safe_buffer> totalBuffer;
-
-			serialize_helper<value_type> sl;
-
-			safe_buffer tmpSafeBuffer;
-			size_type totalLength = 0;
-
-			for (iterator It = begin(); It != end(); It++)
-			{
-				sl.value = It.get()->data;
-				sl.serialize(&tmpSafeBuffer);
-				if (tmpSafeBuffer.bfLength)
-				{
-					totalLength += tmpSafeBuffer.bfLength;
-					totalBuffer.push_back(std::move(tmpSafeBuffer));
-				}
-			}
-
-			if (totalBuffer.size())
-			{
-				SIZE_T totalBufferLength = totalLength + (totalBuffer.size() * sizeof(U32)) + sizeof(U32);
-
-				mbase::vector<safe_buffer>::iterator It = totalBuffer.begin();
-				out_buffer->bfLength = totalBufferLength;
-				out_buffer->bfSource = new IBYTE[totalBufferLength];
-
-				IBYTEBUFFER _bfSource = out_buffer->bfSource;
-				PTRU32 elemCount = reinterpret_cast<PTRU32>(_bfSource);
-				*elemCount = totalBuffer.size();
-
-				_bfSource += sizeof(U32);
-
-				size_type totalIterator = 0;
-				for (It; It != totalBuffer.end(); It++)
-				{
-					elemCount = reinterpret_cast<PTRU32>(_bfSource);
-					*elemCount = It->bfLength;
-					_bfSource += sizeof(U32);
-					for (I32 i = 0; i < It->bfLength; i++)
-					{
-						_bfSource[i] = It->bfSource[i];
-					}
-
-					_bfSource += It->bfLength;
-				}
-			}
-		}
-	}
-
-	MBASE_INLINE GENERIC deserialize(IBYTEBUFFER in_src, SIZE_T in_length) noexcept {
-		if (in_length)
-		{
-			PTRU32 elemCount = reinterpret_cast<PTRU32>(in_src);
-			serialize_helper<value_type> sl;
-
-			IBYTEBUFFER tmpSrc = in_src + sizeof(U32);
-
-			for (I32 i = 0; i < *elemCount; i++)
-			{
-				PTRU32 elemLength = reinterpret_cast<PTRU32>(tmpSrc);
-				tmpSrc += sizeof(U32);
-				push_back(sl.deserialize(tmpSrc, *elemLength));
-				tmpSrc += *elemLength;
-			}
-		}
+	MBASE_INLINE_EXPR GENERIC swap(mbase::list<value_type>& in_src) noexcept {
+		std::swap(firstNode, in_src.firstNode);
+		std::swap(lastNode, in_src.lastNode);
+		std::swap(mSize, in_src.mSize);
 	}
 
 	USED_RETURN MBASE_INLINE_EXPR reference front() noexcept {
@@ -400,6 +337,76 @@ public:
 			mNode->next->prev = mNode->prev;
 			delete mNode;
 			--mSize;
+		}
+	}
+
+	MBASE_INLINE GENERIC serialize(safe_buffer* out_buffer) noexcept {
+		if (mSize)
+		{
+			mbase::vector<safe_buffer> totalBuffer;
+
+			serialize_helper<value_type> sl;
+
+			safe_buffer tmpSafeBuffer;
+			size_type totalLength = 0;
+
+			for (iterator It = begin(); It != end(); It++)
+			{
+				sl.value = It.get()->data;
+				sl.serialize(&tmpSafeBuffer);
+				if (tmpSafeBuffer.bfLength)
+				{
+					totalLength += tmpSafeBuffer.bfLength;
+					totalBuffer.push_back(std::move(tmpSafeBuffer));
+				}
+			}
+
+			if (totalBuffer.size())
+			{
+				SIZE_T totalBufferLength = totalLength + (totalBuffer.size() * sizeof(U32)) + sizeof(U32);
+
+				mbase::vector<safe_buffer>::iterator It = totalBuffer.begin();
+				out_buffer->bfLength = totalBufferLength;
+				out_buffer->bfSource = new IBYTE[totalBufferLength];
+
+				IBYTEBUFFER _bfSource = out_buffer->bfSource;
+				PTRU32 elemCount = reinterpret_cast<PTRU32>(_bfSource);
+				*elemCount = totalBuffer.size();
+
+				_bfSource += sizeof(U32);
+
+				size_type totalIterator = 0;
+				for (It; It != totalBuffer.end(); It++)
+				{
+					elemCount = reinterpret_cast<PTRU32>(_bfSource);
+					*elemCount = It->bfLength;
+					_bfSource += sizeof(U32);
+					for (I32 i = 0; i < It->bfLength; i++)
+					{
+						_bfSource[i] = It->bfSource[i];
+					}
+
+					_bfSource += It->bfLength;
+				}
+			}
+		}
+	}
+
+	MBASE_INLINE GENERIC deserialize(IBYTEBUFFER in_src, SIZE_T in_length) noexcept {
+		if (in_length)
+		{
+			PTRU32 elemCount = reinterpret_cast<PTRU32>(in_src);
+			serialize_helper<value_type> sl;
+
+			IBYTEBUFFER tmpSrc = in_src + sizeof(U32);
+
+			for (I32 i = 0; i < *elemCount; i++)
+			{
+				PTRU32 elemLength = reinterpret_cast<PTRU32>(tmpSrc);
+				tmpSrc += sizeof(U32);
+				push_back(sl.deserialize(tmpSrc, *elemLength));
+				tmpSrc += *elemLength;
+			}
 		}
 	}
 

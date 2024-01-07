@@ -24,7 +24,7 @@
 	#if defined(_MSC_VER)
 		#define MBASE_STD_API __declspec(dllexport)
 	#endif // _WIN32
-	// MAKE SURE TO IMPLY THE CYGWIN AND GNUC
+	// MAKE SURE TO IMPL THE CYGWIN AND GNUC
 #endif
 
 #define MBASE_STD_EXPLICIT explicit
@@ -48,8 +48,8 @@ using U16		  = uint16_t;
 using U32		  = uint32_t;
 using U64		  = uint64_t;
 
-using F32 = float;
-using F64 = double;
+using F32		  = float;
+using F64		  = double;
 
 using SIZE_T	  = U64;
 using PTRDIFF	  = I64;

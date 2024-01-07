@@ -15,13 +15,13 @@ public:
 
 	char_stream() noexcept : bufferLength(0), streamCursor(0), srcBuffer(nullptr) {}
 
-	explicit char_stream(IBYTEBUFFER in_src) noexcept {
+	MBASE_STD_EXPLICIT char_stream(IBYTEBUFFER in_src) noexcept {
 		bufferLength = length(in_src) + 1; // CHAR STREAM WILL INCLUDE NULL TERMINATOR
 		streamCursor = 0;
 		srcBuffer = in_src;
 	}
 
-	explicit char_stream(IBYTEBUFFER in_src, size_type in_length) noexcept : bufferLength(in_length), streamCursor(0), srcBuffer(in_src) {}
+	MBASE_STD_EXPLICIT char_stream(IBYTEBUFFER in_src, size_type in_length) noexcept : bufferLength(in_length), streamCursor(0), srcBuffer(in_src) {}
 
 	MBASE_INLINE_EXPR GENERIC advance() noexcept {
 		++streamCursor;
