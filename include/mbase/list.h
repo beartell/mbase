@@ -157,10 +157,20 @@ public:
 	}
 
 	USED_RETURN MBASE_INLINE_EXPR iterator end() const noexcept {
+		if(!lastNode)
+		{
+			return iterator(lastNode);
+		}
+
 		return iterator(lastNode->next);
 	}
 
 	USED_RETURN MBASE_INLINE_EXPR const_iterator cbegin() const noexcept {
+		if (!lastNode)
+		{
+			return iterator(lastNode);
+		}
+
 		return const_iterator(firstNode);
 	}
 
@@ -188,7 +198,7 @@ public:
 			lastNode = newNode;
 			firstNode = lastNode;
 		}
-		
+		lastNode = newNode;
 		++mSize;
 	}
 

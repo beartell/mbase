@@ -43,11 +43,21 @@ public:
     }
 
     MBASE_INLINE forward_list_iterator& operator++() noexcept {
+        if(!_ptr)
+        {
+            return *this;
+        }
+
         _ptr = _ptr->next;
         return *this;
     }
 
     MBASE_INLINE forward_list_iterator& operator++(int) noexcept {
+        if(!_ptr)
+        {
+            return *this;
+        }
+
         _ptr = _ptr->next;
         return *this;
     }

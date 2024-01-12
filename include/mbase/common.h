@@ -23,11 +23,13 @@
 #ifndef MBASE_STD_API
 	#if defined(_MSC_VER)
 		#define MBASE_STD_API __declspec(dllexport)
+		#define MBASE_API MBASE_STD_API
 	#endif // _WIN32
 	// MAKE SURE TO IMPL THE CYGWIN AND GNUC
 #endif
 
 #define MBASE_STD_EXPLICIT explicit
+#define MBASE_EXPLICIT explicit
 
 #define MBASE_STD_NAME "MBASESTD"
 #define MBASE_STD_VERSION "1.0.0"
@@ -35,6 +37,10 @@
 
 #define MBASE_STD_BEGIN namespace mbase{
 #define MBASE_STD_END }
+
+#define MBASE_BEGIN MBASE_STD_BEGIN
+#define MBASE_END MBASE_STD_END
+
 
 MBASE_STD_BEGIN
 
