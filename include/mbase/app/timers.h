@@ -21,36 +21,40 @@ public:
 		mUsrData = in_data;
 	}
 
-	USED_RETURN U32 get_timer_id() noexcept {
-		return 0;
+	USED_RETURN U32 GetTimerId() const noexcept {
+		return mTimerId;
 	}
 
-	USED_RETURN I32 get_target_time() noexcept {
+	USED_RETURN I32 GetTargetTime() const noexcept {
 		return mTargetTime;
 	}
 
-	USED_RETURN I32 get_current_time() noexcept {
+	USED_RETURN I32 GetCurrTime() const noexcept {
 		return mCurrentTime;
 	}
 
-	USED_RETURN I32 get_remaining_time() noexcept {
-		return get_target_time() - mCurrentTime;
+	USED_RETURN I32 GetRemainingTime() noexcept {
+		return GetTargetTime() - mCurrentTime;
 	}
 
-	USED_RETURN user_data get_user_data() noexcept {
+	USED_RETURN user_data GetUserData() const noexcept {
 		return mUsrData;
 	}
 
-	USED_RETURN timer_type get_timer_type() noexcept {
+	USED_RETURN timer_type GetTimerType() const noexcept {
 		return tt;
 	}
 
-	GENERIC set_target_time(U32 in_time_inms) noexcept {
+	USED_RETURN bool IsActive() const noexcept {
+		return mIsActive;
+	}
+
+	GENERIC SetTargetTime(U32 in_time_inms) noexcept {
 		mCurrentTime = 0;
 		mTargetTime = in_time_inms;
 	}
 
-	GENERIC reset_time() noexcept {
+	GENERIC ResetTime() noexcept {
 		mCurrentTime = 0;
 	}
 
@@ -59,7 +63,7 @@ public:
 	virtual GENERIC on_time(user_data in_data) = 0;
 
 protected:
-
+	bool mIsActive;
 	timer_type tt;
 	U32 mTimerId;
 	I32 mCurrentTime;

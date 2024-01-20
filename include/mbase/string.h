@@ -360,7 +360,8 @@ private:
 };
 
 using string = character_sequence;
-using string_view = character_sequence; // STRING VIEW WILL BE IMPLEMENTED LATER
+using wstring = string; // WSTRING WILL BE IMPLEMENTED LATER
+using string_view = string; // STRING VIEW WILL BE IMPLEMENTED LATER
 
 MBASE_STD_END
 

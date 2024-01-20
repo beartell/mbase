@@ -48,7 +48,7 @@ public:
 		MBASE_INLINE pointer get() const noexcept {
 			return _ptr;
 		}
-
+		
 		USED_RETURN MBASE_INLINE bool operator==(const vector_iterator& in_rhs) const noexcept {
 			return _ptr == in_rhs._ptr;
 		}

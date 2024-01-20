@@ -4,6 +4,7 @@
 #include <mbase/io_base.h> // mbase::io_base
 #include <mbase/string.h> // mbase::string
 #include <mbase/behaviors.h> // mbase::non_copymovable
+#include <mbase/rng.h>
 #include <Windows.h> // CreateFileA, SetFilePointer, WriteFile, ReadFile, CreateIoCompletionPort
 
 MBASE_STD_BEGIN
@@ -24,8 +25,17 @@ public:
 
 	io_file()  noexcept : rawHandle(nullptr) {}
 
-	io_file(const mbase::string& in_filename, access_mode in_accmode, disposition in_disp = disposition::OPEN) noexcept {
-		rawHandle = CreateFileA(in_filename.c_str(), (DWORD)in_accmode, FILE_SHARE_READ, nullptr, (DWORD)in_disp, FILE_ATTRIBUTE_NORMAL, nullptr);
+	io_file(const mbase::string& in_filename, access_mode in_accmode, disposition in_disp = disposition::OVERWRITE, bool isAsync = false) noexcept {
+		DWORD fileAttrs = FILE_ATTRIBUTE_NORMAL;
+		if(isAsync)
+		{
+			fileAttrs |= FILE_FLAG_OVERLAPPED;
+			ov.hEvent = CreateEventA(nullptr, false, true, nullptr);
+			ov.Offset = 0;
+			ov.OffsetHigh = 0;
+		}
+
+		rawHandle = CreateFileA(in_filename.c_str(), (DWORD)in_accmode, FILE_SHARE_READ, nullptr, (DWORD)in_disp, fileAttrs, nullptr);
 		if(!rawHandle)
 		{
 			_set_last_error(GetLastError());
@@ -37,6 +47,12 @@ public:
 			{
 				SetFilePointer(rawHandle, 0, nullptr, FILE_END);
 			}
+
+			if(isAsync)
+			{
+				iocpId = mbase::gen_random_64();
+				iocp = CreateIoCompletionPort(rawHandle, nullptr, iocpId, 0);
+			}
 		}
 	}
 
@@ -44,9 +60,15 @@ public:
 		CloseHandle(rawHandle);
 	}
 
-	MBASE_INLINE PTRGENERIC open_file(const mbase::string& in_filename, access_mode in_accmode, disposition in_disp = disposition::OVERWRITE) noexcept {
+	MBASE_INLINE PTRGENERIC open_file(const mbase::string& in_filename, access_mode in_accmode, disposition in_disp = disposition::OVERWRITE, bool isAsync = false) noexcept {
 		CloseHandle(rawHandle);
-		rawHandle = CreateFileA(in_filename.c_str(), (DWORD)in_accmode, FILE_SHARE_READ, nullptr, (DWORD)in_disp, FILE_ATTRIBUTE_NORMAL, nullptr);
+		DWORD fileAttrs = FILE_ATTRIBUTE_NORMAL;
+		if (isAsync)
+		{
+			fileAttrs |= FILE_FLAG_OVERLAPPED;
+		}
+
+		rawHandle = CreateFileA(in_filename.c_str(), (DWORD)in_accmode, FILE_SHARE_READ, nullptr, (DWORD)in_disp, fileAttrs, nullptr);
 		if (!rawHandle)
 		{
 			_set_last_error(GetLastError());
@@ -98,6 +120,14 @@ public:
 		return dataWritten;
 	}
 
+	size_type awrite_data(IBYTEBUFFER in_src, size_type in_length)
+	{
+		DWORD dataWritten = 0;
+		WriteFile(rawHandle, in_src, in_length, &dataWritten, &ov);
+		_set_last_error(GetLastError());
+		return dataWritten;
+	}
+
 	size_type read_data(IBYTEBUFFER in_src, size_type in_length) override
 	{
 		DWORD dataRead = 0;
@@ -116,7 +146,15 @@ public:
 		return dataRead;
 	}
 
-	template<typename T>
+	LPOVERLAPPED getov() {
+		return &ov;
+	}
+
+	HANDLE getiocp() {
+		return iocp;
+	}
+
+	/*template<typename T>
 	size_type write_data(T& in_src) {
 		safe_buffer mBuffer;
 		in_src.serialize(&mBuffer);
@@ -128,7 +166,7 @@ public:
 		size_type readLength = read_data(in_src, in_length);
 		in_target.deserialize(in_src, in_length);
 		return readLength;
-	}
+	}*/
 
 	USED_RETURN MBASE_INLINE mbase::string get_file_name() const noexcept {
 		return fileName;
@@ -141,6 +179,9 @@ public:
 	}
 	
 private:
+	HANDLE iocp;
+	U64 iocpId;
+	OVERLAPPED ov;
 	mbase::string fileName;
 	HANDLE rawHandle;
 };

@@ -168,13 +168,18 @@ public:
 	USED_RETURN MBASE_INLINE_EXPR const_iterator cbegin() const noexcept {
 		if (!lastNode)
 		{
-			return iterator(lastNode);
+			return const_iterator(lastNode);
 		}
 
 		return const_iterator(firstNode);
 	}
 
 	USED_RETURN MBASE_INLINE_EXPR const_iterator cend() const noexcept {
+		if (!lastNode)
+		{
+			return const_iterator(lastNode);
+		}
+
 		return const_iterator(lastNode->next);
 	}
 
@@ -328,9 +333,10 @@ public:
 		insert(in_post, std::move(in_object));
 	}
 
-	MBASE_INLINE_EXPR GENERIC erase(const_iterator in_pos) noexcept {
+	MBASE_INLINE_EXPR iterator erase(const_iterator in_pos) noexcept {
 		list_node* mNode = in_pos._ptr;
-		
+		list_node* returnedNode = mNode->next;
+
 		if(mNode == firstNode)
 		{
 			pop_front();
@@ -338,6 +344,7 @@ public:
 
 		else if(mNode == lastNode)
 		{
+			returnedNode = mNode->prev;
 			pop_back();
 		}
 
@@ -348,6 +355,7 @@ public:
 			delete mNode;
 			--mSize;
 		}
+		return returnedNode;
 	}
 
 	MBASE_INLINE GENERIC serialize(safe_buffer* out_buffer) noexcept {

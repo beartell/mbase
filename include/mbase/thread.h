@@ -8,7 +8,7 @@
 MBASE_STD_BEGIN
 
 template<typename Func, typename ... Args>
-class thread : public non_copyable {
+class thread {
 public:
 	enum class thread_error : U32 {
 		THREAD_SUCCESS = 0,
@@ -21,7 +21,8 @@ public:
 
 	using raw_handle = HANDLE;
 
-	thread(Func&& in_fptr, Args&&... in_args) noexcept : threadHandle(nullptr), threadId(0) {
+
+	thread(Func&& in_fptr, Args&&... in_args) noexcept {
 		tp.fPtr = std::forward<Func>(in_fptr);
 		tp.fParams = std::make_tuple(std::forward<Args>(in_args)...);
 	}
@@ -119,6 +120,7 @@ public:
 
 private:
 	struct thread_param {
+		thread_param(){}
 		std::decay_t<Func> fPtr;
 		std::tuple<Args...> fParams;
 	};
@@ -147,7 +149,6 @@ private:
 
 		return thread_error::THREAD_SUCCESS;
 	}
-
 	thread_param tp;
 	I32 threadId;
 	raw_handle threadHandle;

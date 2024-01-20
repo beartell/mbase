@@ -4,6 +4,7 @@
 #include <mbase/common.h>
 #include <mbase/list.h>
 #include <mbase/app/timers.h>
+#include <Windows.h>
 
 MBASE_BEGIN
 
@@ -23,74 +24,154 @@ MBASE_BEGIN
 
 class ev_loop {
 public:
-	ev_loop() : mTimerLimit(0), mTimerIdCounter(0) {
+	enum class timer_err : U32 {
+		TIMER_SUCCESS = 0,
+		TIMER_ERR_LIMIT_REACHED = 1,
+		TIMER_ERR_INVALID_DATA = 2
+	};
+
+	ev_loop() : timerLimit(0), timerIdCounter(0), isRunning(false) {
 		LARGE_INTEGER performanceFrequency = {};
 		QueryPerformanceFrequency(&performanceFrequency);
-		mFrequency = performanceFrequency.QuadPart;
+		frequency = performanceFrequency.QuadPart;
 	}
 
-	GENERIC register_timer(timer_base* in_timer) {
-		in_timer->mTimerId = mTimerIdCounter++;
-		mRegisteredTimers.push_back(in_timer);
+	timer_err RegisterTimer(timer_base* in_timer) {
+		if(timerIdCounter > timerLimit)
+		{
+			return timer_err::TIMER_ERR_LIMIT_REACHED;
+		}
+
+		in_timer->mTimerId = ++timerIdCounter; // Timer ids will start from 1
+		registeredTimers.push_back(in_timer);
+
+		return timer_err::TIMER_SUCCESS;
 	}
 
-	GENERIC unregister_timer(timer_base* in_timer) {
+	timer_err RegisterTimer(timer_base* in_timer, PTRGENERIC in_usr_data) noexcept {
+		if (timerIdCounter > timerLimit)
+		{
+			return timer_err::TIMER_ERR_LIMIT_REACHED;
+		}
+
+		in_timer->mTimerId = timerIdCounter++; // Timer ids will start from 1
+		in_timer->mUsrData = in_usr_data;
+		registeredTimers.push_back(in_timer);
+
+		return timer_err::TIMER_SUCCESS;
+	}
+
+	GENERIC UnregisterTimer(timer_base* in_timer) {
+
 		// find will be implemented in list
 	}
 
-	GENERIC run() {
-
+	U32 GetTimerResolutionInMs() {
 		LARGE_INTEGER queryTime;
 		QueryPerformanceCounter(&queryTime);
 
 		U32 startTime = queryTime.QuadPart;
-		Sleep(1);
+		Sleep(15);
 		QueryPerformanceCounter(&queryTime);
 		U32 endTime = queryTime.QuadPart;
-		U32 elapsedTime = ((endTime - startTime) * 1000) / mFrequency;
+		U32 elapsedTime = ((endTime - startTime) * 1000) / frequency;
 
-		while (1)
+		return elapsedTime;
+	}
+
+	mbase::list<timer_base*>* GetTimerList() {
+		return &registeredTimers;
+	}
+
+	GENERIC RunTimerOnly() noexcept {
+		if(isRunning)
 		{
-			mbase::list<timer_base*>::iterator It = mRegisteredTimers.begin();
+			return;
+		}
+		isRunning = true;
+
+		LARGE_INTEGER queryTime;
+		U32 startTime = 0;
+		U32 endTime = 0;
+		U32 elapsedTime = GetTimerResolutionInMs();
+		
+		while (isRunning)
+		{
+			mbase::list<timer_base*>::iterator It = registeredTimers.begin();
 			QueryPerformanceCounter(&queryTime);
-			Sleep(1);
+			Sleep(15);
 			startTime = queryTime.QuadPart;
-			while(It != mRegisteredTimers.end())
+			while(It != registeredTimers.end())
 			{
 				timer_base* tmpTimerBase  = *It;
 				tmpTimerBase->mCurrentTime += elapsedTime;
-				if(tmpTimerBase->get_remaining_time() <= 0)
+				
+				if(tmpTimerBase->GetRemainingTime() <= 0)
 				{
-					tmpTimerBase->on_time(tmpTimerBase->get_user_data());
-					if (tmpTimerBase->get_timer_type() == mbase::timer_base::timer_type::TIMER_TIMEOUT)
+					tmpTimerBase->on_time(tmpTimerBase->GetUserData());
+					if (tmpTimerBase->GetTimerType() == mbase::timer_base::timer_type::TIMER_TIMEOUT)
 					{
-						mbase::list<timer_base*>::iterator removedIt = It;
-						It++;
-						mRegisteredTimers.erase(removedIt);
+						It = registeredTimers.erase(It);
 					}
 					else
 					{
-						tmpTimerBase->reset_time();
-						It++;
+						tmpTimerBase->ResetTime();
 					}
 				}
-				else
-				{
-					It++;
-				}
-				
+				It++;
 			}
 			QueryPerformanceCounter(&queryTime);
 			endTime = queryTime.QuadPart;
-			elapsedTime = ((endTime - startTime) * 1000) / mFrequency;
+			elapsedTime = ((endTime - startTime) * 1000) / frequency;
 		}
 	}
 
+	// RETURNS ELAPSED TIME
+	U32 ManualRunTimers(U32 in_ms) noexcept {
+		LARGE_INTEGER queryTime;
+		QueryPerformanceCounter(&queryTime);
+		U32 startTime = queryTime.QuadPart;
+		U32 endTime = 0;
+		U32 elapsedTime = in_ms;
+
+		mbase::list<timer_base*>::iterator It = registeredTimers.begin();
+		while (It != registeredTimers.end())
+		{
+			timer_base* tmpTimerBase = *It;
+			tmpTimerBase->mCurrentTime += elapsedTime;
+			if (tmpTimerBase->GetRemainingTime() <= 0)
+			{
+				tmpTimerBase->on_time(tmpTimerBase->GetUserData());
+				if (tmpTimerBase->GetTimerType() == mbase::timer_base::timer_type::TIMER_TIMEOUT)
+				{
+					It = registeredTimers.erase(It);
+				}
+				else
+				{
+					tmpTimerBase->ResetTime();
+				}
+			}
+			It++;
+		}
+		
+		QueryPerformanceCounter(&queryTime);
+		endTime = queryTime.QuadPart;
+
+		elapsedTime += ((endTime - startTime) * 1000) / frequency;
+
+		return elapsedTime;
+	}
+
+	GENERIC Halt() noexcept {
+		isRunning = false;
+	}
+
 protected:
-	U32 mFrequency;
-	U32 mTimerLimit;
-	U32 mTimerIdCounter;
-	mbase::list<timer_base*> mRegisteredTimers;
+	U32 frequency; // DO NOT MODIFY
+	U32 timerLimit;
+	U32 timerIdCounter; // DO NOT MODIFY
+	bool isRunning;
+	mbase::list<timer_base*> registeredTimers;
 };
 
 MBASE_END
