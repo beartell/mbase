@@ -57,11 +57,11 @@ public:
 	}
 
 	~io_file() noexcept {
-		CloseHandle(rawHandle);
+		close_file();
 	}
 
 	MBASE_INLINE PTRGENERIC open_file(const mbase::string& in_filename, access_mode in_accmode, disposition in_disp = disposition::OVERWRITE, bool isAsync = false) noexcept {
-		CloseHandle(rawHandle);
+		close_file();
 		DWORD fileAttrs = FILE_ATTRIBUTE_NORMAL;
 		if (isAsync)
 		{
@@ -85,7 +85,11 @@ public:
 	}
 
 	MBASE_INLINE GENERIC close_file() noexcept {
-		CloseHandle(rawHandle);
+		if(rawHandle)
+		{
+			CloseHandle(rawHandle);
+		}
+		rawHandle = nullptr;
 	}
 
 	size_type write_data(IBYTEBUFFER in_src) override 

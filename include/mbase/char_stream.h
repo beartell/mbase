@@ -151,23 +151,16 @@ public:
 		fill(srcBuffer, 0, bufferLength);
 	}
 
-	deep_char_stream(const deep_char_stream& in_rhs) noexcept {
-		if(in_rhs.bufferLength == bufferLength)
-		{
-			streamCursor = in_rhs.streamCursor;
-			copy(srcBuffer, in_rhs.srcBuffer, in_rhs.bufferLength);
-		}
-		else {
-			free(srcBuffer);
-			bufferLength = in_rhs.bufferLength;
-			streamCursor = in_rhs.streamCursor;
-			srcBuffer = static_cast<IBYTEBUFFER>(malloc(bufferLength));
-			copy(srcBuffer, in_rhs.srcBuffer, in_rhs.bufferLength);
-		}
+	deep_char_stream(const deep_char_stream& in_rhs) noexcept : char_stream() {
+		std::cout << "HERERWSER" << std::endl;
+		bufferLength = in_rhs.bufferLength;
+		streamCursor = in_rhs.streamCursor;
+		srcBuffer = static_cast<IBYTEBUFFER>(malloc(bufferLength));
+		copy(srcBuffer, in_rhs.srcBuffer, in_rhs.bufferLength);
 	}
 
 	deep_char_stream(deep_char_stream&& in_rhs) noexcept {
-		free(srcBuffer);
+		bufferLength = in_rhs.bufferLength;
 		srcBuffer = in_rhs.srcBuffer;
 		in_rhs.srcBuffer = nullptr;
 	}
@@ -193,6 +186,7 @@ public:
 
 	deep_char_stream& operator=(deep_char_stream&& in_rhs) noexcept {
 		free(srcBuffer);
+		bufferLength = in_rhs.bufferLength;
 		srcBuffer = in_rhs.srcBuffer;
 		in_rhs.srcBuffer = nullptr;
 		return *this;
