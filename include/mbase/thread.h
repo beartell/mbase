@@ -16,15 +16,18 @@ public:
 		THREAD_NO_AVAILABLE = ERROR_ALREADY_THREAD,
 		THREAD_MISSING_THREAD = 3,
 		THREAD_UNKNOWN_ERROR = 4,
-		THREAD_INVALID_CALL = 5
+		THREAD_INVALID_CALL = 5,
+		THREAD_CANT_JOIN_LAST_OPERATION = 6
 	};
 
 	using raw_handle = HANDLE;
 
-
 	thread(Func&& in_fptr, Args&&... in_args) noexcept {
 		tp.fPtr = std::forward<Func>(in_fptr);
 		tp.fParams = std::make_tuple(std::forward<Args>(in_args)...);
+		
+		threadHandle = nullptr;
+		threadId = 0;
 	}
 
 	thread(thread&& in_rhs) noexcept {
@@ -98,12 +101,17 @@ public:
 	}
 
 	MBASE_INLINE thread_error exit(I32 in_exit_code) noexcept {
+
 		if(threadHandle)
 		{
 			if(TerminateThread(threadHandle, in_exit_code) == -1)
 			{
+				threadHandle = nullptr;
+				threadId = 0;
 				return thread_error::THREAD_UNKNOWN_ERROR;
 			}
+			threadHandle = nullptr;
+			threadId = 0;
 			return thread_error::THREAD_SUCCESS;
 		}
 		return thread_error::THREAD_MISSING_THREAD;
@@ -116,6 +124,10 @@ public:
 		}
 
 		return threadId;
+	}
+
+	USED_RETURN static I32 get_current_thread_id() noexcept {
+		return GetCurrentThreadId();
 	}
 
 private:
@@ -132,7 +144,14 @@ private:
 	}
 
 	MBASE_INLINE thread_error _run() noexcept {
-		join();
+		thread_error _te;
+		_te = join();
+		if(_te == thread_error::THREAD_INVALID_CALL)
+		{
+			// THREAD DO NOT RESPOND
+			// REPORT ON DIAGNOSTICS
+			return thread_error::THREAD_CANT_JOIN_LAST_OPERATION;
+		}
 
 		raw_handle _threadHandle = CreateThread(nullptr,
 			0,
