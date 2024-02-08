@@ -152,7 +152,6 @@ public:
 	}
 
 	deep_char_stream(const deep_char_stream& in_rhs) noexcept : char_stream() {
-		std::cout << "HERERWSER" << std::endl;
 		bufferLength = in_rhs.bufferLength;
 		streamCursor = in_rhs.streamCursor;
 		srcBuffer = static_cast<IBYTEBUFFER>(malloc(bufferLength));

@@ -3,6 +3,7 @@
 
 #include <mbase/common.h>
 #include <mbase/stack.h>
+#include <mbase/queue.h>
 #include <mbase/synchronization.h>
 #include <mbase/thread.h>
 #include <iostream>
@@ -93,6 +94,7 @@ public:
 			mtx.release();
 			return;
 		}
+
 		I32 freeIndex = freeThreadIndex.top();
 		threadPool[freeIndex].tHandler = &in_handler;
 		threadPool[freeIndex].selfThread.resume();

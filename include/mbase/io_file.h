@@ -4,6 +4,7 @@
 #include <mbase/io_base.h> // mbase::io_base
 #include <mbase/string.h> // mbase::string
 #include <mbase/behaviors.h> // mbase::non_copymovable
+#include <mbase/char_stream.h>
 #include <mbase/rng.h>
 #include <Windows.h> // CreateFileA, SetFilePointer, WriteFile, ReadFile, CreateIoCompletionPort
 
@@ -114,12 +115,23 @@ public:
 		_set_last_error(GetLastError());
 		return dataWritten;
 	}
-	size_type write_data(const char_stream& in_src) override
+
+	size_type write_data(char_stream& in_src) override
 	{
 		DWORD dataWritten = 0;
 		PTRDIFF cursorPos = in_src.get_pos();
 		IBYTEBUFFER tmpBuffer = in_src.get_bufferc();
 		WriteFile(rawHandle, tmpBuffer, in_src.buffer_length() - cursorPos, &dataWritten, nullptr);
+		_set_last_error(GetLastError());
+		return dataWritten;
+	}
+
+	size_type write_data(char_stream& in_src, size_type in_length) override
+	{
+		DWORD dataWritten = 0;
+		IBYTEBUFFER tmpBuffer = in_src.get_bufferc();
+		WriteFile(rawHandle, tmpBuffer, in_length, &dataWritten, nullptr);
+		in_src.advance(dataWritten);
 		_set_last_error(GetLastError());
 		return dataWritten;
 	}
@@ -140,12 +152,22 @@ public:
 		return dataRead;
 	}
 
-	size_type read_data(const char_stream& in_src) override
+	size_type read_data(char_stream& in_src) override
 	{
 		DWORD dataRead = 0;
 		PTRDIFF cursorPos = in_src.get_pos();
 		IBYTEBUFFER tmpBuffer = in_src.get_bufferc();
 		ReadFile(rawHandle, tmpBuffer, in_src.buffer_length() - cursorPos, &dataRead, nullptr);
+		_set_last_error(GetLastError());
+		return dataRead;
+	}
+
+	size_type read_data(char_stream& in_src, size_type in_length) override
+	{
+		DWORD dataRead = 0;
+		IBYTEBUFFER tmpBuffer = in_src.get_bufferc();
+		ReadFile(rawHandle, tmpBuffer, in_length, &dataRead, nullptr);
+		in_src.advance(dataRead);
 		_set_last_error(GetLastError());
 		return dataRead;
 	}

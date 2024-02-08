@@ -15,15 +15,20 @@ struct io_context {
 
 class io_base {
 public:
+	io_base() : istream(nullptr), ostream(nullptr) {}
+
 	using size_type = SIZE_T;
 
 	virtual size_type write_data(IBYTEBUFFER in_src) = 0;
 	virtual size_type write_data(IBYTEBUFFER in_src, size_type in_length) = 0;
 	virtual size_type write_data(const mbase::string& in_src) = 0;
-	virtual size_type write_data(const char_stream& in_src) = 0;
+	virtual size_type write_data(char_stream& in_src) = 0;
+	virtual size_type write_data(char_stream& in_src, size_type in_length) = 0;
+
 
 	virtual size_type read_data(IBYTEBUFFER in_src, size_type in_length) = 0;
-	virtual size_type read_data(const char_stream& in_src) = 0;
+	virtual size_type read_data(char_stream& in_src) = 0;
+	virtual size_type read_data(char_stream& in_src, size_type in_length) = 0;
 
 	/*template<typename T>
 	size_type write_data(T& in_src) {
@@ -50,11 +55,19 @@ public:
 	}
 
 	size_type sync_is() noexcept {
-		return write_data(*istream);
+		return read_data(*istream);
+	}
+
+	size_type sync_is(size_type in_length) noexcept {
+		return read_data(*istream, in_length);
 	}
 
 	size_type sync_os() noexcept {
-		return read_data(*ostream);
+		return write_data(*ostream);
+	}
+
+	size_type sync_os(size_type in_length) noexcept {
+		return write_data(*ostream, in_length);
 	}
 
 	USED_RETURN io_context& get_raw_context() noexcept {
@@ -63,6 +76,14 @@ public:
 
 	USED_RETURN U32 get_last_error() const noexcept {
 		return lastError;
+	}
+
+	char_stream* get_is() noexcept {
+		return istream;
+	}
+
+	char_stream* get_os() noexcept {
+		return ostream;
 	}
 
 protected:
