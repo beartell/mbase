@@ -61,13 +61,9 @@ public:
 		close_file();
 	}
 
-	MBASE_INLINE PTRGENERIC open_file(const mbase::string& in_filename, access_mode in_accmode, disposition in_disp = disposition::OVERWRITE, bool isAsync = false) noexcept {
+	MBASE_INLINE PTRGENERIC open_file(const mbase::string& in_filename, access_mode in_accmode, disposition in_disp = disposition::OVERWRITE) noexcept {
 		close_file();
 		DWORD fileAttrs = FILE_ATTRIBUTE_NORMAL;
-		if (isAsync)
-		{
-			fileAttrs |= FILE_FLAG_OVERLAPPED;
-		}
 
 		rawHandle = CreateFileA(in_filename.c_str(), (DWORD)in_accmode, FILE_SHARE_READ, nullptr, (DWORD)in_disp, fileAttrs, nullptr);
 		if (!rawHandle)
@@ -166,7 +162,7 @@ public:
 	{
 		DWORD dataRead = 0;
 		IBYTEBUFFER tmpBuffer = in_src.get_bufferc();
-		ReadFile(rawHandle, tmpBuffer, in_length, &dataRead, nullptr);
+		ReadFile(rawHandle, tmpBuffer, in_length, &dataRead, nullptr);	
 		in_src.advance(dataRead);
 		_set_last_error(GetLastError());
 		return dataRead;

@@ -10,13 +10,16 @@ MBASE_BEGIN
 
 class async_io_manager : public non_copymovable {
 public:
+	using size_type = SIZE_T;
+
 	enum class errors : U8 {
 		AIO_MNG_SUCCESS = 0,
 		AIO_MNG_ERR_MISSING_CONTEXT = 1,
 		AIO_MNG_ERR_ALREADY_REGISTERED = 2,
 		AIO_MNG_ERR_INVALID_PARAMS = 3,
 		AIO_MNG_ERR_LIST_BLOATED = 4,
-		AIO_MNG_ERR_MISSING_STREAM = 5
+		AIO_MNG_ERR_MISSING_STREAM = 5,
+		AIO_MNG_ERR_INVALID_IO_DIRECTION = 6
 	};
 
 	async_io_manager(U32 in_max_write_context, U32 in_max_read_context) {
@@ -25,9 +28,14 @@ public:
 		maximumAllowedReadContext = in_max_read_context;
 	}
 
-	errors EnqueueWriteContext(async_io_context* in_ctx, U64 in_bytes_on_each) noexcept {
+	errors EnqueueWriteContext(async_io_context* in_ctx, size_type in_bytes_on_each) noexcept {
 		MBASE_NULL_CHECK_RETURN_VAL(in_ctx, errors::AIO_MNG_ERR_MISSING_CONTEXT);
-		char_stream* srcBuffer = in_ctx->GetIoHandle()->get_os();
+		if(in_ctx->GetIoDirection() != async_io_context::direction::IO_CTX_DIRECTION_OUTPUT)
+		{
+			return errors::AIO_MNG_ERR_INVALID_IO_DIRECTION;
+		}
+
+		char_stream* srcBuffer = in_ctx->GetCharacterStream();
 		MBASE_NULL_CHECK_RETURN_VAL(srcBuffer, errors::AIO_MNG_ERR_MISSING_STREAM);
 
 		if(writeContextList.size() > maximumAllowedWriteContext)
@@ -51,20 +59,29 @@ public:
 		return errors::AIO_MNG_SUCCESS;
 	}
 
-	GENERIC EnqueueWriteContext(async_io_context* in_ctx, U64 in_bytes_to_read, U64 in_bytes_on_each) noexcept {
+	GENERIC EnqueueWriteContext(async_io_context* in_ctx, size_type in_bytes_to_read, size_type in_bytes_on_each) noexcept {
 		
 	}
 
-	errors EnqueueReadContext(async_io_context* in_ctx, U64 in_bytes_on_each) noexcept {
+	errors EnqueueReadContext(async_io_context* in_ctx, size_type in_bytes_on_each) noexcept {
 		MBASE_NULL_CHECK_RETURN_VAL(in_ctx, errors::AIO_MNG_ERR_MISSING_CONTEXT);
-		if (readContextList.size() > maximumAllowedReadContext)
+
+		if (in_ctx->GetIoDirection() != async_io_context::direction::IO_CTX_DIRECTION_INPUT)
 		{
-			return errors::AIO_MNG_ERR_LIST_BLOATED;
+			return errors::AIO_MNG_ERR_INVALID_IO_DIRECTION;
 		}
 
 		if (in_ctx->ais == async_io_context::status::ASYNC_IO_STAT_IDLE || in_ctx->ais == async_io_context::status::ASYNC_IO_STAT_OPERATING)
 		{
 			return errors::AIO_MNG_ERR_ALREADY_REGISTERED;
+		}
+
+		char_stream* srcBuffer = in_ctx->GetCharacterStream();
+		MBASE_NULL_CHECK_RETURN_VAL(srcBuffer, errors::AIO_MNG_ERR_MISSING_STREAM);
+
+		if (readContextList.size() > maximumAllowedReadContext)
+		{
+			return errors::AIO_MNG_ERR_LIST_BLOATED;
 		}
 
 		in_ctx->ais = async_io_context::status::ASYNC_IO_STAT_IDLE;
@@ -78,7 +95,7 @@ public:
 		return errors::AIO_MNG_SUCCESS;
 	}
 
-	GENERIC EnqueueReadContext(async_io_context* in_ctx, U64 in_bytes_to_read, U64 in_bytes_on_each) noexcept {
+	GENERIC EnqueueReadContext(async_io_context* in_ctx, size_type in_bytes_to_read, size_type in_bytes_on_each) noexcept {
 	
 	}
 
@@ -87,8 +104,7 @@ public:
 		{
 			async_io_context* iCtx = *It;
 			iCtx->ais = async_io_context::status::ASYNC_IO_STAT_FLUSHED;
-			iCtx->isActive = false;
-			readContextList.erase(It);
+			iCtx->FlushContext();
 		}
 	}
 
@@ -99,6 +115,32 @@ public:
 			iCtx->ais = async_io_context::status::ASYNC_IO_STAT_FLUSHED;
 			iCtx->isActive = false;
 			writeContextList.erase(It);
+		}
+	}
+
+	GENERIC ClearReadContexts() noexcept {
+		for (mbase::list<async_io_context*>::iterator It = readContextList.begin(); It != readContextList.end(); It++)
+		{
+			async_io_context* iCtx = *It;
+			if(iCtx->ais != async_io_context::status::ASYNC_IO_STAT_FINISHED)
+			{
+				iCtx->ais = async_io_context::status::ASYNC_IO_STAT_INTERRUPTED;
+			}
+			iCtx->FlushContext();
+			It = readContextList.erase(It);
+		}
+	}
+
+	GENERIC ClearWriteContexts() noexcept {
+		for (mbase::list<async_io_context*>::iterator It = writeContextList.begin(); It != writeContextList.end(); It++)
+		{
+			async_io_context* iCtx = *It;
+			if (iCtx->ais != async_io_context::status::ASYNC_IO_STAT_FINISHED)
+			{
+				iCtx->ais = async_io_context::status::ASYNC_IO_STAT_INTERRUPTED;
+			}
+			iCtx->FlushContext();
+			It = writeContextList.erase(It);
 		}
 	}
 
@@ -113,7 +155,7 @@ public:
 
 			iCtx->isActive = true;
 			iCtx->ais = async_io_context::status::ASYNC_IO_STAT_OPERATING;
-			U64 bytesToWrite = iCtx->targetBytes / iCtx->calculatedHop;
+			size_type bytesToWrite = iCtx->targetBytes / iCtx->calculatedHop;
 			iCtx->hopCounter++;
 			if(iCtx->hopCounter == iCtx->calculatedHop)
 			{
@@ -123,8 +165,8 @@ public:
 			}
 
 			io_base* rawHandle = iCtx->GetIoHandle();
-			char_stream* mStream = iCtx->srcBuffer;
-			U64 writtenBytes = rawHandle->write_data(*mStream, bytesToWrite);
+			char_stream* mStream = iCtx->GetCharacterStream();
+			size_type writtenBytes = rawHandle->write_data(*mStream, bytesToWrite);
 			iCtx->bytesTransferred += writtenBytes;
 			if(iCtx->ais == async_io_context::status::ASYNC_IO_STAT_FINISHED)
 			{
@@ -146,10 +188,10 @@ public:
 			{
 				continue;
 			}
-
+			
 			iCtx->isActive = true;
 			iCtx->ais = async_io_context::status::ASYNC_IO_STAT_OPERATING;
-			U64 bytesToRead = iCtx->targetBytes / iCtx->calculatedHop;
+			size_type bytesToRead = iCtx->targetBytes / iCtx->calculatedHop;
 			iCtx->hopCounter++;
 			if (iCtx->hopCounter == iCtx->calculatedHop)
 			{
@@ -159,8 +201,10 @@ public:
 			}
 
 			io_base* rawHandle = iCtx->GetIoHandle();
-			char_stream* mStream = iCtx->srcBuffer;
-			U64 readBytes = rawHandle->read_data(*mStream, bytesToRead);
+			char_stream* mStream = iCtx->GetCharacterStream();
+			size_type readBytes = rawHandle->read_data(*mStream, bytesToRead);
+			iCtx->bytesTransferred += readBytes;
+			std::cout << "Read bytes: " << readBytes << std::endl;
 			if (iCtx->ais == async_io_context::status::ASYNC_IO_STAT_FINISHED)
 			{
 				iCtx->FlushContext();

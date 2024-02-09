@@ -9,6 +9,14 @@ MBASE_BEGIN
 
 class async_io_context {
 public:
+	using size_type = SIZE_T;
+	using difference_type = PTRDIFF;
+
+	enum class direction : U8 {
+		IO_CTX_DIRECTION_INPUT = 0,
+		IO_CTX_DIRECTION_OUTPUT = 1
+	};
+
 	enum class status : U8 {
 		ASYNC_IO_STAT_UNREGISTERED = 0,
 		ASYNC_IO_STAT_IDLE = 1,
@@ -19,16 +27,29 @@ public:
 		ASYNC_IO_STAT_FINISHED = 6
 	};
 
-	async_io_context(io_base& in_base) noexcept : 
+	async_io_context(io_base& in_base, direction in_io_direction = direction::IO_CTX_DIRECTION_INPUT) noexcept : 
 		bytesTransferred(0),
 		targetBytes(0),
 		lastFraction(0),
 		calculatedHop(0),
 		hopCounter(0),
-		isActive(true) 
+		isActive(true),
+		ioDirection(in_io_direction)
 	{
 		ioHandle = &in_base;
-		srcBuffer = ioHandle->get_os();
+		if(in_io_direction == direction::IO_CTX_DIRECTION_OUTPUT)
+		{
+			srcBuffer = ioHandle->get_os();
+		}
+		else
+		{
+			srcBuffer = ioHandle->get_is();
+		}
+	}
+
+	~async_io_context() noexcept {
+		ioHandle = nullptr;
+		srcBuffer = nullptr;
 	}
 
 	GENERIC SetIoHandle(io_base& in_handle) noexcept {
@@ -36,15 +57,15 @@ public:
 		srcBuffer = ioHandle->get_os();
 	}
 
-	USED_RETURN U64 GetTotalTransferredBytes() const noexcept {
+	USED_RETURN size_type GetTotalTransferredBytes() const noexcept {
 		return bytesTransferred;
 	}
 
-	USED_RETURN U64 GetRequestedByteCount() const noexcept {
+	USED_RETURN size_type GetRequestedByteCount() const noexcept {
 		return targetBytes;
 	}
 
-	USED_RETURN U64 GetRemainingBytes() const noexcept {
+	USED_RETURN difference_type GetRemainingBytes() const noexcept {
 		return targetBytes - bytesTransferred;
 	}
 
@@ -54,6 +75,10 @@ public:
 
 	USED_RETURN U32 GetHopCounter() const noexcept {
 		return hopCounter;
+	}
+
+	USED_RETURN direction GetIoDirection() const noexcept {
+		return ioDirection;
 	}
 
 	USED_RETURN io_base* GetIoHandle() noexcept {
@@ -69,7 +94,6 @@ public:
 	}
 
 	GENERIC FlushContext() noexcept {
-		bytesTransferred = 0;
 		srcBuffer->set_cursor_front();
 		hopCounter = 0;
 		// !!!!! do not forget to reposition the file pointer too !!!!!
@@ -88,16 +112,17 @@ public:
 	friend class async_io_manager;
 
 private:
-	U64 bytesTransferred;
-	U64 targetBytes;
+	size_type bytesTransferred;
+	size_type targetBytes;
 	U32 lastFraction;
 	U32 calculatedHop;
 	U32 hopCounter;
-	io_base* ioHandle;
 	bool isActive;
 
+	io_base* ioHandle;
 	char_stream* srcBuffer;
 	status ais;
+	direction ioDirection;
 };
 
 MBASE_END
