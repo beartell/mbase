@@ -59,8 +59,35 @@ public:
 		return errors::AIO_MNG_SUCCESS;
 	}
 
-	GENERIC EnqueueWriteContext(async_io_context* in_ctx, size_type in_bytes_to_read, size_type in_bytes_on_each) noexcept {
-		
+	errors EnqueueWriteContext(async_io_context* in_ctx, size_type in_bytes_to_read, size_type in_bytes_on_each) noexcept {
+		MBASE_NULL_CHECK_RETURN_VAL(in_ctx, errors::AIO_MNG_ERR_MISSING_CONTEXT);
+		if (in_ctx->GetIoDirection() != async_io_context::direction::IO_CTX_DIRECTION_OUTPUT)
+		{
+			return errors::AIO_MNG_ERR_INVALID_IO_DIRECTION;
+		}
+
+		if (writeContextList.size() > maximumAllowedWriteContext)
+		{
+			return errors::AIO_MNG_ERR_LIST_BLOATED;
+		}
+
+		if (in_ctx->ais == async_io_context::status::ASYNC_IO_STAT_IDLE || in_ctx->ais == async_io_context::status::ASYNC_IO_STAT_OPERATING)
+		{
+			return errors::AIO_MNG_ERR_ALREADY_REGISTERED;
+		}
+
+		in_ctx->srcBuffer = new deep_char_stream(in_bytes_to_read);
+		in_ctx->isBufferInternal = false;
+
+		in_ctx->ais = async_io_context::status::ASYNC_IO_STAT_IDLE;
+		in_ctx->targetBytes = in_ctx->GetCharacterStream()->buffer_length();
+		in_ctx->calculatedHop = in_ctx->targetBytes / in_bytes_on_each;
+		in_ctx->lastFraction = in_ctx->targetBytes % in_bytes_on_each;
+		in_ctx->bytesTransferred = 0;
+
+		writeContextList.push_back(in_ctx);
+
+		return errors::AIO_MNG_SUCCESS;
 	}
 
 	errors EnqueueReadContext(async_io_context* in_ctx, size_type in_bytes_on_each) noexcept {
@@ -95,8 +122,36 @@ public:
 		return errors::AIO_MNG_SUCCESS;
 	}
 
-	GENERIC EnqueueReadContext(async_io_context* in_ctx, size_type in_bytes_to_read, size_type in_bytes_on_each) noexcept {
-	
+	errors EnqueueReadContext(async_io_context* in_ctx, size_type in_bytes_to_read, size_type in_bytes_on_each) noexcept {
+		MBASE_NULL_CHECK_RETURN_VAL(in_ctx, errors::AIO_MNG_ERR_MISSING_CONTEXT);
+
+		if (in_ctx->GetIoDirection() != async_io_context::direction::IO_CTX_DIRECTION_INPUT)
+		{
+			return errors::AIO_MNG_ERR_INVALID_IO_DIRECTION;
+		}
+
+		if (in_ctx->ais == async_io_context::status::ASYNC_IO_STAT_IDLE || in_ctx->ais == async_io_context::status::ASYNC_IO_STAT_OPERATING)
+		{
+			return errors::AIO_MNG_ERR_ALREADY_REGISTERED;
+		}
+
+		if (readContextList.size() > maximumAllowedReadContext)
+		{
+			return errors::AIO_MNG_ERR_LIST_BLOATED;
+		}
+
+		in_ctx->srcBuffer = new deep_char_stream(in_bytes_to_read);
+		in_ctx->isBufferInternal = false;
+
+		in_ctx->ais = async_io_context::status::ASYNC_IO_STAT_IDLE;
+		in_ctx->targetBytes = in_ctx->GetCharacterStream()->buffer_length();
+		in_ctx->calculatedHop = in_ctx->targetBytes / in_bytes_on_each;
+		in_ctx->lastFraction = in_ctx->targetBytes % in_bytes_on_each;
+		in_ctx->bytesTransferred = 0;
+
+		readContextList.push_back(in_ctx);
+
+		return errors::AIO_MNG_SUCCESS;
 	}
 
 	GENERIC FlushReadContexts() noexcept {
@@ -204,7 +259,6 @@ public:
 			char_stream* mStream = iCtx->GetCharacterStream();
 			size_type readBytes = rawHandle->read_data(*mStream, bytesToRead);
 			iCtx->bytesTransferred += readBytes;
-			std::cout << "Read bytes: " << readBytes << std::endl;
 			if (iCtx->ais == async_io_context::status::ASYNC_IO_STAT_FINISHED)
 			{
 				iCtx->FlushContext();

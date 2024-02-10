@@ -34,7 +34,8 @@ public:
 		calculatedHop(0),
 		hopCounter(0),
 		isActive(true),
-		ioDirection(in_io_direction)
+		ioDirection(in_io_direction),
+		isBufferInternal(true)
 	{
 		ioHandle = &in_base;
 		if(in_io_direction == direction::IO_CTX_DIRECTION_OUTPUT)
@@ -48,13 +49,13 @@ public:
 	}
 
 	~async_io_context() noexcept {
+		if(!isBufferInternal)
+		{
+			delete srcBuffer;
+		}
+
 		ioHandle = nullptr;
 		srcBuffer = nullptr;
-	}
-
-	GENERIC SetIoHandle(io_base& in_handle) noexcept {
-		ioHandle = &in_handle;
-		srcBuffer = ioHandle->get_os();
 	}
 
 	USED_RETURN size_type GetTotalTransferredBytes() const noexcept {
@@ -95,18 +96,20 @@ public:
 
 	GENERIC FlushContext() noexcept {
 		srcBuffer->set_cursor_front();
+		ioHandle->set_file_pointer(0, mbase::io_base::move_method::MV_BEGIN);
 		hopCounter = 0;
-		// !!!!! do not forget to reposition the file pointer too !!!!!
 	}
 
 	GENERIC HaltContext() noexcept {
 		isActive = false;
 		srcBuffer->set_cursor_front();
+		ioHandle->set_file_pointer(0, mbase::io_base::move_method::MV_BEGIN);
 	}
 
 	GENERIC ResumeContext() noexcept {
 		isActive = true;
 		srcBuffer->advance(bytesTransferred);
+		ioHandle->set_file_pointer(bytesTransferred, mbase::io_base::move_method::MV_BEGIN);
 	}
 
 	friend class async_io_manager;
@@ -118,6 +121,7 @@ private:
 	U32 calculatedHop;
 	U32 hopCounter;
 	bool isActive;
+	bool isBufferInternal; // true if io context use char_stream of io_base
 
 	io_base* ioHandle;
 	char_stream* srcBuffer;

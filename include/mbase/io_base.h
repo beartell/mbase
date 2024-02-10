@@ -4,6 +4,7 @@
 #include <mbase/common.h>
 #include <mbase/char_stream.h>
 #include <mbase/safe_buffer.h>
+#include <Windows.h>
 
 MBASE_STD_BEGIN
 
@@ -15,6 +16,12 @@ struct io_context {
 
 class io_base {
 public:
+	enum class move_method : U8 {
+		MV_BEGIN = FILE_BEGIN,
+		MV_CURRENT = FILE_CURRENT,
+		MV_ENC = FILE_END
+	};
+	
 	io_base() : istream(nullptr), ostream(nullptr) {}
 
 	using size_type = SIZE_T;
@@ -24,7 +31,6 @@ public:
 	virtual size_type write_data(const mbase::string& in_src) = 0;
 	virtual size_type write_data(char_stream& in_src) = 0;
 	virtual size_type write_data(char_stream& in_src, size_type in_length) = 0;
-
 
 	virtual size_type read_data(IBYTEBUFFER in_src, size_type in_length) = 0;
 	virtual size_type read_data(char_stream& in_src) = 0;
@@ -68,6 +74,11 @@ public:
 
 	size_type sync_os(size_type in_length) noexcept {
 		return write_data(*ostream, in_length);
+	}
+
+	// this is valid if the subclass is io_file,
+	GENERIC set_file_pointer(size_type in_distance, move_method in_method) noexcept {
+		SetFilePointer(rawContext.raw_handle, in_distance, nullptr, (DWORD)in_method);
 	}
 
 	USED_RETURN io_context& get_raw_context() noexcept {
