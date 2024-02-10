@@ -38,6 +38,10 @@ public:
 		deltaTime = frequency;
 	}
 
+	~timer_loop() {
+		
+	}
+
 	timer_err RegisterTimer(timer_base* in_timer) {
 		if(registeredTimers.size() > timerLimit)
 		{

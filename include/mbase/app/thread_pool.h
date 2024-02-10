@@ -54,6 +54,7 @@ public:
 			tpra->selfClass = this;
 			tpra->tIndex = i;
 			tpra->selfThread.run_with_args(tpra);
+			freeThreadIndex.push(tpra->tIndex);
 		}
 	}
 
@@ -72,11 +73,13 @@ public:
 			tpra->selfClass = this;
 			tpra->tIndex = i;
 			tpra->selfThread.run_with_args(tpra);
+			freeThreadIndex.push(tpra->tIndex);
 		}
 	}
 
 	~tpool() noexcept {
 		thread_pool_routine_args* tpra = threadPool;
+		isRunning = false;
 		for(I32 i = 0; i < threadCount; i++)
 		{
 			// finish all execution
@@ -96,9 +99,9 @@ public:
 		}
 
 		I32 freeIndex = freeThreadIndex.top();
+		freeThreadIndex.pop();
 		threadPool[freeIndex].tHandler = &in_handler;
 		threadPool[freeIndex].selfThread.resume();
-		freeThreadIndex.pop();
 		mtx.release();
 	}
 
@@ -125,8 +128,10 @@ private:
 				if (in_args->tHandler)
 				{
 					in_args->tHandler->on_call(in_args->tHandler->GetUserData());
+					in_args->tHandler = nullptr;
+					in_args->selfClass->_UpdateIndex(in_args->tIndex);
 				}
-				in_args->selfClass->_UpdateIndex(in_args->tIndex);
+				
 				in_args->selfThread.halt();
 			}
 			return 0;
