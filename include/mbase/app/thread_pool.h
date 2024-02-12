@@ -22,7 +22,7 @@ public:
 
 		threadPool = new thread_pool_routine_args[threadCount];
 
-		for (I32 i = 0; i < threadCount; i++)
+		for (I32 i = threadCount - 1; i != -1; --i)
 		{
 			thread_pool_routine_args* tpra = threadPool + i;
 			tpra->selfClass = this;
@@ -41,7 +41,7 @@ public:
 
 		threadPool = new thread_pool_routine_args[threadCount];
 
-		for(I32 i = 0; i < threadCount; i++)
+		for(I32 i = threadCount - 1; i != -1; --i)
 		{
 			thread_pool_routine_args* tpra = threadPool + i;
 			tpra->selfClass = this;

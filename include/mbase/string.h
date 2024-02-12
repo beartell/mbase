@@ -44,10 +44,10 @@ public:
         type_sequence::copy(raw_data, in_string, in_length);
     }
 
-    character_sequence(const IBYTE& in_character) noexcept : raw_data(nullptr), mSize(1), mCapacity(8) {
+    /*character_sequence(const IBYTE& in_character) noexcept : raw_data(nullptr), mSize(1), mCapacity(8) {
         raw_data = Alloc::allocate(mCapacity, true);
         *raw_data = in_character;
-    }
+    }*/
 
     character_sequence(const character_sequence& in_rhs) noexcept : raw_data(nullptr), mSize(in_rhs.mSize), mCapacity(in_rhs.mCapacity) {
         raw_data = Alloc::allocate(mCapacity, true);
@@ -298,6 +298,14 @@ public:
         type_sequence::concat(new_data + in_lhs.mSize, in_rhs.raw_data, in_rhs.mSize);
 
         return character_sequence(new_data, totalSize, totalCapacity);
+    }
+
+    bool operator==(const character_sequence& in_rhs) noexcept {
+        return type_sequence::is_equal(raw_data, in_rhs.raw_data);
+    }
+
+    bool operator!=(const character_sequence& in_rhs) noexcept {
+        return !type_sequence::is_equal(raw_data, in_rhs.raw_data);
     }
 
     friend bool operator==(const character_sequence& in_lhs, const character_sequence& in_rhs) noexcept {

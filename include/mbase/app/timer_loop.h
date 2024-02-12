@@ -38,9 +38,7 @@ public:
 		deltaTime = frequency;
 	}
 
-	~timer_loop() {
-		
-	}
+	~timer_loop() {}
 
 	timer_err RegisterTimer(timer_base* in_timer) {
 		if(registeredTimers.size() > timerLimit)
@@ -49,6 +47,10 @@ public:
 		}
 
 		in_timer->mTimerId = ++timerIdCounter; // Timer ids will start from 1
+		if(in_timer->GetTargetTime() <= 0)
+		{
+			// WARN THE USER THAT THE TIMER WILL BE EXECUTED IMMEDIATELY
+		}
 		registeredTimers.push_back(in_timer);
 
 		return timer_err::TIMER_SUCCESS;

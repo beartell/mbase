@@ -24,42 +24,71 @@ MBASE_STD_BEGIN
 // equality comparable
 // destructible
 
+template<typename T>
+class vector_iterator : public mbase::sequence_iterator<T> {
+public:
+	vector_iterator(pointer in_ptr) noexcept : sequence_iterator(in_ptr) {}
+	vector_iterator(const vector_iterator& in_rhs) noexcept : sequence_iterator(in_rhs._ptr) {}
+
+	MBASE_INLINE pointer operator->() const noexcept {
+		return _ptr;
+	}
+
+	MBASE_INLINE pointer get() const noexcept {
+		return _ptr;
+	}
+
+	USED_RETURN MBASE_INLINE bool operator==(const vector_iterator& in_rhs) const noexcept {
+		return _ptr == in_rhs._ptr;
+	}
+
+	USED_RETURN MBASE_INLINE bool operator!=(const vector_iterator& in_rhs) const noexcept {
+		return _ptr != in_rhs._ptr;
+	}
+};
+
+template <typename T>
+class const_vector_iterator : public mbase::sequence_iterator<T> {
+public:
+	const_vector_iterator(pointer in_ptr) noexcept : sequence_iterator(in_ptr) {}
+	const_vector_iterator(const const_vector_iterator& in_rhs) noexcept : sequence_iterator(in_rhs._ptr) {}
+
+	USED_RETURN MBASE_INLINE const T& operator*() const noexcept {
+		return *_ptr;
+	}
+
+	MBASE_INLINE const T* operator->() const noexcept {
+		return _ptr;
+	}
+
+	MBASE_INLINE const T* get() const noexcept {
+		return _ptr;
+	}
+
+	USED_RETURN MBASE_INLINE bool operator==(const const_vector_iterator& in_rhs) const noexcept {
+		return _ptr == in_rhs._ptr;
+	}
+
+	USED_RETURN MBASE_INLINE bool operator!=(const const_vector_iterator& in_rhs) const noexcept {
+		return _ptr != in_rhs._ptr;
+	}
+};
+
 template<typename T, typename Allocator = mbase::allocator_simple<T>>
 class vector {
 public:
 	using value_type = T;
+	using const_type = const T;
 	using size_type = SIZE_T;
 	using difference_type = PTRDIFF;
 	using reference = T&;
-	using const_reference = const T;
+	using const_reference = const T&;
 	using move_reference = T&&;
 	using pointer = T*;
-	using const_pointer = const T;
+	using const_pointer = const T*;
 
-	class vector_iterator : public mbase::sequence_iterator<T> {
-	public:
-		vector_iterator(pointer in_ptr) noexcept : sequence_iterator(in_ptr) {}
-		vector_iterator(const vector_iterator& in_rhs) noexcept : sequence_iterator(in_rhs._ptr) {}
-
-		MBASE_INLINE pointer operator->() const noexcept {
-			return _ptr;
-		}
-
-		MBASE_INLINE pointer get() const noexcept {
-			return _ptr;
-		}
-		
-		USED_RETURN MBASE_INLINE bool operator==(const vector_iterator& in_rhs) const noexcept {
-			return _ptr == in_rhs._ptr;
-		}
-
-		USED_RETURN MBASE_INLINE bool operator!=(const vector_iterator& in_rhs) const noexcept {
-			return _ptr != in_rhs._ptr;
-		}
-	};
-
-	using iterator = vector_iterator;
-	using const_iterator = const vector_iterator;
+	using iterator = vector_iterator<T>;
+	using const_iterator = const_vector_iterator<T>;
 
 	explicit vector() noexcept : raw_data(nullptr), mSize(0), mCapacity(4) {
 		raw_data = Allocator::allocate(mCapacity); // default capacity

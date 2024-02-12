@@ -13,11 +13,13 @@ MBASE_STD_BEGIN
 template<typename T>
 class sequence_iterator {
 public:
+    using iterator_category = std::random_access_iterator_tag;
     using value_type = T;
-    using pointer = value_type*;
-    using reference = value_type&;
+    using pointer = T*;
+    using const_pointer = const T*;
+    using reference = T&;
     using size_type = SIZE_T;
-    using ptrdiff = PTRDIFF;
+    using difference_type = PTRDIFF;
     sequence_iterator(pointer in_ptr) noexcept : _ptr(in_ptr) {}
 
     sequence_iterator(const sequence_iterator& in_rhs) noexcept : _ptr(in_rhs._ptr) {}
@@ -31,12 +33,12 @@ public:
         return *_ptr;
     }
 
-    USED_RETURN MBASE_INLINE sequence_iterator& operator+(ptrdiff in_rhs) noexcept {
+    USED_RETURN MBASE_INLINE sequence_iterator& operator+(difference_type in_rhs) noexcept {
         _ptr += in_rhs;
         return *this;
     }
 
-    MBASE_INLINE sequence_iterator& operator+=(ptrdiff in_rhs) noexcept {
+    MBASE_INLINE sequence_iterator& operator+=(difference_type in_rhs) noexcept {
         _ptr += in_rhs;
         return *this;
     }
@@ -51,12 +53,12 @@ public:
         return *this;
     }
 
-    MBASE_INLINE sequence_iterator& operator-(ptrdiff in_rhs) noexcept {
+    MBASE_INLINE sequence_iterator& operator-(difference_type in_rhs) noexcept {
         _ptr -= in_rhs;
         return *this;
     }
 
-    MBASE_INLINE sequence_iterator& operator-=(ptrdiff in_rhs) noexcept {
+    MBASE_INLINE sequence_iterator& operator-=(difference_type in_rhs) noexcept {
         _ptr -= in_rhs;
         return *this;
     }
@@ -126,12 +128,6 @@ public:
 
     static MBASE_INLINE_EXPR pointer fill(pointer in_target, value_type in_value, size_type in_length) noexcept {
         memset(in_target, in_value, sizeof(value_type) * in_length);
-        /*while (in_length--)
-        {
-            *in_target = in_value;
-            in_target++;
-        }*/
-
         return in_target;
     }
     
