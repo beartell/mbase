@@ -61,7 +61,7 @@ public:
 		}
 
 		in_timer->mTimerId = timerIdCounter++; // Timer ids will start from 1
-		in_timer->mUsrData = in_usr_data;
+		in_timer->suppliedData = in_usr_data;
 		registeredTimers.push_back(in_timer);
 
 		return timer_err::TIMER_SUCCESS;
@@ -109,7 +109,7 @@ public:
 				{
 					if(tmpTimerBase->GetExecutionPolicy() == mbase::timer_base::timer_exec_policy::TIMER_POLICY_ASYNC)
 					{
-						threadPool.ExecuteJob(*tmpTimerBase);
+						threadPool.ExecuteJob(tmpTimerBase);
 					}
 					else
 					{
@@ -164,7 +164,7 @@ protected:
 	U32 timerIdCounter; // DO NOT MODIFY
 	bool isRunning;
 	mbase::list<timer_base*> registeredTimers;
-	mbase::tpool<timer_base> threadPool;
+	mbase::tpool threadPool;
 };
 
 MBASE_END

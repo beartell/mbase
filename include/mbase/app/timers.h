@@ -3,10 +3,11 @@
 
 #include <mbase/common.h>
 #include <mbase/behaviors.h>
+#include <mbase/app/handler_base.h>
 
 MBASE_BEGIN
 
-class timer_base {
+class timer_base : public handler_base {
 public:
 	enum class timer_type : U8 {
 		TIMER_TIMEOUT = 0,
@@ -20,10 +21,10 @@ public:
 
 	using user_data = PTRGENERIC;
 
-	timer_base() noexcept : mUsrData(nullptr), mCurrentTime(0), mTargetTime(0), mPolicy(timer_exec_policy::TIMER_POLICY_IMMEDIATE) {}
+	timer_base() noexcept :  handler_base(), mCurrentTime(0), mTargetTime(0), mPolicy(timer_exec_policy::TIMER_POLICY_IMMEDIATE) {}
 
 	MBASE_EXPLICIT timer_base(user_data in_data) noexcept : mCurrentTime(0), mTargetTime(0), mPolicy(timer_exec_policy::TIMER_POLICY_IMMEDIATE) {
-		mUsrData = in_data;
+		suppliedData = in_data;
 	}
 
 	USED_RETURN U32 GetTimerId() const noexcept {
@@ -40,10 +41,6 @@ public:
 
 	USED_RETURN I32 GetRemainingTime() noexcept {
 		return mTargetTime - mCurrentTime;
-	}
-
-	USED_RETURN user_data GetUserData() const noexcept {
-		return mUsrData;
 	}
 
 	USED_RETURN timer_type GetTimerType() const noexcept {
@@ -74,7 +71,7 @@ public:
 
 	friend class timer_loop;
 
-	virtual GENERIC on_call(user_data in_data) = 0;
+	virtual GENERIC on_call(user_data in_data) {/* do nothing */ };
 
 protected:
 	bool mIsActive;
@@ -82,7 +79,6 @@ protected:
 	U32 mTimerId;
 	F64 mCurrentTime;
 	F64 mTargetTime;
-	user_data mUsrData;
 	timer_exec_policy mPolicy;
 };
 

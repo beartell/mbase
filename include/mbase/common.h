@@ -54,6 +54,15 @@ if(MBASE_NULL_CHECK(in_arg))\
 	return in_val;\
 }
 
+#ifdef MBASE_ASYNC_IO_THREAD_SAFE
+	#define MBASE_TS_LOCK(in_mutex) in_mutex.acquire();
+	#define MBASE_TS_UNLOCK(in_mutex) in_mutex.release();
+#else
+	#define MBASE_TS_LOCK(in_mutex)
+	#define MBASE_TS_UNLOCK(in_mutex)
+#endif // MBASE_ASYNC_IO_THREAD_SAFE
+
+
 MBASE_STD_BEGIN
 
 using I8		  = char;

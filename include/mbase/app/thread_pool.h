@@ -5,6 +5,7 @@
 #include <mbase/stack.h>
 #include <mbase/queue.h>
 #include <mbase/synchronization.h>
+#include <mbase/app/handler_base.h>
 #include <mbase/thread.h>
 #include <iostream>
 #include <tuple>
@@ -14,33 +15,6 @@
 
 MBASE_BEGIN
 
-class thread_pool_handler {
-public:
-	using user_data = PTRGENERIC;
-
-	thread_pool_handler() noexcept : suppliedData(nullptr) {}
-	
-	virtual GENERIC on_call(user_data in_data) { /* Do nothing literally */ };
-	
-	GENERIC SetUserData(user_data in_data) noexcept {
-		suppliedData = in_data;
-	}
-
-	USED_RETURN user_data GetUserData() noexcept {
-		return suppliedData;
-	}
-
-	USED_RETURN U32 GetHandlerId() noexcept {
-		return handlerId;
-	}
-
-protected:
-	U32 handlerId;
-	user_data suppliedData;
-};
-
-// OnCallable is an object type that has an on_call method
-template <typename OnCallable>
 class tpool : public non_copymovable {
 public:
 	tpool() noexcept : isRunning(true){
@@ -90,7 +64,7 @@ public:
 		delete[]threadPool;
 	}
 
-	GENERIC ExecuteJob(std::add_lvalue_reference_t<OnCallable> in_handler) noexcept {
+	GENERIC ExecuteJob(handler_base* in_handler) noexcept {
 		mtx.acquire();
 		if(!freeThreadIndex.size())
 		{
@@ -100,7 +74,8 @@ public:
 
 		I32 freeIndex = freeThreadIndex.top();
 		freeThreadIndex.pop();
-		threadPool[freeIndex].tHandler = &in_handler;
+		threadPool[freeIndex].tHandler = in_handler;
+		threadPool[freeIndex].tHandler->_SetThreadIndex(freeIndex);
 		threadPool[freeIndex].selfThread.resume();
 		mtx.release();
 	}
@@ -140,7 +115,7 @@ private:
 		thread_pool_routine_args() : selfClass(nullptr), tHandler(nullptr), selfThread(_PoolRoutine, nullptr) {}
 		tpool* selfClass;
 		I32 tIndex;
-		OnCallable* tHandler;
+		handler_base* tHandler;
 		mbase::thread<decltype(_PoolRoutine), thread_pool_routine_args*> selfThread;
 	};
 

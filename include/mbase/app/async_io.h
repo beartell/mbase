@@ -54,7 +54,9 @@ public:
 		in_ctx->lastFraction = in_ctx->targetBytes % in_bytes_on_each;
 		in_ctx->bytesTransferred = 0;
 
+		MBASE_TS_LOCK(writeQueueMutex)
 		writeContextList.push_back(in_ctx);
+		MBASE_TS_UNLOCK(writeQueueMutex)
 
 		return errors::AIO_MNG_SUCCESS;
 	}
@@ -85,7 +87,9 @@ public:
 		in_ctx->lastFraction = in_ctx->targetBytes % in_bytes_on_each;
 		in_ctx->bytesTransferred = 0;
 
+		MBASE_TS_LOCK(writeQueueMutex)
 		writeContextList.push_back(in_ctx);
+		MBASE_TS_UNLOCK(writeQueueMutex)
 
 		return errors::AIO_MNG_SUCCESS;
 	}
@@ -117,7 +121,9 @@ public:
 		in_ctx->lastFraction = in_ctx->targetBytes % in_bytes_on_each;
 		in_ctx->bytesTransferred = 0;
 
+		MBASE_TS_LOCK(readQueueMutex)
 		readContextList.push_back(in_ctx);
+		MBASE_TS_UNLOCK(readQueueMutex);
 
 		return errors::AIO_MNG_SUCCESS;
 	}
@@ -149,21 +155,26 @@ public:
 		in_ctx->lastFraction = in_ctx->targetBytes % in_bytes_on_each;
 		in_ctx->bytesTransferred = 0;
 
+		MBASE_TS_LOCK(readQueueMutex);
 		readContextList.push_back(in_ctx);
+		MBASE_TS_UNLOCK(readQueueMutex);
 
 		return errors::AIO_MNG_SUCCESS;
 	}
 
 	GENERIC FlushReadContexts() noexcept {
+		MBASE_TS_LOCK(readQueueMutex);
 		for(mbase::list<async_io_context*>::iterator It = readContextList.begin(); It != readContextList.end(); It++)
 		{
 			async_io_context* iCtx = *It;
 			iCtx->ais = async_io_context::status::ASYNC_IO_STAT_FLUSHED;
 			iCtx->FlushContext();
 		}
+		MBASE_TS_UNLOCK(readQueueMutex);
 	}
 
 	GENERIC FlushWriteContexts() noexcept {
+		MBASE_TS_LOCK(writeQueueMutex)
 		for (mbase::list<async_io_context*>::iterator It = writeContextList.begin(); It != writeContextList.end(); It++)
 		{
 			async_io_context* iCtx = *It;
@@ -171,9 +182,11 @@ public:
 			iCtx->isActive = false;
 			writeContextList.erase(It);
 		}
+		MBASE_TS_UNLOCK(writeQueueMutex)
 	}
 
 	GENERIC ClearReadContexts() noexcept {
+		MBASE_TS_LOCK(readQueueMutex);
 		for (mbase::list<async_io_context*>::iterator It = readContextList.begin(); It != readContextList.end(); It++)
 		{
 			async_io_context* iCtx = *It;
@@ -184,9 +197,11 @@ public:
 			iCtx->FlushContext();
 			It = readContextList.erase(It);
 		}
+		MBASE_TS_UNLOCK(readQueueMutex);
 	}
 
 	GENERIC ClearWriteContexts() noexcept {
+		MBASE_TS_LOCK(writeQueueMutex)
 		for (mbase::list<async_io_context*>::iterator It = writeContextList.begin(); It != writeContextList.end(); It++)
 		{
 			async_io_context* iCtx = *It;
@@ -197,9 +212,12 @@ public:
 			iCtx->FlushContext();
 			It = writeContextList.erase(It);
 		}
+		MBASE_TS_UNLOCK(writeQueueMutex)
 	}
 
 	GENERIC RunWriteContexts() noexcept {
+		MBASE_TS_LOCK(writeQueueMutex)
+
 		for(mbase::list<async_io_context*>::iterator It = writeContextList.begin(); It != writeContextList.end(); It++)
 		{
 			async_io_context* iCtx = *It;
@@ -233,9 +251,13 @@ public:
 				iCtx->ais = async_io_context::status::ASYNC_IO_STAT_IDLE;
 			}
 		}
+
+		MBASE_TS_UNLOCK(writeQueueMutex)
 	}
 
 	GENERIC RunReadContexts() noexcept {
+		MBASE_TS_LOCK(readQueueMutex);
+
 		for (mbase::list<async_io_context*>::iterator It = readContextList.begin(); It != readContextList.end(); It++)
 		{
 			async_io_context* iCtx = *It;
@@ -269,6 +291,8 @@ public:
 				iCtx->ais = async_io_context::status::ASYNC_IO_STAT_IDLE;
 			}
 		}
+
+		MBASE_TS_UNLOCK(readQueueMutex);
 	}
 
 	GENERIC RunBothContexts() noexcept {
@@ -277,19 +301,27 @@ public:
 	}
 
 	GENERIC HaltWriteContexts() noexcept {
+		MBASE_TS_LOCK(writeQueueMutex)
+
 		for (mbase::list<async_io_context*>::iterator It = writeContextList.begin(); It != writeContextList.end(); It++)
 		{
 			async_io_context* iCtx = *It;
 			iCtx->HaltContext();
 		}
+
+		MBASE_TS_UNLOCK(writeQueueMutex)
 	}
 
 	GENERIC HaltReadContexts() noexcept {
+		MBASE_TS_LOCK(readQueueMutex);
+
 		for (mbase::list<async_io_context*>::iterator It = readContextList.begin(); It != readContextList.end(); It++)
 		{
 			async_io_context* iCtx = *It;
 			iCtx->HaltContext();
 		}
+
+		MBASE_TS_UNLOCK(readQueueMutex);
 	}
 
 	mbase::list<async_io_context*>* GetWriteContextList() noexcept {
@@ -305,6 +337,11 @@ private:
 	U32 maximumAllowedReadContext;
 	mbase::list<async_io_context*> writeContextList;
 	mbase::list<async_io_context*> readContextList;
+
+	#ifdef MBASE_ASYNC_IO_THREAD_SAFE
+		mbase::mutex writeQueueMutex;
+		mbase::mutex readQueueMutex;
+	#endif
 };
 
 MBASE_END
