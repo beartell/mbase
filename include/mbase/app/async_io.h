@@ -28,6 +28,11 @@ public:
 		maximumAllowedReadContext = in_max_read_context;
 	}
 
+	~async_io_manager() {
+		ClearWriteContexts();
+		ClearReadContexts();
+	}
+
 	errors EnqueueWriteContext(async_io_context* in_ctx, size_type in_bytes_on_each) noexcept {
 		MBASE_NULL_CHECK_RETURN_VAL(in_ctx, errors::AIO_MNG_ERR_MISSING_CONTEXT);
 		if(in_ctx->GetIoDirection() != async_io_context::direction::IO_CTX_DIRECTION_OUTPUT)
@@ -50,6 +55,7 @@ public:
 
 		in_ctx->ais = async_io_context::status::ASYNC_IO_STAT_IDLE;
 		in_ctx->targetBytes = in_ctx->GetCharacterStream()->buffer_length();
+		in_ctx->bytesOnEachIteration = in_bytes_on_each;
 		in_ctx->calculatedHop = in_ctx->targetBytes / in_bytes_on_each;
 		in_ctx->lastFraction = in_ctx->targetBytes % in_bytes_on_each;
 		in_ctx->bytesTransferred = 0;
@@ -61,7 +67,7 @@ public:
 		return errors::AIO_MNG_SUCCESS;
 	}
 
-	errors EnqueueWriteContext(async_io_context* in_ctx, size_type in_bytes_to_read, size_type in_bytes_on_each) noexcept {
+	errors EnqueueWriteContext(async_io_context* in_ctx, IBYTEBUFFER in_data, size_type in_bytes_to_write, size_type in_bytes_on_each) noexcept {
 		MBASE_NULL_CHECK_RETURN_VAL(in_ctx, errors::AIO_MNG_ERR_MISSING_CONTEXT);
 		if (in_ctx->GetIoDirection() != async_io_context::direction::IO_CTX_DIRECTION_OUTPUT)
 		{
@@ -78,11 +84,12 @@ public:
 			return errors::AIO_MNG_ERR_ALREADY_REGISTERED;
 		}
 
-		in_ctx->srcBuffer = new deep_char_stream(in_bytes_to_read);
+		in_ctx->srcBuffer = new deep_char_stream(in_data, in_bytes_to_write);
 		in_ctx->isBufferInternal = false;
 
 		in_ctx->ais = async_io_context::status::ASYNC_IO_STAT_IDLE;
 		in_ctx->targetBytes = in_ctx->GetCharacterStream()->buffer_length();
+		in_ctx->bytesOnEachIteration = in_bytes_on_each;
 		in_ctx->calculatedHop = in_ctx->targetBytes / in_bytes_on_each;
 		in_ctx->lastFraction = in_ctx->targetBytes % in_bytes_on_each;
 		in_ctx->bytesTransferred = 0;
@@ -117,6 +124,7 @@ public:
 
 		in_ctx->ais = async_io_context::status::ASYNC_IO_STAT_IDLE;
 		in_ctx->targetBytes = in_ctx->GetCharacterStream()->buffer_length();
+		in_ctx->bytesOnEachIteration = in_bytes_on_each;
 		in_ctx->calculatedHop = in_ctx->targetBytes / in_bytes_on_each;
 		in_ctx->lastFraction = in_ctx->targetBytes % in_bytes_on_each;
 		in_ctx->bytesTransferred = 0;
@@ -151,6 +159,7 @@ public:
 
 		in_ctx->ais = async_io_context::status::ASYNC_IO_STAT_IDLE;
 		in_ctx->targetBytes = in_ctx->GetCharacterStream()->buffer_length();
+		in_ctx->bytesOnEachIteration = in_bytes_on_each;
 		in_ctx->calculatedHop = in_ctx->targetBytes / in_bytes_on_each;
 		in_ctx->lastFraction = in_ctx->targetBytes % in_bytes_on_each;
 		in_ctx->bytesTransferred = 0;
@@ -179,8 +188,7 @@ public:
 		{
 			async_io_context* iCtx = *It;
 			iCtx->ais = async_io_context::status::ASYNC_IO_STAT_FLUSHED;
-			iCtx->isActive = false;
-			writeContextList.erase(It);
+			iCtx->FlushContext();
 		}
 		MBASE_TS_UNLOCK(writeQueueMutex)
 	}
@@ -228,7 +236,8 @@ public:
 
 			iCtx->isActive = true;
 			iCtx->ais = async_io_context::status::ASYNC_IO_STAT_OPERATING;
-			size_type bytesToWrite = iCtx->targetBytes / iCtx->calculatedHop;
+			
+			size_type bytesToWrite = iCtx->bytesOnEachIteration;
 			iCtx->hopCounter++;
 			if(iCtx->hopCounter == iCtx->calculatedHop)
 			{
@@ -268,7 +277,7 @@ public:
 			
 			iCtx->isActive = true;
 			iCtx->ais = async_io_context::status::ASYNC_IO_STAT_OPERATING;
-			size_type bytesToRead = iCtx->targetBytes / iCtx->calculatedHop;
+			size_type bytesToRead = iCtx->bytesOnEachIteration;
 			iCtx->hopCounter++;
 			if (iCtx->hopCounter == iCtx->calculatedHop)
 			{

@@ -6,6 +6,7 @@
 #include <Windows.h>
 #include <bcrypt.h>
 #include <iostream>
+#include <ntstatus.h>
 
 #pragma comment(lib, "bcrypt.lib")
 
@@ -27,7 +28,8 @@ enum class crypto_error : U64 {
 	MBASE_CRYERR_SUCCESS = 0,
 	MBASE_CRYERR_NOT_SUPPORTED = 1,
 	MBASE_CRYERR_INVALID_CALL = 2,
-	MBASE_CRYERR_INTERNAL_ERROR = 3
+	MBASE_CRYERR_INTERNAL_ERROR = 3,
+	MBASE_CRYERR_INVALID_SIZE = 4
 };
 
 struct crypto_provider_data {
@@ -39,11 +41,36 @@ struct crypto_provider_data {
 struct crypto_init {
 	// ASSUME THEY WILL 100% SUCCEED FOR NOW
 	crypto_init() noexcept {
-		BCryptOpenAlgorithmProvider(&hash_MD5.providerHandle, BCRYPT_MD5_ALGORITHM, nullptr, 0);
-		BCryptOpenAlgorithmProvider(&hash_SHA256.providerHandle, BCRYPT_SHA256_ALGORITHM, nullptr, 0);
-		BCryptOpenAlgorithmProvider(&symm_AES.providerHandle, BCRYPT_AES_ALGORITHM, nullptr, 0);
-		BCryptOpenAlgorithmProvider(&asym_RSA.providerHandle, BCRYPT_RSA_ALGORITHM, nullptr, 0);
-		BCryptOpenAlgorithmProvider(&rng_rng.providerHandle, BCRYPT_RNG_ALGORITHM, nullptr, 0);
+		NTSTATUS ntStat;
+
+		ntStat = BCryptOpenAlgorithmProvider(&hash_MD5.providerHandle, BCRYPT_MD5_ALGORITHM, nullptr, 0);
+		if(ntStat != STATUS_SUCCESS)
+		{
+			// NOTIFY DIAGNOSTICS
+		}
+
+		ntStat = BCryptOpenAlgorithmProvider(&hash_SHA256.providerHandle, BCRYPT_SHA256_ALGORITHM, nullptr, 0);
+		if (ntStat != STATUS_SUCCESS)
+		{
+			// NOTIFY DIAGNOSTICS
+		}
+
+		ntStat = BCryptOpenAlgorithmProvider(&symm_AES.providerHandle, BCRYPT_AES_ALGORITHM, nullptr, 0);
+		if (ntStat != STATUS_SUCCESS)
+		{
+			// NOTIFY DIAGNOSTICS
+		}
+		ntStat = BCryptOpenAlgorithmProvider(&asym_RSA.providerHandle, BCRYPT_RSA_ALGORITHM, nullptr, 0);
+		if (ntStat != STATUS_SUCCESS)
+		{
+			// NOTIFY DIAGNOSTICS
+		}
+
+		ntStat = BCryptOpenAlgorithmProvider(&rng_rng.providerHandle, BCRYPT_RNG_ALGORITHM, nullptr, 0);
+		if (ntStat != STATUS_SUCCESS)
+		{
+			// NOTIFY DIAGNOSTICS
+		}
 
 		ULONG pcbResult = 0;
 
@@ -54,6 +81,8 @@ struct crypto_init {
 		// ASYM WILL BE IMPLEMENTED LATER
 	}
 	~crypto_init() noexcept {
+		// no need to check the validity of the provider handles
+
 		BCryptCloseAlgorithmProvider(rng_rng.providerHandle, 0);
 		BCryptCloseAlgorithmProvider(asym_RSA.providerHandle, 0);
 		BCryptCloseAlgorithmProvider(symm_AES.providerHandle, 0);

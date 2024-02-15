@@ -7,16 +7,40 @@
 #include <mbase/synchronization.h>
 #include <mbase/app/handler_base.h>
 #include <mbase/thread.h>
+#include <mbase/atomic.h>
 #include <iostream>
 #include <tuple>
 
-#define MBASE_TPOOL_MAX_THREADS 512 // ARBITRARY NUMBER. FIND A WAY TO CALCULATE MAX THREAD COUNT
-#define MBASE_TPOOL_DEFAULT_THREADS 16
+#define MBASE_TPOOL_MAX_THREADS 1024 // ARBITRARY NUMBER. FIND A WAY TO CALCULATE MAX THREAD COUNT
+#define MBASE_TPOOL_DEFAULT_THREADS 32
 
 MBASE_BEGIN
 
 class tpool : public non_copymovable {
 public:
+	struct thread_pool_routine_args {
+		static I32 _PoolRoutine(thread_pool_routine_args* in_args) {
+			while (in_args->selfClass->isRunning)
+			{
+				if (in_args->tHandler)
+				{
+					in_args->tHandler->on_call(in_args->tHandler->GetUserData());
+					in_args->tHandler = nullptr;
+					in_args->selfClass->_UpdateIndex(in_args->tIndex);
+				}
+
+				in_args->selfThread.halt();
+			}
+			return 0;
+		}
+
+		thread_pool_routine_args() : selfClass(nullptr), tHandler(nullptr), selfThread(_PoolRoutine, nullptr) {}
+		tpool* selfClass;
+		I32 tIndex;
+		handler_base* tHandler;
+		mbase::thread<decltype(_PoolRoutine), thread_pool_routine_args*> selfThread;
+	};
+
 	tpool() noexcept : isRunning(true){
 		threadCount = MBASE_TPOOL_DEFAULT_THREADS;
 
@@ -64,7 +88,7 @@ public:
 		delete[]threadPool;
 	}
 
-	GENERIC ExecuteJob(handler_base* in_handler) noexcept {
+	GENERIC ExecuteJob(handler_base* in_handler) {
 		mtx.acquire();
 		if(!freeThreadIndex.size())
 		{
@@ -74,14 +98,20 @@ public:
 
 		I32 freeIndex = freeThreadIndex.top();
 		freeThreadIndex.pop();
+		activeThreadCounter++;
+
 		threadPool[freeIndex].tHandler = in_handler;
 		threadPool[freeIndex].tHandler->_SetThreadIndex(freeIndex);
 		threadPool[freeIndex].selfThread.resume();
 		mtx.release();
 	}
 
-	USED_RETURN U32 GetThreadCount() noexcept {
+	USED_RETURN U32 GetThreadCount() const noexcept {
 		return threadCount;
+	}
+
+	USED_RETURN thread_pool_routine_args* GetRoutineInfo(I32 in_index) noexcept {
+		return threadPool + in_index;
 	}
 
 	// INTERNAL CALL
@@ -90,38 +120,17 @@ public:
 		mtx.acquire();
 
 		freeThreadIndex.push(in_index);
-		
+		activeThreadCounter--;
+
 		mtx.release();
 	}
 
 private:
 
-	struct thread_pool_routine_args {
-		static I32 _PoolRoutine(thread_pool_routine_args* in_args) {
-			while (in_args->selfClass->isRunning)
-			{
-				if (in_args->tHandler)
-				{
-					in_args->tHandler->on_call(in_args->tHandler->GetUserData());
-					in_args->tHandler = nullptr;
-					in_args->selfClass->_UpdateIndex(in_args->tIndex);
-				}
-				
-				in_args->selfThread.halt();
-			}
-			return 0;
-		}
-
-		thread_pool_routine_args() : selfClass(nullptr), tHandler(nullptr), selfThread(_PoolRoutine, nullptr) {}
-		tpool* selfClass;
-		I32 tIndex;
-		handler_base* tHandler;
-		mbase::thread<decltype(_PoolRoutine), thread_pool_routine_args*> selfThread;
-	};
-
 	bool isRunning;
 	U32 threadCount;
 	mbase::mutex mtx;
+	mbase::atomic_i32 activeThreadCounter;
 	mbase::stack<I32> freeThreadIndex;
 	thread_pool_routine_args* threadPool;
 };

@@ -7,21 +7,20 @@
 MBASE_STD_BEGIN
 
 struct safe_buffer {
-	safe_buffer() noexcept {}
+	safe_buffer() noexcept : bfSource(nullptr), bfLength(0) {}
 
 	safe_buffer(IBYTEBUFFER in_src, SIZE_T in_length) noexcept {
 		bfSource = in_src;
 		bfLength = in_length;
 	}
 
-	safe_buffer(const safe_buffer& in_rhs) noexcept {
-		bfLength = in_rhs.bfLength;
-
-		if(in_rhs.bfSource)
-		{
-			type_sequence<IBYTE>::copy(bfSource, in_rhs.bfSource, in_rhs.bfLength);
-		}
-	}
+	//safe_buffer(const safe_buffer& in_rhs) noexcept {
+	//	bfLength = in_rhs.bfLength;
+	//	if(in_rhs.bfSource)
+	//	{
+	//		type_sequence<IBYTE>::copy(bfSource, in_rhs.bfSource, in_rhs.bfLength);
+	//	}
+	//}
 
 	safe_buffer(safe_buffer&& in_rhs) noexcept {
 		bfSource = in_rhs.bfSource;
@@ -38,7 +37,7 @@ struct safe_buffer {
 		}
 	}
 
-	safe_buffer& operator=(const safe_buffer& in_rhs) noexcept {
+	/*safe_buffer& operator=(const safe_buffer& in_rhs) noexcept {
 		bfLength = in_rhs.bfLength;
 		if (bfSource)
 		{
@@ -51,13 +50,10 @@ struct safe_buffer {
 		}
 
 		return *this;
-	}
+	}*/
 
 	safe_buffer& operator=(safe_buffer&& in_rhs) noexcept {
-		if (bfSource)
-		{
-			delete[] bfSource;
-		}
+		clear();
 
 		bfSource = in_rhs.bfSource;
 		bfLength = in_rhs.bfLength;
@@ -67,9 +63,12 @@ struct safe_buffer {
 	}
 
 	GENERIC clear() noexcept {
-		delete[] bfSource;
+		if(bfSource)
+		{
+			delete[] bfSource;
+			bfSource = nullptr;
+		}
 		bfLength = 0;
-		bfSource = nullptr;
 	}
 
 	SIZE_T bfLength = 0;

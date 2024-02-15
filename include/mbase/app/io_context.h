@@ -30,6 +30,7 @@ public:
 	async_io_context(io_base& in_base, direction in_io_direction = direction::IO_CTX_DIRECTION_INPUT) noexcept : 
 		bytesTransferred(0),
 		targetBytes(0),
+		bytesOnEachIteration(0),
 		lastFraction(0),
 		calculatedHop(0),
 		hopCounter(0),
@@ -51,15 +52,19 @@ public:
 	~async_io_context() noexcept {
 		if(!isBufferInternal)
 		{
-			delete srcBuffer;
+			deep_char_stream* dcsTemp = static_cast<deep_char_stream*>(srcBuffer);
+			delete dcsTemp;
 		}
-
 		ioHandle = nullptr;
 		srcBuffer = nullptr;
 	}
 
 	USED_RETURN size_type GetTotalTransferredBytes() const noexcept {
 		return bytesTransferred;
+	}
+
+	USED_RETURN size_type GetBytesOnEachIteration() const noexcept {
+		return bytesOnEachIteration;
 	}
 
 	USED_RETURN size_type GetRequestedByteCount() const noexcept {
@@ -117,6 +122,8 @@ public:
 private:
 	size_type bytesTransferred;
 	size_type targetBytes;
+	size_type bytesOnEachIteration;
+
 	U32 lastFraction;
 	U32 calculatedHop;
 	U32 hopCounter;

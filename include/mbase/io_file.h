@@ -26,15 +26,8 @@ public:
 
 	io_file()  noexcept : rawHandle(nullptr) {}
 
-	io_file(const mbase::string& in_filename, access_mode in_accmode, disposition in_disp = disposition::OVERWRITE, bool isAsync = false) noexcept {
+	io_file(const mbase::string& in_filename, access_mode in_accmode, disposition in_disp = disposition::OVERWRITE) noexcept {
 		DWORD fileAttrs = FILE_ATTRIBUTE_NORMAL;
-		if(isAsync)
-		{
-			fileAttrs |= FILE_FLAG_OVERLAPPED;
-			ov.hEvent = CreateEventA(nullptr, false, true, nullptr);
-			ov.Offset = 0;
-			ov.OffsetHigh = 0;
-		}
 
 		rawHandle = CreateFileA(in_filename.c_str(), (DWORD)in_accmode, FILE_SHARE_READ, nullptr, (DWORD)in_disp, fileAttrs, nullptr);
 		if(!rawHandle)
@@ -47,12 +40,6 @@ public:
 			if(in_disp == disposition::APPEND)
 			{
 				SetFilePointer(rawHandle, 0, nullptr, FILE_END);
-			}
-
-			if(isAsync)
-			{
-				iocpId = mbase::gen_random_64();
-				iocp = CreateIoCompletionPort(rawHandle, nullptr, iocpId, 0);
 			}
 		}
 	}
@@ -72,6 +59,7 @@ public:
 		}
 		else
 		{
+			isFileOpen = true;
 			_set_raw_context(rawHandle);
 			if (in_disp == disposition::APPEND)
 			{
@@ -86,6 +74,7 @@ public:
 		{
 			CloseHandle(rawHandle);
 		}
+		isFileOpen = false;
 		rawHandle = nullptr;
 	}
 
@@ -97,6 +86,7 @@ public:
 		_set_last_error(GetLastError());
 		return dataWritten;
 	}
+
 	size_type write_data(IBYTEBUFFER in_src, size_type in_length) override
 	{
 		DWORD dataWritten = 0;
@@ -104,6 +94,7 @@ public:
 		_set_last_error(GetLastError());
 		return dataWritten;
 	}
+
 	size_type write_data(const mbase::string& in_src) override
 	{
 		DWORD dataWritten = 0;
@@ -128,14 +119,6 @@ public:
 		IBYTEBUFFER tmpBuffer = in_src.get_bufferc();
 		WriteFile(rawHandle, tmpBuffer, in_length, &dataWritten, nullptr);
 		in_src.advance(dataWritten);
-		_set_last_error(GetLastError());
-		return dataWritten;
-	}
-
-	size_type awrite_data(IBYTEBUFFER in_src, size_type in_length)
-	{
-		DWORD dataWritten = 0;
-		WriteFile(rawHandle, in_src, in_length, &dataWritten, &ov);
 		_set_last_error(GetLastError());
 		return dataWritten;
 	}
@@ -168,27 +151,23 @@ public:
 		return dataRead;
 	}
 
-	LPOVERLAPPED getov() {
-		return &ov;
-	}
-
-	HANDLE getiocp() {
-		return iocp;
-	}
-
-	/*template<typename T>
-	size_type write_data(T& in_src) {
+	template<typename SerializableObject>
+	size_type write_data(SerializableObject& in_src) {
 		safe_buffer mBuffer;
 		in_src.serialize(&mBuffer);
 		return write_data(mBuffer.bfSource, mBuffer.bfLength);
 	}
 
-	template<typename T>
-	size_type read_data(T& in_target, IBYTEBUFFER in_src, size_type in_length) {
+	template<typename SerializableObject>
+	size_type read_data(SerializableObject& in_target, IBYTEBUFFER in_src, size_type in_length) {
 		size_type readLength = read_data(in_src, in_length);
-		in_target.deserialize(in_src, in_length);
+		in_target = std::move(in_target.deserialize(in_src, in_length));
 		return readLength;
-	}*/
+	}
+
+	USED_RETURN MBASE_INLINE bool is_file_open() const noexcept {
+		return isFileOpen;
+	}
 
 	USED_RETURN MBASE_INLINE mbase::string get_file_name() const noexcept {
 		return fileName;
@@ -201,9 +180,7 @@ public:
 	}
 	
 private:
-	HANDLE iocp;
-	U64 iocpId;
-	OVERLAPPED ov;
+	bool isFileOpen;
 	mbase::string fileName;
 	HANDLE rawHandle;
 };

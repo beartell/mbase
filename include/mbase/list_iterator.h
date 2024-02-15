@@ -8,9 +8,11 @@ MBASE_STD_BEGIN
 template<typename T, typename DataT>
 class forward_list_iterator {
 public:
+    using iterator_category = std::forward_iterator_tag;
     using value_type = T;
-    using pointer = value_type*;
-    using reference = value_type&;
+    using pointer = T*;
+    using const_pointer = const T*;
+    using reference = T&;
     using size_type = SIZE_T;
     using difference_type = PTRDIFF;
 

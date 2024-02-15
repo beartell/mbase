@@ -7,31 +7,22 @@
 #include <mbase/app/thread_pool.h>
 #include <Windows.h>
 
+#define MBASE_DEFAULT_TIMER_LIMIT 64
+
 MBASE_BEGIN
 
-// THIS WILL BE EXTENDED INTO NEW timer_loop IF THE APPLICATION HAS GUI
-
-/*
-	Public Methods:
-	- register_timer
-	- unregister_timer
-	- register_event
-	- listen_event
-	- dispatch_event
-	- run
-	- halt
-
-*/
-
-class timer_loop {
+class timer_loop : public non_copymovable {
 public:
+	using timer_element_iterator = mbase::list<timer_base*>::iterator;
+
 	enum class timer_err : U32 {
 		TIMER_SUCCESS = 0,
 		TIMER_ERR_LIMIT_REACHED = 1,
-		TIMER_ERR_INVALID_DATA = 2
+		TIMER_ERR_INVALID_DATA = 2,
+		TIMER_WARN_TIMER_WILL_EXECUTE_IMM = 3
 	};
 
-	timer_loop() : timerLimit(16), timerIdCounter(0), isRunning(false) {
+	timer_loop() : timerLimit(64), timerIdCounter(0), isRunning(false) {
 		LARGE_INTEGER performanceFrequency = {};
 		QueryPerformanceFrequency(&performanceFrequency);
 		frequency = 1000 / (F64)performanceFrequency.QuadPart; // MS ACCURACY
@@ -40,45 +31,54 @@ public:
 
 	~timer_loop() {}
 
-	timer_err RegisterTimer(timer_base* in_timer) {
+	timer_err RegisterTimer(timer_base& in_timer, timer_element_iterator* out_timer) noexcept {
 		if(registeredTimers.size() > timerLimit)
 		{
 			return timer_err::TIMER_ERR_LIMIT_REACHED;
 		}
 
-		in_timer->mTimerId = ++timerIdCounter; // Timer ids will start from 1
-		if(in_timer->GetTargetTime() <= 0)
+		in_timer.mTimerId = ++timerIdCounter; // Timer ids will start from 1
+		timer_err terr = timer_err::TIMER_SUCCESS;
+
+		if(in_timer.GetTargetTime() <= 0)
 		{
 			// WARN THE USER THAT THE TIMER WILL BE EXECUTED IMMEDIATELY
+			terr = timer_err::TIMER_WARN_TIMER_WILL_EXECUTE_IMM;
 		}
-		registeredTimers.push_back(in_timer);
+		registeredTimers.push_back(&in_timer);
 
 		return timer_err::TIMER_SUCCESS;
 	}
 
-	timer_err RegisterTimer(timer_base* in_timer, PTRGENERIC in_usr_data) noexcept {
+	timer_err RegisterTimer(timer_base& in_timer, PTRGENERIC in_usr_data, timer_element_iterator* out_timer) noexcept {
 		if (registeredTimers.size() > timerLimit)
 		{
 			return timer_err::TIMER_ERR_LIMIT_REACHED;
 		}
 
-		in_timer->mTimerId = timerIdCounter++; // Timer ids will start from 1
-		in_timer->suppliedData = in_usr_data;
-		registeredTimers.push_back(in_timer);
+		in_timer.mTimerId = timerIdCounter++; // Timer ids will start from 1
+		in_timer.suppliedData = in_usr_data;
+		registeredTimers.push_back(&in_timer);
+		out_timer = &registeredTimers.end();
 
 		return timer_err::TIMER_SUCCESS;
 	}
 
-	GENERIC UnregisterTimer(timer_base* in_timer) {
-
-		// find will be implemented in list
+	timer_err UnregisterTimer(timer_element_iterator* out_timer) noexcept {
+		MBASE_NULL_CHECK_RETURN_VAL(out_timer, timer_err::TIMER_ERR_INVALID_DATA);
+		registeredTimers.erase(*out_timer);
+		return timer_err::TIMER_SUCCESS;
 	}
 
-	U32 GetDeltaSeconds() {
+	USED_RETURN U32 GetDeltaSeconds() const noexcept {
 		return deltaTime;
 	}
 
-	mbase::list<timer_base*>* GetTimerList() {
+	USED_RETURN mbase::tpool* GetThreadPool() noexcept {
+		return &threadPool;
+	}
+
+	USED_RETURN mbase::list<timer_base*>* GetTimerList() noexcept {
 		return &registeredTimers;
 	}
 
@@ -155,15 +155,19 @@ public:
 		}
 	}
 
+	GENERIC SetTimerLimit(U32 in_limit) noexcept {
+		timerLimit = in_limit;
+	}
+
 	GENERIC Halt() noexcept {
 		isRunning = false;
 	}
 
 protected:
-	F64 deltaTime; // DO NOT MODIFY
-	F64 frequency; // DO NOT MODIFY
+	F64 deltaTime;
+	F64 frequency;
 	U32 timerLimit;
-	U32 timerIdCounter; // DO NOT MODIFY
+	U32 timerIdCounter;
 	bool isRunning;
 	mbase::list<timer_base*> registeredTimers;
 	mbase::tpool threadPool;

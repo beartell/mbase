@@ -20,8 +20,8 @@ public:
     using reference = T&;
     using size_type = SIZE_T;
     using difference_type = PTRDIFF;
-    sequence_iterator(pointer in_ptr) noexcept : _ptr(in_ptr) {}
 
+    sequence_iterator(pointer in_ptr) noexcept : _ptr(in_ptr) {}
     sequence_iterator(const sequence_iterator& in_rhs) noexcept : _ptr(in_rhs._ptr) {}
 
     sequence_iterator& operator=(const sequence_iterator& in_rhs) noexcept {
@@ -79,6 +79,78 @@ public:
 protected:
     pointer _ptr;
 };
+
+template<typename T>
+class const_sequence_iterator {
+public:
+    using iterator_category = std::random_access_iterator_tag;
+    using value_type = T;
+    using pointer = T*;
+    using const_pointer = const T*;
+    using reference = T&;
+    using const_reference = const T&;
+    using size_type = SIZE_T;
+    using difference_type = PTRDIFF;
+
+    const_sequence_iterator(pointer in_ptr) noexcept : _ptr(in_ptr) {}
+    const_sequence_iterator(const const_sequence_iterator& in_rhs) noexcept : _ptr(in_rhs._ptr) {}
+
+    const_sequence_iterator& operator=(const const_sequence_iterator& in_rhs) noexcept {
+        _ptr = in_rhs._ptr;
+        return *this;
+    }
+
+    USED_RETURN MBASE_INLINE const_reference operator*() const noexcept {
+        return *_ptr;
+    }
+
+    USED_RETURN MBASE_INLINE const_sequence_iterator& operator+(difference_type in_rhs) noexcept {
+        _ptr += in_rhs;
+        return *this;
+    }
+
+    MBASE_INLINE const_sequence_iterator& operator+=(difference_type in_rhs) noexcept {
+        _ptr += in_rhs;
+        return *this;
+    }
+
+    MBASE_INLINE const_sequence_iterator& operator++() noexcept {
+        ++_ptr;
+        return *this;
+    }
+
+    MBASE_INLINE const_sequence_iterator& operator++(int) noexcept {
+        ++_ptr;
+        return *this;
+    }
+
+    MBASE_INLINE const_sequence_iterator& operator-(difference_type in_rhs) noexcept {
+        _ptr -= in_rhs;
+        return *this;
+    }
+
+    MBASE_INLINE const_sequence_iterator& operator-=(difference_type in_rhs) noexcept {
+        _ptr -= in_rhs;
+        return *this;
+    }
+
+    MBASE_INLINE const_sequence_iterator& operator--() noexcept {
+        --_ptr;
+        return *this;
+    }
+
+    USED_RETURN MBASE_INLINE bool operator==(const const_sequence_iterator& in_rhs) const noexcept {
+        return _ptr == in_rhs._ptr;
+    }
+
+    USED_RETURN MBASE_INLINE bool operator!=(const const_sequence_iterator& in_rhs) const noexcept {
+        return _ptr != in_rhs._ptr;
+    }
+
+protected:
+    pointer _ptr;
+};
+
 
 template<typename T, typename Alloc = allocator<T>>
 class type_sequence {

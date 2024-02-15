@@ -18,9 +18,7 @@ public:
 	using pointer = T*;
 	using const_pointer = const T*;
 
-	stack() noexcept {
-		
-	}
+	stack() noexcept {}
 
 	stack(const stack& in_rhs) noexcept {
 		_Sc = in_rhs._Sc;

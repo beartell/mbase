@@ -44,11 +44,6 @@ public:
         type_sequence::copy(raw_data, in_string, in_length);
     }
 
-    /*character_sequence(const IBYTE& in_character) noexcept : raw_data(nullptr), mSize(1), mCapacity(8) {
-        raw_data = Alloc::allocate(mCapacity, true);
-        *raw_data = in_character;
-    }*/
-
     character_sequence(const character_sequence& in_rhs) noexcept : raw_data(nullptr), mSize(in_rhs.mSize), mCapacity(in_rhs.mCapacity) {
         raw_data = Alloc::allocate(mCapacity, true);
         type_sequence::copy(raw_data, in_rhs.raw_data, mSize);
@@ -168,18 +163,19 @@ public:
         return *this;
     }
 
-    USED_RETURN MBASE_INLINE size_type find(const character_sequence& in_src, size_type in_pos = 0) const noexcept {
-        return find(in_src.c_str(), in_pos);
-    }
-
     USED_RETURN MBASE_INLINE size_type find(MSTRING in_src, size_type in_pos = 0) const noexcept {
         MSTRING tmpResult = strstr(raw_data + in_pos, in_src);
-        if(tmpResult)
+        if (tmpResult)
         {
             return tmpResult - (raw_data + in_pos);
         }
 
         return npos;
+    }
+
+    USED_RETURN MBASE_INLINE size_type find(const character_sequence& in_src, size_type in_pos = 0) const noexcept {
+        
+        return find(in_src.c_str(), in_pos);
     }
 
     USED_RETURN MBASE_INLINE size_type find(IBYTE in_char, size_type in_pos = 0) const noexcept {
@@ -190,6 +186,14 @@ public:
         }
 
         return npos;
+    }
+
+    USED_RETURN MBASE_INLINE I32 to_i32() const noexcept {
+        return to_int32(raw_data);
+    }
+
+    USED_RETURN MBASE_INLINE I64 to_i64() const noexcept {
+        return to_int64(raw_data);
     }
 
     USED_RETURN MBASE_INLINE GENERIC resize(size_type in_amount) {
@@ -338,7 +342,7 @@ public:
         }
     }
 
-    static MBASE_INLINE character_sequence deserialize(IBYTEBUFFER in_buffer, SIZE_T in_length) {
+    MBASE_INLINE static character_sequence deserialize(IBYTEBUFFER in_buffer, SIZE_T in_length) noexcept {
         return mbase::character_sequence(in_buffer, in_length);
     }
 

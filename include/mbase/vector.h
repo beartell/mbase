@@ -362,7 +362,8 @@ public:
 		}
 	}
 
-	MBASE_INLINE GENERIC deserialize(IBYTEBUFFER in_src, SIZE_T in_length) noexcept {
+	MBASE_INLINE static mbase::vector<T, Allocator> deserialize(IBYTEBUFFER in_src, SIZE_T in_length) noexcept {
+		mbase::vector<T, Allocator> deserializedVec;
 		if(in_length)
 		{
 			PTRU32 elemCount = reinterpret_cast<PTRU32>(in_src);
@@ -374,10 +375,12 @@ public:
 			{
 				PTRU32 elemLength = reinterpret_cast<PTRU32>(tmpSrc);
 				tmpSrc += sizeof(U32);
-				push_back(sl.deserialize(tmpSrc, *elemLength));
+				deserializedVec.push_back(sl.deserialize(tmpSrc, *elemLength));
 				tmpSrc += *elemLength;
 			}
 		}
+
+		return deserializedVec;
 	}
 
 	MBASE_INLINE_EXPR GENERIC swap(mbase::vector<value_type>& in_src) noexcept {

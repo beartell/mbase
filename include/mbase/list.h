@@ -29,13 +29,13 @@ template<typename T, typename Allocator = mbase::allocator_simple<T>>
 class list {
 public:
 	using value_type = T;
+	using pointer = T*;
+	using const_pointer = const T*;
+	using reference = T&;
+	using const_reference = const T&;
+	using move_reference = T&&;
 	using size_type = SIZE_T;
 	using difference_type = PTRDIFF;
-	using reference = value_type&;
-	using const_reference = const T&;
-	using move_reference = value_type&&;
-	using pointer = value_type*;
-	using const_pointer = const T*;
 
 	struct list_node {
 		list_node* prev;
@@ -63,6 +63,8 @@ public:
 	template<typename T, typename DataT>
 	class bi_list_iterator : public forward_list_iterator<T, DataT> {
 	public:
+		using iterator_category = std::bidirectional_iterator_tag;
+
 		bi_list_iterator(pointer in_ptr) noexcept : forward_list_iterator(in_ptr) {}
 		bi_list_iterator(const bi_list_iterator& in_rhs) noexcept : forward_list_iterator(in_rhs._ptr) {}
 
@@ -91,8 +93,45 @@ public:
 		friend class list;
 	};
 
+	template<typename T, typename DataT>
+	class const_bi_list_iterator : public forward_list_iterator<T, DataT> {
+	public:
+		using iterator_category = std::bidirectional_iterator_tag;
+
+		const_bi_list_iterator(pointer in_ptr) noexcept : forward_list_iterator(in_ptr) {}
+		const_bi_list_iterator(const const_bi_list_iterator& in_rhs) noexcept : forward_list_iterator(in_rhs._ptr) {}
+
+		USED_RETURN MBASE_INLINE const DataT& operator*() const noexcept {
+			return *_ptr->data;
+		}
+
+		MBASE_INLINE const_pointer get() const noexcept {
+			return _ptr;
+		}
+
+		MBASE_INLINE const_bi_list_iterator& operator-=(difference_type in_rhs) noexcept {
+			for (size_type i = 0; i < in_rhs; i++)
+			{
+				_ptr = _ptr->prev;
+			}
+			return *this;
+		}
+
+		MBASE_INLINE const_bi_list_iterator& operator--() noexcept {
+			_ptr = _ptr->prev;
+			return *this;
+		}
+
+		MBASE_INLINE const_bi_list_iterator& operator--(int) noexcept {
+			_ptr = _ptr->prev;
+			return *this;
+		}
+
+		friend class list;
+	};
+
 	using iterator = bi_list_iterator<list_node, value_type>;
-	using const_iterator = const bi_list_iterator<list_node, value_type>;
+	using const_iterator = const_bi_list_iterator<list_node, value_type>;
 
 	list() noexcept : firstNode(nullptr), lastNode(nullptr), mSize(0) {}
 
@@ -333,7 +372,7 @@ public:
 		insert(in_post, std::move(in_object));
 	}
 
-	MBASE_INLINE_EXPR iterator erase(const_iterator in_pos) noexcept {
+	MBASE_INLINE_EXPR iterator erase(iterator in_pos) noexcept {
 		list_node* mNode = in_pos._ptr;
 		list_node* returnedNode = mNode->next;
 
@@ -410,7 +449,8 @@ public:
 		}
 	}
 
-	MBASE_INLINE GENERIC deserialize(IBYTEBUFFER in_src, SIZE_T in_length) noexcept {
+	MBASE_INLINE static mbase::list<T, Allocator> deserialize(IBYTEBUFFER in_src, SIZE_T in_length) noexcept {
+		mbase::list<T, Allocator> deserializedContainer;
 		if (in_length)
 		{
 			PTRU32 elemCount = reinterpret_cast<PTRU32>(in_src);
@@ -422,10 +462,12 @@ public:
 			{
 				PTRU32 elemLength = reinterpret_cast<PTRU32>(tmpSrc);
 				tmpSrc += sizeof(U32);
-				push_back(sl.deserialize(tmpSrc, *elemLength));
+				deserializedContainer.push_back(sl.deserialize(tmpSrc, *elemLength));
 				tmpSrc += *elemLength;
 			}
 		}
+
+		return deserializedContainer;
 	}
 
 private:
