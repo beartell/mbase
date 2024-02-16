@@ -174,7 +174,6 @@ public:
     }
 
     USED_RETURN MBASE_INLINE size_type find(const character_sequence& in_src, size_type in_pos = 0) const noexcept {
-        
         return find(in_src.c_str(), in_pos);
     }
 
@@ -188,12 +187,54 @@ public:
         return npos;
     }
 
+    template<typename ... Params>
+    USED_RETURN static character_sequence from_format(MSTRING in_format, Params ... in_params) noexcept {
+        I32 stringLength = _scprintf(in_format, std::forward<Params>(in_params)...); // FIND THE FKIN SIZE
+        character_sequence newSequence;
+        if(!stringLength)
+        {
+            return newSequence;
+        }
+
+        IBYTEBUFFER mString = new IBYTE[stringLength + 1];
+        fill(mString, 0, stringLength + 1);
+        sprintf(mString, in_format, std::forward<Params>(in_params)...);
+        newSequence = std::move(character_sequence(mString));
+        delete[]mString;
+
+        return newSequence;
+    }
+
+    USED_RETURN static I32 to_i32(const character_sequence& in_string) noexcept {
+        return atoi(in_string.c_str());
+    }
+
+    USED_RETURN static I32 to_i64(const character_sequence& in_string) noexcept {
+        return _atoi64(in_string.c_str());
+    }
+
+    USED_RETURN static F32 to_f32(const character_sequence& in_string) noexcept {
+        return strtof(in_string.c_str(), nullptr);
+    }
+
+    USED_RETURN static F64 to_f64(const character_sequence& in_string) noexcept {
+        return atof(in_string.c_str());
+    }
+
     USED_RETURN MBASE_INLINE I32 to_i32() const noexcept {
-        return to_int32(raw_data);
+        return atoi(raw_data);
     }
 
     USED_RETURN MBASE_INLINE I64 to_i64() const noexcept {
-        return to_int64(raw_data);
+        return _atoi64(raw_data);
+    }
+
+    USED_RETURN MBASE_INLINE F32 to_f32() const noexcept {
+        return strtof(raw_data, nullptr);
+    }
+
+    USED_RETURN MBASE_INLINE F64 to_f64() const noexcept {
+        return atof(raw_data);
     }
 
     USED_RETURN MBASE_INLINE GENERIC resize(size_type in_amount) {

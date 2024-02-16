@@ -60,6 +60,7 @@ public:
 		threadCount = in_thread_count;
 		if(!threadCount || threadCount > MBASE_TPOOL_MAX_THREADS)
 		{
+			// notify the user about it
 			threadCount = MBASE_TPOOL_DEFAULT_THREADS;
 		}
 
@@ -89,6 +90,8 @@ public:
 	}
 
 	GENERIC ExecuteJob(handler_base* in_handler) {
+		MBASE_NULL_CHECK_RETURN(in_handler);
+
 		mtx.acquire();
 		if(!freeThreadIndex.size())
 		{

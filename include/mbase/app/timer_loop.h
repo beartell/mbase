@@ -7,7 +7,7 @@
 #include <mbase/app/thread_pool.h>
 #include <Windows.h>
 
-#define MBASE_DEFAULT_TIMER_LIMIT 64
+#define MBASE_DEFAULT_TIMER_LIMIT 1024
 
 MBASE_BEGIN
 
@@ -22,7 +22,7 @@ public:
 		TIMER_WARN_TIMER_WILL_EXECUTE_IMM = 3
 	};
 
-	timer_loop() : timerLimit(64), timerIdCounter(0), isRunning(false) {
+	timer_loop() : timerLimit(MBASE_DEFAULT_TIMER_LIMIT), timerIdCounter(0), isRunning(false) {
 		LARGE_INTEGER performanceFrequency = {};
 		QueryPerformanceFrequency(&performanceFrequency);
 		frequency = 1000 / (F64)performanceFrequency.QuadPart; // MS ACCURACY
@@ -46,8 +46,9 @@ public:
 			terr = timer_err::TIMER_WARN_TIMER_WILL_EXECUTE_IMM;
 		}
 		registeredTimers.push_back(&in_timer);
+		out_timer = &registeredTimers.end();
 
-		return timer_err::TIMER_SUCCESS;
+		return terr;
 	}
 
 	timer_err RegisterTimer(timer_base& in_timer, PTRGENERIC in_usr_data, timer_element_iterator* out_timer) noexcept {
@@ -56,12 +57,19 @@ public:
 			return timer_err::TIMER_ERR_LIMIT_REACHED;
 		}
 
-		in_timer.mTimerId = timerIdCounter++; // Timer ids will start from 1
+		in_timer.mTimerId = ++timerIdCounter; // Timer ids will start from 1
+		timer_err terr = timer_err::TIMER_SUCCESS;
+
+		if (in_timer.GetTargetTime() <= 0)
+		{
+			// WARN THE USER THAT THE TIMER WILL BE EXECUTED IMMEDIATELY
+			terr = timer_err::TIMER_WARN_TIMER_WILL_EXECUTE_IMM;
+		}
 		in_timer.suppliedData = in_usr_data;
 		registeredTimers.push_back(&in_timer);
 		out_timer = &registeredTimers.end();
 
-		return timer_err::TIMER_SUCCESS;
+		return terr;
 	}
 
 	timer_err UnregisterTimer(timer_element_iterator* out_timer) noexcept {
@@ -153,6 +161,10 @@ public:
 			}
 			It++;
 		}
+	}
+
+	USED_RETURN U32 GetActiveTimerCount() const noexcept {
+		return registeredTimers.size();
 	}
 
 	GENERIC SetTimerLimit(U32 in_limit) noexcept {

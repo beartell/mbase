@@ -202,15 +202,6 @@ public:
         memset(in_target, in_value, sizeof(value_type) * in_length);
         return in_target;
     }
-    
-    USED_RETURN static MBASE_INLINE_EXPR I32 to_int32(const_pointer in_target) noexcept {
-        return atoi(in_target);
-    }
-
-    USED_RETURN static MBASE_INLINE_EXPR I64 to_int64(const_pointer in_target) noexcept {
-        return _atoi64(in_target);
-    }
-
 };
 
 MBASE_STD_END
