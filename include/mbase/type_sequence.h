@@ -29,6 +29,10 @@ public:
         return *this;
     }
 
+    USED_RETURN MBASE_INLINE pointer get() noexcept {
+        return _ptr;
+    }
+
     USED_RETURN MBASE_INLINE reference operator*() const noexcept {
         return *_ptr;
     }
@@ -94,10 +98,20 @@ public:
 
     const_sequence_iterator(pointer in_ptr) noexcept : _ptr(in_ptr) {}
     const_sequence_iterator(const const_sequence_iterator& in_rhs) noexcept : _ptr(in_rhs._ptr) {}
+    const_sequence_iterator(sequence_iterator<T> in_rhs) noexcept : _ptr(in_rhs.get()) {}
 
     const_sequence_iterator& operator=(const const_sequence_iterator& in_rhs) noexcept {
         _ptr = in_rhs._ptr;
         return *this;
+    }
+
+    const_sequence_iterator& operator=(sequence_iterator<T> in_rhs) noexcept {
+        _ptr = in_rhs.get();
+        return *this;
+    }
+
+    USED_RETURN MBASE_INLINE pointer get() noexcept {
+        return _ptr;
     }
 
     USED_RETURN MBASE_INLINE const_reference operator*() const noexcept {
@@ -164,9 +178,9 @@ public:
     using move_reference = value_type&&;
     using size_type = SIZE_T;
     using iterator = sequence_iterator<T>;
-    using const_iterator = sequence_iterator<const T>;
+    using const_iterator = const_sequence_iterator<T>;
 
-    static MBASE_INLINE_EXPR pointer copy(pointer out_target, const_pointer in_source, size_type in_length) noexcept {
+    static MBASE_INLINE_EXPR pointer copy_bytes(pointer out_target, const_pointer in_source, size_type in_length) noexcept {
         return static_cast<pointer>(memcpy(out_target, in_source, sizeof(value_type) * in_length));
     }
 
@@ -196,6 +210,10 @@ public:
 
     USED_RETURN static MBASE_INLINE_EXPR I32 compare(const_pointer in_lhs, const_pointer in_rhs, size_type in_length) noexcept {
         return memcmp(in_lhs, in_rhs, sizeof(value_type) * in_length);
+    }
+
+    USED_RETURN static MBASE_INLINE_EXPR I32 compare(const_pointer in_lhs, const_pointer in_rhs) noexcept {
+        return strcmp(in_lhs, in_rhs);
     }
 
     static MBASE_INLINE_EXPR pointer fill(pointer in_target, value_type in_value, size_type in_length) noexcept {

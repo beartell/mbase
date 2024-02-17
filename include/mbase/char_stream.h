@@ -132,19 +132,19 @@ protected:
 
 class deep_char_stream : public char_stream {
 public:
-	explicit deep_char_stream(IBYTEBUFFER in_src) noexcept : char_stream(in_src) {
+	MBASE_EXPLICIT deep_char_stream(IBYTEBUFFER in_src) noexcept : char_stream(in_src) {
 		IBYTEBUFFER freshBuffer = static_cast<IBYTEBUFFER>(malloc(bufferLength));
-		copy(freshBuffer, srcBuffer, bufferLength);
+		copy_bytes(freshBuffer, srcBuffer, bufferLength);
 		srcBuffer = freshBuffer;
 	}
 
-	explicit deep_char_stream(IBYTEBUFFER in_src, size_type in_length) noexcept : char_stream(in_src, in_length) {
+	MBASE_EXPLICIT deep_char_stream(IBYTEBUFFER in_src, size_type in_length) noexcept : char_stream(in_src, in_length) {
 		IBYTEBUFFER freshBuffer = static_cast<IBYTEBUFFER>(malloc(bufferLength));
-		copy(freshBuffer, srcBuffer, bufferLength);
+		copy_bytes(freshBuffer, srcBuffer, bufferLength);
 		srcBuffer = freshBuffer;
 	}
 
-	explicit deep_char_stream(size_type in_length) : char_stream() {
+	MBASE_EXPLICIT deep_char_stream(size_type in_length) : char_stream() {
 		IBYTEBUFFER freshBuffer = static_cast<IBYTEBUFFER>(malloc(in_length));
 		bufferLength = in_length;
 		srcBuffer = freshBuffer;
@@ -155,7 +155,7 @@ public:
 		bufferLength = in_rhs.bufferLength;
 		streamCursor = in_rhs.streamCursor;
 		srcBuffer = static_cast<IBYTEBUFFER>(malloc(bufferLength));
-		copy(srcBuffer, in_rhs.srcBuffer, in_rhs.bufferLength);
+		copy_bytes(srcBuffer, in_rhs.srcBuffer, in_rhs.bufferLength);
 	}
 
 	deep_char_stream(deep_char_stream&& in_rhs) noexcept {
@@ -169,7 +169,7 @@ public:
 		{
 			streamCursor = in_rhs.streamCursor;
 			fill(srcBuffer, 0, bufferLength);
-			copy(srcBuffer, in_rhs.srcBuffer, in_rhs.bufferLength);
+			copy_bytes(srcBuffer, in_rhs.srcBuffer, in_rhs.bufferLength);
 		}
 		else {
 			free(srcBuffer);
@@ -177,7 +177,7 @@ public:
 			streamCursor = in_rhs.streamCursor;
 			srcBuffer = static_cast<IBYTEBUFFER>(malloc(bufferLength));
 			fill(srcBuffer, 0, bufferLength);
-			copy(srcBuffer, in_rhs.srcBuffer, in_rhs.bufferLength);
+			copy_bytes(srcBuffer, in_rhs.srcBuffer, in_rhs.bufferLength);
 		}
 
 		return *this;

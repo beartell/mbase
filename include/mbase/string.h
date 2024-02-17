@@ -5,7 +5,7 @@
 
 MBASE_STD_BEGIN
 
-class character_sequence : private type_sequence<IBYTE> {
+class character_sequence : public type_sequence<IBYTE> {
 public:
     using Alloc = mbase::allocator_simple<IBYTE>;
 
@@ -27,7 +27,7 @@ public:
         mCapacity = base_capacity;
         mSize = tmp_st_length;
         raw_data = Alloc::allocate(base_capacity, true);
-        type_sequence::copy(raw_data, in_string, tmp_st_length + 1);
+        type_sequence::copy_bytes(raw_data, in_string, tmp_st_length + 1);
     }
 
     character_sequence(MSTRING in_string, size_type in_length) noexcept {
@@ -41,12 +41,12 @@ public:
         mCapacity = base_capacity;
         mSize = in_length;
         raw_data = Alloc::allocate(base_capacity, true);
-        type_sequence::copy(raw_data, in_string, in_length);
+        type_sequence::copy_bytes(raw_data, in_string, in_length);
     }
 
     character_sequence(const character_sequence& in_rhs) noexcept : raw_data(nullptr), mSize(in_rhs.mSize), mCapacity(in_rhs.mCapacity) {
         raw_data = Alloc::allocate(mCapacity, true);
-        type_sequence::copy(raw_data, in_rhs.raw_data, mSize);
+        type_sequence::copy_bytes(raw_data, in_rhs.raw_data, mSize);
     }
 
     character_sequence(character_sequence&& in_rhs) noexcept : raw_data(in_rhs.raw_data), mSize(in_rhs.mSize), mCapacity(in_rhs.mCapacity) {
@@ -67,7 +67,7 @@ public:
         mCapacity = in_rhs.mCapacity;
 
         raw_data = Alloc::allocate(in_rhs.mCapacity, true);
-        type_sequence::copy(raw_data, in_rhs.raw_data, in_rhs.mSize);
+        type_sequence::copy_bytes(raw_data, in_rhs.raw_data, in_rhs.mSize);
         return *this;
     }
 
@@ -88,7 +88,7 @@ public:
         }
         
         raw_data = Alloc::allocate(mCapacity, true);
-        type_sequence::copy(raw_data, in_rhs, st_length);
+        type_sequence::copy_bytes(raw_data, in_rhs, st_length);
 
         return *this;
     }
@@ -187,6 +187,17 @@ public:
         return npos;
     }
 
+    template<typename SourceContainer = mbase::vector<character_sequence>>
+    MBASE_INLINE GENERIC split(const character_sequence& in_delimiters, SourceContainer& out_strings) noexcept {
+        IBYTEBUFFER delims = in_delimiters.c_str();
+        IBYTEBUFFER stringOut = strtok(raw_data, delims);
+        while(stringOut != nullptr)
+        {
+            out_strings.push_back(stringOut);
+            stringOut = strtok(nullptr, delims);
+        }
+    }
+
     template<typename ... Params>
     USED_RETURN static character_sequence from_format(MSTRING in_format, Params ... in_params) noexcept {
         I32 stringLength = _scprintf(in_format, std::forward<Params>(in_params)...); // FIND THE FKIN SIZE
@@ -237,6 +248,40 @@ public:
         return atof(raw_data);
     }
 
+    MBASE_INLINE GENERIC to_lower(iterator in_from, iterator in_to) noexcept {
+        iterator It = in_from;
+        iterator endIt = in_to;
+        for (It; It != endIt; It++)
+        {
+            *It = tolower(*It);
+        }
+    }
+
+    MBASE_INLINE GENERIC to_lower(size_t in_from, size_t in_to) noexcept {
+        to_lower(begin() + in_from, end() + in_to);
+    }
+
+    MBASE_INLINE GENERIC to_lower() noexcept {
+        to_lower(begin(), end());
+    }
+
+    MBASE_INLINE GENERIC to_upper(iterator in_from, iterator in_to) noexcept {
+        iterator It = in_from;
+        iterator endIt = in_to;
+        for (It; It != endIt; It++)
+        {
+            *It = toupper(*It);
+        }
+    }
+
+    MBASE_INLINE GENERIC to_upper(size_t in_from, size_t in_to) noexcept {
+        to_upper(begin() + in_from, end() + in_to);
+    }
+
+    MBASE_INLINE GENERIC to_upper() noexcept {
+        to_upper(begin(), end());
+    }
+
     USED_RETURN MBASE_INLINE GENERIC resize(size_type in_amount) {
         _resize(in_amount);
     }
@@ -245,6 +290,10 @@ public:
         std::swap(raw_data, in_src.raw_data);
         std::swap(mCapacity, in_src.mCapacity);
         std::swap(mSize, in_src.mSize);
+    }
+
+    MBASE_INLINE GENERIC copy(IBYTEBUFFER in_src, size_t in_len, size_t in_pos = 0) noexcept {
+        copy_bytes(in_src, raw_data + in_pos, in_len);
     }
 
     USED_RETURN MBASE_INLINE iterator begin() const noexcept {
@@ -293,6 +342,261 @@ public:
 
     USED_RETURN MBASE_INLINE_EXPR size_type capacity() const noexcept {
         return mCapacity - 1;
+    }
+
+    USED_RETURN static MBASE_INLINE bool is_alnum(const IBYTE& in_char) noexcept {
+        return isalnum(in_char);
+    }
+
+    // if there is a space character in range, the returned value will be false
+    USED_RETURN MBASE_INLINE bool is_alnum(const_iterator in_begin, const_iterator in_end) const noexcept {
+        if(!size())
+        {
+            return false;
+        }
+
+        const_iterator It = in_begin;
+        const_iterator endIt = in_end;
+        
+        for(It; It != endIt; It++)
+        {
+            if(!is_alnum(*It))
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    USED_RETURN MBASE_INLINE bool is_alnum(size_type in_from, size_type in_to) const noexcept {
+        return is_alnum(cbegin() + in_from, cbegin() + in_to);
+    }
+
+    USED_RETURN MBASE_INLINE bool is_alnum() const noexcept {
+        return is_alnum(cbegin(), cend());
+    }
+
+    USED_RETURN static MBASE_INLINE bool is_alpha(const IBYTE& in_char) noexcept {
+        return isalpha(in_char);
+    }
+
+    // if there is a space character in range, the returned value will be false
+    USED_RETURN MBASE_INLINE bool is_alpha(const_iterator in_begin, const_iterator in_end) const noexcept {
+        if (!size())
+        {
+            return false;
+        }
+
+        const_iterator It = in_begin;
+        const_iterator endIt = in_end;
+
+        for (It; It != endIt; It++)
+        {
+            if (!is_alpha(*It))
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    USED_RETURN MBASE_INLINE bool is_alpha(size_type in_from, size_type in_to) const noexcept {
+        return is_alpha(cbegin() + in_from, cbegin() + in_to);
+    }
+
+    USED_RETURN MBASE_INLINE bool is_alpha() const noexcept {
+        return is_alpha(cbegin(), cend());
+    }
+
+    USED_RETURN static MBASE_INLINE bool is_lower(const IBYTE& in_char) noexcept {
+        return islower(in_char);
+    }
+
+    // if there is a space character in range, the returned value will be false
+    USED_RETURN MBASE_INLINE bool is_lower(const_iterator in_begin, const_iterator in_end) const noexcept {
+        if (!size())
+        {
+            return false;
+        }
+
+        const_iterator It = in_begin;
+        const_iterator endIt = in_end;
+
+        for (It; It != endIt; It++)
+        {
+            if (!is_lower(*It))
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    USED_RETURN MBASE_INLINE bool is_lower(size_type in_from, size_type in_to) const noexcept {
+        return is_lower(cbegin() + in_from, cbegin() + in_to);
+    }
+
+    USED_RETURN MBASE_INLINE bool is_lower() const noexcept {
+        return is_lower(cbegin(), cend());
+    }
+
+    USED_RETURN static MBASE_INLINE bool is_upper(const IBYTE& in_char) noexcept {
+        return isupper(in_char);
+    }
+
+    // if there is a space character in range, the returned value will be false
+    USED_RETURN MBASE_INLINE bool is_upper(const_iterator in_begin, const_iterator in_end) const noexcept {
+        if (!size())
+        {
+            return false;
+        }
+
+        const_iterator It = in_begin;
+        const_iterator endIt = in_end;
+
+        for (It; It != endIt; It++)
+        {
+            if (!is_upper(*It))
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    USED_RETURN MBASE_INLINE bool is_upper(size_type in_from, size_type in_to) const noexcept {
+        return is_upper(cbegin() + in_from, cbegin() + in_to);
+    }
+
+    USED_RETURN MBASE_INLINE bool is_upper() const noexcept {
+        return is_upper(cbegin(), cend());
+    }
+
+    USED_RETURN static MBASE_INLINE bool is_blank(const IBYTE& in_char) noexcept {
+        return isblank(in_char);
+    }
+
+    USED_RETURN MBASE_INLINE bool is_blank(const_iterator in_begin, const_iterator in_end) const noexcept {
+        if (!size())
+        {
+            return false;
+        }
+
+        const_iterator It = in_begin;
+        const_iterator endIt = in_end;
+
+        for (It; It != endIt; It++)
+        {
+            if (!is_blank(*It))
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    USED_RETURN MBASE_INLINE bool is_blank(size_type in_from, size_type in_to) const noexcept {
+        return is_blank(cbegin() + in_from, cbegin() + in_to);
+    }
+
+    USED_RETURN MBASE_INLINE bool is_blank() const noexcept {
+        return is_blank(cbegin(), cend());
+    }
+
+    USED_RETURN static MBASE_INLINE bool is_control(const IBYTE& in_char) noexcept {
+        return iscntrl(in_char);
+    }
+
+    // if there is a space character in range, the returned value will be false
+    USED_RETURN MBASE_INLINE bool is_control(const_iterator in_begin, const_iterator in_end) const noexcept {
+        if (!size())
+        {
+            return false;
+        }
+
+        const_iterator It = in_begin;
+        const_iterator endIt = in_end;
+
+        for (It; It != endIt; It++)
+        {
+            if (!is_control(*It))
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    USED_RETURN MBASE_INLINE bool is_control(size_type in_from, size_type in_to) const noexcept {
+        return is_control(cbegin() + in_from, cbegin() + in_to);
+    }
+
+    USED_RETURN MBASE_INLINE bool is_control() const noexcept {
+        return is_control(cbegin(), cend());
+    }
+
+    USED_RETURN static MBASE_INLINE bool is_space(const IBYTE& in_char) noexcept {
+        return isspace(in_char);
+    }
+
+    // characters such as: 0x20(' '), 0x0c('\f'), 0x0a('\n'), 0x0d('\r'), 0x09('\t'), 0x0b('\v')
+    USED_RETURN MBASE_INLINE bool is_space(const_iterator in_begin, const_iterator in_end) const noexcept {
+        if (!size())
+        {
+            return false;
+        }
+
+        const_iterator It = in_begin;
+        const_iterator endIt = in_end;
+
+        for (It; It != endIt; It++)
+        {
+            if (!is_space(*It))
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    USED_RETURN MBASE_INLINE bool is_space(size_type in_from, size_type in_to) const noexcept {
+        return is_space(cbegin() + in_from, cbegin() + in_to);
+    }
+
+    USED_RETURN MBASE_INLINE bool is_space() const noexcept {
+        return is_space(cbegin(), cend());
+    }
+
+    USED_RETURN static MBASE_INLINE bool is_punctuation(const IBYTE& in_char) noexcept {
+        return ispunct(in_char);
+    }
+
+    // characters such as: !"#$%&'()*+,-./:;<=>?@[\]^_`{|}~
+    USED_RETURN MBASE_INLINE bool is_punctuation(const_iterator in_begin, const_iterator in_end) const noexcept {
+        if (!size())
+        {
+            return false;
+        }
+
+        const_iterator It = in_begin;
+        const_iterator endIt = in_end;
+
+        for (It; It != endIt; It++)
+        {
+            if (!is_punctuation(*It))
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    USED_RETURN MBASE_INLINE bool is_punctuation(size_type in_from, size_type in_to) const noexcept {
+        return is_punctuation(cbegin() + in_from, cbegin() + in_to);
+    }
+
+    USED_RETURN MBASE_INLINE bool is_punctuation() const noexcept {
+        return is_punctuation(cbegin(), cend());
     }
 
     friend character_sequence operator+(const character_sequence& in_lhs, MSTRING in_rhs) noexcept {
@@ -379,7 +683,7 @@ public:
             out_buffer->bfLength = mSize;
             out_buffer->bfSource = new IBYTE[mSize];
 
-            copy(out_buffer->bfSource, raw_data, mSize); // DO NOT INCLUDE NULL TERMINATOR
+            copy_bytes(out_buffer->bfSource, raw_data, mSize); // DO NOT INCLUDE NULL TERMINATOR
         }
     }
 
@@ -400,7 +704,7 @@ private:
         }
 
         IBYTEBUFFER new_data = Alloc::allocate(in_size, true);
-        type_sequence::copy(new_data, raw_data, expectedSize);
+        type_sequence::copy_bytes(new_data, raw_data, expectedSize);
         Alloc::deallocate(raw_data);
         raw_data = new_data;
         mCapacity = in_size;

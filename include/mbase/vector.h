@@ -90,11 +90,11 @@ public:
 	using iterator = vector_iterator<T>;
 	using const_iterator = const_vector_iterator<T>;
 
-	explicit vector() noexcept : raw_data(nullptr), mSize(0), mCapacity(4) {
+	MBASE_EXPLICIT vector() noexcept : raw_data(nullptr), mSize(0), mCapacity(4) {
 		raw_data = Allocator::allocate(mCapacity); // default capacity
 	}
 
-	explicit vector(size_type in_size) noexcept : raw_data(nullptr), mSize(0), mCapacity(0) {
+	MBASE_EXPLICIT vector(size_type in_size) noexcept : raw_data(nullptr), mSize(0), mCapacity(0) {
 		if(in_size < 0)
 		{
 			return;
