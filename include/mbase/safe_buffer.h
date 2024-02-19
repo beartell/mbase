@@ -14,14 +14,6 @@ struct safe_buffer {
 		bfLength = in_length;
 	}
 
-	//safe_buffer(const safe_buffer& in_rhs) noexcept {
-	//	bfLength = in_rhs.bfLength;
-	//	if(in_rhs.bfSource)
-	//	{
-	//		type_sequence<IBYTE>::copy(bfSource, in_rhs.bfSource, in_rhs.bfLength);
-	//	}
-	//}
-
 	safe_buffer(safe_buffer&& in_rhs) noexcept {
 		bfSource = in_rhs.bfSource;
 		bfLength = in_rhs.bfLength;
@@ -36,21 +28,6 @@ struct safe_buffer {
 			delete[] bfSource;
 		}
 	}
-
-	/*safe_buffer& operator=(const safe_buffer& in_rhs) noexcept {
-		bfLength = in_rhs.bfLength;
-		if (bfSource)
-		{
-			delete[] bfSource;
-		}
-
-		if (in_rhs.bfSource)
-		{
-			type_sequence<IBYTE>::copy(bfSource, in_rhs.bfSource, in_rhs.bfLength);
-		}
-
-		return *this;
-	}*/
 
 	safe_buffer& operator=(safe_buffer&& in_rhs) noexcept {
 		clear();

@@ -7,10 +7,16 @@
 
 MBASE_BEGIN
 
-class async_io_context {
+class async_io_context : public non_copymovable {
 public:
 	using size_type = SIZE_T;
 	using difference_type = PTRDIFF;
+
+	enum class errors : U8 {
+		ASYNC_CTX_SUCCESS = 0,
+		ASYNC_CTX_ERR_CONTEXT_ACTIVE = 1,
+		ASYNC_CTX_ERR_ALREADY_HALTED = 2
+	};
 
 	enum class direction : U8 {
 		IO_CTX_DIRECTION_INPUT = 0,
@@ -20,7 +26,7 @@ public:
 	enum class status : U8 {
 		ASYNC_IO_STAT_UNREGISTERED = 0,
 		ASYNC_IO_STAT_IDLE = 1,
-		ASYNC_IO_STAT_INTERRUPTED = 2,
+		ASYNC_IO_STAT_ABANDONED = 2,
 		ASYNC_IO_STAT_FAILED = 3,
 		ASYNC_IO_STAT_FLUSHED = 4,
 		ASYNC_IO_STAT_OPERATING = 5,
@@ -55,8 +61,36 @@ public:
 			deep_char_stream* dcsTemp = static_cast<deep_char_stream*>(srcBuffer);
 			delete dcsTemp;
 		}
+		
 		ioHandle = nullptr;
 		srcBuffer = nullptr;
+	}
+
+	USED_RETURN errors ConstructContext(io_base& in_base, direction in_io_direction = direction::IO_CTX_DIRECTION_INPUT) {
+		if (isActive)
+		{
+			return errors::ASYNC_CTX_ERR_CONTEXT_ACTIVE;
+		}
+
+		ioHandle = &in_base;
+		if (!isBufferInternal)
+		{
+			deep_char_stream* dcsTemp = static_cast<deep_char_stream*>(srcBuffer);
+			delete dcsTemp;
+		}
+
+		srcBuffer = nullptr;
+
+		if (in_io_direction == direction::IO_CTX_DIRECTION_OUTPUT)
+		{
+			srcBuffer = ioHandle->get_os();
+		}
+		else
+		{
+			srcBuffer = ioHandle->get_is();
+		}
+
+		return errors::ASYNC_CTX_SUCCESS;
 	}
 
 	USED_RETURN size_type GetTotalTransferredBytes() const noexcept {
@@ -103,18 +137,32 @@ public:
 		srcBuffer->set_cursor_front();
 		ioHandle->set_file_pointer(0, mbase::io_base::move_method::MV_BEGIN);
 		hopCounter = 0;
+		bytesTransferred = 0;
+		ais = status::ASYNC_IO_STAT_FLUSHED;
 	}
 
-	GENERIC HaltContext() noexcept {
+	errors HaltContext() noexcept {
+		if(!isActive)
+		{
+			return errors::ASYNC_CTX_ERR_ALREADY_HALTED;
+		}
+
 		isActive = false;
 		srcBuffer->set_cursor_front();
 		ioHandle->set_file_pointer(0, mbase::io_base::move_method::MV_BEGIN);
+		return errors::ASYNC_CTX_SUCCESS;
 	}
 
-	GENERIC ResumeContext() noexcept {
+	errors ResumeContext() noexcept {
+		if (isActive)
+		{
+			return errors::ASYNC_CTX_ERR_CONTEXT_ACTIVE;
+		}
+
 		isActive = true;
 		srcBuffer->advance(bytesTransferred);
 		ioHandle->set_file_pointer(bytesTransferred, mbase::io_base::move_method::MV_BEGIN);
+		return errors::ASYNC_CTX_SUCCESS;
 	}
 
 	friend class async_io_manager;

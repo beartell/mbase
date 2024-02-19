@@ -154,13 +154,27 @@ public:
     }
 
     character_sequence& operator+=(const IBYTE& in_character) noexcept {
-        mSize += 1;
+        mSize++;
         if(mSize >= mCapacity)
         {
             _resize(++mCapacity);
         }
         raw_data[mSize-1] = in_character;
         return *this;
+    }
+
+    MBASE_INLINE GENERIC pop_back() noexcept {
+        mSize--;
+        raw_data[mSize] = '\0';
+    }
+
+    MBASE_INLINE GENERIC push_back(const IBYTE& in_character) noexcept {
+        mSize++;
+        if (mSize >= mCapacity)
+        {
+            _resize(++mCapacity);
+        }
+        raw_data[mSize - 1] = in_character;
     }
 
     USED_RETURN MBASE_INLINE size_type find(MSTRING in_src, size_type in_pos = 0) const noexcept {
@@ -257,6 +271,15 @@ public:
         }
     }
 
+    MBASE_INLINE GENERIC to_lower(reverse_iterator in_from, reverse_iterator in_to) noexcept {
+        reverse_iterator rIt = in_from;
+        reverse_iterator endrIt = in_to;
+        for(rIt; rIt != endrIt; rIt++)
+        {
+            *rIt = tolower(*rIt);
+        }
+    }
+
     MBASE_INLINE GENERIC to_lower(size_t in_from, size_t in_to) noexcept {
         to_lower(begin() + in_from, end() + in_to);
     }
@@ -271,6 +294,15 @@ public:
         for (It; It != endIt; It++)
         {
             *It = toupper(*It);
+        }
+    }
+
+    MBASE_INLINE GENERIC to_upper(reverse_iterator in_from, reverse_iterator in_to) noexcept {
+        reverse_iterator rIt = in_from;
+        reverse_iterator endrIt = in_to;
+        for (rIt; rIt != endrIt; rIt++)
+        {
+            *rIt = toupper(*rIt);
         }
     }
 
@@ -314,6 +346,22 @@ public:
 
     USED_RETURN MBASE_INLINE const_pointer c_str() const noexcept {
         return raw_data;
+    }
+
+    USED_RETURN MBASE_INLINE reverse_iterator rbegin() const noexcept {
+        return reverse_iterator(raw_data + (mSize - 1));
+    }
+
+    USED_RETURN MBASE_INLINE const_reverse_iterator crbegin() const noexcept {
+        return const_reverse_iterator(raw_data + (mSize - 1));
+    }
+
+    USED_RETURN MBASE_INLINE reverse_iterator rend() const noexcept {
+        return reverse_iterator(raw_data - 1);
+    }
+
+    USED_RETURN MBASE_INLINE const_reverse_iterator crend() const noexcept {
+        return const_reverse_iterator(raw_data - 1);
     }
 
     USED_RETURN MBASE_INLINE pointer data() const noexcept {
@@ -704,7 +752,7 @@ private:
         }
 
         IBYTEBUFFER new_data = Alloc::allocate(in_size, true);
-        type_sequence::copy_bytes(new_data, raw_data, expectedSize);
+        copy_bytes(new_data, raw_data, expectedSize);
         Alloc::deallocate(raw_data);
         raw_data = new_data;
         mCapacity = in_size;

@@ -45,6 +45,7 @@ public:
 			// WARN THE USER THAT THE TIMER WILL BE EXECUTED IMMEDIATELY
 			terr = timer_err::TIMER_WARN_TIMER_WILL_EXECUTE_IMM;
 		}
+		in_timer.mIsActive = true;
 		registeredTimers.push_back(&in_timer);
 		out_timer = &registeredTimers.end();
 
@@ -65,6 +66,7 @@ public:
 			// WARN THE USER THAT THE TIMER WILL BE EXECUTED IMMEDIATELY
 			terr = timer_err::TIMER_WARN_TIMER_WILL_EXECUTE_IMM;
 		}
+		in_timer.mIsActive = true;
 		in_timer.suppliedData = in_usr_data;
 		registeredTimers.push_back(&in_timer);
 		out_timer = &registeredTimers.end();
@@ -74,6 +76,8 @@ public:
 
 	timer_err UnregisterTimer(timer_element_iterator* out_timer) noexcept {
 		MBASE_NULL_CHECK_RETURN_VAL(out_timer, timer_err::TIMER_ERR_INVALID_DATA);
+		timer_base* tb = **out_timer;
+		tb->mIsActive = false;
 		registeredTimers.erase(*out_timer);
 		return timer_err::TIMER_SUCCESS;
 	}
@@ -115,6 +119,7 @@ public:
 			{
 				timer_base* tmpTimerBase = *It;
 				tmpTimerBase->mCurrentTime += deltaTime;
+				tmpTimerBase->mIsActive = true;
 				if (tmpTimerBase->mCurrentTime >= tmpTimerBase->mTargetTime)
 				{
 					if(tmpTimerBase->GetExecutionPolicy() == mbase::timer_base::timer_exec_policy::TIMER_POLICY_ASYNC)

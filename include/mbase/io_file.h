@@ -26,7 +26,7 @@ public:
 
 	io_file()  noexcept : rawHandle(nullptr) {}
 
-	io_file(const mbase::string& in_filename, access_mode in_accmode, disposition in_disp = disposition::OVERWRITE) noexcept {
+	io_file(const mbase::string& in_filename, access_mode in_accmode = access_mode::RW_ACCESS, disposition in_disp = disposition::OVERWRITE) noexcept {
 		DWORD fileAttrs = FILE_ATTRIBUTE_NORMAL;
 
 		rawHandle = CreateFileA(in_filename.c_str(), (DWORD)in_accmode, FILE_SHARE_READ, nullptr, (DWORD)in_disp, fileAttrs, nullptr);
@@ -48,7 +48,7 @@ public:
 		close_file();
 	}
 
-	MBASE_INLINE PTRGENERIC open_file(const mbase::string& in_filename, access_mode in_accmode, disposition in_disp = disposition::OVERWRITE) noexcept {
+	MBASE_INLINE PTRGENERIC open_file(const mbase::string& in_filename, access_mode in_accmode = access_mode::RW_ACCESS, disposition in_disp = disposition::OVERWRITE) noexcept {
 		close_file();
 		DWORD fileAttrs = FILE_ATTRIBUTE_NORMAL;
 
