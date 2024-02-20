@@ -5,7 +5,6 @@
 
 #include <mbase/common.h> // For data types and macros
 #include <mbase/allocator.h> // For allocation routines
-#include <mbase/vector_iterator.h>
 #include <mbase/safe_buffer.h> // For safe buffer
 #include <mbase/container_serializer_helper.h> // For serialize_helper
 
@@ -37,10 +36,10 @@ public:
 	using pointer = T*;
 	using const_pointer = const T*;
 
-	using iterator = vector_iterator<T>;
-	using const_iterator = const_vector_iterator<T>;
-	using reverse_iterator = reverse_vector_iterator<T>;
-	using const_reverse_iterator = const_reverse_vector_iterator<T>;
+	using iterator = sequence_iterator<T>;
+	using const_iterator = const_sequence_iterator<T>;
+	using reverse_iterator = reverse_sequence_iterator<T>;
+	using const_reverse_iterator = const_reverse_sequence_iterator<T>;
 
 	MBASE_EXPLICIT vector() noexcept : raw_data(nullptr), mSize(0), mCapacity(4) {
 		raw_data = Allocator::allocate(mCapacity); // default capacity
@@ -179,7 +178,6 @@ public:
 		{
 			reserve(in_size * 2);
 		}
-		
 		mSize = in_size;
 	}
 
@@ -194,15 +192,18 @@ public:
 		for(i; i < mSize; i++)
 		{
 			Allocator::construct(new_data + i, std::move(*(raw_data + i)));
+			raw_data[i].~value_type();
 		}
-		clear();
+		Allocator::deallocate(raw_data);
+		raw_data = nullptr;
+
 		mSize = i;
 		mCapacity = in_capacity;
 		raw_data = new_data;
 	}
 
 	MBASE_INLINE_EXPR GENERIC erase(iterator in_pos) noexcept {
-		if(in_pos == end())
+		if(in_pos == end() - 1)
 		{
 			pop_back();
 		}
@@ -210,26 +211,33 @@ public:
 		{
 			if(mSize)
 			{
-				pointer new_data = Allocator::allocate(in_capacity);
+				pointer new_data = Allocator::allocate(mCapacity);
 				difference_type i = 0;
+				difference_type j = 0;
 				for (iterator It = begin(); It != end(); It++)
 				{
 					if (It == in_pos)
 					{
 						It->~value_type();
+						++j;
 					}
 					else
 					{
-						raw_data[i].~value_type();
-						Allocator::construct(new_data + i, std::move(*(raw_data + i)));
+						raw_data[j].~value_type();
 					}
+					Allocator::construct(new_data + i, std::move(*(raw_data + j)));
 					++i;
+					++j;
 				}
 				Allocator::deallocate(raw_data);
 				raw_data = new_data;
 				--mSize;
 			}
 		}
+	}
+
+	MBASE_INLINE_EXPR iterator insert(const_iterator in_position, const T& in_val) noexcept {
+		return iterator(raw_data);
 	}
 
 	MBASE_INLINE_EXPR GENERIC push_back(const T& in_data) noexcept {

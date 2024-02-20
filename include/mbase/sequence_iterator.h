@@ -28,6 +28,10 @@ public:
         return _ptr;
     }
 
+    MBASE_INLINE pointer operator->() const noexcept {
+        return _ptr;
+    }
+
     USED_RETURN MBASE_INLINE reference operator*() const noexcept {
         return *_ptr;
     }
@@ -109,6 +113,10 @@ public:
         return _ptr;
     }
 
+    MBASE_INLINE const_pointer operator->() const noexcept {
+        return _ptr;
+    }
+
     USED_RETURN MBASE_INLINE const_reference operator*() const noexcept {
         return *_ptr;
     }
@@ -181,6 +189,10 @@ public:
     }
 
     USED_RETURN MBASE_INLINE pointer get() noexcept {
+        return _ptr;
+    }
+
+    MBASE_INLINE pointer operator->() const noexcept {
         return _ptr;
     }
 
@@ -262,6 +274,10 @@ public:
     }
 
     USED_RETURN MBASE_INLINE const_pointer get() noexcept {
+        return _ptr;
+    }
+
+    MBASE_INLINE const_pointer operator->() const noexcept {
         return _ptr;
     }
 
