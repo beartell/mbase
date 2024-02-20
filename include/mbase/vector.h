@@ -5,7 +5,7 @@
 
 #include <mbase/common.h> // For data types and macros
 #include <mbase/allocator.h> // For allocation routines
-#include <mbase/type_sequence.h> // For sequence iterator
+#include <mbase/vector_iterator.h>
 #include <mbase/safe_buffer.h> // For safe buffer
 #include <mbase/container_serializer_helper.h> // For serialize_helper
 
@@ -24,56 +24,6 @@ MBASE_STD_BEGIN
 // equality comparable
 // destructible
 
-template<typename T>
-class vector_iterator : public mbase::sequence_iterator<T> {
-public:
-	vector_iterator(pointer in_ptr) noexcept : sequence_iterator(in_ptr) {}
-	vector_iterator(const vector_iterator& in_rhs) noexcept : sequence_iterator(in_rhs._ptr) {}
-
-	MBASE_INLINE pointer operator->() const noexcept {
-		return _ptr;
-	}
-
-	MBASE_INLINE pointer get() const noexcept {
-		return _ptr;
-	}
-
-	USED_RETURN MBASE_INLINE bool operator==(const vector_iterator& in_rhs) const noexcept {
-		return _ptr == in_rhs._ptr;
-	}
-
-	USED_RETURN MBASE_INLINE bool operator!=(const vector_iterator& in_rhs) const noexcept {
-		return _ptr != in_rhs._ptr;
-	}
-};
-
-template <typename T>
-class const_vector_iterator : public mbase::sequence_iterator<T> {
-public:
-	const_vector_iterator(pointer in_ptr) noexcept : sequence_iterator(in_ptr) {}
-	const_vector_iterator(const const_vector_iterator& in_rhs) noexcept : sequence_iterator(in_rhs._ptr) {}
-
-	USED_RETURN MBASE_INLINE const T& operator*() const noexcept {
-		return *_ptr;
-	}
-
-	MBASE_INLINE const T* operator->() const noexcept {
-		return _ptr;
-	}
-
-	MBASE_INLINE const T* get() const noexcept {
-		return _ptr;
-	}
-
-	USED_RETURN MBASE_INLINE bool operator==(const const_vector_iterator& in_rhs) const noexcept {
-		return _ptr == in_rhs._ptr;
-	}
-
-	USED_RETURN MBASE_INLINE bool operator!=(const const_vector_iterator& in_rhs) const noexcept {
-		return _ptr != in_rhs._ptr;
-	}
-};
-
 template<typename T, typename Allocator = mbase::allocator_simple<T>>
 class vector {
 public:
@@ -89,6 +39,8 @@ public:
 
 	using iterator = vector_iterator<T>;
 	using const_iterator = const_vector_iterator<T>;
+	using reverse_iterator = reverse_vector_iterator<T>;
+	using const_reverse_iterator = const_reverse_vector_iterator<T>;
 
 	MBASE_EXPLICIT vector() noexcept : raw_data(nullptr), mSize(0), mCapacity(4) {
 		raw_data = Allocator::allocate(mCapacity); // default capacity
@@ -119,15 +71,13 @@ public:
 	}
 
 	vector(const vector& in_rhs) noexcept {
-		if(!in_rhs.mCapacity)
-		{
-			mSize = 0;
-			mCapacity = 0;
-			return;
-		}
-
 		mSize = in_rhs.mSize;
 		mCapacity = in_rhs.mCapacity;
+
+		if(!mCapacity)
+		{
+			mCapacity = 4;
+		}
 
 		raw_data = Allocator::allocate(mCapacity);
 		for (I32 i = 0; i < mCapacity; i++)
@@ -389,11 +339,11 @@ public:
 		std::swap(mSize, in_src.mSize);
 	}
 
-	USED_RETURN MBASE_INLINE_EXPR iterator begin() noexcept {
+	USED_RETURN MBASE_INLINE_EXPR iterator begin() const noexcept {
 		return iterator(raw_data);
 	}
 
-	USED_RETURN MBASE_INLINE_EXPR iterator end() noexcept {
+	USED_RETURN MBASE_INLINE_EXPR iterator end() const noexcept {
 		return iterator(raw_data + mSize);
 	}
 
@@ -403,6 +353,22 @@ public:
 
 	USED_RETURN MBASE_INLINE_EXPR const_iterator cend() const noexcept {
 		return const_iterator(raw_data + mSize);
+	}
+
+	USED_RETURN MBASE_INLINE_EXPR reverse_iterator rbegin() const noexcept {
+		return reverse_iterator(raw_data + (mSize - 1));
+	}
+
+	USED_RETURN MBASE_INLINE_EXPR reverse_iterator rend() const noexcept {
+		return reverse_iterator(raw_data - 1);
+	}
+
+	USED_RETURN MBASE_INLINE_EXPR const_reverse_iterator crbegin() const noexcept {
+		return const_reverse_iterator(raw_data + (mSize - 1));
+	}
+
+	USED_RETURN MBASE_INLINE_EXPR const_reverse_iterator crend() const noexcept {
+		return const_reverse_iterator(raw_data - 1);
 	}
 
 	USED_RETURN MBASE_INLINE_EXPR reference back() noexcept {

@@ -76,10 +76,6 @@ public:
 			return *this;
 		}
 
-		MBASE_INLINE pointer get() const noexcept {
-			return _ptr;
-		}
-
 		MBASE_INLINE bi_list_iterator& operator--() noexcept {
 			_ptr = _ptr->prev;
 			return *this;
@@ -94,20 +90,13 @@ public:
 	};
 
 	template<typename T, typename DataT>
-	class const_bi_list_iterator : public forward_list_iterator<T, DataT> {
+	class const_bi_list_iterator : public const_forward_list_iterator<T, DataT> {
 	public:
 		using iterator_category = std::bidirectional_iterator_tag;
 
-		const_bi_list_iterator(pointer in_ptr) noexcept : forward_list_iterator(in_ptr) {}
-		const_bi_list_iterator(const const_bi_list_iterator& in_rhs) noexcept : forward_list_iterator(in_rhs._ptr) {}
-
-		USED_RETURN MBASE_INLINE const DataT& operator*() const noexcept {
-			return *_ptr->data;
-		}
-
-		MBASE_INLINE const_pointer get() const noexcept {
-			return _ptr;
-		}
+		const_bi_list_iterator(pointer in_ptr) noexcept : const_forward_list_iterator(in_ptr) {}
+		const_bi_list_iterator(const const_bi_list_iterator& in_rhs) noexcept : const_forward_list_iterator(in_rhs._ptr) {}
+		const_bi_list_iterator(const bi_list_iterator<T, DataT>& in_rhs) noexcept : const_forward_list_iterator(in_rhs.get()) {}
 
 		MBASE_INLINE const_bi_list_iterator& operator-=(difference_type in_rhs) noexcept {
 			for (size_type i = 0; i < in_rhs; i++)
@@ -130,8 +119,74 @@ public:
 		friend class list;
 	};
 
+	template<typename T, typename DataT>
+	class reverse_bi_list_iterator : public backward_list_iterator<T, DataT> {
+	public:
+		using iterator_category = std::bidirectional_iterator_tag;
+
+		reverse_bi_list_iterator(pointer in_ptr) noexcept : backward_list_iterator(in_ptr) {}
+		reverse_bi_list_iterator(const reverse_bi_list_iterator& in_rhs) noexcept : backward_list_iterator(in_rhs._ptr) {}
+
+		MBASE_INLINE reverse_bi_list_iterator& operator-=(difference_type in_rhs) noexcept {
+			for (size_type i = 0; i < in_rhs; i++)
+			{
+				_ptr = _ptr->next;
+			}
+			return *this;
+		}
+
+		MBASE_INLINE reverse_bi_list_iterator& operator--() noexcept {
+			_ptr = _ptr->next;
+			return *this;
+		}
+
+		MBASE_INLINE reverse_bi_list_iterator& operator--(int) noexcept {
+			_ptr = _ptr->next;
+			return *this;
+		}
+
+		friend class list;
+	};
+
+	template<typename T, typename DataT>
+	class const_reverse_bi_list_iterator : public const_backward_list_iterator<T, DataT> {
+	public:
+		using iterator_category = std::bidirectional_iterator_tag;
+
+		const_reverse_bi_list_iterator(pointer in_ptr) noexcept : const_backward_list_iterator(in_ptr) {}
+		const_reverse_bi_list_iterator(const const_reverse_bi_list_iterator& in_rhs) noexcept : const_backward_list_iterator(in_rhs._ptr) {}
+		const_reverse_bi_list_iterator(const reverse_bi_list_iterator<T, DataT>& in_rhs) noexcept : const_backward_list_iterator(in_rhs.get()) {}
+
+
+		MBASE_INLINE const_reverse_bi_list_iterator& operator-=(difference_type in_rhs) noexcept {
+			for (size_type i = 0; i < in_rhs; i++)
+			{
+				_ptr = _ptr->next;
+			}
+			return *this;
+		}
+
+		MBASE_INLINE const_pointer get() const noexcept {
+			return _ptr;
+		}
+
+		MBASE_INLINE const_reverse_bi_list_iterator& operator--() noexcept {
+			_ptr = _ptr->next;
+			return *this;
+		}
+
+		MBASE_INLINE const_reverse_bi_list_iterator& operator--(int) noexcept {
+			_ptr = _ptr->next;
+			return *this;
+		}
+
+		friend class list;
+	};
+
 	using iterator = bi_list_iterator<list_node, value_type>;
 	using const_iterator = const_bi_list_iterator<list_node, value_type>;
+	using reverse_iterator = reverse_bi_list_iterator<list_node, value_type>;
+	using const_reverse_iterator = const_reverse_bi_list_iterator<list_node, value_type>;
 
 	list() noexcept : firstNode(nullptr), lastNode(nullptr), mSize(0) {}
 
@@ -205,11 +260,6 @@ public:
 	}
 
 	USED_RETURN MBASE_INLINE_EXPR const_iterator cbegin() const noexcept {
-		if (!lastNode)
-		{
-			return const_iterator(lastNode);
-		}
-
 		return const_iterator(firstNode);
 	}
 
@@ -220,6 +270,32 @@ public:
 		}
 
 		return const_iterator(lastNode->next);
+	}
+
+	USED_RETURN MBASE_INLINE reverse_iterator rbegin() const noexcept {
+		return reverse_iterator(lastNode);
+	}
+
+	USED_RETURN MBASE_INLINE_EXPR reverse_iterator rend() const noexcept {
+		if(!firstNode)
+		{
+			return reverse_iterator(firstNode);
+		}
+
+		return reverse_iterator(firstNode->prev);
+	}
+
+	USED_RETURN MBASE_INLINE const_reverse_iterator crbegin() const noexcept {
+		return const_reverse_iterator(lastNode);
+	}
+
+	USED_RETURN MBASE_INLINE_EXPR const_reverse_iterator crend() const noexcept {
+		if (!firstNode)
+		{
+			return const_reverse_iterator(firstNode);
+		}
+
+		return const_reverse_iterator(firstNode->prev);
 	}
 
 	MBASE_INLINE_EXPR GENERIC clear() noexcept {
