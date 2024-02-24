@@ -74,11 +74,11 @@ public:
 		return *this;
 	}
 
-	USED_RETURN MBASE_INLINE crypto_error hash_data(IBYTEBUFFER in_src, SIZE_T in_length, safe_buffer* out_buffer) const noexcept {
+	MBASE_INLINE crypto_error hash_data(IBYTEBUFFER in_src, SIZE_T in_length, safe_buffer* out_buffer) const noexcept {
 		return _hash_data(in_src, in_length, out_buffer);
 	}
 
-	USED_RETURN MBASE_INLINE crypto_error hash_data(const mbase::string& in_src, safe_buffer* out_buffer) const noexcept {
+	MBASE_INLINE crypto_error hash_data(const mbase::string& in_src, safe_buffer* out_buffer) const noexcept {
 		return _hash_data(in_src.c_str(), in_src.size(), out_buffer);
 	}
 
@@ -87,7 +87,7 @@ private:
 	BCRYPT_HASH_HANDLE ourHashHandle = nullptr;
 	U64 hashSize;
 
-	USED_RETURN MBASE_INLINE crypto_error _hash_data(IBYTEBUFFER in_src, SIZE_T in_length, safe_buffer* out_buffer) const noexcept {
+	MBASE_INLINE crypto_error _hash_data(IBYTEBUFFER in_src, SIZE_T in_length, safe_buffer* out_buffer) const noexcept {
 		U64 hashValue = 0;
 		NTSTATUS cryptRes = BCryptHashData(ourHashHandle, (PUCHAR)in_src, in_length, 0);
 		PUCHAR outHash = new UCHAR[hashSize];

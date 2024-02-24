@@ -1,7 +1,9 @@
 #ifndef MBASE_STRING_H
 #define MBASE_STRING_H
 
+#include <mbase/vector.h>
 #include <mbase/type_sequence.h>
+#include <mbase/safe_buffer.h>
 
 MBASE_STD_BEGIN
 
@@ -177,7 +179,7 @@ public:
         raw_data[mSize - 1] = in_character;
     }
 
-    USED_RETURN MBASE_INLINE size_type find(MSTRING in_src, size_type in_pos = 0) const noexcept {
+    USED_RETURN("founded string not being used") MBASE_INLINE size_type find(MSTRING in_src, size_type in_pos = 0) const noexcept {
         MSTRING tmpResult = strstr(raw_data + in_pos, in_src);
         if (tmpResult)
         {
@@ -187,11 +189,11 @@ public:
         return npos;
     }
 
-    USED_RETURN MBASE_INLINE size_type find(const character_sequence& in_src, size_type in_pos = 0) const noexcept {
+    USED_RETURN("founded string not being used") MBASE_INLINE size_type find(const character_sequence& in_src, size_type in_pos = 0) const noexcept {
         return find(in_src.c_str(), in_pos);
     }
 
-    USED_RETURN MBASE_INLINE size_type find(IBYTE in_char, size_type in_pos = 0) const noexcept {
+    USED_RETURN("founded string not being used") MBASE_INLINE size_type find(IBYTE in_char, size_type in_pos = 0) const noexcept {
         MSTRING tmpResult = strchr(raw_data + in_pos, in_char);
         if(tmpResult)
         {
@@ -213,7 +215,7 @@ public:
     }
 
     template<typename ... Params>
-    USED_RETURN static character_sequence from_format(MSTRING in_format, Params ... in_params) noexcept {
+    USED_RETURN("formatted string not being used") static character_sequence from_format(MSTRING in_format, Params ... in_params) noexcept {
         I32 stringLength = _scprintf(in_format, std::forward<Params>(in_params)...); // FIND THE FKIN SIZE
         character_sequence newSequence;
         if(!stringLength)
@@ -230,35 +232,35 @@ public:
         return newSequence;
     }
 
-    USED_RETURN static I32 to_i32(const character_sequence& in_string) noexcept {
+    USED_RETURN("converted string not being used.") static I32 to_i32(const character_sequence& in_string) noexcept {
         return atoi(in_string.c_str());
     }
 
-    USED_RETURN static I32 to_i64(const character_sequence& in_string) noexcept {
+    USED_RETURN("converted string not being used.") static I32 to_i64(const character_sequence& in_string) noexcept {
         return _atoi64(in_string.c_str());
     }
 
-    USED_RETURN static F32 to_f32(const character_sequence& in_string) noexcept {
+    USED_RETURN("converted string not being used.") static F32 to_f32(const character_sequence& in_string) noexcept {
         return strtof(in_string.c_str(), nullptr);
     }
 
-    USED_RETURN static F64 to_f64(const character_sequence& in_string) noexcept {
+    USED_RETURN("converted string not being used.") static F64 to_f64(const character_sequence& in_string) noexcept {
         return atof(in_string.c_str());
     }
 
-    USED_RETURN MBASE_INLINE I32 to_i32() const noexcept {
+    USED_RETURN("converted string not being used.") MBASE_INLINE I32 to_i32() const noexcept {
         return atoi(raw_data);
     }
 
-    USED_RETURN MBASE_INLINE I64 to_i64() const noexcept {
+    USED_RETURN("converted string not being used.") MBASE_INLINE I64 to_i64() const noexcept {
         return _atoi64(raw_data);
     }
 
-    USED_RETURN MBASE_INLINE F32 to_f32() const noexcept {
+    USED_RETURN("converted string not being used.") MBASE_INLINE F32 to_f32() const noexcept {
         return strtof(raw_data, nullptr);
     }
 
-    USED_RETURN MBASE_INLINE F64 to_f64() const noexcept {
+    USED_RETURN("converted string not being used.") MBASE_INLINE F64 to_f64() const noexcept {
         return atof(raw_data);
     }
 
@@ -314,7 +316,7 @@ public:
         to_upper(begin(), end());
     }
 
-    USED_RETURN MBASE_INLINE GENERIC resize(size_type in_amount) {
+    MBASE_INLINE GENERIC resize(size_type in_amount) {
         _resize(in_amount);
     }
 
@@ -328,76 +330,76 @@ public:
         copy_bytes(in_src, raw_data + in_pos, in_len);
     }
 
-    USED_RETURN MBASE_INLINE iterator begin() const noexcept {
+    USED_RETURN("iterator being ignored") MBASE_INLINE iterator begin() const noexcept {
         return iterator(raw_data);
     }
 
-    USED_RETURN MBASE_INLINE iterator end() const noexcept {
+    USED_RETURN("iterator being ignored") MBASE_INLINE iterator end() const noexcept {
         return iterator(raw_data + mSize);
     }
 
-    USED_RETURN MBASE_INLINE const_iterator cbegin() const noexcept {
+    USED_RETURN("const iterator being ignored") MBASE_INLINE const_iterator cbegin() const noexcept {
         return const_iterator(raw_data);
     }
 
-    USED_RETURN MBASE_INLINE const_iterator cend() const noexcept {
+    USED_RETURN("const iterator being ignored") MBASE_INLINE const_iterator cend() const noexcept {
         return const_iterator(raw_data + mSize);
     }
 
-    USED_RETURN MBASE_INLINE const_pointer c_str() const noexcept {
+    USED_RETURN("raw string being ignored") MBASE_INLINE const_pointer c_str() const noexcept {
         return raw_data;
     }
 
-    USED_RETURN MBASE_INLINE reverse_iterator rbegin() const noexcept {
+    USED_RETURN("reverse iterator being ignored") MBASE_INLINE reverse_iterator rbegin() const noexcept {
         return reverse_iterator(raw_data + (mSize - 1));
     }
 
-    USED_RETURN MBASE_INLINE const_reverse_iterator crbegin() const noexcept {
+    USED_RETURN("const reverse iterator being ignored") MBASE_INLINE const_reverse_iterator crbegin() const noexcept {
         return const_reverse_iterator(raw_data + (mSize - 1));
     }
 
-    USED_RETURN MBASE_INLINE reverse_iterator rend() const noexcept {
+    USED_RETURN("reverse iterator being ignored") MBASE_INLINE reverse_iterator rend() const noexcept {
         return reverse_iterator(raw_data - 1);
     }
 
-    USED_RETURN MBASE_INLINE const_reverse_iterator crend() const noexcept {
+    USED_RETURN("const reverse iterator being ignored") MBASE_INLINE const_reverse_iterator crend() const noexcept {
         return const_reverse_iterator(raw_data - 1);
     }
 
-    USED_RETURN MBASE_INLINE pointer data() const noexcept {
+    USED_RETURN("raw string data being ignored") MBASE_INLINE pointer data() const noexcept {
         return raw_data;
     }
 
-    USED_RETURN MBASE_INLINE reference front() const noexcept {
+    USED_RETURN("first character being ignored") MBASE_INLINE reference front() const noexcept {
         return raw_data[0];
     }
 
-    USED_RETURN MBASE_INLINE reference back() const noexcept {
+    USED_RETURN("last character being ignored") MBASE_INLINE reference back() const noexcept {
         return raw_data[mSize - 1];
     }
 
-    USED_RETURN MBASE_INLINE reference at(size_type in_pos) const noexcept {
+    USED_RETURN("character unused") MBASE_INLINE reference at(size_type in_pos) const noexcept {
         return raw_data[in_pos];
     }
 
-    USED_RETURN MBASE_INLINE reference operator[](size_type in_pos) const noexcept {
+    USED_RETURN("character unused") MBASE_INLINE reference operator[](size_type in_pos) const noexcept {
         return raw_data[in_pos];
     }
 
-    USED_RETURN MBASE_INLINE_EXPR size_type size() const noexcept {
+    USED_RETURN("string observation ignored") MBASE_INLINE_EXPR size_type size() const noexcept {
         return mSize;
     }
 
-    USED_RETURN MBASE_INLINE_EXPR size_type capacity() const noexcept {
+    USED_RETURN("string observation ignored") MBASE_INLINE_EXPR size_type capacity() const noexcept {
         return mCapacity - 1;
     }
 
-    USED_RETURN static MBASE_INLINE bool is_alnum(const IBYTE& in_char) noexcept {
+    USED_RETURN("string observation ignored") static MBASE_INLINE bool is_alnum(const IBYTE& in_char) noexcept {
         return isalnum(in_char);
     }
 
     // if there is a space character in range, the returned value will be false
-    USED_RETURN MBASE_INLINE bool is_alnum(const_iterator in_begin, const_iterator in_end) const noexcept {
+    USED_RETURN("string observation ignored") MBASE_INLINE bool is_alnum(const_iterator in_begin, const_iterator in_end) const noexcept {
         if(!size())
         {
             return false;
@@ -416,20 +418,20 @@ public:
         return true;
     }
 
-    USED_RETURN MBASE_INLINE bool is_alnum(size_type in_from, size_type in_to) const noexcept {
+    USED_RETURN("string observation ignored") MBASE_INLINE bool is_alnum(size_type in_from, size_type in_to) const noexcept {
         return is_alnum(cbegin() + in_from, cbegin() + in_to);
     }
 
-    USED_RETURN MBASE_INLINE bool is_alnum() const noexcept {
+    USED_RETURN("string observation ignored") MBASE_INLINE bool is_alnum() const noexcept {
         return is_alnum(cbegin(), cend());
     }
 
-    USED_RETURN static MBASE_INLINE bool is_alpha(const IBYTE& in_char) noexcept {
+    USED_RETURN("string observation ignored") static MBASE_INLINE bool is_alpha(const IBYTE& in_char) noexcept {
         return isalpha(in_char);
     }
 
     // if there is a space character in range, the returned value will be false
-    USED_RETURN MBASE_INLINE bool is_alpha(const_iterator in_begin, const_iterator in_end) const noexcept {
+    USED_RETURN("string observation ignored") MBASE_INLINE bool is_alpha(const_iterator in_begin, const_iterator in_end) const noexcept {
         if (!size())
         {
             return false;
@@ -448,20 +450,20 @@ public:
         return true;
     }
 
-    USED_RETURN MBASE_INLINE bool is_alpha(size_type in_from, size_type in_to) const noexcept {
+    USED_RETURN("string observation ignored") MBASE_INLINE bool is_alpha(size_type in_from, size_type in_to) const noexcept {
         return is_alpha(cbegin() + in_from, cbegin() + in_to);
     }
 
-    USED_RETURN MBASE_INLINE bool is_alpha() const noexcept {
+    USED_RETURN("string observation ignored") MBASE_INLINE bool is_alpha() const noexcept {
         return is_alpha(cbegin(), cend());
     }
 
-    USED_RETURN static MBASE_INLINE bool is_lower(const IBYTE& in_char) noexcept {
+    USED_RETURN("string observation ignored") static MBASE_INLINE bool is_lower(const IBYTE& in_char) noexcept {
         return islower(in_char);
     }
 
     // if there is a space character in range, the returned value will be false
-    USED_RETURN MBASE_INLINE bool is_lower(const_iterator in_begin, const_iterator in_end) const noexcept {
+    USED_RETURN("string observation ignored") MBASE_INLINE bool is_lower(const_iterator in_begin, const_iterator in_end) const noexcept {
         if (!size())
         {
             return false;
@@ -480,20 +482,20 @@ public:
         return true;
     }
 
-    USED_RETURN MBASE_INLINE bool is_lower(size_type in_from, size_type in_to) const noexcept {
+    USED_RETURN("string observation ignored") MBASE_INLINE bool is_lower(size_type in_from, size_type in_to) const noexcept {
         return is_lower(cbegin() + in_from, cbegin() + in_to);
     }
 
-    USED_RETURN MBASE_INLINE bool is_lower() const noexcept {
+    USED_RETURN("string observation ignored") MBASE_INLINE bool is_lower() const noexcept {
         return is_lower(cbegin(), cend());
     }
 
-    USED_RETURN static MBASE_INLINE bool is_upper(const IBYTE& in_char) noexcept {
+    USED_RETURN("string observation ignored") static MBASE_INLINE bool is_upper(const IBYTE& in_char) noexcept {
         return isupper(in_char);
     }
 
     // if there is a space character in range, the returned value will be false
-    USED_RETURN MBASE_INLINE bool is_upper(const_iterator in_begin, const_iterator in_end) const noexcept {
+    USED_RETURN("string observation ignored") MBASE_INLINE bool is_upper(const_iterator in_begin, const_iterator in_end) const noexcept {
         if (!size())
         {
             return false;
@@ -512,19 +514,19 @@ public:
         return true;
     }
 
-    USED_RETURN MBASE_INLINE bool is_upper(size_type in_from, size_type in_to) const noexcept {
+    USED_RETURN("string observation ignored") MBASE_INLINE bool is_upper(size_type in_from, size_type in_to) const noexcept {
         return is_upper(cbegin() + in_from, cbegin() + in_to);
     }
 
-    USED_RETURN MBASE_INLINE bool is_upper() const noexcept {
+    USED_RETURN("string observation ignored") MBASE_INLINE bool is_upper() const noexcept {
         return is_upper(cbegin(), cend());
     }
 
-    USED_RETURN static MBASE_INLINE bool is_blank(const IBYTE& in_char) noexcept {
+    USED_RETURN("string observation ignored") static MBASE_INLINE bool is_blank(const IBYTE& in_char) noexcept {
         return isblank(in_char);
     }
 
-    USED_RETURN MBASE_INLINE bool is_blank(const_iterator in_begin, const_iterator in_end) const noexcept {
+    USED_RETURN("string observation ignored") MBASE_INLINE bool is_blank(const_iterator in_begin, const_iterator in_end) const noexcept {
         if (!size())
         {
             return false;
@@ -543,20 +545,20 @@ public:
         return true;
     }
 
-    USED_RETURN MBASE_INLINE bool is_blank(size_type in_from, size_type in_to) const noexcept {
+    USED_RETURN("string observation ignored") MBASE_INLINE bool is_blank(size_type in_from, size_type in_to) const noexcept {
         return is_blank(cbegin() + in_from, cbegin() + in_to);
     }
 
-    USED_RETURN MBASE_INLINE bool is_blank() const noexcept {
+    USED_RETURN("string observation ignored") MBASE_INLINE bool is_blank() const noexcept {
         return is_blank(cbegin(), cend());
     }
 
-    USED_RETURN static MBASE_INLINE bool is_control(const IBYTE& in_char) noexcept {
+    USED_RETURN("string observation ignored") static MBASE_INLINE bool is_control(const IBYTE& in_char) noexcept {
         return iscntrl(in_char);
     }
 
     // if there is a space character in range, the returned value will be false
-    USED_RETURN MBASE_INLINE bool is_control(const_iterator in_begin, const_iterator in_end) const noexcept {
+    USED_RETURN("string observation ignored") MBASE_INLINE bool is_control(const_iterator in_begin, const_iterator in_end) const noexcept {
         if (!size())
         {
             return false;
@@ -575,20 +577,20 @@ public:
         return true;
     }
 
-    USED_RETURN MBASE_INLINE bool is_control(size_type in_from, size_type in_to) const noexcept {
+    USED_RETURN("string observation ignored") MBASE_INLINE bool is_control(size_type in_from, size_type in_to) const noexcept {
         return is_control(cbegin() + in_from, cbegin() + in_to);
     }
 
-    USED_RETURN MBASE_INLINE bool is_control() const noexcept {
+    USED_RETURN("string observation ignored") MBASE_INLINE bool is_control() const noexcept {
         return is_control(cbegin(), cend());
     }
 
-    USED_RETURN static MBASE_INLINE bool is_space(const IBYTE& in_char) noexcept {
+    USED_RETURN("string observation ignored") static MBASE_INLINE bool is_space(const IBYTE& in_char) noexcept {
         return isspace(in_char);
     }
 
     // characters such as: 0x20(' '), 0x0c('\f'), 0x0a('\n'), 0x0d('\r'), 0x09('\t'), 0x0b('\v')
-    USED_RETURN MBASE_INLINE bool is_space(const_iterator in_begin, const_iterator in_end) const noexcept {
+    USED_RETURN("string observation ignored") MBASE_INLINE bool is_space(const_iterator in_begin, const_iterator in_end) const noexcept {
         if (!size())
         {
             return false;
@@ -607,20 +609,20 @@ public:
         return true;
     }
 
-    USED_RETURN MBASE_INLINE bool is_space(size_type in_from, size_type in_to) const noexcept {
+    USED_RETURN("string observation ignored") MBASE_INLINE bool is_space(size_type in_from, size_type in_to) const noexcept {
         return is_space(cbegin() + in_from, cbegin() + in_to);
     }
 
-    USED_RETURN MBASE_INLINE bool is_space() const noexcept {
+    USED_RETURN("string observation ignored") MBASE_INLINE bool is_space() const noexcept {
         return is_space(cbegin(), cend());
     }
 
-    USED_RETURN static MBASE_INLINE bool is_punctuation(const IBYTE& in_char) noexcept {
+    USED_RETURN("string observation ignored") static MBASE_INLINE bool is_punctuation(const IBYTE& in_char) noexcept {
         return ispunct(in_char);
     }
 
     // characters such as: !"#$%&'()*+,-./:;<=>?@[\]^_`{|}~
-    USED_RETURN MBASE_INLINE bool is_punctuation(const_iterator in_begin, const_iterator in_end) const noexcept {
+    USED_RETURN("string observation ignored") MBASE_INLINE bool is_punctuation(const_iterator in_begin, const_iterator in_end) const noexcept {
         if (!size())
         {
             return false;
@@ -639,11 +641,11 @@ public:
         return true;
     }
 
-    USED_RETURN MBASE_INLINE bool is_punctuation(size_type in_from, size_type in_to) const noexcept {
+    USED_RETURN("string observation ignored") MBASE_INLINE bool is_punctuation(size_type in_from, size_type in_to) const noexcept {
         return is_punctuation(cbegin() + in_from, cbegin() + in_to);
     }
 
-    USED_RETURN MBASE_INLINE bool is_punctuation() const noexcept {
+    USED_RETURN("string observation ignored") MBASE_INLINE bool is_punctuation() const noexcept {
         return is_punctuation(cbegin(), cend());
     }
 

@@ -62,39 +62,39 @@ public:
 		}
 	}
 
-	USED_RETURN MBASE_INLINE_EXPR IBYTE front() const noexcept {
+	USED_RETURN("first byte being ignored") MBASE_INLINE_EXPR IBYTE front() const noexcept {
 		return *srcBuffer;
 	}
 
-	USED_RETURN MBASE_INLINE_EXPR IBYTE back() const noexcept {
+	USED_RETURN("last byte being ignored") MBASE_INLINE_EXPR IBYTE back() const noexcept {
 		return *(srcBuffer + (bufferLength - 1));
 	}
 
-	USED_RETURN MBASE_INLINE_EXPR size_type buffer_length() const noexcept {
+	USED_RETURN("stream observation ignored") MBASE_INLINE_EXPR size_type buffer_length() const noexcept {
 		return bufferLength;
 	}
 
-	USED_RETURN MBASE_INLINE_EXPR IBYTEBUFFER get_buffer() const noexcept {
+	USED_RETURN("stream observation ignored") MBASE_INLINE_EXPR IBYTEBUFFER get_buffer() const noexcept {
 		return srcBuffer;
 	}
 
-	USED_RETURN MBASE_INLINE_EXPR IBYTEBUFFER get_bufferc() const noexcept {
+	USED_RETURN("stream observation ignored") MBASE_INLINE_EXPR IBYTEBUFFER get_bufferc() const noexcept {
 		return srcBuffer + streamCursor;
 	}
 
-	USED_RETURN MBASE_INLINE_EXPR difference_type get_pos() const noexcept {
+	USED_RETURN("stream observation ignored") MBASE_INLINE_EXPR difference_type get_pos() const noexcept {
 		return streamCursor;
 	}
 
-	USED_RETURN MBASE_INLINE_EXPR IBYTE getc() const noexcept {
+	USED_RETURN("stream observation ignored") MBASE_INLINE_EXPR IBYTE getc() const noexcept {
 		return *(srcBuffer + streamCursor);
 	}
 
-	USED_RETURN MBASE_INLINE_EXPR IBYTE getcn() noexcept {
+	USED_RETURN("stream observation ignored") MBASE_INLINE_EXPR IBYTE getcn() noexcept {
 		return *(srcBuffer + streamCursor--);
 	}
 
-	USED_RETURN MBASE_INLINE_EXPR IBYTEBUFFER data() const noexcept {
+	USED_RETURN("stream data ignored") MBASE_INLINE_EXPR IBYTEBUFFER data() const noexcept {
 		return srcBuffer;
 	}
 

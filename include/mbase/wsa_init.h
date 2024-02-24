@@ -24,7 +24,7 @@ public:
         WSACleanup();
     }
 
-    USED_RETURN I32 get_init_result() const noexcept {
+    USED_RETURN("checking if wsa is initialized but ignoring the result") I32 get_init_result() const noexcept {
         return wsaInit;
     }
 

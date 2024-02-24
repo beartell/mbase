@@ -117,7 +117,7 @@ public:
 		return thread_error::THREAD_MISSING_THREAD;
 	}
 
-	USED_RETURN MBASE_INLINE I32 get_id() noexcept {
+	USED_RETURN("ignoring thread id") MBASE_INLINE I32 get_id() noexcept {
 		if(!threadId)
 		{
 			return GetCurrentThreadId();
@@ -126,7 +126,7 @@ public:
 		return threadId;
 	}
 
-	USED_RETURN static I32 get_current_thread_id() noexcept {
+	USED_RETURN("ignoring thread id") static I32 get_current_thread_id() noexcept {
 		return GetCurrentThreadId();
 	}
 

@@ -2,6 +2,7 @@
 #define MBASE_LIST_ITERATOR_H
 
 #include <mbase/common.h>
+#include <iterator>
 
 MBASE_STD_BEGIN
 
@@ -31,11 +32,11 @@ public:
     forward_list_iterator(pointer in_ptr) noexcept : _ptr(in_ptr) {}
     forward_list_iterator(const forward_list_iterator& in_rhs) noexcept : _ptr(in_rhs._ptr) {}
 
-    MBASE_INLINE pointer get() const noexcept {
+    USED_RETURN("internal data that is access through the iterator should be used") MBASE_INLINE pointer get() const noexcept {
         return _ptr;
     }
 
-    USED_RETURN MBASE_INLINE DataT& operator*() const noexcept {
+    USED_RETURN("internal data that is access through the iterator should be used") MBASE_INLINE DataT& operator*() const noexcept {
         return *_ptr->data;
     }
 
@@ -43,7 +44,7 @@ public:
         return _ptr->data;
     }
 
-    USED_RETURN MBASE_INLINE forward_list_iterator& operator+(difference_type in_rhs) noexcept {
+    USED_RETURN("ignoring iterator index") MBASE_INLINE forward_list_iterator& operator+(difference_type in_rhs) noexcept {
 
         for (size_type i = 0; i < in_rhs; i++)
         {
@@ -80,19 +81,19 @@ public:
         return *this;
     }
 
-    USED_RETURN MBASE_INLINE bool operator==(const forward_list_iterator& in_rhs) const noexcept {
+    USED_RETURN("ignoring equality comparison") MBASE_INLINE bool operator==(const forward_list_iterator& in_rhs) const noexcept {
         return _ptr == in_rhs._ptr;
     }
 
-    USED_RETURN MBASE_INLINE bool operator!=(const forward_list_iterator& in_rhs) const noexcept {
+    USED_RETURN("ignoring equality comparison") MBASE_INLINE bool operator!=(const forward_list_iterator& in_rhs) const noexcept {
         return _ptr != in_rhs._ptr;
     }
 
-    USED_RETURN MBASE_INLINE bool operator==(const const_forward_list_iterator<T, DataT>& in_rhs) const noexcept {
+    USED_RETURN("ignoring equality comparison") MBASE_INLINE bool operator==(const const_forward_list_iterator<T, DataT>& in_rhs) const noexcept {
         return _ptr == in_rhs.get();
     }
 
-    USED_RETURN MBASE_INLINE bool operator!=(const const_forward_list_iterator<T, DataT>& in_rhs) const noexcept {
+    USED_RETURN("ignoring equality comparison") MBASE_INLINE bool operator!=(const const_forward_list_iterator<T, DataT>& in_rhs) const noexcept {
         return _ptr != in_rhs.get();
     }
 
@@ -115,11 +116,11 @@ public:
     const_forward_list_iterator(const const_forward_list_iterator& in_rhs) noexcept : _ptr(in_rhs._ptr) {}
     const_forward_list_iterator(const forward_list_iterator<T, DataT>& in_rhs) noexcept : _ptr(in_rhs.get()) {}
 
-    MBASE_INLINE const_pointer get() const noexcept {
+    USED_RETURN("internal data that is access through the iterator should be used") MBASE_INLINE const_pointer get() const noexcept {
         return _ptr;
     }
 
-    USED_RETURN MBASE_INLINE const DataT& operator*() const noexcept {
+    USED_RETURN("internal data that is access through the iterator should be used") MBASE_INLINE const DataT& operator*() const noexcept {
         return *_ptr->data;
     }
 
@@ -127,7 +128,7 @@ public:
         return _ptr->data;
     }
 
-    USED_RETURN MBASE_INLINE const_forward_list_iterator& operator+(difference_type in_rhs) noexcept {
+    USED_RETURN("ignoring iterator index") MBASE_INLINE const_forward_list_iterator& operator+(difference_type in_rhs) noexcept {
 
         for (size_type i = 0; i < in_rhs; i++)
         {
@@ -164,19 +165,19 @@ public:
         return *this;
     }
 
-    USED_RETURN MBASE_INLINE bool operator==(const const_forward_list_iterator& in_rhs) const noexcept {
+    USED_RETURN("ignoring equality comparison") MBASE_INLINE bool operator==(const const_forward_list_iterator& in_rhs) const noexcept {
         return _ptr == in_rhs._ptr;
     }
 
-    USED_RETURN MBASE_INLINE bool operator!=(const const_forward_list_iterator& in_rhs) const noexcept {
+    USED_RETURN("ignoring equality comparison") MBASE_INLINE bool operator!=(const const_forward_list_iterator& in_rhs) const noexcept {
         return _ptr != in_rhs._ptr;
     }
 
-    USED_RETURN MBASE_INLINE bool operator==(const forward_list_iterator<T, DataT>& in_rhs) const noexcept {
+    USED_RETURN("ignoring equality comparison") MBASE_INLINE bool operator==(const forward_list_iterator<T, DataT>& in_rhs) const noexcept {
         return _ptr == in_rhs.get();
     }
 
-    USED_RETURN MBASE_INLINE bool operator!=(const forward_list_iterator<T, DataT>& in_rhs) const noexcept {
+    USED_RETURN("ignoring equality comparison") MBASE_INLINE bool operator!=(const forward_list_iterator<T, DataT>& in_rhs) const noexcept {
         return _ptr != in_rhs.get();
     }
 
@@ -202,15 +203,15 @@ public:
         return _ptr;
     }
 
-    USED_RETURN MBASE_INLINE DataT& operator*() const noexcept {
+    USED_RETURN("internal data that is access through the iterator should be used") MBASE_INLINE DataT& operator*() const noexcept {
         return *_ptr->data;
     }
 
-    MBASE_INLINE DataT* operator->() const noexcept {
+    USED_RETURN("internal data that is access through the iterator should be used") MBASE_INLINE DataT* operator->() const noexcept {
         return _ptr->data;
     }
 
-    USED_RETURN MBASE_INLINE backward_list_iterator& operator+(difference_type in_rhs) noexcept {
+    USED_RETURN("ignoring iterator index") MBASE_INLINE backward_list_iterator& operator+(difference_type in_rhs) noexcept {
 
         for (size_type i = 0; i < in_rhs; i++)
         {
@@ -247,19 +248,19 @@ public:
         return *this;
     }
 
-    USED_RETURN MBASE_INLINE bool operator==(const backward_list_iterator& in_rhs) const noexcept {
+    USED_RETURN("ignoring equality comparison") MBASE_INLINE bool operator==(const backward_list_iterator& in_rhs) const noexcept {
         return _ptr == in_rhs._ptr;
     }
 
-    USED_RETURN MBASE_INLINE bool operator!=(const backward_list_iterator& in_rhs) const noexcept {
+    USED_RETURN("ignoring equality comparison") MBASE_INLINE bool operator!=(const backward_list_iterator& in_rhs) const noexcept {
         return _ptr != in_rhs._ptr;
     }
 
-    USED_RETURN MBASE_INLINE bool operator==(const const_backward_list_iterator<T, DataT>& in_rhs) const noexcept {
+    USED_RETURN("ignoring equality comparison") MBASE_INLINE bool operator==(const const_backward_list_iterator<T, DataT>& in_rhs) const noexcept {
         return _ptr == in_rhs.get();
     }
 
-    USED_RETURN MBASE_INLINE bool operator!=(const const_backward_list_iterator<T, DataT>& in_rhs) const noexcept {
+    USED_RETURN("ignoring equality comparison") MBASE_INLINE bool operator!=(const const_backward_list_iterator<T, DataT>& in_rhs) const noexcept {
         return _ptr != in_rhs.get();
     }
 
@@ -282,11 +283,11 @@ public:
     const_backward_list_iterator(const const_backward_list_iterator& in_rhs) noexcept : _ptr(in_rhs._ptr) {}
     const_backward_list_iterator(const backward_list_iterator<T, DataT>& in_rhs) noexcept : _ptr(in_rhs.get()) {}
 
-    MBASE_INLINE const_pointer get() const noexcept {
+    USED_RETURN("internal data that is access through the iterator should be used") MBASE_INLINE const_pointer get() const noexcept {
         return _ptr;
     }
 
-    USED_RETURN MBASE_INLINE const DataT& operator*() const noexcept {
+    USED_RETURN("internal data that is access through the iterator should be used") MBASE_INLINE const DataT& operator*() const noexcept {
         return *_ptr->data;
     }
 
@@ -294,7 +295,7 @@ public:
         return _ptr->data;
     }
 
-    USED_RETURN MBASE_INLINE const_backward_list_iterator& operator+(difference_type in_rhs) noexcept {
+    USED_RETURN("ignoring iterator index") MBASE_INLINE const_backward_list_iterator& operator+(difference_type in_rhs) noexcept {
         
         for(size_type i = 0; i < in_rhs; i++)
         {
@@ -331,19 +332,19 @@ public:
         return *this;
     }
 
-    USED_RETURN MBASE_INLINE bool operator==(const const_backward_list_iterator& in_rhs) const noexcept {
+    USED_RETURN("ignoring equality comparison") MBASE_INLINE bool operator==(const const_backward_list_iterator& in_rhs) const noexcept {
         return _ptr == in_rhs._ptr;
     }
 
-    USED_RETURN MBASE_INLINE bool operator!=(const const_backward_list_iterator& in_rhs) const noexcept {
+    USED_RETURN("ignoring equality comparison") MBASE_INLINE bool operator!=(const const_backward_list_iterator& in_rhs) const noexcept {
         return _ptr != in_rhs._ptr;
     }
 
-    USED_RETURN MBASE_INLINE bool operator==(const backward_list_iterator<T, DataT>& in_rhs) const noexcept {
+    USED_RETURN("ignoring equality comparison") MBASE_INLINE bool operator==(const backward_list_iterator<T, DataT>& in_rhs) const noexcept {
         return _ptr == in_rhs.get();
     }
 
-    USED_RETURN MBASE_INLINE bool operator!=(const backward_list_iterator<T, DataT>& in_rhs) const noexcept {
+    USED_RETURN("ignoring equality comparison") MBASE_INLINE bool operator!=(const backward_list_iterator<T, DataT>& in_rhs) const noexcept {
         return _ptr != in_rhs.get();
     }
 

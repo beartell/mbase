@@ -81,19 +81,19 @@ public:
 		SetFilePointer(rawContext.raw_handle, in_distance, nullptr, (DWORD)in_method);
 	}
 
-	USED_RETURN io_context& get_raw_context() noexcept {
+	USED_RETURN("io context unused") io_context& get_raw_context() noexcept {
 		return rawContext;
 	}
 
-	USED_RETURN U32 get_last_error() const noexcept {
+	USED_RETURN("io last error unused") U32 get_last_error() const noexcept {
 		return lastError;
 	}
 
-	char_stream* get_is() noexcept {
+	USED_RETURN("input stream unused") char_stream* get_is() noexcept {
 		return istream;
 	}
 
-	char_stream* get_os() noexcept {
+	USED_RETURN("output stream unused") char_stream* get_os() noexcept {
 		return ostream;
 	}
 

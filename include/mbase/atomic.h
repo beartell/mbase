@@ -71,7 +71,7 @@ public:
 		return *this;
 	}
 
-	value_type get_val() noexcept {
+	USED_RETURN("ignoring the atomic variable") value_type get_val() noexcept {
 		return val;
 	}
 

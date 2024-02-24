@@ -130,11 +130,11 @@ public:
 		return *this;
 	}
 
-	USED_RETURN reference operator[](difference_type in_index) noexcept {
+	USED_RETURN("unused element") reference operator[](difference_type in_index) noexcept {
 		return raw_data[in_index];
 	}
 
-	USED_RETURN const_reference operator[](difference_type in_index) const noexcept {
+	USED_RETURN("unused element") const_reference operator[](difference_type in_index) const noexcept {
 		return raw_data[in_index];
 	}
 
@@ -347,71 +347,71 @@ public:
 		std::swap(mSize, in_src.mSize);
 	}
 
-	USED_RETURN MBASE_INLINE_EXPR iterator begin() const noexcept {
+	USED_RETURN("iterator being ignored") MBASE_INLINE_EXPR iterator begin() const noexcept {
 		return iterator(raw_data);
 	}
 
-	USED_RETURN MBASE_INLINE_EXPR iterator end() const noexcept {
+	USED_RETURN("iterator being ignored") MBASE_INLINE_EXPR iterator end() const noexcept {
 		return iterator(raw_data + mSize);
 	}
 
-	USED_RETURN MBASE_INLINE_EXPR const_iterator cbegin() const noexcept {
+	USED_RETURN("const iterator being ignored") MBASE_INLINE_EXPR const_iterator cbegin() const noexcept {
 		return const_iterator(raw_data);
 	}
 
-	USED_RETURN MBASE_INLINE_EXPR const_iterator cend() const noexcept {
+	USED_RETURN("const iterator being ignored") MBASE_INLINE_EXPR const_iterator cend() const noexcept {
 		return const_iterator(raw_data + mSize);
 	}
 
-	USED_RETURN MBASE_INLINE_EXPR reverse_iterator rbegin() const noexcept {
+	USED_RETURN("reverse iterator being ignored") MBASE_INLINE_EXPR reverse_iterator rbegin() const noexcept {
 		return reverse_iterator(raw_data + (mSize - 1));
 	}
 
-	USED_RETURN MBASE_INLINE_EXPR reverse_iterator rend() const noexcept {
+	USED_RETURN("reverse iterator being ignored") MBASE_INLINE_EXPR reverse_iterator rend() const noexcept {
 		return reverse_iterator(raw_data - 1);
 	}
 
-	USED_RETURN MBASE_INLINE_EXPR const_reverse_iterator crbegin() const noexcept {
+	USED_RETURN("const reverse iterator being ignored") MBASE_INLINE_EXPR const_reverse_iterator crbegin() const noexcept {
 		return const_reverse_iterator(raw_data + (mSize - 1));
 	}
 
-	USED_RETURN MBASE_INLINE_EXPR const_reverse_iterator crend() const noexcept {
+	USED_RETURN("const reverse iterator being ignored") MBASE_INLINE_EXPR const_reverse_iterator crend() const noexcept {
 		return const_reverse_iterator(raw_data - 1);
 	}
 
-	USED_RETURN MBASE_INLINE_EXPR reference back() noexcept {
+	USED_RETURN("last element being ignored") MBASE_INLINE_EXPR reference back() noexcept {
 		return raw_data[mSize - 1];
 	}
 
-	USED_RETURN MBASE_INLINE_EXPR reference front() noexcept {
+	USED_RETURN("first element being ignored") MBASE_INLINE_EXPR reference front() noexcept {
 		return raw_data[0];
 	}
 
-	USED_RETURN MBASE_INLINE_EXPR const_reference back() const noexcept {
+	USED_RETURN("last element being ignored") MBASE_INLINE_EXPR const_reference back() const noexcept {
 		return raw_data[mSize - 1];
 	}
 
-	USED_RETURN MBASE_INLINE_EXPR const_reference front() const noexcept {
+	USED_RETURN("first element being ignored") MBASE_INLINE_EXPR const_reference front() const noexcept {
 		return raw_data[0];
 	}
 
-	USED_RETURN MBASE_INLINE_EXPR pointer data() noexcept {
+	USED_RETURN("raw data being ignored") MBASE_INLINE_EXPR pointer data() noexcept {
 		return raw_data;
 	}
 
-	USED_RETURN MBASE_INLINE_EXPR const_pointer data() const noexcept {
+	USED_RETURN("raw string data being ignored") MBASE_INLINE_EXPR const_pointer data() const noexcept {
 		return raw_data;
 	}
 
-	USED_RETURN MBASE_INLINE_EXPR size_type size() const noexcept {
+	USED_RETURN("container observation ignored") MBASE_INLINE_EXPR size_type size() const noexcept {
 		return mSize;
 	}
 
-	USED_RETURN MBASE_INLINE_EXPR size_type capacity() const noexcept {
+	USED_RETURN("container observation ignored") MBASE_INLINE_EXPR size_type capacity() const noexcept {
 		return mCapacity;
 	}
 
-	USED_RETURN MBASE_INLINE_EXPR bool empty() const noexcept {
+	MBASE_INLINE_EXPR bool empty() const noexcept {
 		return mSize == 0;
 	}
 

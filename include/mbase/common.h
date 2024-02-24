@@ -14,11 +14,37 @@
 
 #endif
 
+/* LANGUAGE VERSION CONTROL */
+
+#define MBASE_CPP_VERSION 1 // --> means less than c++11
+
+#ifdef __cpp_fold_expressions
+#define MBASE_CPP_VERSION 17
+#endif 
+
+#ifdef __cpp_concepts
+#define MBASE_CPP_VERSION 20
+#endif
+
+#ifdef __cpp_pack_indexing
+#define MBASE_CPP_VERSION 26
+#endif
+
+
+/* LANGUAGE VERSION CONTROL */
+
 #define MBASE_INLINE inline
 #define MBASE_CONSTEXPR constexpr
-#define MBASE_INLINE_EXPR inline constexpr
 
-#define USED_RETURN [[nodiscard]]
+#if MBASE_CPP_VERSION >= 20
+	#define USED_RETURN(in_reason) [[nodiscard(in_reason)]]
+	#define MBASE_INLINE_EXPR inline constexpr
+#else
+	#define USED_RETURN(in_reason) [[nodiscard]]
+	#define MBASE_INLINE_EXPR inline
+#endif
+
+
 
 #ifndef MBASE_STD_API
 	#if defined(_MSC_VER)
@@ -103,7 +129,7 @@ using UBYTEPTR    = PTRU8;
 using IBYTEBUFFER = IBYTEPTR;
 using UBYTEBUFFER = UBYTEPTR;
 
-using MSTRING     = const IBYTEBUFFER;
+using MSTRING     = const PTR8;
 
 using GENERIC     = void;
 using PTRGENERIC  = GENERIC*;

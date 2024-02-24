@@ -31,19 +31,19 @@ public:
 		}
 	}
 
-	USED_RETURN MBASE_INLINE crypto_error encrypt(const mbase::string& in_src, safe_buffer* out_target) const noexcept {
+	MBASE_INLINE crypto_error encrypt(const mbase::string& in_src, safe_buffer* out_target) const noexcept {
 		return _encrypt(in_src.c_str(), in_src.size() + 1, out_target); // +1 is for null terminating character
 	}
 
-	USED_RETURN MBASE_INLINE crypto_error encrypt(IBYTEBUFFER in_src, SIZE_T in_length, safe_buffer* out_target) const noexcept {
+	MBASE_INLINE crypto_error encrypt(IBYTEBUFFER in_src, SIZE_T in_length, safe_buffer* out_target) const noexcept {
 		return _encrypt(in_src, in_length, out_target);
 	}
 	
-	USED_RETURN MBASE_INLINE crypto_error decrypt(IBYTEBUFFER in_src, SIZE_T in_length, safe_buffer* out_target) const noexcept {
+	MBASE_INLINE crypto_error decrypt(IBYTEBUFFER in_src, SIZE_T in_length, safe_buffer* out_target) const noexcept {
 		return _decrypt(in_src, in_length, out_target);
 	}
 
-	USED_RETURN MBASE_INLINE crypto_error decrypt(IBYTEBUFFER in_src, SIZE_T in_length, mbase::string& out_string) const noexcept {
+	MBASE_INLINE crypto_error decrypt(IBYTEBUFFER in_src, SIZE_T in_length, mbase::string& out_string) const noexcept {
 		safe_buffer myBuffer;
 		crypto_error decErr = _decrypt(in_src, in_length, &myBuffer);
 
@@ -54,7 +54,7 @@ public:
 		return decErr;
 	}
 
-	USED_RETURN MBASE_INLINE crypto_error export_key(safe_buffer* out_key) const noexcept {
+	MBASE_INLINE crypto_error export_key(safe_buffer* out_key) const noexcept {
 		ULONG pcbRes = 0;
 		NTSTATUS exportResult = 0;
 		exportResult = BCryptExportKey(symko.mkHandle,
@@ -89,7 +89,7 @@ public:
 		return crypto_error::MBASE_CRYERR_SUCCESS;
 	}
 
-	USED_RETURN MBASE_INLINE crypto_error import_key(IBYTEBUFFER in_src, SIZE_T in_length) noexcept {
+	MBASE_INLINE crypto_error import_key(IBYTEBUFFER in_src, SIZE_T in_length) noexcept {
 		BCRYPT_KEY_HANDLE newKey;
 		IBYTEBUFFER out_key = new IBYTE[gCryptoManager.symm_AES.objectSize];
 		NTSTATUS importResult = BCryptImportKey(gCryptoManager.symm_AES.providerHandle,
@@ -116,7 +116,7 @@ public:
 	}
 
 private:
-	USED_RETURN MBASE_INLINE crypto_error _encrypt(IBYTEBUFFER in_src, SIZE_T in_length, safe_buffer* out_target) const noexcept {
+	MBASE_INLINE crypto_error _encrypt(IBYTEBUFFER in_src, SIZE_T in_length, safe_buffer* out_target) const noexcept {
 		U64 blockLength = ckm.get_block_length();
 		if (!blockLength)
 		{
@@ -169,7 +169,7 @@ private:
 		return crypto_error::MBASE_CRYERR_SUCCESS;
 	}
 
-	USED_RETURN MBASE_INLINE crypto_error _decrypt(IBYTEBUFFER in_src, SIZE_T in_length, safe_buffer* out_target) const noexcept {
+	MBASE_INLINE crypto_error _decrypt(IBYTEBUFFER in_src, SIZE_T in_length, safe_buffer* out_target) const noexcept {
 		U64 blockLength = ckm.get_block_length();
 		if (!blockLength)
 		{

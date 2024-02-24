@@ -48,19 +48,19 @@ MBASE_INLINE FS_ERROR delete_file(const mbase::string_view& in_path) noexcept {
 	return FS_ERROR::FS_SUCCESS;
 }
 
-USED_RETURN MBASE_INLINE mbase::string get_temp_path() noexcept {
+USED_RETURN("temp path unused") MBASE_INLINE mbase::string get_temp_path() noexcept {
 	IBYTE pathString[MAX_PATH + 1] = { 0 };
 	GetTempPathA(MAX_PATH + 1, pathString);
 	return mbase::string(pathString);
 }
 
-USED_RETURN MBASE_INLINE mbase::string get_current_path() noexcept {
+USED_RETURN("current path unused") MBASE_INLINE mbase::string get_current_path() noexcept {
 	IBYTE pathString[MAX_PATH + 1] = { 0 };
 	GetCurrentDirectoryA(MAX_PATH + 1, pathString);
 	return mbase::string(pathString);
 }
 
-USED_RETURN MBASE_INLINE mbase::string get_temp_file(const mbase::string_view& in_prefix) noexcept {
+USED_RETURN("temp file unused") MBASE_INLINE mbase::string get_temp_file(const mbase::string_view& in_prefix) noexcept {
 	IBYTE pathString[MAX_PATH + 1] = { 0 };
 	GetTempFileNameA(".", in_prefix.c_str(), 0, pathString);
 	return mbase::string(pathString);

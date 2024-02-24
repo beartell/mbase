@@ -165,15 +165,15 @@ public:
 		return readLength;
 	}
 
-	USED_RETURN MBASE_INLINE bool is_file_open() const noexcept {
+	USED_RETURN("is file open unused") MBASE_INLINE bool is_file_open() const noexcept {
 		return isFileOpen;
 	}
 
-	USED_RETURN MBASE_INLINE mbase::string get_file_name() const noexcept {
+	USED_RETURN("file name unused") MBASE_INLINE mbase::string get_file_name() const noexcept {
 		return fileName;
 	}
 
-	USED_RETURN MBASE_INLINE SIZE_T get_file_size() const noexcept {
+	USED_RETURN("file size unused") MBASE_INLINE SIZE_T get_file_size() const noexcept {
 		LARGE_INTEGER lInt;
 		GetFileSizeEx(rawHandle, &lInt);
 		return lInt.QuadPart;

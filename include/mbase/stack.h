@@ -28,19 +28,19 @@ public:
 		_Sc = std::move(in_rhs._Sc);
 	}
 
-	USED_RETURN MBASE_INLINE_EXPR reference top() noexcept {
+	USED_RETURN("returned element being ignored") MBASE_INLINE_EXPR reference top() noexcept {
 		return _Sc.back();
 	}
 
-	USED_RETURN MBASE_INLINE_EXPR const_reference top() const noexcept {
+	USED_RETURN("returned element being ignored") MBASE_INLINE_EXPR const_reference top() const noexcept {
 		return _Sc.back();
 	}
 
-	USED_RETURN MBASE_INLINE_EXPR bool empty() const noexcept {
+	MBASE_INLINE_EXPR bool empty() const noexcept {
 		return _Sc.empty();
 	}
 
-	USED_RETURN MBASE_INLINE_EXPR size_type size() const noexcept {
+	USED_RETURN("container observation ignored") MBASE_INLINE_EXPR size_type size() const noexcept {
 		return _Sc.size();
 	}
 

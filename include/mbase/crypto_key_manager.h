@@ -36,7 +36,7 @@ public:
 		}
 	}
 
-	USED_RETURN MBASE_INLINE crypto_error generate_symmetric_key(sym_key_out* out_key) const noexcept {
+	MBASE_INLINE crypto_error generate_symmetric_key(sym_key_out* out_key) const noexcept {
 		if (!secretLength)
 		{
 			return crypto_error::MBASE_CRYERR_NOT_SUPPORTED;
@@ -60,11 +60,11 @@ public:
 		gen_random_n(secretBuffer, secretLength);
 	}
 
-	USED_RETURN MBASE_INLINE U64 get_block_length() const noexcept {
+	USED_RETURN("crypto observation ignored") MBASE_INLINE U64 get_block_length() const noexcept {
 		return secretLength;
 	}
 
-	USED_RETURN MBASE_INLINE U64 get_secret_length() const noexcept {
+	USED_RETURN("crypto observation ignored") MBASE_INLINE U64 get_secret_length() const noexcept {
 		return secretLength;
 	}
 

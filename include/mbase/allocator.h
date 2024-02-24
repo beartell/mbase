@@ -18,7 +18,7 @@ public:
 	using difference_type = PTRDIFF;
 	using size_type = SIZE_T;
 
-	USED_RETURN static MBASE_INLINE_EXPR pointer allocate(SIZE_T in_amount) noexcept {
+	USED_RETURN("dynamically allocated memory unused") static MBASE_INLINE_EXPR pointer allocate(SIZE_T in_amount) noexcept {
 		if (in_amount <= 0)
 		{
 			return nullptr;
@@ -26,7 +26,7 @@ public:
 		return static_cast<pointer>(::operator new(sizeof(value_type) * in_amount));
 	}
 
-	USED_RETURN static MBASE_INLINE_EXPR pointer allocate(SIZE_T in_amount, bool in_zero_memory) noexcept {
+	USED_RETURN("dynamically allocated memory unused") static MBASE_INLINE_EXPR pointer allocate(SIZE_T in_amount, bool in_zero_memory) noexcept {
 		if (in_amount <= 0)
 		{
 			return nullptr;
@@ -76,9 +76,9 @@ public:
 	using size_type = SIZE_T;
 	using difference_type = PTRDIFF;
 	
-	USED_RETURN MBASE_INLINE_EXPR pointer allocate(SIZE_T in_amount) const;
-	USED_RETURN MBASE_INLINE_EXPR pointer allocate(SIZE_T in_amount, bool in_zero_memory) const;
-	USED_RETURN MBASE_INLINE_EXPR pointer allocate(const T* base, SIZE_T in_amount) const;
+	USED_RETURN("dynamically allocated memory unused") MBASE_INLINE_EXPR pointer allocate(SIZE_T in_amount) const;
+	USED_RETURN("dynamically allocated memory unused") MBASE_INLINE_EXPR pointer allocate(SIZE_T in_amount, bool in_zero_memory) const;
+	USED_RETURN("dynamically allocated memory unused") MBASE_INLINE_EXPR pointer allocate(const T* base, SIZE_T in_amount) const;
 	MBASE_INLINE_EXPR GENERIC deallocate(T* src, SIZE_T in_amount) const;
 
 	template< class... Args >
@@ -87,7 +87,7 @@ public:
 };
 
 template<typename T>
-USED_RETURN MBASE_INLINE_EXPR T* allocator<T>::allocate(SIZE_T in_amount) const
+USED_RETURN("dynamically allocated memory unused") MBASE_INLINE_EXPR T* allocator<T>::allocate(SIZE_T in_amount) const
 {
 	if(in_amount <= 0)
 	{
@@ -97,7 +97,7 @@ USED_RETURN MBASE_INLINE_EXPR T* allocator<T>::allocate(SIZE_T in_amount) const
 }
 
 template<typename T>
-USED_RETURN MBASE_INLINE_EXPR T* allocator<T>::allocate(SIZE_T in_amount, bool in_zero_memory) const
+USED_RETURN("dynamically allocated memory unused") MBASE_INLINE_EXPR T* allocator<T>::allocate(SIZE_T in_amount, bool in_zero_memory) const
 {
 	if(in_amount <= 0)
 	{
@@ -111,7 +111,7 @@ USED_RETURN MBASE_INLINE_EXPR T* allocator<T>::allocate(SIZE_T in_amount, bool i
 }
 
 template<typename T>
-USED_RETURN MBASE_INLINE_EXPR T* allocator<T>::allocate(const T* base, SIZE_T in_amount) const
+USED_RETURN("dynamically allocated memory unused") MBASE_INLINE_EXPR T* allocator<T>::allocate(const T* base, SIZE_T in_amount) const
 {
 	if(in_amount <= 0 || !base)
 	{

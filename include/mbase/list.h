@@ -4,7 +4,7 @@
 #include <mbase/common.h>
 #include <mbase/allocator.h>
 #include <mbase/list_iterator.h>
-#include <mbase/vector.h>
+#include <iterator>
 #include <initializer_list>
 
 // TODO: Reconsider list_node structure's destructor and constructor
@@ -65,8 +65,8 @@ public:
 	public:
 		using iterator_category = std::bidirectional_iterator_tag;
 
-		bi_list_iterator(pointer in_ptr) noexcept : forward_list_iterator(in_ptr) {}
-		bi_list_iterator(const bi_list_iterator& in_rhs) noexcept : forward_list_iterator(in_rhs._ptr) {}
+		bi_list_iterator(pointer in_ptr) noexcept : forward_list_iterator<T, DataT>(in_ptr) {}
+		bi_list_iterator(const bi_list_iterator& in_rhs) noexcept : forward_list_iterator<T, DataT>(in_rhs._ptr) {}
 
 		MBASE_INLINE bi_list_iterator& operator-=(difference_type in_rhs) noexcept {
 			for (size_type i = 0; i < in_rhs; i++)
@@ -94,9 +94,9 @@ public:
 	public:
 		using iterator_category = std::bidirectional_iterator_tag;
 
-		const_bi_list_iterator(pointer in_ptr) noexcept : const_forward_list_iterator(in_ptr) {}
-		const_bi_list_iterator(const const_bi_list_iterator& in_rhs) noexcept : const_forward_list_iterator(in_rhs._ptr) {}
-		const_bi_list_iterator(const bi_list_iterator<T, DataT>& in_rhs) noexcept : const_forward_list_iterator(in_rhs.get()) {}
+		const_bi_list_iterator(pointer in_ptr) noexcept : const_forward_list_iterator<T, DataT>(in_ptr) {}
+		const_bi_list_iterator(const const_bi_list_iterator& in_rhs) noexcept : const_forward_list_iterator<T, DataT>(in_rhs._ptr) {}
+		const_bi_list_iterator(const bi_list_iterator<T, DataT>& in_rhs) noexcept : const_forward_list_iterator<T, DataT>(in_rhs.get()) {}
 
 		MBASE_INLINE const_bi_list_iterator& operator-=(difference_type in_rhs) noexcept {
 			for (size_type i = 0; i < in_rhs; i++)
@@ -124,8 +124,8 @@ public:
 	public:
 		using iterator_category = std::bidirectional_iterator_tag;
 
-		reverse_bi_list_iterator(pointer in_ptr) noexcept : backward_list_iterator(in_ptr) {}
-		reverse_bi_list_iterator(const reverse_bi_list_iterator& in_rhs) noexcept : backward_list_iterator(in_rhs._ptr) {}
+		reverse_bi_list_iterator(pointer in_ptr) noexcept : backward_list_iterator<T, DataT>(in_ptr) {}
+		reverse_bi_list_iterator(const reverse_bi_list_iterator& in_rhs) noexcept : backward_list_iterator<T, DataT>(in_rhs._ptr) {}
 
 		MBASE_INLINE reverse_bi_list_iterator& operator-=(difference_type in_rhs) noexcept {
 			for (size_type i = 0; i < in_rhs; i++)
@@ -153,9 +153,9 @@ public:
 	public:
 		using iterator_category = std::bidirectional_iterator_tag;
 
-		const_reverse_bi_list_iterator(pointer in_ptr) noexcept : const_backward_list_iterator(in_ptr) {}
-		const_reverse_bi_list_iterator(const const_reverse_bi_list_iterator& in_rhs) noexcept : const_backward_list_iterator(in_rhs._ptr) {}
-		const_reverse_bi_list_iterator(const reverse_bi_list_iterator<T, DataT>& in_rhs) noexcept : const_backward_list_iterator(in_rhs.get()) {}
+		const_reverse_bi_list_iterator(pointer in_ptr) noexcept : const_backward_list_iterator<T, DataT>(in_ptr) {}
+		const_reverse_bi_list_iterator(const const_reverse_bi_list_iterator& in_rhs) noexcept : const_backward_list_iterator<T, DataT>(in_rhs._ptr) {}
+		const_reverse_bi_list_iterator(const reverse_bi_list_iterator<T, DataT>& in_rhs) noexcept : const_backward_list_iterator<T, DataT>(in_rhs.get()) {}
 
 
 		MBASE_INLINE const_reverse_bi_list_iterator& operator-=(difference_type in_rhs) noexcept {
@@ -222,35 +222,35 @@ public:
 		std::swap(mSize, in_src.mSize);
 	}
 
-	USED_RETURN MBASE_INLINE_EXPR reference front() noexcept {
+	USED_RETURN("first element being ignored") MBASE_INLINE_EXPR reference front() noexcept {
 		return *firstNode->data;
 	}
 	
-	USED_RETURN MBASE_INLINE_EXPR const_reference front() const noexcept {
+	USED_RETURN("first element being ignored") MBASE_INLINE_EXPR const_reference front() const noexcept {
 		return *firstNode->data;
 	}
 
-	USED_RETURN MBASE_INLINE_EXPR reference back() noexcept {
+	USED_RETURN("last element being ignored") MBASE_INLINE_EXPR reference back() noexcept {
 		return *lastNode->data;
 	}
 
-	USED_RETURN MBASE_INLINE_EXPR const_reference back() const noexcept {
+	USED_RETURN("last element being ignored") MBASE_INLINE_EXPR const_reference back() const noexcept {
 		return *lastNode->data;
 	}
 
-	USED_RETURN MBASE_INLINE_EXPR bool empty() const noexcept {
+	USED_RETURN("container observation ignored") MBASE_INLINE_EXPR bool empty() const noexcept {
 		return mSize == 0;
 	}
 
-	USED_RETURN MBASE_INLINE_EXPR size_type size() const noexcept {
+	USED_RETURN("container observation ignored") MBASE_INLINE_EXPR size_type size() const noexcept {
 		return mSize;
 	}
 
-	USED_RETURN MBASE_INLINE_EXPR iterator begin() const noexcept {
+	USED_RETURN("iterator being ignored") MBASE_INLINE_EXPR iterator begin() const noexcept {
 		return iterator(firstNode);
 	}
 
-	USED_RETURN MBASE_INLINE_EXPR iterator end() const noexcept {
+	USED_RETURN("iterator being ignored") MBASE_INLINE_EXPR iterator end() const noexcept {
 		if(!lastNode)
 		{
 			return iterator(lastNode);
@@ -259,11 +259,11 @@ public:
 		return iterator(lastNode->next);
 	}
 
-	USED_RETURN MBASE_INLINE_EXPR const_iterator cbegin() const noexcept {
+	USED_RETURN("const iterator being ignored") MBASE_INLINE_EXPR const_iterator cbegin() const noexcept {
 		return const_iterator(firstNode);
 	}
 
-	USED_RETURN MBASE_INLINE_EXPR const_iterator cend() const noexcept {
+	USED_RETURN("const iterator being ignored") MBASE_INLINE_EXPR const_iterator cend() const noexcept {
 		if (!lastNode)
 		{
 			return const_iterator(lastNode);
@@ -272,11 +272,11 @@ public:
 		return const_iterator(lastNode->next);
 	}
 
-	USED_RETURN MBASE_INLINE reverse_iterator rbegin() const noexcept {
+	USED_RETURN("reverse iterator being ignored") MBASE_INLINE reverse_iterator rbegin() const noexcept {
 		return reverse_iterator(lastNode);
 	}
 
-	USED_RETURN MBASE_INLINE_EXPR reverse_iterator rend() const noexcept {
+	USED_RETURN("reverse iterator being ignored") MBASE_INLINE_EXPR reverse_iterator rend() const noexcept {
 		if(!firstNode)
 		{
 			return reverse_iterator(firstNode);
@@ -285,11 +285,11 @@ public:
 		return reverse_iterator(firstNode->prev);
 	}
 
-	USED_RETURN MBASE_INLINE const_reverse_iterator crbegin() const noexcept {
+	USED_RETURN("const reverse iterator being ignored") MBASE_INLINE const_reverse_iterator crbegin() const noexcept {
 		return const_reverse_iterator(lastNode);
 	}
 
-	USED_RETURN MBASE_INLINE_EXPR const_reverse_iterator crend() const noexcept {
+	USED_RETURN("const reverse iterator being ignored") MBASE_INLINE_EXPR const_reverse_iterator crend() const noexcept {
 		if (!firstNode)
 		{
 			return const_reverse_iterator(firstNode);
@@ -445,7 +445,7 @@ public:
 		iterator in_pos = begin();
 		in_pos += in_index;
 
-		insert(in_post, std::move(in_object));
+		insert(in_pos, std::move(in_object));
 	}
 
 	MBASE_INLINE_EXPR iterator erase(iterator in_pos) noexcept {
