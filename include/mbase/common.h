@@ -16,7 +16,7 @@
 
 /* LANGUAGE VERSION CONTROL */
 
-#define MBASE_CPP_VERSION 1 // --> means less than c++11
+#define MBASE_CPP_VERSION 1 // --> means less than c++17
 
 #ifdef __cpp_fold_expressions
 #define MBASE_CPP_VERSION 17
@@ -24,6 +24,10 @@
 
 #ifdef __cpp_concepts
 #define MBASE_CPP_VERSION 20
+#endif
+
+#ifdef __cpp_multidimensional_subscript
+#define MBASE_CPP_VERSION 23
 #endif
 
 #ifdef __cpp_pack_indexing
@@ -129,7 +133,7 @@ using UBYTEPTR    = PTRU8;
 using IBYTEBUFFER = IBYTEPTR;
 using UBYTEBUFFER = UBYTEPTR;
 
-using MSTRING     = const PTR8;
+using MSTRING     = const I8*;
 
 using GENERIC     = void;
 using PTRGENERIC  = GENERIC*;

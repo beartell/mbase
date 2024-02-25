@@ -352,6 +352,183 @@ protected:
     pointer _ptr;
 };
 
+template<typename Type, typename DataT>
+class bi_list_iterator : public forward_list_iterator<Type, DataT> {
+public:
+#if MBASE_CPP_VERSION >= 20
+    using value_type = typename forward_list_iterator<Type, DataT>::value_type;
+    using pointer = typename forward_list_iterator<Type, DataT>::pointer;
+    using const_pointer = typename forward_list_iterator<Type, DataT>::const_pointer;
+    using reference = typename forward_list_iterator<Type, DataT>::reference;
+    using size_type = typename forward_list_iterator<Type, DataT>::size_type;
+    using difference_type = typename forward_list_iterator<Type, DataT>::difference_type;
+#endif
+
+    using iterator_category = std::bidirectional_iterator_tag;
+
+    bi_list_iterator(pointer in_ptr) noexcept : forward_list_iterator<Type, DataT>(in_ptr) {}
+    bi_list_iterator(const bi_list_iterator& in_rhs) noexcept : forward_list_iterator<Type, DataT>(in_rhs._ptr) {}
+
+    MBASE_INLINE bi_list_iterator& operator-=(difference_type in_rhs) noexcept {
+        for (size_type i = 0; i < in_rhs; i++)
+        {
+            this->_ptr = this->_ptr->prev;
+        }
+        return *this;
+    }
+
+    MBASE_INLINE bi_list_iterator& operator--() noexcept {
+        this->_ptr = this->_ptr->prev;
+        return *this;
+    }
+
+    MBASE_INLINE bi_list_iterator& operator--(int) noexcept {
+        this->_ptr = this->_ptr->prev;
+        return *this;
+    }
+};
+
+template<typename Type, typename DataT>
+class const_bi_list_iterator : public const_forward_list_iterator<Type, DataT> {
+public:
+#if MBASE_CPP_VERSION >= 20
+    using value_type = typename const_forward_list_iterator<Type, DataT>::value_type;
+    using pointer = typename const_forward_list_iterator<Type, DataT>::pointer;
+    using const_pointer = typename const_forward_list_iterator<Type, DataT>::const_pointer;
+    using reference = typename const_forward_list_iterator<Type, DataT>::reference;
+    using size_type = typename const_forward_list_iterator<Type, DataT>::size_type;
+    using difference_type = typename const_forward_list_iterator<Type, DataT>::difference_type;
+#endif
+    using iterator_category = std::bidirectional_iterator_tag;
+
+    const_bi_list_iterator(pointer in_ptr) noexcept : const_forward_list_iterator<Type, DataT>(in_ptr) {}
+    const_bi_list_iterator(const const_bi_list_iterator& in_rhs) noexcept : const_forward_list_iterator<Type, DataT>(in_rhs._ptr) {}
+    const_bi_list_iterator(const bi_list_iterator<Type, DataT>& in_rhs) noexcept : const_forward_list_iterator<Type, DataT>(in_rhs.get()) {}
+
+    MBASE_INLINE const_bi_list_iterator& operator-=(difference_type in_rhs) noexcept {
+        for (size_type i = 0; i < in_rhs; i++)
+        {
+            this->_ptr = this->_ptr->prev;
+        }
+        return *this;
+    }
+
+    MBASE_INLINE const_bi_list_iterator& operator--() noexcept {
+        this->_ptr = this->_ptr->prev;
+        return *this;
+    }
+
+    MBASE_INLINE const_bi_list_iterator& operator--(int) noexcept {
+        this->_ptr = this->_ptr->prev;
+        return *this;
+    }
+};
+
+template<typename Type, typename DataT>
+class reverse_bi_list_iterator : public backward_list_iterator<Type, DataT> {
+public:
+#if MBASE_CPP_VERSION >= 20
+    using value_type = typename backward_list_iterator<Type, DataT>::value_type;
+    using pointer = typename backward_list_iterator<Type, DataT>::pointer;
+    using const_pointer = typename backward_list_iterator<Type, DataT>::const_pointer;
+    using reference = typename backward_list_iterator<Type, DataT>::reference;
+    using size_type = typename backward_list_iterator<Type, DataT>::size_type;
+    using difference_type = typename backward_list_iterator<Type, DataT>::difference_type;
+#endif
+    using iterator_category = std::bidirectional_iterator_tag;
+
+    reverse_bi_list_iterator(pointer in_ptr) noexcept : backward_list_iterator<Type, DataT>(in_ptr) {}
+    reverse_bi_list_iterator(const reverse_bi_list_iterator& in_rhs) noexcept : backward_list_iterator<Type, DataT>(in_rhs._ptr) {}
+
+    MBASE_INLINE reverse_bi_list_iterator& operator-=(difference_type in_rhs) noexcept {
+        for (size_type i = 0; i < in_rhs; i++)
+        {
+            this->_ptr = this->_ptr->next;
+        }
+        return *this;
+    }
+
+    MBASE_INLINE reverse_bi_list_iterator& operator--() noexcept {
+        this->_ptr = this->_ptr->next;
+        return *this;
+    }
+
+    MBASE_INLINE reverse_bi_list_iterator& operator--(int) noexcept {
+        this->_ptr = this->_ptr->next;
+        return *this;
+    }
+};
+
+template<typename Type, typename DataT>
+class const_reverse_bi_list_iterator : public const_backward_list_iterator<Type, DataT> {
+public:
+#if MBASE_CPP_VERSION >= 20
+    using value_type = typename const_backward_list_iterator<Type, DataT>::value_type;
+    using pointer = typename const_backward_list_iterator<Type, DataT>::pointer;
+    using const_pointer = typename const_backward_list_iterator<Type, DataT>::const_pointer;
+    using reference = typename const_backward_list_iterator<Type, DataT>::reference;
+    using size_type = typename const_backward_list_iterator<Type, DataT>::size_type;
+    using difference_type = typename const_backward_list_iterator<Type, DataT>::difference_type;
+#endif
+    using iterator_category = std::bidirectional_iterator_tag;
+
+    const_reverse_bi_list_iterator(pointer in_ptr) noexcept : const_backward_list_iterator<Type, DataT>(in_ptr) {}
+    const_reverse_bi_list_iterator(const const_reverse_bi_list_iterator& in_rhs) noexcept : const_backward_list_iterator<Type, DataT>(in_rhs._ptr) {}
+    const_reverse_bi_list_iterator(const reverse_bi_list_iterator<Type, DataT>& in_rhs) noexcept : const_backward_list_iterator<Type, DataT>(in_rhs.get()) {}
+
+    MBASE_INLINE const_reverse_bi_list_iterator& operator-=(difference_type in_rhs) noexcept {
+        for (size_type i = 0; i < in_rhs; i++)
+        {
+            this->_ptr = this->_ptr->next;
+        }
+        return *this;
+    }
+
+    MBASE_INLINE const_pointer get() const noexcept {
+        return this->_ptr;
+    }
+
+    MBASE_INLINE const_reverse_bi_list_iterator& operator--() noexcept {
+        this->_ptr = this->_ptr->next;
+        return *this;
+    }
+
+    MBASE_INLINE const_reverse_bi_list_iterator& operator--(int) noexcept {
+        this->_ptr = this->_ptr->next;
+        return *this;
+    }
+};
+
+template<typename T, typename Allocator = mbase::allocator_simple<T>>
+struct list_node {
+    using value_type = T;
+    using pointer = T*;
+    using reference = T&;
+    using const_reference = const T&;
+    using move_reference = T&&;
+
+    list_node* prev;
+    list_node* next;
+    pointer data;
+
+    list_node(const_reference in_object) noexcept : prev(nullptr), next(nullptr) {
+        data = Allocator::allocate(1);
+        Allocator::construct(data, in_object);
+    }
+
+    list_node(move_reference in_object) noexcept : prev(nullptr), next(nullptr) {
+        data = Allocator::allocate(1);
+        Allocator::construct(data, std::move(in_object));
+    }
+
+    ~list_node() noexcept {
+        // data is guaranteed to be present
+        // so no need to null check
+        data->~value_type();
+        Allocator::deallocate(data);
+    }
+};
+
 MBASE_STD_END
 
 #endif // MBASE_LIST_ITERATOR_H

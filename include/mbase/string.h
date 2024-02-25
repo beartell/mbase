@@ -74,6 +74,7 @@ public:
     }
 
     character_sequence& operator=(MSTRING in_rhs) noexcept {
+
         if (raw_data)
         {
             Alloc::deallocate(raw_data);
