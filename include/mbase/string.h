@@ -9,10 +9,10 @@ MBASE_STD_BEGIN
 
 class character_sequence : public type_sequence<IBYTE> {
 public:
-    using Alloc = mbase::allocator_simple<IBYTE>;
+    using Allocator = mbase::allocator<IBYTE>;
 
     character_sequence() noexcept : raw_data(nullptr), mSize(0), mCapacity(8) {
-        raw_data = Alloc::allocate(mCapacity, true);
+        raw_data = externalAllocator.allocate(mCapacity, true);
     }
 
     character_sequence(IBYTEBUFFER in_data, size_type in_size, size_type in_capacity) noexcept : raw_data(in_data), mSize(in_size), mCapacity(in_capacity) {}
@@ -28,7 +28,7 @@ public:
         }
         mCapacity = base_capacity;
         mSize = tmp_st_length;
-        raw_data = Alloc::allocate(base_capacity, true);
+        raw_data = externalAllocator.allocate(base_capacity, true);
         type_sequence::copy_bytes(raw_data, in_string, tmp_st_length + 1);
     }
 
@@ -42,12 +42,12 @@ public:
         }
         mCapacity = base_capacity;
         mSize = in_length;
-        raw_data = Alloc::allocate(base_capacity, true);
+        raw_data = externalAllocator.allocate(base_capacity, true);
         type_sequence::copy_bytes(raw_data, in_string, in_length);
     }
 
     character_sequence(const character_sequence& in_rhs) noexcept : raw_data(nullptr), mSize(in_rhs.mSize), mCapacity(in_rhs.mCapacity) {
-        raw_data = Alloc::allocate(mCapacity, true);
+        raw_data = externalAllocator.allocate(mCapacity, true);
         type_sequence::copy_bytes(raw_data, in_rhs.raw_data, mSize);
     }
 
@@ -56,19 +56,19 @@ public:
     }
 
     ~character_sequence() noexcept {
-        Alloc::destroy(raw_data);
+        externalAllocator.destroy(raw_data);
     }
 
     character_sequence& operator=(const character_sequence& in_rhs) noexcept {
         if(raw_data)
         {
-            Alloc::deallocate(raw_data);
+            externalAllocator.deallocate(raw_data, 0);
         }
 
         mSize = in_rhs.mSize;
         mCapacity = in_rhs.mCapacity;
 
-        raw_data = Alloc::allocate(in_rhs.mCapacity, true);
+        raw_data = externalAllocator.allocate(in_rhs.mCapacity, true);
         type_sequence::copy_bytes(raw_data, in_rhs.raw_data, in_rhs.mSize);
         return *this;
     }
@@ -77,7 +77,7 @@ public:
 
         if (raw_data)
         {
-            Alloc::deallocate(raw_data);
+            externalAllocator.deallocate(raw_data, 0);
         }
 
         size_type st_length = type_sequence::length(in_rhs);
@@ -90,7 +90,7 @@ public:
             mCapacity *= 2;
         }
         
-        raw_data = Alloc::allocate(mCapacity, true);
+        raw_data = externalAllocator.allocate(mCapacity, true);
         type_sequence::copy_bytes(raw_data, in_rhs, st_length);
 
         return *this;
@@ -99,7 +99,7 @@ public:
     character_sequence& operator=(character_sequence&& in_rhs) noexcept {
         if (raw_data)
         {
-            Alloc::deallocate(raw_data);
+            externalAllocator.deallocate(raw_data, 0);
         }
 
         mSize = in_rhs.mSize;
@@ -662,8 +662,8 @@ public:
         {
             totalCapacity *= 2;
         }
+        IBYTEBUFFER new_data = mbase::allocator_simple<IBYTE>::allocate(totalCapacity, true);
 
-        IBYTEBUFFER new_data = Alloc::allocate(totalCapacity, true);
         type_sequence::concat(new_data, in_lhs.raw_data, in_lhs.mSize);
         type_sequence::concat(new_data + in_lhs.mSize, in_rhs, rhsSize);
 
@@ -677,7 +677,7 @@ public:
             totalCapacity *= 2;
         }
 
-        IBYTEBUFFER new_data = Alloc::allocate(totalCapacity, true);
+        IBYTEBUFFER new_data = mbase::allocator_simple<IBYTE>::allocate(totalCapacity, true);
         type_sequence::concat(new_data, in_lhs.raw_data, in_lhs.mSize);
         type_sequence::concat(new_data + in_lhs.mSize, (IBYTEBUFFER)&in_rhs, 1);
 
@@ -692,7 +692,7 @@ public:
         {
             totalCapacity *= 2;
         }
-        IBYTEBUFFER new_data = Alloc::allocate(totalCapacity, true);
+        IBYTEBUFFER new_data = mbase::allocator_simple<IBYTE>::allocate(totalCapacity, true);
 
         type_sequence::concat(new_data, in_lhs.raw_data, in_lhs.mSize);
         type_sequence::concat(new_data + in_lhs.mSize, in_rhs.raw_data, in_rhs.mSize);
@@ -754,14 +754,14 @@ private:
             expectedSize = in_size;
         }
 
-        IBYTEBUFFER new_data = Alloc::allocate(in_size, true);
+        IBYTEBUFFER new_data = externalAllocator.allocate(in_size, true);
         copy_bytes(new_data, raw_data, expectedSize);
-        Alloc::deallocate(raw_data);
+        externalAllocator.deallocate(raw_data, 0);
         raw_data = new_data;
         mCapacity = in_size;
         mSize = expectedSize;
     }
-
+    Allocator externalAllocator;
     IBYTEBUFFER raw_data;
     SIZE_T mCapacity;
     SIZE_T mSize;

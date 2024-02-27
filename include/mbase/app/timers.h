@@ -27,31 +27,31 @@ public:
 		suppliedData = in_data;
 	}
 
-	USED_RETURN U32 GetTimerId() const noexcept {
+	USED_RETURN("timer observation ignored") U32 GetTimerId() const noexcept {
 		return mTimerId;
 	}
 
-	USED_RETURN I32 GetTargetTime() const noexcept {
+	USED_RETURN("timer observation ignored") I32 GetTargetTime() const noexcept {
 		return mTargetTime;
 	}
 
-	USED_RETURN I32 GetCurrTime() const noexcept {
+	USED_RETURN("timer observation ignored") I32 GetCurrTime() const noexcept {
 		return mCurrentTime;
 	}
 
-	USED_RETURN I32 GetRemainingTime() noexcept {
+	USED_RETURN("timer observation ignored") I32 GetRemainingTime() noexcept {
 		return mTargetTime - mCurrentTime;
 	}
 
-	USED_RETURN timer_type GetTimerType() const noexcept {
+	USED_RETURN("timer observation ignored") timer_type GetTimerType() const noexcept {
 		return tt;
 	}
 
-	USED_RETURN timer_exec_policy GetExecutionPolicy() const noexcept {
+	USED_RETURN("timer observation ignored") timer_exec_policy GetExecutionPolicy() const noexcept {
 		return mPolicy;
 	}
 
-	USED_RETURN bool IsActive() const noexcept {
+	USED_RETURN("timer observation ignored") bool IsActive() const noexcept {
 		return mIsActive;
 	}
 

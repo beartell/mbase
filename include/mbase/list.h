@@ -241,7 +241,7 @@ public:
 	}
 
 	MBASE_INLINE_EXPR GENERIC insert(const_iterator in_pos, const_reference in_object) noexcept {
-		node_type* mNode = in_pos._ptr;
+		node_type* mNode = in_pos.get();
 		node_type* newNode = new node_type(in_object);
 		newNode->prev = mNode->prev;
 		if(mNode->prev)
@@ -255,7 +255,7 @@ public:
 	}
 
 	MBASE_INLINE_EXPR GENERIC insert(const_iterator in_pos, move_reference in_object) noexcept {
-		node_type* mNode = in_pos._ptr;
+		node_type* mNode = in_pos.get();
 		node_type* newNode = new node_type(std::move(in_object));
 		newNode->prev = mNode->prev;
 		if (mNode->prev)
@@ -288,7 +288,7 @@ public:
 	}
 
 	MBASE_INLINE_EXPR iterator erase(iterator in_pos) noexcept {
-		node_type* mNode = in_pos._ptr;
+		node_type* mNode = in_pos.get();
 		node_type* returnedNode = mNode->next;
 
 		if(mNode == firstNode)

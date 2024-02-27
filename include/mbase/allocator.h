@@ -69,16 +69,12 @@ template<typename T = I8>
 class allocator {
 public:
 	using value_type = T;
-	using pointer = value_type*;
-	using const_pointer = const value_type*;
-	using reference = value_type&;
-	using const_reference = const reference;
 	using size_type = SIZE_T;
 	using difference_type = PTRDIFF;
 	
-	USED_RETURN("dynamically allocated memory unused") MBASE_INLINE_EXPR pointer allocate(SIZE_T in_amount) const;
-	USED_RETURN("dynamically allocated memory unused") MBASE_INLINE_EXPR pointer allocate(SIZE_T in_amount, bool in_zero_memory) const;
-	USED_RETURN("dynamically allocated memory unused") MBASE_INLINE_EXPR pointer allocate(const T* base, SIZE_T in_amount) const;
+	USED_RETURN("dynamically allocated memory unused") MBASE_INLINE_EXPR T* allocate(SIZE_T in_amount) const;
+	USED_RETURN("dynamically allocated memory unused") MBASE_INLINE_EXPR T* allocate(SIZE_T in_amount, bool in_zero_memory) const;
+	USED_RETURN("dynamically allocated memory unused") MBASE_INLINE_EXPR T* allocate(SIZE_T in_amount, const T* base) const;
 	MBASE_INLINE_EXPR GENERIC deallocate(T* src, SIZE_T in_amount) const;
 
 	template< class... Args >
@@ -93,7 +89,7 @@ USED_RETURN("dynamically allocated memory unused") MBASE_INLINE_EXPR T* allocato
 	{
 		return nullptr;
 	}
-	return static_cast<pointer>(::operator new(sizeof(value_type) * in_amount));
+	return static_cast<T*>(::operator new(sizeof(value_type) * in_amount));
 }
 
 template<typename T>
@@ -104,21 +100,21 @@ USED_RETURN("dynamically allocated memory unused") MBASE_INLINE_EXPR T* allocato
 		return nullptr;
 	}
 
-	T* out_data = static_cast<pointer>(::operator new(sizeof(value_type) * in_amount));
+	T* out_data = static_cast<T*>(::operator new(sizeof(value_type) * in_amount));
 	memset(out_data, 0, sizeof(value_type) * in_amount);
 
 	return out_data;
 }
 
 template<typename T>
-USED_RETURN("dynamically allocated memory unused") MBASE_INLINE_EXPR T* allocator<T>::allocate(const T* base, SIZE_T in_amount) const
+USED_RETURN("dynamically allocated memory unused") MBASE_INLINE_EXPR T* allocator<T>::allocate(SIZE_T in_amount, const T* base) const
 {
 	if(in_amount <= 0 || !base)
 	{
 		return nullptr;
 	}
 
-	return static_cast<pointer>(::operator new(sizeof(value_type) * in_amount, base));
+	return static_cast<T*>(::operator new(sizeof(value_type) * in_amount, base));
 }
 
 template<typename T>

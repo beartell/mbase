@@ -7,6 +7,7 @@
 #include <mbase/allocator.h> // For allocation routines
 #include <mbase/safe_buffer.h> // For safe buffer
 #include <mbase/container_serializer_helper.h> // For serialize_helper
+#include <vector>
 
 #include <initializer_list> // For std::initializer_list
 
@@ -23,7 +24,7 @@ MBASE_STD_BEGIN
 // equality comparable
 // destructible
 
-template<typename T, typename Allocator = mbase::allocator_simple<T>>
+template<typename T, typename Allocator = mbase::allocator<T>>
 class vector {
 public:
 	using value_type = T;
@@ -42,7 +43,7 @@ public:
 	using const_reverse_iterator = const_reverse_sequence_iterator<T>;
 
 	MBASE_EXPLICIT vector() noexcept : raw_data(nullptr), mSize(0), mCapacity(4) {
-		raw_data = Allocator::allocate(mCapacity); // default capacity
+		raw_data = externalAllocator.allocate(mCapacity); // default capacity
 	}
 
 	MBASE_EXPLICIT vector(size_type in_size) noexcept : raw_data(nullptr), mSize(0), mCapacity(0) {
@@ -51,7 +52,7 @@ public:
 			return;
 		}
 		mCapacity = in_size;
-		raw_data = Allocator::allocate(mCapacity);
+		raw_data = externalAllocator.allocate(mCapacity);
 	}
 
 	vector(std::initializer_list<value_type> in_list) noexcept {
@@ -59,11 +60,11 @@ public:
 		mCapacity = in_list.size() * 2;
 
 		const value_type* currentObj = in_list.begin();
-		raw_data = Allocator::allocate(mCapacity);
+		raw_data = externalAllocator.allocate(mCapacity);
 
 		while(currentObj != in_list.end())
 		{
-			Allocator::construct(raw_data + mSize, *currentObj);
+			externalAllocator.construct(raw_data + mSize, *currentObj);
 			currentObj++;
 			mSize++;
 		}
@@ -78,10 +79,10 @@ public:
 			mCapacity = 4;
 		}
 
-		raw_data = Allocator::allocate(mCapacity);
+		raw_data = externalAllocator.allocate(mCapacity);
 		for (I32 i = 0; i < mCapacity; i++)
 		{
-			Allocator::construct(raw_data + i, in_rhs[i]);
+			externalAllocator.construct(raw_data + i, in_rhs[i]);
 		}
 	}
 	
@@ -92,6 +93,10 @@ public:
 		raw_data = in_rhs.raw_data;
 		in_rhs.raw_data = nullptr;
 	}
+
+	//vector(const std::vector<T, Allocator>& in_rhs) noexcept {
+	//	
+	//}
 
 	~vector() noexcept {
 		clear();
@@ -110,10 +115,10 @@ public:
 		mSize = in_rhs.mSize;
 		mCapacity = in_rhs.mCapacity;
 
-		raw_data = Allocator::allocate(mCapacity);
+		raw_data = externalAllocator.allocate(mCapacity);
 		for (I32 i = 0; i < mCapacity; i++)
 		{
-			Allocator::construct(raw_data + i, in_rhs[i]);
+			externalAllocator.construct(raw_data + i, in_rhs[i]);
 		}
 		return *this;
 	}
@@ -152,7 +157,7 @@ public:
 			{
 				raw_data[i].~value_type();
 			}
-			Allocator::deallocate(raw_data);
+			externalAllocator.deallocate(raw_data, 0);
 			raw_data = nullptr;
 		}
 		mSize = 0;
@@ -166,7 +171,7 @@ public:
 			{
 				raw_data[i].~value_type();
 			}
-			Allocator::deallocate(raw_data);
+			externalAllocator.deallocate(raw_data, 0);
 			raw_data = nullptr;
 		}
 		mSize = 0;
@@ -187,14 +192,14 @@ public:
 			return;
 		}
 
-		pointer new_data = Allocator::allocate(in_capacity);
+		pointer new_data = externalAllocator.allocate(in_capacity);
 		difference_type i = 0;
 		for(i; i < mSize; i++)
 		{
-			Allocator::construct(new_data + i, std::move(*(raw_data + i)));
+			externalAllocator.construct(new_data + i, std::move(*(raw_data + i)));
 			raw_data[i].~value_type();
 		}
-		Allocator::deallocate(raw_data);
+		externalAllocator.deallocate(raw_data, 0);
 		raw_data = nullptr;
 
 		mSize = i;
@@ -211,7 +216,7 @@ public:
 		{
 			if(mSize)
 			{
-				pointer new_data = Allocator::allocate(mCapacity);
+				pointer new_data = externalAllocator.allocate(mCapacity);
 				difference_type i = 0;
 				difference_type j = 0;
 				for (iterator It = begin(); It != end(); It++)
@@ -225,11 +230,11 @@ public:
 					{
 						raw_data[j].~value_type();
 					}
-					Allocator::construct(new_data + i, std::move(*(raw_data + j)));
+					externalAllocator.construct(new_data + i, std::move(*(raw_data + j)));
 					++i;
 					++j;
 				}
-				Allocator::deallocate(raw_data);
+				externalAllocator.deallocate(raw_data, 0);
 				raw_data = new_data;
 				--mSize;
 			}
@@ -246,7 +251,7 @@ public:
 			reserve(2 * mCapacity + 1);
 		}
 		pointer curObj = raw_data + mSize++;
-		Allocator::construct(curObj, in_data);
+		externalAllocator.construct(curObj, in_data);
 	}
 
 	MBASE_INLINE_EXPR GENERIC push_back(T&& in_data) noexcept {
@@ -255,7 +260,7 @@ public:
 			reserve(2 * mCapacity + 1);
 		}
 		pointer curObj = raw_data + mSize++;
-		Allocator::construct(curObj, std::move(in_data));
+		externalAllocator.construct(curObj, std::move(in_data));
 	}
 
 	MBASE_INLINE_EXPR GENERIC pop_back() noexcept {
@@ -416,6 +421,7 @@ public:
 	}
 
 private:
+	Allocator externalAllocator;
 	pointer raw_data;
 	SIZE_T mSize;
 	SIZE_T mCapacity;

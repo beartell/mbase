@@ -18,9 +18,7 @@ public:
 	using pointer = T*;
 	using const_pointer = const T*;
 
-	queue() noexcept {
-
-	}
+	queue() noexcept {}
 
 	queue(const queue& in_rhs) noexcept {
 		_Sc = in_rhs._Sc;

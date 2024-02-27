@@ -34,7 +34,6 @@
 #define MBASE_CPP_VERSION 26
 #endif
 
-
 /* LANGUAGE VERSION CONTROL */
 
 #define MBASE_INLINE inline
@@ -48,7 +47,7 @@
 	#define MBASE_INLINE_EXPR inline
 #endif
 
-
+#define MBASE_STD_LIB_COMPATIBLE
 
 #ifndef MBASE_STD_API
 	#if defined(_MSC_VER)

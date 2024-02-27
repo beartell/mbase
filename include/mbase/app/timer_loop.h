@@ -82,15 +82,15 @@ public:
 		return timer_err::TIMER_SUCCESS;
 	}
 
-	USED_RETURN U32 GetDeltaSeconds() const noexcept {
+	USED_RETURN("timer loop observation being ignored") U32 GetDeltaSeconds() const noexcept {
 		return deltaTime;
 	}
 
-	USED_RETURN mbase::tpool* GetThreadPool() noexcept {
+	USED_RETURN("timer loop observation being ignored") mbase::tpool* GetThreadPool() noexcept {
 		return &threadPool;
 	}
 
-	USED_RETURN mbase::list<timer_base*>* GetTimerList() noexcept {
+	USED_RETURN("timer loop observation being ignored") mbase::list<timer_base*>* GetTimerList() noexcept {
 		return &registeredTimers;
 	}
 
@@ -168,7 +168,7 @@ public:
 		}
 	}
 
-	USED_RETURN U32 GetActiveTimerCount() const noexcept {
+	USED_RETURN("timer loop observation being ignored") U32 GetActiveTimerCount() const noexcept {
 		return registeredTimers.size();
 	}
 
