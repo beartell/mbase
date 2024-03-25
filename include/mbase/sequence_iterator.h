@@ -99,7 +99,6 @@ public:
         return _ptr != in_rhs.get();
     }
 
-
 protected:
     pointer _ptr;
 };

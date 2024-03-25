@@ -7,21 +7,43 @@
 
 MBASE_STD_BEGIN
 
+/* --- OBJECT BEHAVIOURS --- */
+
+/*
+    Default Constructible
+    Move Constructible
+    Copy Constructible
+    Destructible
+    Copy Assignable
+    Move Assignable
+    Swappable
+    Allocate Aware
+    Equality Comparable
+    Sign Comparable
+    Serializable
+    Arithmetic Operable
+    Iterable
+    Type Aware
+    Debuggable
+*/
+
+/* --- OBJECT BEHAVIOURS --- */
+
 class character_sequence : public type_sequence<IBYTE> {
 public:
     using Allocator = mbase::allocator<IBYTE>;
 
-    character_sequence() noexcept;
-    character_sequence(IBYTEBUFFER in_data, size_type in_size, size_type in_capacity) noexcept;
-    character_sequence(MSTRING in_string) noexcept;
-    character_sequence(MSTRING in_string, size_type in_length) noexcept;
-    character_sequence(const character_sequence& in_rhs) noexcept;
-    character_sequence(character_sequence&& in_rhs) noexcept;
-    ~character_sequence() noexcept;
+    MBASE_INLINE character_sequence() noexcept;
+    MBASE_INLINE character_sequence(IBYTEBUFFER in_data, size_type in_size, size_type in_capacity) noexcept;
+    MBASE_INLINE character_sequence(MSTRING in_string) noexcept;
+    MBASE_INLINE character_sequence(MSTRING in_string, size_type in_length) noexcept;
+    MBASE_INLINE character_sequence(const character_sequence& in_rhs) noexcept;
+    MBASE_INLINE character_sequence(character_sequence&& in_rhs) noexcept;
+    MBASE_INLINE ~character_sequence() noexcept;
 
-    character_sequence& operator=(const character_sequence& in_rhs) noexcept;
-    character_sequence& operator=(character_sequence&& in_rhs) noexcept;
-    character_sequence& operator=(MSTRING in_rhs) noexcept;
+    MBASE_INLINE character_sequence& operator=(const character_sequence& in_rhs) noexcept;
+    MBASE_INLINE character_sequence& operator=(character_sequence&& in_rhs) noexcept;
+    MBASE_INLINE character_sequence& operator=(MSTRING in_rhs) noexcept;
 
     USED_RETURN("raw string data being ignored") MBASE_INLINE_EXPR pointer data() const noexcept;
     USED_RETURN("raw string being ignored") MBASE_INLINE_EXPR const_pointer c_str() const noexcept;
@@ -104,7 +126,7 @@ public:
     character_sequence& operator+=(MSTRING in_rhs) noexcept;
     character_sequence& operator+=(const IBYTE& in_character) noexcept;
 
-    MBASE_INLINE GENERIC serialize(safe_buffer* out_buffer);
+    MBASE_INLINE GENERIC serialize(safe_buffer& out_buffer);
     MBASE_INLINE static character_sequence deserialize(IBYTEBUFFER in_buffer, SIZE_T in_length) noexcept;
 
     USED_RETURN("converted string not being used.") static I32 to_i32(const character_sequence& in_string) noexcept { return atoi(in_string.c_str()); }
@@ -155,15 +177,16 @@ private:
     SIZE_T mSize;
 };
 
-character_sequence::character_sequence() noexcept : raw_data(nullptr), mSize(0), mCapacity(8) {
+MBASE_INLINE character_sequence::character_sequence() noexcept : raw_data(nullptr), mSize(0), mCapacity(8) {
     raw_data = externalAllocator.allocate(mCapacity, true);
 }
 
-character_sequence::character_sequence(IBYTEBUFFER in_data, size_type in_size, size_type in_capacity) noexcept : raw_data(in_data), mSize(in_size), mCapacity(in_capacity) {
- 
+MBASE_INLINE character_sequence::character_sequence(IBYTEBUFFER in_data, size_type in_size, size_type in_capacity) noexcept : raw_data(in_data), mSize(in_size), mCapacity(in_capacity) 
+{
+    // IMPLEMENT THIS
 }
 
-character_sequence::character_sequence(MSTRING in_string) noexcept {
+MBASE_INLINE character_sequence::character_sequence(MSTRING in_string) noexcept {
     size_type tmp_st_length = type_sequence::length(in_string);
     size_type string_length = tmp_st_length / 8;
     size_type base_capacity = 8;
@@ -178,7 +201,7 @@ character_sequence::character_sequence(MSTRING in_string) noexcept {
     type_sequence::copy_bytes(raw_data, in_string, tmp_st_length + 1);
 }
 
-character_sequence::character_sequence(MSTRING in_string, size_type in_length) noexcept {
+MBASE_INLINE character_sequence::character_sequence(MSTRING in_string, size_type in_length) noexcept {
     size_type string_length = in_length / 8;
     size_type base_capacity = 8;
     while (string_length--)
@@ -192,20 +215,20 @@ character_sequence::character_sequence(MSTRING in_string, size_type in_length) n
     type_sequence::copy_bytes(raw_data, in_string, in_length);
 }
 
-character_sequence::character_sequence(const character_sequence& in_rhs) noexcept : raw_data(nullptr), mSize(in_rhs.mSize), mCapacity(in_rhs.mCapacity) {
+MBASE_INLINE character_sequence::character_sequence(const character_sequence& in_rhs) noexcept : raw_data(nullptr), mSize(in_rhs.mSize), mCapacity(in_rhs.mCapacity) {
     raw_data = externalAllocator.allocate(mCapacity, true);
     type_sequence::copy_bytes(raw_data, in_rhs.raw_data, mSize);
 }
 
-character_sequence::character_sequence(character_sequence&& in_rhs) noexcept : raw_data(in_rhs.raw_data), mSize(in_rhs.mSize), mCapacity(in_rhs.mCapacity) {
+MBASE_INLINE character_sequence::character_sequence(character_sequence&& in_rhs) noexcept : raw_data(in_rhs.raw_data), mSize(in_rhs.mSize), mCapacity(in_rhs.mCapacity) {
     in_rhs.raw_data = NULL;
 }
 
-character_sequence::~character_sequence() noexcept {
+MBASE_INLINE character_sequence::~character_sequence() noexcept {
     externalAllocator.destroy(raw_data);
 }
 
-character_sequence& character_sequence::operator=(const character_sequence& in_rhs) noexcept {
+MBASE_INLINE character_sequence& character_sequence::operator=(const character_sequence& in_rhs) noexcept {
     if (raw_data)
     {
         externalAllocator.deallocate(raw_data, 0);
@@ -219,7 +242,7 @@ character_sequence& character_sequence::operator=(const character_sequence& in_r
     return *this;
 }
 
-character_sequence& character_sequence::operator=(MSTRING in_rhs) noexcept {
+MBASE_INLINE character_sequence& character_sequence::operator=(MSTRING in_rhs) noexcept {
 
     if (raw_data)
     {
@@ -242,7 +265,7 @@ character_sequence& character_sequence::operator=(MSTRING in_rhs) noexcept {
     return *this;
 }
 
-character_sequence& character_sequence::operator=(character_sequence&& in_rhs) noexcept {
+MBASE_INLINE character_sequence& character_sequence::operator=(character_sequence&& in_rhs) noexcept {
     if (raw_data)
     {
         externalAllocator.deallocate(raw_data, 0);
@@ -731,13 +754,13 @@ MBASE_INLINE GENERIC character_sequence::copy(IBYTEBUFFER in_src, size_t in_len,
     copy_bytes(in_src, raw_data + in_pos, in_len);
 }
 
-MBASE_INLINE GENERIC character_sequence::serialize(safe_buffer* out_buffer) {
+MBASE_INLINE GENERIC character_sequence::serialize(safe_buffer& out_buffer) {
     if (mSize)
     {
-        out_buffer->bfLength = mSize;
-        out_buffer->bfSource = new IBYTE[mSize];
+        out_buffer.bfLength = mSize;
+        out_buffer.bfSource = new IBYTE[mSize];
 
-        copy_bytes(out_buffer->bfSource, raw_data, mSize); // DO NOT INCLUDE NULL TERMINATOR
+        copy_bytes(out_buffer.bfSource, raw_data, mSize); // DO NOT INCLUDE NULL TERMINATOR
     }
 }
 

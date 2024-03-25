@@ -56,7 +56,7 @@ public:
 		_Sc.pop_back();
 	}
 
-	MBASE_INLINE GENERIC serialize(safe_buffer* out_buffer) noexcept {
+	MBASE_INLINE GENERIC serialize(safe_buffer& out_buffer) noexcept {
 		_Sc.serialize(out_buffer);
 	}
 

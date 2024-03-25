@@ -22,113 +22,20 @@ public:
 
 	using raw_handle = HANDLE;
 
-	thread(Func&& in_fptr, Args&&... in_args) noexcept {
-		tp.fPtr = std::forward<Func>(in_fptr);
-		tp.fParams = std::make_tuple(std::forward<Args>(in_args)...);
-		
-		threadHandle = nullptr;
-		threadId = 0;
-	}
+	MBASE_INLINE thread(Func&& in_fptr, Args&&... in_args) noexcept;
+	MBASE_INLINE thread(thread&& in_rhs) noexcept;
+	MBASE_INLINE ~thread() noexcept;
 
-	thread(thread&& in_rhs) noexcept {
-		tp.fPtr = in_rhs.tp.fPtr;
-		tp.fParams = in_rhs.tp.fParams;
-		threadHandle = in_rhs.threadHandle;
-		threadId = in_rhs.threadId;
+	USED_RETURN("ignoring thread id") MBASE_INLINE I32 get_id() noexcept;
+	USED_RETURN("ignoring thread id") static I32 get_current_thread_id() noexcept;
 
-		in_rhs.threadHandle = nullptr;
-		in_rhs.threadId = 0;
-	}
-
-	~thread() noexcept {
-		join();
-	}
-
-	MBASE_INLINE thread_error run() noexcept {
-		return _run();
-	}
-
-	MBASE_INLINE thread_error run(Func&& in_fptr, Args&&... in_args) noexcept {
-		tp.fPtr = std::forward<Func>(in_fptr);
-		tp.fParams = std::make_tuple(std::forward<Args>(in_args)...);
-		return _run();
-	}
-
-	MBASE_INLINE thread_error run_with_args(Args&... in_args) noexcept {
-		tp.fParams = std::make_tuple(std::forward<Args>(in_args)...);
-		return _run();
-	}
-
-	MBASE_INLINE thread_error join() noexcept {
-		if(threadHandle)
-		{
-			thread_error t_err = thread_error::THREAD_SUCCESS;
-			if(WaitForSingleObject(threadHandle, INFINITE) == WAIT_FAILED)
-			{
-				t_err = thread_error::THREAD_INVALID_CALL;
-			}
-			threadHandle = nullptr;
-			threadId = 0;
-			return t_err;
-		}
-
-		return thread_error::THREAD_MISSING_THREAD;
-	}
-
-	MBASE_INLINE thread_error halt() noexcept {
-		if(threadHandle)
-		{
-			if(SuspendThread(threadHandle) == -1)
-			{
-				return thread_error::THREAD_UNKNOWN_ERROR;
-			}
-			return thread_error::THREAD_SUCCESS;
-		}
-
-		return thread_error::THREAD_MISSING_THREAD;
-	}
-
-	MBASE_INLINE thread_error resume() noexcept {
-		if(threadHandle)
-		{
-			if(ResumeThread(threadHandle) == -1)
-			{
-				return thread_error::THREAD_UNKNOWN_ERROR;
-			}
-			return thread_error::THREAD_SUCCESS;
-		}
-		return thread_error::THREAD_MISSING_THREAD;
-	}
-
-	MBASE_INLINE thread_error exit(I32 in_exit_code) noexcept {
-
-		if(threadHandle)
-		{
-			if(TerminateThread(threadHandle, in_exit_code) == -1)
-			{
-				threadHandle = nullptr;
-				threadId = 0;
-				return thread_error::THREAD_UNKNOWN_ERROR;
-			}
-			threadHandle = nullptr;
-			threadId = 0;
-			return thread_error::THREAD_SUCCESS;
-		}
-		return thread_error::THREAD_MISSING_THREAD;
-	}
-
-	USED_RETURN("ignoring thread id") MBASE_INLINE I32 get_id() noexcept {
-		if(!threadId)
-		{
-			return GetCurrentThreadId();
-		}
-
-		return threadId;
-	}
-
-	USED_RETURN("ignoring thread id") static I32 get_current_thread_id() noexcept {
-		return GetCurrentThreadId();
-	}
+	MBASE_INLINE thread_error run() noexcept;
+	MBASE_INLINE thread_error run(Func&& in_fptr, Args&&... in_args) noexcept;
+	MBASE_INLINE thread_error run_with_args(Args&... in_args) noexcept;
+	MBASE_INLINE thread_error join() noexcept;
+	MBASE_INLINE thread_error halt() noexcept;
+	MBASE_INLINE thread_error resume() noexcept;
+	MBASE_INLINE thread_error exit(I32 in_exit_code) noexcept;
 
 private:
 	struct thread_param {
@@ -172,6 +79,125 @@ private:
 	I32 threadId;
 	raw_handle threadHandle;
 };
+
+template<typename Func, typename ...Args>
+MBASE_INLINE thread<Func, Args...>::thread(Func&& in_fptr, Args && ...in_args) noexcept {
+	tp.fPtr = std::forward<Func>(in_fptr);
+	tp.fParams = std::make_tuple(std::forward<Args>(in_args)...);
+
+	threadHandle = nullptr;
+	threadId = 0;
+}
+
+template<typename Func, typename ...Args>
+MBASE_INLINE thread<Func, Args...>::thread(thread&& in_rhs) noexcept {
+	tp.fPtr = in_rhs.tp.fPtr;
+	tp.fParams = in_rhs.tp.fParams;
+	threadHandle = in_rhs.threadHandle;
+	threadId = in_rhs.threadId;
+
+	in_rhs.threadHandle = nullptr;
+	in_rhs.threadId = 0;
+}
+
+template<typename Func, typename ...Args>
+MBASE_INLINE thread<Func, Args...>::~thread() noexcept {
+	join();
+}
+
+template<typename Func, typename ...Args>
+USED_RETURN("ignoring thread id") MBASE_INLINE I32 thread<Func, Args...>::get_id() noexcept {
+	if (!threadId)
+	{
+		return GetCurrentThreadId();
+	}
+
+	return threadId;
+}
+
+template<typename Func, typename ...Args>
+USED_RETURN("ignoring thread id") I32 thread<Func, Args...>::get_current_thread_id() noexcept {
+	return GetCurrentThreadId();
+}
+
+template<typename Func, typename ...Args>
+MBASE_INLINE thread<Func, Args...>::thread_error thread<Func, Args...>::run() noexcept {
+	return _run();
+}
+
+template<typename Func, typename ...Args>
+MBASE_INLINE thread<Func, Args...>::thread_error thread<Func, Args...>::run(Func&& in_fptr, Args&&... in_args) noexcept {
+	tp.fPtr = std::forward<Func>(in_fptr);
+	tp.fParams = std::make_tuple(std::forward<Args>(in_args)...);
+	return _run();
+}
+
+template<typename Func, typename ...Args>
+MBASE_INLINE thread<Func, Args...>::thread_error thread<Func, Args...>::run_with_args(Args&... in_args) noexcept {
+	tp.fParams = std::make_tuple(std::forward<Args>(in_args)...);
+	return _run();
+}
+
+template<typename Func, typename ...Args>
+MBASE_INLINE thread<Func, Args...>::thread_error thread<Func, Args...>::join() noexcept {
+	if (threadHandle)
+	{
+		thread_error t_err = thread_error::THREAD_SUCCESS;
+		if (WaitForSingleObject(threadHandle, INFINITE) == WAIT_FAILED)
+		{
+			t_err = thread_error::THREAD_INVALID_CALL;
+		}
+		threadHandle = nullptr;
+		threadId = 0;
+		return t_err;
+	}
+
+	return thread_error::THREAD_MISSING_THREAD;
+}
+
+template<typename Func, typename ...Args>
+MBASE_INLINE thread<Func, Args...>::thread_error thread<Func, Args...>::halt() noexcept {
+	if (threadHandle)
+	{
+		if (SuspendThread(threadHandle) == -1)
+		{
+			return thread_error::THREAD_UNKNOWN_ERROR;
+		}
+		return thread_error::THREAD_SUCCESS;
+	}
+
+	return thread_error::THREAD_MISSING_THREAD;
+}
+
+template<typename Func, typename ...Args>
+MBASE_INLINE thread<Func, Args...>::thread_error thread<Func, Args...>::resume() noexcept {
+	if (threadHandle)
+	{
+		if (ResumeThread(threadHandle) == -1)
+		{
+			return thread_error::THREAD_UNKNOWN_ERROR;
+		}
+		return thread_error::THREAD_SUCCESS;
+	}
+	return thread_error::THREAD_MISSING_THREAD;
+}
+
+template<typename Func, typename ...Args>
+MBASE_INLINE thread<Func, Args...>::thread_error thread<Func, Args...>::exit(I32 in_exit_code) noexcept {
+	if (threadHandle)
+	{
+		if (TerminateThread(threadHandle, in_exit_code) == -1)
+		{
+			threadHandle = nullptr;
+			threadId = 0;
+			return thread_error::THREAD_UNKNOWN_ERROR;
+		}
+		threadHandle = nullptr;
+		threadId = 0;
+		return thread_error::THREAD_SUCCESS;
+	}
+	return thread_error::THREAD_MISSING_THREAD;
+}
 
 MBASE_STD_END
 

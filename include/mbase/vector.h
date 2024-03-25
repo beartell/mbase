@@ -27,6 +27,7 @@ MBASE_STD_BEGIN
 	Templated
 	Serializable
 	Type Aware
+	Iterable
 	Debuggable
 */
 
@@ -94,28 +95,8 @@ public:
 	MBASE_INLINE_EXPR GENERIC pop_back() noexcept;
 	MBASE_INLINE_EXPR iterator insert(const_iterator in_pos, const T& in_val) noexcept;
 
-	MBASE_INLINE_EXPR GENERIC serialize(safe_buffer* out_buffer) noexcept;
-	MBASE_INLINE_EXPR static mbase::vector<T, Allocator> deserialize(IBYTEBUFFER in_src, SIZE_T in_length) noexcept {
-		mbase::vector<T, Allocator> deserializedVec;
-		if (in_length)
-		{
-			PTRU32 elemCount = reinterpret_cast<PTRU32>(in_src);
-			serialize_helper<value_type> sl;
-
-			IBYTEBUFFER tmpSrc = in_src + sizeof(U32);
-
-			for (I32 i = 0; i < *elemCount; i++)
-			{
-				PTRU32 elemLength = reinterpret_cast<PTRU32>(tmpSrc);
-				tmpSrc += sizeof(U32);
-				deserializedVec.push_back(sl.deserialize(tmpSrc, *elemLength));
-				tmpSrc += *elemLength;
-			}
-		}
-
-		return deserializedVec;
-	}
-
+	MBASE_INLINE_EXPR GENERIC serialize(safe_buffer& out_buffer) noexcept;
+	MBASE_INLINE_EXPR static mbase::vector<T, Allocator> deserialize(IBYTEBUFFER in_src, SIZE_T in_length) noexcept;
 
 private:
 	Allocator externalAllocator;
@@ -457,7 +438,7 @@ MBASE_INLINE_EXPR GENERIC vector<T, Allocator>::pop_back() noexcept {
 }
 
 template<typename T, typename Allocator>
-MBASE_INLINE_EXPR GENERIC vector<T, Allocator>::serialize(safe_buffer* out_buffer) noexcept {
+MBASE_INLINE_EXPR GENERIC vector<T, Allocator>::serialize(safe_buffer& out_buffer) noexcept {
 	if (mSize)
 	{
 		mbase::vector<safe_buffer> totalBuffer;
@@ -483,10 +464,10 @@ MBASE_INLINE_EXPR GENERIC vector<T, Allocator>::serialize(safe_buffer* out_buffe
 			SIZE_T totalBufferLength = totalLength + (totalBuffer.size() * sizeof(U32)) + sizeof(U32);
 
 			mbase::vector<safe_buffer>::iterator It = totalBuffer.begin();
-			out_buffer->bfLength = totalBufferLength;
-			out_buffer->bfSource = new IBYTE[totalBufferLength];
+			out_buffer.bfLength = totalBufferLength;
+			out_buffer.bfSource = new IBYTE[totalBufferLength];
 
-			IBYTEBUFFER _bfSource = out_buffer->bfSource;
+			IBYTEBUFFER _bfSource = out_buffer.bfSource;
 			PTRU32 elemCount = reinterpret_cast<PTRU32>(_bfSource);
 			*elemCount = totalBuffer.size();
 
@@ -514,6 +495,28 @@ MBASE_INLINE_EXPR GENERIC vector<T, Allocator>::swap(mbase::vector<value_type, A
 	std::swap(raw_data, in_src.raw_data);
 	std::swap(mCapacity, in_src.mCapacity);
 	std::swap(mSize, in_src.mSize);
+}
+
+template<typename T, typename Allocator>
+MBASE_INLINE_EXPR mbase::vector<T, Allocator> mbase::vector<T, Allocator>::deserialize(IBYTEBUFFER in_src, SIZE_T in_length) noexcept {
+	mbase::vector<T, Allocator> deserializedVec;
+	if (in_length)
+	{
+		PTRU32 elemCount = reinterpret_cast<PTRU32>(in_src);
+		serialize_helper<value_type> sl;
+
+		IBYTEBUFFER tmpSrc = in_src + sizeof(U32);
+
+		for (I32 i = 0; i < *elemCount; i++)
+		{
+			PTRU32 elemLength = reinterpret_cast<PTRU32>(tmpSrc);
+			tmpSrc += sizeof(U32);
+			deserializedVec.push_back(sl.deserialize(tmpSrc, *elemLength));
+			tmpSrc += *elemLength;
+		}
+	}
+
+	return deserializedVec;
 }
 
 MBASE_STD_END

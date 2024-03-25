@@ -312,7 +312,7 @@ public:
 		return returnedNode;
 	}
 
-	MBASE_INLINE GENERIC serialize(safe_buffer* out_buffer) noexcept {
+	MBASE_INLINE GENERIC serialize(safe_buffer& out_buffer) noexcept {
 		if (mSize)
 		{
 			mbase::vector<safe_buffer> totalBuffer;
@@ -338,10 +338,10 @@ public:
 				SIZE_T totalBufferLength = totalLength + (totalBuffer.size() * sizeof(U32)) + sizeof(U32);
 
 				mbase::vector<safe_buffer>::iterator It = totalBuffer.begin();
-				out_buffer->bfLength = totalBufferLength;
-				out_buffer->bfSource = new IBYTE[totalBufferLength];
+				out_buffer.bfLength = totalBufferLength;
+				out_buffer.bfSource = new IBYTE[totalBufferLength];
 
-				IBYTEBUFFER _bfSource = out_buffer->bfSource;
+				IBYTEBUFFER _bfSource = out_buffer.bfSource;
 				PTRU32 elemCount = reinterpret_cast<PTRU32>(_bfSource);
 				*elemCount = totalBuffer.size();
 

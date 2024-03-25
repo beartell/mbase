@@ -21,8 +21,25 @@ enum class FS_ERROR : I32{
 	FS_ACCESS_DENIED = ERROR_ACCESS_DENIED
 };
 
+MBASE_INLINE FS_ERROR create_directory(const mbase::string_view& in_path) noexcept;
+MBASE_INLINE FS_ERROR copy_file(const mbase::string_view& in_path, const mbase::string_view& in_copypath) noexcept;
+MBASE_INLINE FS_ERROR delete_file(const mbase::string_view& in_path) noexcept;
+USED_RETURN("temp path unused") MBASE_INLINE mbase::string get_temp_path() noexcept;
+USED_RETURN("current path unused") MBASE_INLINE mbase::string get_current_path() noexcept;
+USED_RETURN("temp file unused") MBASE_INLINE mbase::string get_temp_file(const mbase::string_view& in_prefix) noexcept;
+MBASE_INLINE GENERIC get_directory(const mbase::string_view& in_path, mbase::vector<FS_FILE_INFORMATION>& out_files) noexcept;
+
+
+
+
+
+
+
+
+
+
 MBASE_INLINE FS_ERROR create_directory(const mbase::string_view& in_path) noexcept {
-	if(!CreateDirectoryA(in_path.c_str(), nullptr))
+	if (!CreateDirectoryA(in_path.c_str(), nullptr))
 	{
 		return (FS_ERROR)(GetLastError());
 	}
@@ -31,7 +48,7 @@ MBASE_INLINE FS_ERROR create_directory(const mbase::string_view& in_path) noexce
 }
 
 MBASE_INLINE FS_ERROR copy_file(const mbase::string_view& in_path, const mbase::string_view& in_copypath) noexcept {
-	if(!CopyFileA(in_path.c_str(), in_copypath.c_str(), false))
+	if (!CopyFileA(in_path.c_str(), in_copypath.c_str(), false))
 	{
 		return (FS_ERROR)(GetLastError());
 	}
@@ -40,7 +57,7 @@ MBASE_INLINE FS_ERROR copy_file(const mbase::string_view& in_path, const mbase::
 }
 
 MBASE_INLINE FS_ERROR delete_file(const mbase::string_view& in_path) noexcept {
-	if(!DeleteFileA(in_path.c_str()))
+	if (!DeleteFileA(in_path.c_str()))
 	{
 		return (FS_ERROR)(GetLastError());
 	}
@@ -77,6 +94,7 @@ MBASE_INLINE GENERIC get_directory(const mbase::string_view& in_path, mbase::vec
 	} while (FindNextFileA(findHandle, &findData));
 	FindClose(findHandle);
 }
+
 
 MBASE_STD_END
 
