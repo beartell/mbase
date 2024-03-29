@@ -22,6 +22,7 @@ public:
     using const_reference = const T&;
     using move_reference = T&&;
     using size_type = SIZE_T;
+    using difference_type = PTRDIFF;
 
     using iterator = sequence_iterator<T>;
     using const_iterator = const_sequence_iterator<T>;

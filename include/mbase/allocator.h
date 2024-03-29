@@ -18,7 +18,7 @@ public:
 	using difference_type = PTRDIFF;
 	using size_type = SIZE_T;
 
-	USED_RETURN("dynamically allocated memory unused") static MBASE_INLINE_EXPR pointer allocate(SIZE_T in_amount) noexcept {
+	USED_RETURN("dynamically allocated memory unused") static MBASE_INLINE_EXPR T* allocate(SIZE_T in_amount) noexcept {
 		if (in_amount <= 0)
 		{
 			return nullptr;
@@ -26,7 +26,7 @@ public:
 		return static_cast<pointer>(::operator new(sizeof(value_type) * in_amount));
 	}
 
-	USED_RETURN("dynamically allocated memory unused") static MBASE_INLINE_EXPR pointer allocate(SIZE_T in_amount, bool in_zero_memory) noexcept {
+	USED_RETURN("dynamically allocated memory unused") static MBASE_INLINE_EXPR T* allocate(SIZE_T in_amount, bool in_zero_memory) noexcept {
 		if (in_amount <= 0)
 		{
 			return nullptr;

@@ -7,19 +7,19 @@
 
 MBASE_STD_BEGIN
 
+enum class thread_error : U32 {
+	THREAD_SUCCESS = 0,
+	THREAD_INVALID_PARAMS = ERROR_INVALID_PARAMETER,
+	THREAD_NO_AVAILABLE = ERROR_ALREADY_THREAD,
+	THREAD_MISSING_THREAD = 3,
+	THREAD_UNKNOWN_ERROR = 4,
+	THREAD_INVALID_CALL = 5,
+	THREAD_CANT_JOIN_LAST_OPERATION = 6
+};
+
 template<typename Func, typename ... Args>
 class thread {
 public:
-	enum class thread_error : U32 {
-		THREAD_SUCCESS = 0,
-		THREAD_INVALID_PARAMS = ERROR_INVALID_PARAMETER,
-		THREAD_NO_AVAILABLE = ERROR_ALREADY_THREAD,
-		THREAD_MISSING_THREAD = 3,
-		THREAD_UNKNOWN_ERROR = 4,
-		THREAD_INVALID_CALL = 5,
-		THREAD_CANT_JOIN_LAST_OPERATION = 6
-	};
-
 	using raw_handle = HANDLE;
 
 	MBASE_INLINE thread(Func&& in_fptr, Args&&... in_args) noexcept;
@@ -121,25 +121,25 @@ USED_RETURN("ignoring thread id") I32 thread<Func, Args...>::get_current_thread_
 }
 
 template<typename Func, typename ...Args>
-MBASE_INLINE thread<Func, Args...>::thread_error thread<Func, Args...>::run() noexcept {
+MBASE_INLINE thread_error thread<Func, Args...>::run() noexcept {
 	return _run();
 }
 
 template<typename Func, typename ...Args>
-MBASE_INLINE thread<Func, Args...>::thread_error thread<Func, Args...>::run(Func&& in_fptr, Args&&... in_args) noexcept {
+MBASE_INLINE thread_error thread<Func, Args...>::run(Func&& in_fptr, Args&&... in_args) noexcept {
 	tp.fPtr = std::forward<Func>(in_fptr);
 	tp.fParams = std::make_tuple(std::forward<Args>(in_args)...);
 	return _run();
 }
 
 template<typename Func, typename ...Args>
-MBASE_INLINE thread<Func, Args...>::thread_error thread<Func, Args...>::run_with_args(Args&... in_args) noexcept {
+MBASE_INLINE thread_error thread<Func, Args...>::run_with_args(Args&... in_args) noexcept {
 	tp.fParams = std::make_tuple(std::forward<Args>(in_args)...);
 	return _run();
 }
 
 template<typename Func, typename ...Args>
-MBASE_INLINE thread<Func, Args...>::thread_error thread<Func, Args...>::join() noexcept {
+MBASE_INLINE thread_error thread<Func, Args...>::join() noexcept {
 	if (threadHandle)
 	{
 		thread_error t_err = thread_error::THREAD_SUCCESS;
@@ -156,7 +156,7 @@ MBASE_INLINE thread<Func, Args...>::thread_error thread<Func, Args...>::join() n
 }
 
 template<typename Func, typename ...Args>
-MBASE_INLINE thread<Func, Args...>::thread_error thread<Func, Args...>::halt() noexcept {
+MBASE_INLINE thread_error thread<Func, Args...>::halt() noexcept {
 	if (threadHandle)
 	{
 		if (SuspendThread(threadHandle) == -1)
@@ -170,7 +170,7 @@ MBASE_INLINE thread<Func, Args...>::thread_error thread<Func, Args...>::halt() n
 }
 
 template<typename Func, typename ...Args>
-MBASE_INLINE thread<Func, Args...>::thread_error thread<Func, Args...>::resume() noexcept {
+MBASE_INLINE thread_error thread<Func, Args...>::resume() noexcept {
 	if (threadHandle)
 	{
 		if (ResumeThread(threadHandle) == -1)
@@ -183,7 +183,7 @@ MBASE_INLINE thread<Func, Args...>::thread_error thread<Func, Args...>::resume()
 }
 
 template<typename Func, typename ...Args>
-MBASE_INLINE thread<Func, Args...>::thread_error thread<Func, Args...>::exit(I32 in_exit_code) noexcept {
+MBASE_INLINE thread_error thread<Func, Args...>::exit(I32 in_exit_code) noexcept {
 	if (threadHandle)
 	{
 		if (TerminateThread(threadHandle, in_exit_code) == -1)
