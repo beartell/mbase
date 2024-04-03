@@ -72,7 +72,6 @@ public:
 
 	MBASE_INLINE deep_char_stream& operator=(const deep_char_stream& in_rhs) noexcept;
 	MBASE_INLINE deep_char_stream& operator=(deep_char_stream&& in_rhs) noexcept;
-	
 };
 
 MBASE_INLINE char_stream::char_stream() noexcept : bufferLength(0), streamCursor(0), srcBuffer(nullptr)

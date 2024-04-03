@@ -17,7 +17,7 @@ public:
 	}
 
 	~io_tcp_client() noexcept {
-		closesocket(rawHandle);
+		disconnect();
 	}
 
 	I32 connect_target(const mbase::string& in_name, const mbase::string& in_port) noexcept {
@@ -107,6 +107,7 @@ public:
 		}
 		return dataWritten;
 	}
+
 	size_type write_data(IBYTEBUFFER in_src, size_type in_length) override
 	{
 		DWORD dataWritten = 0;
@@ -117,6 +118,7 @@ public:
 		}
 		return dataWritten;
 	}
+
 	size_type write_data(const mbase::string& in_src) override
 	{
 		DWORD dataWritten = 0;
@@ -127,6 +129,7 @@ public:
 		}
 		return dataWritten;
 	}
+
 	size_type write_data(const char_stream& in_src) override
 	{
 		DWORD dataWritten = 0;

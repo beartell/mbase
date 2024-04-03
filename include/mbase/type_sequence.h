@@ -71,6 +71,11 @@ public:
     }
 };
 
+template <>
+class type_sequence<wchar_t> {
+
+};
+
 MBASE_STD_END
 
 #endif // !MBASE_TYPE_SEQUENCE_H

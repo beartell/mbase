@@ -48,8 +48,21 @@ public:
 	using const_reverse_iterator = typename const_reverse_bi_list_iterator<node_type, value_type>;
 
 	MBASE_INLINE list() noexcept;
+	MBASE_INLINE MBASE_EXPLICIT list(const Allocator& in_alloc);
+	list(size_type in_count, const T& in_value, const Allocator& in_alloc = Allocator());
+	MBASE_INLINE MBASE_EXPLICIT list(size_type in_count, const Allocator& in_alloc = Allocator());
+	template<typename InputIt>
+	list(InputIt in_begin, InputIt in_end, const Allocator& in_alloc = Allocator());
+	list(const list& in_rhs);
+	list(const list& in_rhs, const Allocator& in_alloc);
+	list(list&& in_rhs);
+	list(list&& in_rhs, const Allocator& in_alloc);
 	MBASE_INLINE list(std::initializer_list<value_type> in_list) noexcept;
 	MBASE_INLINE ~list() noexcept;
+
+	list& operator=(const list& in_rhs);
+	list& operator=(list&& in_rhs) noexcept;
+	list& operator=(std::initializer_list<value_type> in_vals);
 
 	USED_RETURN("iterator being ignored") MBASE_INLINE_EXPR iterator begin() noexcept;
 	USED_RETURN("iterator being ignored") MBASE_INLINE_EXPR iterator end() noexcept;
@@ -66,7 +79,13 @@ public:
 	USED_RETURN("last element being ignored") MBASE_INLINE_EXPR const_reference back() const noexcept;
 	USED_RETURN("container observation ignored") MBASE_INLINE_EXPR bool empty() const noexcept;
 	USED_RETURN("container observation ignored") MBASE_INLINE_EXPR size_type size() const noexcept;
+	USED_RETURN("ignoring max size") MBASE_INLINE size_type max_size() const noexcept;
+	USED_RETURN("ignoring allocator") MBASE_INLINE_EXPR Allocator get_allocator() const noexcept;
 
+	MBASE_INLINE GENERIC assign(size_type in_count, const_reference in_value);
+	template<typename InputIt>
+	MBASE_INLINE GENERIC assign(InputIt in_begin, InputIt in_end);
+	MBASE_INLINE GENERIC assign(std::initializer_list<value_type> in_vals);
 	MBASE_INLINE_EXPR GENERIC clear() noexcept;
 	MBASE_INLINE_EXPR GENERIC push_back(const_reference in_data) noexcept;
 	MBASE_INLINE_EXPR GENERIC push_back(move_reference in_data) noexcept;
@@ -74,12 +93,36 @@ public:
 	MBASE_INLINE_EXPR GENERIC push_front(move_reference in_data) noexcept;
 	MBASE_INLINE_EXPR GENERIC pop_back() noexcept;
 	MBASE_INLINE_EXPR GENERIC pop_front() noexcept;
-	MBASE_INLINE_EXPR GENERIC insert(const_iterator in_pos, const_reference in_object) noexcept;
-	MBASE_INLINE_EXPR GENERIC insert(const_iterator in_pos, move_reference in_object) noexcept;
-	MBASE_INLINE_EXPR GENERIC insert(difference_type in_index, const_reference in_object) noexcept;
-	MBASE_INLINE_EXPR GENERIC insert(difference_type in_index, move_reference in_object) noexcept;
+	MBASE_INLINE_EXPR iterator insert(const_iterator in_pos, const_reference in_object) noexcept;
+	MBASE_INLINE_EXPR iterator insert(const_iterator in_pos, move_reference in_object) noexcept;
+	MBASE_INLINE_EXPR iterator insert(const_iterator in_pos, size_type in_count, const_reference in_object);
+	template<typename InputIt>
+	MBASE_INLINE_EXPR iterator insert(const_iterator in_pos, InputIt in_begin, InputIt in_end);
+	MBASE_INLINE_EXPR iterator insert(difference_type in_index, const_reference in_object) noexcept;
+	MBASE_INLINE_EXPR iterator insert(difference_type in_index, move_reference in_object) noexcept;
+	MBASE_INLINE_EXPR iterator insert(const_iterator in_pos, std::initializer_list<value_type> in_vals);
+	template<typename ... Args>
+	MBASE_INLINE iterator emplace(const_iterator in_pos, Args&& ... in_args);
+	template<typename ... Args>
+	MBASE_INLINE_EXPR reference emplace_front(Args&& ... in_args);
+	template<typename ... Args>
+	MBASE_INLINE_EXPR reference emplace_back(Args&& ... in_args);
 	MBASE_INLINE_EXPR iterator erase(iterator in_pos) noexcept;
-	MBASE_INLINE_EXPR GENERIC swap(mbase::list<value_type>& in_src) noexcept;
+	MBASE_INLINE_EXPR iterator erase(const_iterator in_pos);
+	MBASE_INLINE_EXPR iterator erase(iterator in_begin, iterator in_end);
+	MBASE_INLINE_EXPR iterator erase(const_iterator in_begin, const_iterator in_end);
+	MBASE_INLINE_EXPR GENERIC swap(list& in_src) noexcept;
+	MBASE_INLINE_EXPR GENERIC merge(list& in_rhs);
+	MBASE_INLINE_EXPR GENERIC merge(list&& in_rhs);
+	template<typename Compare>
+	MBASE_INLINE_EXPR GENERIC merge(list& in_rhs, Compare in_comp);
+	template<typename Compare>
+	MBASE_INLINE_EXPR GENERIC merge(list&& in_rhs, Compare in_comp);
+	MBASE_INLINE_EXPR GENERIC splice(const_iterator in_pos, list& in_rhs);
+	MBASE_INLINE_EXPR GENERIC splice(const_iterator in_pos, list&& in_rhs);
+	MBASE_INLINE_EXPR GENERIC splice(const_iterator in_pos, list& in_rhs, const_iterator in_it);
+	MBASE_INLINE_EXPR GENERIC splice(const_iterator in_pos, list&& in_rhs, const_iterator in_it);
+	MBASE_INLINE_EXPR GENERIC splice(const_iterator in_pos, list&& in_rhs, const_iterator in_begin, const_iterator in_end);
 	MBASE_INLINE GENERIC serialize(safe_buffer& out_buffer) noexcept;
 	MBASE_INLINE static mbase::list<T, Allocator> deserialize(IBYTEBUFFER in_src, SIZE_T in_length) noexcept;
 };
@@ -299,7 +342,7 @@ MBASE_INLINE_EXPR GENERIC list<T, Allocator>::pop_front() noexcept {
 }
 
 template<typename T, typename Allocator>
-MBASE_INLINE_EXPR GENERIC list<T, Allocator>::insert(const_iterator in_pos, const_reference in_object) noexcept {
+MBASE_INLINE_EXPR typename list<T, Allocator>::iterator list<T, Allocator>::insert(const_iterator in_pos, const_reference in_object) noexcept {
 	node_type* mNode = in_pos.get();
 	node_type* newNode = new node_type(in_object);
 	newNode->prev = mNode->prev;
@@ -311,10 +354,11 @@ MBASE_INLINE_EXPR GENERIC list<T, Allocator>::insert(const_iterator in_pos, cons
 	mNode->prev = newNode;
 	newNode->next = mNode;
 	++mSize;
+	return iterator(newNode);
 }
 
 template<typename T, typename Allocator>
-MBASE_INLINE_EXPR GENERIC list<T, Allocator>::insert(const_iterator in_pos, move_reference in_object) noexcept {
+MBASE_INLINE_EXPR typename list<T, Allocator>::iterator list<T, Allocator>::insert(const_iterator in_pos, move_reference in_object) noexcept {
 	node_type* mNode = in_pos.get();
 	node_type* newNode = new node_type(std::move(in_object));
 	newNode->prev = mNode->prev;
@@ -331,22 +375,23 @@ MBASE_INLINE_EXPR GENERIC list<T, Allocator>::insert(const_iterator in_pos, move
 	mNode->prev = newNode;
 	newNode->next = mNode;
 	++mSize;
+	return iterator(newNode);
 }
 
 template<typename T, typename Allocator>
-MBASE_INLINE_EXPR GENERIC list<T, Allocator>::insert(difference_type in_index, const_reference in_object) noexcept {
+MBASE_INLINE_EXPR typename list<T, Allocator>::iterator list<T, Allocator>::insert(difference_type in_index, const_reference in_object) noexcept {
 	iterator in_pos = begin();
 	in_pos += in_index;
 
-	insert(in_pos, in_object);
+	return insert(in_pos, in_object);
 }
 
 template<typename T, typename Allocator>
-MBASE_INLINE_EXPR GENERIC list<T, Allocator>::insert(difference_type in_index, move_reference in_object) noexcept {
+MBASE_INLINE_EXPR typename list<T, Allocator>::iterator list<T, Allocator>::insert(difference_type in_index, move_reference in_object) noexcept {
 	iterator in_pos = begin();
 	in_pos += in_index;
 
-	insert(in_pos, std::move(in_object));
+	return insert(in_pos, std::move(in_object));
 }
 
 template<typename T, typename Allocator>
@@ -376,7 +421,7 @@ MBASE_INLINE_EXPR typename list<T, Allocator>::iterator list<T, Allocator>::eras
 }
 
 template<typename T, typename Allocator>
-MBASE_INLINE_EXPR GENERIC list<T, Allocator>::swap(mbase::list<value_type>& in_src) noexcept {
+MBASE_INLINE_EXPR GENERIC list<T, Allocator>::swap(list& in_src) noexcept {
 	std::swap(firstNode, in_src.firstNode);
 	std::swap(lastNode, in_src.lastNode);
 	std::swap(mSize, in_src.mSize);
