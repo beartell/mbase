@@ -2,7 +2,6 @@
 #define MBASE_LIST_ITERATOR_H
 
 #include <mbase/common.h>
-#include <iterator>
 
 MBASE_STD_BEGIN
 
@@ -249,12 +248,12 @@ struct list_node {
     list_node* next;
     pointer data;
 
-    list_node(const_reference in_object) noexcept : prev(nullptr), next(nullptr) {
+    list_node(const_reference in_object, const Allocator& in_alloc = Allocator()) noexcept : prev(nullptr), next(nullptr), externalAllocator(in_alloc){
         data = externalAllocator.allocate(1);
         externalAllocator.construct(data, in_object);
     }
 
-    list_node(move_reference in_object) noexcept : prev(nullptr), next(nullptr) {
+    list_node(move_reference in_object, const Allocator& in_alloc = Allocator()) noexcept : prev(nullptr), next(nullptr), externalAllocator(in_alloc) {
         data = externalAllocator.allocate(1);
         externalAllocator.construct(data, std::move(in_object));
     }
@@ -263,7 +262,7 @@ struct list_node {
         // data is guaranteed to be present
         // so no need to null check
         data->~value_type();
-        externalAllocator.deallocate(data);
+        externalAllocator.deallocate(data, 0);
     }
 };
 
@@ -329,9 +328,9 @@ MBASE_INLINE forward_list_iterator<T, DataT>& forward_list_iterator<T, DataT>::o
     {
         return *this;
     }
-
+    forward_list_iterator fli(*this);
     _ptr = _ptr->next;
-    return *this;
+    return fli;
 }
 
 template<typename T, typename DataT>
@@ -421,9 +420,9 @@ MBASE_INLINE const_forward_list_iterator<T, DataT>& const_forward_list_iterator<
     {
         return *this;
     }
-
+    const_forward_list_iterator fli(*this);
     _ptr = _ptr->next;
-    return *this;
+    return fli;
 }
 
 template<typename T, typename DataT>
@@ -506,9 +505,9 @@ MBASE_INLINE backward_list_iterator<T, DataT>& backward_list_iterator<T, DataT>:
     {
         return *this;
     }
-
+    backward_list_iterator fli(*this);
     _ptr = _ptr->prev;
-    return *this;
+    return fli;
 }
 
 template<typename T, typename DataT>
@@ -651,8 +650,9 @@ MBASE_INLINE bi_list_iterator<Type, DataT>& bi_list_iterator<Type, DataT>::opera
 
 template<typename Type, typename DataT>
 MBASE_INLINE bi_list_iterator<Type, DataT>& bi_list_iterator<Type, DataT>::operator--(int) noexcept {
+    bi_list_iterator bi(*this);
     this->_ptr = this->_ptr->prev;
-    return *this;
+    return bi;
 }
 
 /* <-- CONST BIDIRECTIONAL LIST ITERATOR IMPLEMENTATION -->*/
