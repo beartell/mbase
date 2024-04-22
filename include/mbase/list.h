@@ -183,13 +183,23 @@ public:
 	MBASE_INLINE_EXPR GENERIC splice(const_iterator in_pos, list& in_rhs, const_iterator in_it);
 	MBASE_INLINE_EXPR GENERIC splice(const_iterator in_pos, list&& in_rhs, const_iterator in_it);
 	MBASE_INLINE_EXPR GENERIC splice(const_iterator in_pos, list&& in_rhs, const_iterator in_begin, const_iterator in_end);
-	MBASE_INLINE size_type remove(const_reference in_value);
+	MBASE_INLINE GENERIC remove(const_reference in_value);
 	template<typename UnaryPredicate>
-	MBASE_INLINE size_type remove_if(UnaryPredicate in_p);
-	MBASE_INLINE GENERIC reverse();
-	MBASE_INLINE size_type unique();
+	MBASE_INLINE GENERIC remove_if(UnaryPredicate in_p) {
+		const_iterator in_begin = cbegin();
+		for (in_begin; in_begin != cend(); in_begin++)
+		{
+			if (in_p(*in_begin))
+			{
+				erase(in_begin);
+				return;
+			}
+		}
+	}
+	MBASE_INLINE GENERIC reverse(); // IMPLEMENT 
+	MBASE_INLINE GENERIC unique(); // IMPLEMENT
 	template<typename BinaryPredicate>
-	MBASE_INLINE size_type unique(BinaryPredicate in_p);
+	MBASE_INLINE GENERIC unique(BinaryPredicate in_p); // IMPLEMENT
 	MBASE_INLINE GENERIC serialize(safe_buffer& out_buffer) noexcept;
 	MBASE_INLINE static mbase::list<T, Allocator> deserialize(IBYTEBUFFER in_src, SIZE_T in_length) noexcept;
 };
@@ -717,7 +727,7 @@ MBASE_INLINE_EXPR typename list<T, Allocator>::iterator list<T, Allocator>::eras
 
 template<typename T, typename Allocator>
 MBASE_INLINE_EXPR typename list<T, Allocator>::iterator list<T, Allocator>::erase(const_iterator in_pos) {
-	node_type* mNode = const_cast<node_type*>in_pos.get();
+	node_type* mNode = const_cast<node_type*>(in_pos.get());
 	node_type* returnedNode = mNode->next;
 
 	if (mNode == firstNode)
@@ -820,6 +830,18 @@ MBASE_INLINE_EXPR GENERIC list<T, Allocator>::splice(const_iterator in_pos, list
 	in_rhs.erase(in_begin, in_end);
 }
 
+template<typename T, typename Allocator>
+MBASE_INLINE GENERIC list<T, Allocator>::remove(const_reference in_value) {
+	const_iterator in_begin = cbegin();
+	for(in_begin; in_begin != cend(); in_begin++)
+	{
+		if (*in_begin == in_value)
+		{
+			erase(in_begin);
+			return;
+		}
+	}
+}
 
 template<typename T, typename Allocator>
 MBASE_INLINE_EXPR GENERIC list<T, Allocator>::swap(list& in_src) noexcept {
