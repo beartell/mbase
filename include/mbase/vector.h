@@ -108,6 +108,7 @@ public:
 	MBASE_INLINE_EXPR GENERIC deep_clear() noexcept;
 	MBASE_INLINE_EXPR GENERIC resize(size_type in_size) noexcept;
 	MBASE_INLINE_EXPR GENERIC resize(size_type, const T& in_value) noexcept;
+	MBASE_INLINE_EXPR GENERIC shrink_to_fit();
 	MBASE_INLINE_EXPR GENERIC reserve(size_type in_capacity) noexcept;
 	MBASE_INLINE_EXPR GENERIC erase(iterator in_pos) noexcept;
 	MBASE_INLINE_EXPR iterator erase(const_iterator in_begin, const_iterator in_end) noexcept;

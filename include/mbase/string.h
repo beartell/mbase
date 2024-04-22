@@ -126,7 +126,12 @@ public:
     USED_RETURN("founded string not being used") MBASE_INLINE size_type find_last_not_of(value_type in_char, size_type in_pos = 0) const noexcept;
     USED_RETURN("founded string not being used") MBASE_INLINE character_sequence substr(size_type in_pos = 0, size_type in_count = npos) const;
     USED_RETURN("founded string not being used") MBASE_INLINE character_sequence subarray(size_type in_pos = 0, size_type in_count = npos) const;
-    // --- MISSING ---> starts_with
+    USED_RETURN("string observation ignored") MBASE_INLINE bool starts_with(value_type in_char) const noexcept;
+    USED_RETURN("string observation ignored") MBASE_INLINE bool starts_with(MSTRING in_str) const;
+    USED_RETURN("string observation ignored") MBASE_INLINE bool ends_with(value_type in_char) const noexcept;
+    USED_RETURN("string observation ignored") MBASE_INLINE bool ends_with(MSTRING in_str) const;
+    USED_RETURN("string observation ignored") MBASE_INLINE bool contains(value_type in_char) const noexcept;
+    USED_RETURN("string observation ignored") MBASE_INLINE bool contains(MSTRING in_str) const;
     USED_RETURN("string observation ignored") MBASE_INLINE I32 compare(const character_sequence& in_src) const noexcept;
     USED_RETURN("string observation ignored") MBASE_INLINE I32 compare(size_type in_pos1, size_type in_pos2, const character_sequence& in_src) const;
     USED_RETURN("string observation ignored") MBASE_INLINE I32 compare(size_type in_pos1, size_type in_count1, const character_sequence& in_src, size_type in_pos2, size_type in_count2 = npos) const;

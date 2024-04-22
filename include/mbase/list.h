@@ -183,6 +183,13 @@ public:
 	MBASE_INLINE_EXPR GENERIC splice(const_iterator in_pos, list& in_rhs, const_iterator in_it);
 	MBASE_INLINE_EXPR GENERIC splice(const_iterator in_pos, list&& in_rhs, const_iterator in_it);
 	MBASE_INLINE_EXPR GENERIC splice(const_iterator in_pos, list&& in_rhs, const_iterator in_begin, const_iterator in_end);
+	MBASE_INLINE size_type remove(const_reference in_value);
+	template<typename UnaryPredicate>
+	MBASE_INLINE size_type remove_if(UnaryPredicate in_p);
+	MBASE_INLINE GENERIC reverse();
+	MBASE_INLINE size_type unique();
+	template<typename BinaryPredicate>
+	MBASE_INLINE size_type unique(BinaryPredicate in_p);
 	MBASE_INLINE GENERIC serialize(safe_buffer& out_buffer) noexcept;
 	MBASE_INLINE static mbase::list<T, Allocator> deserialize(IBYTEBUFFER in_src, SIZE_T in_length) noexcept;
 };
