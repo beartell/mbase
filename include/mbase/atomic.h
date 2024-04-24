@@ -25,7 +25,7 @@ public:
 	atomic& operator--() noexcept;
 	atomic& operator--(int) noexcept;
 
-	USED_RETURN("ignoring the atomic variable") value_type get_val() noexcept;
+	MBASE_ND("ignoring the atomic variable") value_type get_val() noexcept;
 
 	friend atomic operator+(const atomic& in_lhs, const T& in_rhs) noexcept {
 		value_type vt = InterlockedExchange64((LONG64*)&in_lhs.val, in_lhs.val);
@@ -107,7 +107,7 @@ atomic<T>& atomic<T>::operator--(int) noexcept {
 }
 
 template<typename T>
-USED_RETURN("ignoring the atomic variable") T atomic<T>::get_val() noexcept {
+MBASE_ND("ignoring the atomic variable") T atomic<T>::get_val() noexcept {
 	return val;
 }
 

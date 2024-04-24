@@ -24,9 +24,9 @@ enum class FS_ERROR : I32{
 MBASE_INLINE FS_ERROR create_directory(const mbase::string_view& in_path) noexcept;
 MBASE_INLINE FS_ERROR copy_file(const mbase::string_view& in_path, const mbase::string_view& in_copypath) noexcept;
 MBASE_INLINE FS_ERROR delete_file(const mbase::string_view& in_path) noexcept;
-USED_RETURN("temp path unused") MBASE_INLINE mbase::string get_temp_path() noexcept;
-USED_RETURN("current path unused") MBASE_INLINE mbase::string get_current_path() noexcept;
-USED_RETURN("temp file unused") MBASE_INLINE mbase::string get_temp_file(const mbase::string_view& in_prefix) noexcept;
+MBASE_ND("temp path unused") MBASE_INLINE mbase::string get_temp_path() noexcept;
+MBASE_ND("current path unused") MBASE_INLINE mbase::string get_current_path() noexcept;
+MBASE_ND("temp file unused") MBASE_INLINE mbase::string get_temp_file(const mbase::string_view& in_prefix) noexcept;
 MBASE_INLINE GENERIC get_directory(const mbase::string_view& in_path, mbase::vector<FS_FILE_INFORMATION>& out_files) noexcept;
 
 
@@ -65,19 +65,19 @@ MBASE_INLINE FS_ERROR delete_file(const mbase::string_view& in_path) noexcept {
 	return FS_ERROR::FS_SUCCESS;
 }
 
-USED_RETURN("temp path unused") MBASE_INLINE mbase::string get_temp_path() noexcept {
+MBASE_ND("temp path unused") MBASE_INLINE mbase::string get_temp_path() noexcept {
 	IBYTE pathString[MAX_PATH + 1] = { 0 };
 	GetTempPathA(MAX_PATH + 1, pathString);
 	return mbase::string(pathString);
 }
 
-USED_RETURN("current path unused") MBASE_INLINE mbase::string get_current_path() noexcept {
+MBASE_ND("current path unused") MBASE_INLINE mbase::string get_current_path() noexcept {
 	IBYTE pathString[MAX_PATH + 1] = { 0 };
 	GetCurrentDirectoryA(MAX_PATH + 1, pathString);
 	return mbase::string(pathString);
 }
 
-USED_RETURN("temp file unused") MBASE_INLINE mbase::string get_temp_file(const mbase::string_view& in_prefix) noexcept {
+MBASE_ND("temp file unused") MBASE_INLINE mbase::string get_temp_file(const mbase::string_view& in_prefix) noexcept {
 	IBYTE pathString[MAX_PATH + 1] = { 0 };
 	GetTempFileNameA(".", in_prefix.c_str(), 0, pathString);
 	return mbase::string(pathString);

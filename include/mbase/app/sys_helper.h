@@ -55,13 +55,13 @@ namespace sys
 		I32 sysMillisecond;
 	};
 	
-	USED_RETURN("system time being ignored") sys_time get_system_time() noexcept {
+	MBASE_ND("system time being ignored") sys_time get_system_time() noexcept {
 		SYSTEMTIME sysTime;
 		GetSystemTime(&sysTime);
 		return sysTime;
 	}
 
-	USED_RETURN("local time being ignored") sys_time get_local_time() noexcept {
+	MBASE_ND("local time being ignored") sys_time get_local_time() noexcept {
 		SYSTEMTIME sysTime;
 		GetLocalTime(&sysTime);
 		return sysTime;

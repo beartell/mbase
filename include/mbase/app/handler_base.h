@@ -16,17 +16,17 @@ public:
 		suppliedData = in_data;
 	}
 
-	USED_RETURN("base handler observation being ignored") user_data GetUserData() const noexcept {
+	MBASE_ND("base handler observation being ignored") user_data GetUserData() const noexcept {
 		return suppliedData;
 	}
 
-	USED_RETURN("base handler observation being ignored") U32 GetHandlerId() const noexcept {
+	MBASE_ND("base handler observation being ignored") U32 GetHandlerId() const noexcept {
 		return handlerId;
 	}
 
 	// if -1, it is the main thread
 	// should not be understood as thread id, that is a different thing
-	USED_RETURN("base handler observation being ignored") I32 GetThreadIndex() const noexcept {
+	MBASE_ND("base handler observation being ignored") I32 GetThreadIndex() const noexcept {
 		return threadIndex;
 	}
 

@@ -109,11 +109,11 @@ public:
 		mtx.release();
 	}
 
-	USED_RETURN("thread pool observation being ignored") U32 GetThreadCount() const noexcept {
+	MBASE_ND("thread pool observation being ignored") U32 GetThreadCount() const noexcept {
 		return threadCount;
 	}
 
-	USED_RETURN("thread pool routine info being ignored") thread_pool_routine_args* GetRoutineInfo(I32 in_index) noexcept {
+	MBASE_ND("thread pool routine info being ignored") thread_pool_routine_args* GetRoutineInfo(I32 in_index) noexcept {
 		return threadPool + in_index;
 	}
 

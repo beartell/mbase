@@ -21,7 +21,7 @@ MBASE_STD_BEGIN
 //
 //    legacy_sequence_iterator& operator=(const legacy_sequence_iterator) noexcept;
 //
-//    USED_RETURN("internal data that is access through the iterator should be used") MBASE_INLINE reference operator*() const noexcept;
+//    MBASE_ND("internal data that is access through the iterator should be used") MBASE_INLINE reference operator*() const noexcept;
 //
 //    MBASE_INLINE legacy_sequence_iterator& operator++() noexcept;
 //
@@ -46,7 +46,7 @@ MBASE_STD_BEGIN
 //
 //    const_legacy_sequence_iterator& operator=(const const_legacy_sequence_iterator) noexcept;
 //
-//    USED_RETURN("internal data that is access through the iterator should be used") MBASE_INLINE reference operator*() const noexcept;
+//    MBASE_ND("internal data that is access through the iterator should be used") MBASE_INLINE reference operator*() const noexcept;
 //
 //    MBASE_INLINE const_legacy_sequence_iterator& operator++() noexcept;
 //
@@ -71,8 +71,8 @@ MBASE_STD_BEGIN
 //
 //    MBASE_INLINE legacy_input_sequence_iterator operator++(I32) noexcept;
 //
-//    USED_RETURN("ignoring equality comparison") MBASE_INLINE bool operator==(const legacy_input_sequence_iterator& in_rhs) const noexcept;
-//    USED_RETURN("ignoring equality comparison") MBASE_INLINE bool operator!=(const legacy_input_sequence_iterator& in_rhs) const noexcept;
+//    MBASE_ND("ignoring equality comparison") MBASE_INLINE bool operator==(const legacy_input_sequence_iterator& in_rhs) const noexcept;
+//    MBASE_ND("ignoring equality comparison") MBASE_INLINE bool operator!=(const legacy_input_sequence_iterator& in_rhs) const noexcept;
 //};
 //
 //template<typename T>
@@ -91,10 +91,10 @@ MBASE_STD_BEGIN
 //
 //    MBASE_INLINE const_legacy_input_sequence_iterator operator++(I32) noexcept;
 //
-//    USED_RETURN("ignoring equality comparison") MBASE_INLINE bool operator==(const const_legacy_input_sequence_iterator& in_rhs) const noexcept;
-//    USED_RETURN("ignoring equality comparison") MBASE_INLINE bool operator!=(const const_legacy_input_sequence_iterator& in_rhs) const noexcept;
-//    USED_RETURN("ignoring equality comparison") MBASE_INLINE bool operator==(const legacy_input_sequence_iterator<T>& in_rhs) const noexcept;
-//    USED_RETURN("ignoring equality comparison") MBASE_INLINE bool operator!=(const legacy_input_sequence_iterator<T>& in_rhs) const noexcept;
+//    MBASE_ND("ignoring equality comparison") MBASE_INLINE bool operator==(const const_legacy_input_sequence_iterator& in_rhs) const noexcept;
+//    MBASE_ND("ignoring equality comparison") MBASE_INLINE bool operator!=(const const_legacy_input_sequence_iterator& in_rhs) const noexcept;
+//    MBASE_ND("ignoring equality comparison") MBASE_INLINE bool operator==(const legacy_input_sequence_iterator<T>& in_rhs) const noexcept;
+//    MBASE_ND("ignoring equality comparison") MBASE_INLINE bool operator!=(const legacy_input_sequence_iterator<T>& in_rhs) const noexcept;
 //};
 //
 
@@ -127,13 +127,13 @@ public:
 
     sequence_iterator& operator=(const sequence_iterator& in_rhs) noexcept;
 
-    USED_RETURN("internal data that is access through the iterator should be used") MBASE_INLINE pointer get() noexcept;
+    MBASE_ND("internal data that is access through the iterator should be used") MBASE_INLINE pointer get() noexcept;
 
     MBASE_INLINE pointer operator->() const noexcept;
-    USED_RETURN("internal data that is access through the iterator should be used") MBASE_INLINE reference operator*() const noexcept;
+    MBASE_ND("internal data that is access through the iterator should be used") MBASE_INLINE reference operator*() const noexcept;
     MBASE_INLINE reference operator[](difference_type in_index);
 
-    USED_RETURN("ignoring iterator index") MBASE_INLINE sequence_iterator operator+(difference_type in_rhs) noexcept;
+    MBASE_ND("ignoring iterator index") MBASE_INLINE sequence_iterator operator+(difference_type in_rhs) noexcept;
     MBASE_INLINE sequence_iterator& operator+=(difference_type in_rhs) noexcept;
     MBASE_INLINE sequence_iterator& operator++() noexcept;
     MBASE_INLINE const sequence_iterator operator++(int) noexcept;
@@ -144,10 +144,10 @@ public:
     MBASE_INLINE difference_type operator-(const sequence_iterator& in_rhs) noexcept;
     MBASE_INLINE difference_type operator-(const const_sequence_iterator<T>& in_rhs) noexcept;
 
-    USED_RETURN("ignoring equality comparison") MBASE_INLINE bool operator==(const sequence_iterator& in_rhs) const noexcept;
-    USED_RETURN("ignoring equality comparison") MBASE_INLINE bool operator!=(const sequence_iterator& in_rhs) const noexcept;
-    USED_RETURN("ignoring equality comparison") MBASE_INLINE bool operator==(const const_sequence_iterator<T>& in_rhs) const noexcept;
-    USED_RETURN("ignoring equality comparison") MBASE_INLINE bool operator!=(const const_sequence_iterator<T>& in_rhs) const noexcept;
+    MBASE_ND("ignoring equality comparison") MBASE_INLINE bool operator==(const sequence_iterator& in_rhs) const noexcept;
+    MBASE_ND("ignoring equality comparison") MBASE_INLINE bool operator!=(const sequence_iterator& in_rhs) const noexcept;
+    MBASE_ND("ignoring equality comparison") MBASE_INLINE bool operator==(const const_sequence_iterator<T>& in_rhs) const noexcept;
+    MBASE_ND("ignoring equality comparison") MBASE_INLINE bool operator!=(const const_sequence_iterator<T>& in_rhs) const noexcept;
     MBASE_INLINE bool operator<(const sequence_iterator& in_rhs) noexcept;
     MBASE_INLINE bool operator>(const sequence_iterator& in_rhs) noexcept;
     MBASE_INLINE bool operator>=(const sequence_iterator& in_rhs) noexcept;
@@ -180,13 +180,13 @@ public:
     const_sequence_iterator& operator=(const const_sequence_iterator& in_rhs) noexcept;
     const_sequence_iterator& operator=(sequence_iterator<T> in_rhs) noexcept;
 
-    USED_RETURN("ignoring equality comparison") MBASE_INLINE const_pointer get() noexcept;
+    MBASE_ND("ignoring equality comparison") MBASE_INLINE const_pointer get() noexcept;
     
     MBASE_INLINE const_pointer operator->() const noexcept;
-    USED_RETURN("ignoring equality comparison") MBASE_INLINE const_reference operator*() const noexcept;
+    MBASE_ND("ignoring equality comparison") MBASE_INLINE const_reference operator*() const noexcept;
     MBASE_INLINE const_reference operator[](difference_type in_index);
 
-    USED_RETURN("ignoring equality comparison") MBASE_INLINE const_sequence_iterator operator+(difference_type in_rhs) noexcept;
+    MBASE_ND("ignoring equality comparison") MBASE_INLINE const_sequence_iterator operator+(difference_type in_rhs) noexcept;
     MBASE_INLINE const_sequence_iterator& operator+=(difference_type in_rhs) noexcept;
     MBASE_INLINE const_sequence_iterator& operator++() noexcept;
     MBASE_INLINE const const_sequence_iterator operator++(int) noexcept;
@@ -197,10 +197,10 @@ public:
     MBASE_INLINE difference_type operator-(const sequence_iterator<T>& in_rhs) noexcept;
     MBASE_INLINE difference_type operator-(const const_sequence_iterator& in_rhs) noexcept;
     
-    USED_RETURN("ignoring equality comparison") MBASE_INLINE bool operator==(const const_sequence_iterator& in_rhs) const noexcept;
-    USED_RETURN("ignoring equality comparison") MBASE_INLINE bool operator!=(const const_sequence_iterator& in_rhs) const noexcept;
-    USED_RETURN("ignoring equality comparison") MBASE_INLINE bool operator==(const sequence_iterator<T>& in_rhs) const noexcept;
-    USED_RETURN("ignoring equality comparison") MBASE_INLINE bool operator!=(const sequence_iterator<T>& in_rhs) const noexcept;
+    MBASE_ND("ignoring equality comparison") MBASE_INLINE bool operator==(const const_sequence_iterator& in_rhs) const noexcept;
+    MBASE_ND("ignoring equality comparison") MBASE_INLINE bool operator!=(const const_sequence_iterator& in_rhs) const noexcept;
+    MBASE_ND("ignoring equality comparison") MBASE_INLINE bool operator==(const sequence_iterator<T>& in_rhs) const noexcept;
+    MBASE_ND("ignoring equality comparison") MBASE_INLINE bool operator!=(const sequence_iterator<T>& in_rhs) const noexcept;
     MBASE_INLINE bool operator<(const const_sequence_iterator& in_rhs) noexcept;
     MBASE_INLINE bool operator>(const const_sequence_iterator& in_rhs) noexcept;
     MBASE_INLINE bool operator>=(const const_sequence_iterator& in_rhs) noexcept;
@@ -230,13 +230,13 @@ public:
 
     reverse_sequence_iterator& operator=(const reverse_sequence_iterator& in_rhs) noexcept;
 
-    USED_RETURN("ignoring equality comparison") MBASE_INLINE pointer get() noexcept;
+    MBASE_ND("ignoring equality comparison") MBASE_INLINE pointer get() noexcept;
 
     MBASE_INLINE pointer operator->() const noexcept;
-    USED_RETURN("ignoring equality comparison") MBASE_INLINE reference operator*() const noexcept;
+    MBASE_ND("ignoring equality comparison") MBASE_INLINE reference operator*() const noexcept;
     MBASE_INLINE reference operator[](difference_type in_index);
 
-    USED_RETURN("ignoring equality comparison") MBASE_INLINE reverse_sequence_iterator operator+(difference_type in_rhs) noexcept;
+    MBASE_ND("ignoring equality comparison") MBASE_INLINE reverse_sequence_iterator operator+(difference_type in_rhs) noexcept;
     MBASE_INLINE reverse_sequence_iterator& operator+=(difference_type in_rhs) noexcept;
     MBASE_INLINE reverse_sequence_iterator& operator++() noexcept;
     MBASE_INLINE const reverse_sequence_iterator operator++(int) noexcept;
@@ -245,10 +245,10 @@ public:
     MBASE_INLINE reverse_sequence_iterator& operator--() noexcept;
     MBASE_INLINE const reverse_sequence_iterator operator--(int) noexcept;
 
-    USED_RETURN("ignoring equality comparison") MBASE_INLINE bool operator==(const reverse_sequence_iterator& in_rhs) const noexcept;
-    USED_RETURN("ignoring equality comparison") MBASE_INLINE bool operator!=(const reverse_sequence_iterator& in_rhs) const noexcept;
-    USED_RETURN("ignoring equality comparison") MBASE_INLINE bool operator==(const const_reverse_sequence_iterator<T>& in_rhs) const noexcept;
-    USED_RETURN("ignoring equality comparison") MBASE_INLINE bool operator!=(const const_reverse_sequence_iterator<T>& in_rhs) const noexcept;
+    MBASE_ND("ignoring equality comparison") MBASE_INLINE bool operator==(const reverse_sequence_iterator& in_rhs) const noexcept;
+    MBASE_ND("ignoring equality comparison") MBASE_INLINE bool operator!=(const reverse_sequence_iterator& in_rhs) const noexcept;
+    MBASE_ND("ignoring equality comparison") MBASE_INLINE bool operator==(const const_reverse_sequence_iterator<T>& in_rhs) const noexcept;
+    MBASE_ND("ignoring equality comparison") MBASE_INLINE bool operator!=(const const_reverse_sequence_iterator<T>& in_rhs) const noexcept;
 
 protected:
     pointer _ptr;
@@ -273,13 +273,13 @@ public:
     const_reverse_sequence_iterator& operator=(const const_reverse_sequence_iterator& in_rhs) noexcept;
     const_reverse_sequence_iterator& operator=(reverse_sequence_iterator<T> in_rhs) noexcept;
 
-    USED_RETURN("ignoring equality comparison") MBASE_INLINE const_pointer get() noexcept;
+    MBASE_ND("ignoring equality comparison") MBASE_INLINE const_pointer get() noexcept;
     
     MBASE_INLINE const_pointer operator->() const noexcept;
-    USED_RETURN("ignoring equality comparison") MBASE_INLINE const_reference operator*() const noexcept;
+    MBASE_ND("ignoring equality comparison") MBASE_INLINE const_reference operator*() const noexcept;
     MBASE_INLINE const_reference operator[](difference_type in_index);
 
-    USED_RETURN("ignoring equality comparison") MBASE_INLINE const_reverse_sequence_iterator operator+(difference_type in_rhs) noexcept;
+    MBASE_ND("ignoring equality comparison") MBASE_INLINE const_reverse_sequence_iterator operator+(difference_type in_rhs) noexcept;
     MBASE_INLINE const_reverse_sequence_iterator& operator+=(difference_type in_rhs) noexcept;
     MBASE_INLINE const_reverse_sequence_iterator& operator++() noexcept;
     MBASE_INLINE const const_reverse_sequence_iterator operator++(int) noexcept;
@@ -288,10 +288,10 @@ public:
     MBASE_INLINE const_reverse_sequence_iterator& operator--() noexcept;
     MBASE_INLINE const const_reverse_sequence_iterator operator--(int) noexcept;
 
-    USED_RETURN("ignoring equality comparison") MBASE_INLINE bool operator==(const const_reverse_sequence_iterator& in_rhs) const noexcept;
-    USED_RETURN("ignoring equality comparison") MBASE_INLINE bool operator!=(const const_reverse_sequence_iterator& in_rhs) const noexcept;
-    USED_RETURN("ignoring equality comparison") MBASE_INLINE bool operator==(const reverse_sequence_iterator<T>& in_rhs) const noexcept;
-    USED_RETURN("ignoring equality comparison") MBASE_INLINE bool operator!=(const reverse_sequence_iterator<T>& in_rhs) const noexcept;
+    MBASE_ND("ignoring equality comparison") MBASE_INLINE bool operator==(const const_reverse_sequence_iterator& in_rhs) const noexcept;
+    MBASE_ND("ignoring equality comparison") MBASE_INLINE bool operator!=(const const_reverse_sequence_iterator& in_rhs) const noexcept;
+    MBASE_ND("ignoring equality comparison") MBASE_INLINE bool operator==(const reverse_sequence_iterator<T>& in_rhs) const noexcept;
+    MBASE_ND("ignoring equality comparison") MBASE_INLINE bool operator!=(const reverse_sequence_iterator<T>& in_rhs) const noexcept;
 
 protected:
     pointer _ptr;
@@ -315,7 +315,7 @@ sequence_iterator<T>& sequence_iterator<T>::operator=(const sequence_iterator& i
 }
 
 template<typename T>
-USED_RETURN("internal data that is access through the iterator should be used") MBASE_INLINE typename sequence_iterator<T>::pointer sequence_iterator<T>::get() noexcept {
+MBASE_ND("internal data that is access through the iterator should be used") MBASE_INLINE typename sequence_iterator<T>::pointer sequence_iterator<T>::get() noexcept {
     return _ptr;
 }
 
@@ -325,7 +325,7 @@ MBASE_INLINE  typename sequence_iterator<T>::pointer sequence_iterator<T>::opera
 }
 
 template<typename T>
-USED_RETURN("internal data that is access through the iterator should be used") MBASE_INLINE typename sequence_iterator<T>::reference sequence_iterator<T>::operator*() const noexcept {
+MBASE_ND("internal data that is access through the iterator should be used") MBASE_INLINE typename sequence_iterator<T>::reference sequence_iterator<T>::operator*() const noexcept {
     return *_ptr;
 }
 
@@ -335,7 +335,7 @@ MBASE_INLINE typename sequence_iterator<T>::reference sequence_iterator<T>::oper
 }
 
 template<typename T>
-USED_RETURN("ignoring iterator index") MBASE_INLINE sequence_iterator<T> sequence_iterator<T>::operator+(difference_type in_rhs) noexcept {
+MBASE_ND("ignoring iterator index") MBASE_INLINE sequence_iterator<T> sequence_iterator<T>::operator+(difference_type in_rhs) noexcept {
     sequence_iterator sit(_ptr);
     sit += in_rhs;
     return sit;
@@ -398,22 +398,22 @@ MBASE_INLINE typename sequence_iterator<T>::difference_type sequence_iterator<T>
 
 
 template<typename T>
-USED_RETURN("ignoring equality comparison") MBASE_INLINE bool sequence_iterator<T>::operator==(const sequence_iterator& in_rhs) const noexcept {
+MBASE_ND("ignoring equality comparison") MBASE_INLINE bool sequence_iterator<T>::operator==(const sequence_iterator& in_rhs) const noexcept {
     return _ptr == in_rhs._ptr;
 }
 
 template<typename T>
-USED_RETURN("ignoring equality comparison") MBASE_INLINE bool sequence_iterator<T>::operator!=(const sequence_iterator& in_rhs) const noexcept {
+MBASE_ND("ignoring equality comparison") MBASE_INLINE bool sequence_iterator<T>::operator!=(const sequence_iterator& in_rhs) const noexcept {
     return _ptr != in_rhs._ptr;
 }
 
 template<typename T>
-USED_RETURN("ignoring equality comparison") MBASE_INLINE bool sequence_iterator<T>::operator==(const const_sequence_iterator<T>& in_rhs) const noexcept {
+MBASE_ND("ignoring equality comparison") MBASE_INLINE bool sequence_iterator<T>::operator==(const const_sequence_iterator<T>& in_rhs) const noexcept {
     return _ptr == in_rhs.get();
 }
 
 template<typename T>
-USED_RETURN("ignoring equality comparison") MBASE_INLINE bool sequence_iterator<T>::operator!=(const const_sequence_iterator<T>& in_rhs) const noexcept {
+MBASE_ND("ignoring equality comparison") MBASE_INLINE bool sequence_iterator<T>::operator!=(const const_sequence_iterator<T>& in_rhs) const noexcept {
     return _ptr != in_rhs.get();
 }
 
@@ -465,7 +465,7 @@ const_sequence_iterator<T>& const_sequence_iterator<T>::operator=(sequence_itera
 }
 
 template<typename T>
-USED_RETURN("ignoring equality comparison") MBASE_INLINE typename const_sequence_iterator<T>::const_pointer const_sequence_iterator<T>::get() noexcept {
+MBASE_ND("ignoring equality comparison") MBASE_INLINE typename const_sequence_iterator<T>::const_pointer const_sequence_iterator<T>::get() noexcept {
     return _ptr;
 }
 
@@ -475,7 +475,7 @@ MBASE_INLINE typename const_sequence_iterator<T>::const_pointer const_sequence_i
 }
 
 template<typename T>
-USED_RETURN("ignoring equality comparison") MBASE_INLINE typename const_sequence_iterator<T>::const_reference const_sequence_iterator<T>::operator*() const noexcept {
+MBASE_ND("ignoring equality comparison") MBASE_INLINE typename const_sequence_iterator<T>::const_reference const_sequence_iterator<T>::operator*() const noexcept {
     return *_ptr;
 }
 
@@ -486,7 +486,7 @@ MBASE_INLINE typename const_sequence_iterator<T>::const_reference const_sequence
 
 
 template<typename T>
-USED_RETURN("ignoring equality comparison") MBASE_INLINE const_sequence_iterator<T> const_sequence_iterator<T>::operator+(difference_type in_rhs) noexcept {
+MBASE_ND("ignoring equality comparison") MBASE_INLINE const_sequence_iterator<T> const_sequence_iterator<T>::operator+(difference_type in_rhs) noexcept {
     const_sequence_iterator csit(_ptr);
     csit += in_rhs;
     return csit;
@@ -548,22 +548,22 @@ MBASE_INLINE typename const_sequence_iterator<T>::difference_type const_sequence
 }
 
 template<typename T>
-USED_RETURN("ignoring equality comparison") MBASE_INLINE bool const_sequence_iterator<T>::operator==(const const_sequence_iterator& in_rhs) const noexcept {
+MBASE_ND("ignoring equality comparison") MBASE_INLINE bool const_sequence_iterator<T>::operator==(const const_sequence_iterator& in_rhs) const noexcept {
     return _ptr == in_rhs._ptr;
 }
 
 template<typename T>
-USED_RETURN("ignoring equality comparison") MBASE_INLINE bool const_sequence_iterator<T>::operator!=(const const_sequence_iterator& in_rhs) const noexcept {
+MBASE_ND("ignoring equality comparison") MBASE_INLINE bool const_sequence_iterator<T>::operator!=(const const_sequence_iterator& in_rhs) const noexcept {
     return _ptr != in_rhs._ptr;
 }
 
 template<typename T>
-USED_RETURN("ignoring equality comparison") MBASE_INLINE bool const_sequence_iterator<T>::operator==(const sequence_iterator<T>& in_rhs) const noexcept {
+MBASE_ND("ignoring equality comparison") MBASE_INLINE bool const_sequence_iterator<T>::operator==(const sequence_iterator<T>& in_rhs) const noexcept {
     return _ptr == in_rhs.get();
 }
 
 template<typename T>
-USED_RETURN("ignoring equality comparison") MBASE_INLINE bool const_sequence_iterator<T>::operator!=(const sequence_iterator<T>& in_rhs) const noexcept {
+MBASE_ND("ignoring equality comparison") MBASE_INLINE bool const_sequence_iterator<T>::operator!=(const sequence_iterator<T>& in_rhs) const noexcept {
     return _ptr != in_rhs.get();
 }
 
@@ -585,7 +585,7 @@ reverse_sequence_iterator<T>& reverse_sequence_iterator<T>::operator=(const reve
 }
 
 template<typename T>
-USED_RETURN("ignoring equality comparison") MBASE_INLINE typename reverse_sequence_iterator<T>::pointer reverse_sequence_iterator<T>::get() noexcept {
+MBASE_ND("ignoring equality comparison") MBASE_INLINE typename reverse_sequence_iterator<T>::pointer reverse_sequence_iterator<T>::get() noexcept {
     return _ptr;
 }
 
@@ -595,7 +595,7 @@ MBASE_INLINE typename reverse_sequence_iterator<T>::pointer reverse_sequence_ite
 }
 
 template<typename T>
-USED_RETURN("ignoring equality comparison") MBASE_INLINE typename reverse_sequence_iterator<T>::reference reverse_sequence_iterator<T>::operator*() const noexcept {
+MBASE_ND("ignoring equality comparison") MBASE_INLINE typename reverse_sequence_iterator<T>::reference reverse_sequence_iterator<T>::operator*() const noexcept {
     return *_ptr;
 }
 
@@ -606,7 +606,7 @@ MBASE_INLINE typename reverse_sequence_iterator<T>::reference reverse_sequence_i
 
 
 template<typename T>
-USED_RETURN("ignoring equality comparison") MBASE_INLINE reverse_sequence_iterator<T> reverse_sequence_iterator<T>::operator+(difference_type in_rhs) noexcept {
+MBASE_ND("ignoring equality comparison") MBASE_INLINE reverse_sequence_iterator<T> reverse_sequence_iterator<T>::operator+(difference_type in_rhs) noexcept {
     reverse_sequence_iterator rsi(_ptr);
     rsi += in_rhs;
     return rsi;
@@ -658,22 +658,22 @@ MBASE_INLINE const reverse_sequence_iterator<T> reverse_sequence_iterator<T>::op
 }
 
 template<typename T>
-USED_RETURN("ignoring equality comparison") MBASE_INLINE bool reverse_sequence_iterator<T>::operator==(const reverse_sequence_iterator& in_rhs) const noexcept {
+MBASE_ND("ignoring equality comparison") MBASE_INLINE bool reverse_sequence_iterator<T>::operator==(const reverse_sequence_iterator& in_rhs) const noexcept {
     return _ptr == in_rhs._ptr;
 }
 
 template<typename T>
-USED_RETURN("ignoring equality comparison") MBASE_INLINE bool reverse_sequence_iterator<T>::operator!=(const reverse_sequence_iterator& in_rhs) const noexcept {
+MBASE_ND("ignoring equality comparison") MBASE_INLINE bool reverse_sequence_iterator<T>::operator!=(const reverse_sequence_iterator& in_rhs) const noexcept {
     return _ptr != in_rhs._ptr;
 }
 
 template<typename T>
-USED_RETURN("ignoring equality comparison") MBASE_INLINE bool reverse_sequence_iterator<T>::operator==(const const_reverse_sequence_iterator<T>& in_rhs) const noexcept {
+MBASE_ND("ignoring equality comparison") MBASE_INLINE bool reverse_sequence_iterator<T>::operator==(const const_reverse_sequence_iterator<T>& in_rhs) const noexcept {
     return _ptr == in_rhs.get();
 }
 
 template<typename T>
-USED_RETURN("ignoring equality comparison") MBASE_INLINE bool reverse_sequence_iterator<T>::operator!=(const const_reverse_sequence_iterator<T>& in_rhs) const noexcept {
+MBASE_ND("ignoring equality comparison") MBASE_INLINE bool reverse_sequence_iterator<T>::operator!=(const const_reverse_sequence_iterator<T>& in_rhs) const noexcept {
     return _ptr != in_rhs.get();
 }
 
@@ -707,7 +707,7 @@ const_reverse_sequence_iterator<T>& const_reverse_sequence_iterator<T>::operator
 }
 
 template<typename T>
-USED_RETURN("ignoring equality comparison") MBASE_INLINE typename const_reverse_sequence_iterator<T>::const_pointer const_reverse_sequence_iterator<T>::get() noexcept {
+MBASE_ND("ignoring equality comparison") MBASE_INLINE typename const_reverse_sequence_iterator<T>::const_pointer const_reverse_sequence_iterator<T>::get() noexcept {
     return _ptr;
 }
 
@@ -717,7 +717,7 @@ MBASE_INLINE typename const_reverse_sequence_iterator<T>::const_pointer const_re
 }
 
 template<typename T>
-USED_RETURN("ignoring equality comparison") MBASE_INLINE typename const_reverse_sequence_iterator<T>::const_reference const_reverse_sequence_iterator<T>::operator*() const noexcept {
+MBASE_ND("ignoring equality comparison") MBASE_INLINE typename const_reverse_sequence_iterator<T>::const_reference const_reverse_sequence_iterator<T>::operator*() const noexcept {
     return *_ptr;
 }
 
@@ -728,7 +728,7 @@ MBASE_INLINE typename const_reverse_sequence_iterator<T>::const_reference const_
 
 
 template<typename T>
-USED_RETURN("ignoring equality comparison") MBASE_INLINE const_reverse_sequence_iterator<T> const_reverse_sequence_iterator<T>::operator+(difference_type in_rhs) noexcept {
+MBASE_ND("ignoring equality comparison") MBASE_INLINE const_reverse_sequence_iterator<T> const_reverse_sequence_iterator<T>::operator+(difference_type in_rhs) noexcept {
     const_reverse_sequence_iterator rsi(_ptr);
     rsi += in_rhs;
     return rsi;
@@ -781,22 +781,22 @@ MBASE_INLINE const const_reverse_sequence_iterator<T> const_reverse_sequence_ite
 }
 
 template<typename T>
-USED_RETURN("ignoring equality comparison") MBASE_INLINE bool const_reverse_sequence_iterator<T>::operator==(const const_reverse_sequence_iterator& in_rhs) const noexcept {
+MBASE_ND("ignoring equality comparison") MBASE_INLINE bool const_reverse_sequence_iterator<T>::operator==(const const_reverse_sequence_iterator& in_rhs) const noexcept {
     return _ptr == in_rhs._ptr;
 }
 
 template<typename T>
-USED_RETURN("ignoring equality comparison") MBASE_INLINE bool const_reverse_sequence_iterator<T>::operator!=(const const_reverse_sequence_iterator& in_rhs) const noexcept {
+MBASE_ND("ignoring equality comparison") MBASE_INLINE bool const_reverse_sequence_iterator<T>::operator!=(const const_reverse_sequence_iterator& in_rhs) const noexcept {
     return _ptr != in_rhs._ptr;
 }
 
 template<typename T>
-USED_RETURN("ignoring equality comparison") MBASE_INLINE bool const_reverse_sequence_iterator<T>::operator==(const reverse_sequence_iterator<T>& in_rhs) const noexcept {
+MBASE_ND("ignoring equality comparison") MBASE_INLINE bool const_reverse_sequence_iterator<T>::operator==(const reverse_sequence_iterator<T>& in_rhs) const noexcept {
     return _ptr == in_rhs.get();
 }
 
 template<typename T>
-USED_RETURN("ignoring equality comparison") MBASE_INLINE bool const_reverse_sequence_iterator<T>::operator!=(const reverse_sequence_iterator<T>& in_rhs) const noexcept {
+MBASE_ND("ignoring equality comparison") MBASE_INLINE bool const_reverse_sequence_iterator<T>::operator!=(const reverse_sequence_iterator<T>& in_rhs) const noexcept {
     return _ptr != in_rhs.get();
 }
 

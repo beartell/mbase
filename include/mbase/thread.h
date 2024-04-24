@@ -26,8 +26,8 @@ public:
 	MBASE_INLINE thread(thread&& in_rhs) noexcept;
 	MBASE_INLINE ~thread() noexcept;
 
-	USED_RETURN("ignoring thread id") MBASE_INLINE I32 get_id() noexcept;
-	USED_RETURN("ignoring thread id") static I32 get_current_thread_id() noexcept;
+	MBASE_ND("ignoring thread id") MBASE_INLINE I32 get_id() noexcept;
+	MBASE_ND("ignoring thread id") static I32 get_current_thread_id() noexcept;
 
 	MBASE_INLINE thread_error run() noexcept;
 	MBASE_INLINE thread_error run(Func&& in_fptr, Args&&... in_args) noexcept;
@@ -106,7 +106,7 @@ MBASE_INLINE thread<Func, Args...>::~thread() noexcept {
 }
 
 template<typename Func, typename ...Args>
-USED_RETURN("ignoring thread id") MBASE_INLINE I32 thread<Func, Args...>::get_id() noexcept {
+MBASE_ND("ignoring thread id") MBASE_INLINE I32 thread<Func, Args...>::get_id() noexcept {
 	if (!threadId)
 	{
 		return GetCurrentThreadId();
@@ -116,7 +116,7 @@ USED_RETURN("ignoring thread id") MBASE_INLINE I32 thread<Func, Args...>::get_id
 }
 
 template<typename Func, typename ...Args>
-USED_RETURN("ignoring thread id") I32 thread<Func, Args...>::get_current_thread_id() noexcept {
+MBASE_ND("ignoring thread id") I32 thread<Func, Args...>::get_current_thread_id() noexcept {
 	return GetCurrentThreadId();
 }
 

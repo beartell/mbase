@@ -6,19 +6,19 @@
 
 MBASE_STD_BEGIN
 
-USED_RETURN("randomdly generated number being unused") MBASE_INLINE I32 gen_random_32() noexcept {
+MBASE_ND("randomdly generated number being unused") MBASE_INLINE I32 gen_random_32() noexcept {
 	I32 freshNumber = 0;
 	BCryptGenRandom(gCryptoManager.rng_rng.providerHandle, (PUCHAR)&freshNumber, sizeof(I32), 0);
 	return freshNumber;
 }
 
-USED_RETURN("randomdly generated number being unused") MBASE_INLINE I64 gen_random_64() noexcept {
+MBASE_ND("randomdly generated number being unused") MBASE_INLINE I64 gen_random_64() noexcept {
 	I64 freshNumber = 0;
 	BCryptGenRandom(gCryptoManager.rng_rng.providerHandle, (PUCHAR)&freshNumber, sizeof(I64), 0);
 	return freshNumber;
 }
 
-USED_RETURN("randomly generated sequence being unused") MBASE_INLINE GENERIC gen_random_n(IBYTEBUFFER in_buffer, SIZE_T in_length) noexcept {
+MBASE_ND("randomly generated sequence being unused") MBASE_INLINE GENERIC gen_random_n(IBYTEBUFFER in_buffer, SIZE_T in_length) noexcept {
 	BCryptGenRandom(gCryptoManager.rng_rng.providerHandle, (PUCHAR)in_buffer, in_length, 0);
 }
 

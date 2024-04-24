@@ -28,7 +28,7 @@ public:
 		_Sc = std::move(in_rhs._Sc);
 	}
 
-	USED_RETURN("returned element being ignored") MBASE_INLINE_EXPR const_reference front() const noexcept {
+	MBASE_ND("returned element being ignored") MBASE_INLINE_EXPR const_reference front() const noexcept {
 		return _Sc.front();
 	}
 
@@ -36,7 +36,7 @@ public:
 		return _Sc.empty();
 	}
 
-	USED_RETURN("container observation ignored") MBASE_INLINE_EXPR size_type size() const noexcept {
+	MBASE_ND("container observation ignored") MBASE_INLINE_EXPR size_type size() const noexcept {
 		return _Sc.size();
 	}
 

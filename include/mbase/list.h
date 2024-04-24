@@ -99,23 +99,23 @@ public:
 	list& operator=(list&& in_rhs) noexcept;
 	list& operator=(std::initializer_list<value_type> in_vals);
 
-	USED_RETURN("iterator being ignored") MBASE_INLINE_EXPR iterator begin() noexcept;
-	USED_RETURN("iterator being ignored") MBASE_INLINE_EXPR iterator end() noexcept;
-	USED_RETURN("const iterator being ignored") MBASE_INLINE_EXPR const_iterator cbegin() const noexcept;
-	USED_RETURN("const iterator being ignored") MBASE_INLINE_EXPR const_iterator cend() const noexcept;
-	USED_RETURN("reverse iterator being ignored") MBASE_INLINE reverse_iterator rbegin() const noexcept;
-	USED_RETURN("reverse iterator being ignored") MBASE_INLINE_EXPR reverse_iterator rend() const noexcept;
-	USED_RETURN("const reverse iterator being ignored") MBASE_INLINE const_reverse_iterator crbegin() const noexcept;
-	USED_RETURN("const reverse iterator being ignored") MBASE_INLINE_EXPR const_reverse_iterator crend() const noexcept;
+	MBASE_ND("iterator being ignored") MBASE_INLINE_EXPR iterator begin() noexcept;
+	MBASE_ND("iterator being ignored") MBASE_INLINE_EXPR iterator end() noexcept;
+	MBASE_ND("const iterator being ignored") MBASE_INLINE_EXPR const_iterator cbegin() const noexcept;
+	MBASE_ND("const iterator being ignored") MBASE_INLINE_EXPR const_iterator cend() const noexcept;
+	MBASE_ND("reverse iterator being ignored") MBASE_INLINE reverse_iterator rbegin() const noexcept;
+	MBASE_ND("reverse iterator being ignored") MBASE_INLINE_EXPR reverse_iterator rend() const noexcept;
+	MBASE_ND("const reverse iterator being ignored") MBASE_INLINE const_reverse_iterator crbegin() const noexcept;
+	MBASE_ND("const reverse iterator being ignored") MBASE_INLINE_EXPR const_reverse_iterator crend() const noexcept;
 
-	USED_RETURN("first element being ignored") MBASE_INLINE_EXPR reference front() noexcept;
-	USED_RETURN("first element being ignored") MBASE_INLINE_EXPR const_reference front() const noexcept;
-	USED_RETURN("last element being ignored") MBASE_INLINE_EXPR reference back() noexcept;
-	USED_RETURN("last element being ignored") MBASE_INLINE_EXPR const_reference back() const noexcept;
-	USED_RETURN("container observation ignored") MBASE_INLINE_EXPR bool empty() const noexcept;
-	USED_RETURN("container observation ignored") MBASE_INLINE_EXPR size_type size() const noexcept;
-	USED_RETURN("ignoring max size") MBASE_INLINE size_type max_size() const noexcept;
-	USED_RETURN("ignoring allocator") MBASE_INLINE_EXPR Allocator get_allocator() const noexcept;
+	MBASE_ND("first element being ignored") MBASE_INLINE_EXPR reference front() noexcept;
+	MBASE_ND("first element being ignored") MBASE_INLINE_EXPR const_reference front() const noexcept;
+	MBASE_ND("last element being ignored") MBASE_INLINE_EXPR reference back() noexcept;
+	MBASE_ND("last element being ignored") MBASE_INLINE_EXPR const_reference back() const noexcept;
+	MBASE_ND("container observation ignored") MBASE_INLINE_EXPR bool empty() const noexcept;
+	MBASE_ND("container observation ignored") MBASE_INLINE_EXPR size_type size() const noexcept;
+	MBASE_ND("ignoring max size") MBASE_INLINE size_type max_size() const noexcept;
+	MBASE_ND("ignoring allocator") MBASE_INLINE_EXPR Allocator get_allocator() const noexcept;
 
 	MBASE_INLINE GENERIC assign(size_type in_count, const_reference in_value);
 	template<typename InputIt, typename = std::enable_if_t<std::is_constructible_v<T, typename std::iterator_traits<InputIt>::value_type>>>
@@ -149,7 +149,7 @@ public:
 			inLast = insert(in_pos, *in_begin);
 		}
 
-		return in_last;
+		return inLast;
 	}
 	MBASE_INLINE_EXPR iterator insert(difference_type in_index, const_reference in_object) noexcept;
 	MBASE_INLINE_EXPR iterator insert(difference_type in_index, move_reference in_object) noexcept;
@@ -398,82 +398,82 @@ list<T, Allocator>& list<T, Allocator>::operator=(std::initializer_list<value_ty
 
 
 template<typename T, typename Allocator>
-USED_RETURN("iterator being ignored") MBASE_INLINE_EXPR typename list<T, Allocator>::iterator list<T, Allocator>::begin() noexcept {
+MBASE_ND("iterator being ignored") MBASE_INLINE_EXPR typename list<T, Allocator>::iterator list<T, Allocator>::begin() noexcept {
 	return iterator(firstNode);
 }
 
 template<typename T, typename Allocator>
-USED_RETURN("iterator being ignored") MBASE_INLINE_EXPR typename list<T, Allocator>::iterator list<T, Allocator>::end() noexcept {
+MBASE_ND("iterator being ignored") MBASE_INLINE_EXPR typename list<T, Allocator>::iterator list<T, Allocator>::end() noexcept {
 	return iterator(nullptr);
 }
 
 template<typename T, typename Allocator>
-USED_RETURN("const iterator being ignored") MBASE_INLINE_EXPR typename list<T, Allocator>::const_iterator list<T, Allocator>::cbegin() const noexcept {
+MBASE_ND("const iterator being ignored") MBASE_INLINE_EXPR typename list<T, Allocator>::const_iterator list<T, Allocator>::cbegin() const noexcept {
 	return const_iterator(firstNode);
 }
 
 template<typename T, typename Allocator>
-USED_RETURN("const iterator being ignored") MBASE_INLINE_EXPR typename list<T, Allocator>::const_iterator list<T, Allocator>::cend() const noexcept {
+MBASE_ND("const iterator being ignored") MBASE_INLINE_EXPR typename list<T, Allocator>::const_iterator list<T, Allocator>::cend() const noexcept {
 	return const_iterator(nullptr);
 }
 
 template<typename T, typename Allocator>
-USED_RETURN("reverse iterator being ignored") MBASE_INLINE typename list<T, Allocator>::reverse_iterator list<T, Allocator>::rbegin() const noexcept {
+MBASE_ND("reverse iterator being ignored") MBASE_INLINE typename list<T, Allocator>::reverse_iterator list<T, Allocator>::rbegin() const noexcept {
 	return reverse_iterator(lastNode);
 }
 
 template<typename T, typename Allocator>
-USED_RETURN("reverse iterator being ignored") MBASE_INLINE_EXPR typename list<T, Allocator>::reverse_iterator list<T, Allocator>::rend() const noexcept {
+MBASE_ND("reverse iterator being ignored") MBASE_INLINE_EXPR typename list<T, Allocator>::reverse_iterator list<T, Allocator>::rend() const noexcept {
 	return reverse_iterator(nullptr);
 }
 
 template<typename T, typename Allocator>
-USED_RETURN("const reverse iterator being ignored") MBASE_INLINE typename list<T, Allocator>::const_reverse_iterator list<T, Allocator>::crbegin() const noexcept {
+MBASE_ND("const reverse iterator being ignored") MBASE_INLINE typename list<T, Allocator>::const_reverse_iterator list<T, Allocator>::crbegin() const noexcept {
 	return const_reverse_iterator(lastNode);
 }
 
 template<typename T, typename Allocator>
-USED_RETURN("const reverse iterator being ignored") MBASE_INLINE_EXPR typename list<T, Allocator>::const_reverse_iterator list<T, Allocator>::crend() const noexcept {
+MBASE_ND("const reverse iterator being ignored") MBASE_INLINE_EXPR typename list<T, Allocator>::const_reverse_iterator list<T, Allocator>::crend() const noexcept {
 	return const_reverse_iterator(nullptr);
 }
 
 template<typename T, typename Allocator>
-USED_RETURN("first element being ignored") MBASE_INLINE_EXPR typename list<T, Allocator>::reference list<T, Allocator>::front() noexcept {
+MBASE_ND("first element being ignored") MBASE_INLINE_EXPR typename list<T, Allocator>::reference list<T, Allocator>::front() noexcept {
 	return *firstNode->data;
 }
 
 template<typename T, typename Allocator>
-USED_RETURN("first element being ignored") MBASE_INLINE_EXPR typename list<T, Allocator>::const_reference list<T, Allocator>::front() const noexcept {
+MBASE_ND("first element being ignored") MBASE_INLINE_EXPR typename list<T, Allocator>::const_reference list<T, Allocator>::front() const noexcept {
 	return *firstNode->data;
 }
 
 template<typename T, typename Allocator>
-USED_RETURN("last element being ignored") MBASE_INLINE_EXPR typename list<T, Allocator>::reference list<T, Allocator>::back() noexcept {
+MBASE_ND("last element being ignored") MBASE_INLINE_EXPR typename list<T, Allocator>::reference list<T, Allocator>::back() noexcept {
 	return *lastNode->data;
 }
 
 template<typename T, typename Allocator>
-USED_RETURN("last element being ignored") MBASE_INLINE_EXPR typename list<T, Allocator>::const_reference list<T, Allocator>::back() const noexcept {
+MBASE_ND("last element being ignored") MBASE_INLINE_EXPR typename list<T, Allocator>::const_reference list<T, Allocator>::back() const noexcept {
 	return *lastNode->data;
 }
 
 template<typename T, typename Allocator>
-USED_RETURN("container observation ignored") MBASE_INLINE_EXPR bool list<T, Allocator>::empty() const noexcept {
+MBASE_ND("container observation ignored") MBASE_INLINE_EXPR bool list<T, Allocator>::empty() const noexcept {
 	return mSize == 0;
 }
 
 template<typename T, typename Allocator>
-USED_RETURN("container observation ignored") MBASE_INLINE_EXPR typename list<T, Allocator>::size_type list<T, Allocator>::size() const noexcept {
+MBASE_ND("container observation ignored") MBASE_INLINE_EXPR typename list<T, Allocator>::size_type list<T, Allocator>::size() const noexcept {
 	return mSize;
 }
 
 template<typename T, typename Allocator>
-USED_RETURN("ignoring max size") MBASE_INLINE typename list<T, Allocator>::size_type list<T, Allocator>::max_size() const noexcept {
+MBASE_ND("ignoring max size") MBASE_INLINE typename list<T, Allocator>::size_type list<T, Allocator>::max_size() const noexcept {
 	return std::numeric_limits<difference_type>::max();
 }
 
 template<typename T, typename Allocator>
-USED_RETURN("ignoring allocator") MBASE_INLINE_EXPR Allocator list<T, Allocator>::get_allocator() const noexcept {
+MBASE_ND("ignoring allocator") MBASE_INLINE_EXPR Allocator list<T, Allocator>::get_allocator() const noexcept {
 	return Allocator();
 }
 
@@ -864,7 +864,7 @@ MBASE_INLINE GENERIC list<T, Allocator>::serialize(safe_buffer& out_buffer) noex
 		for (iterator It = begin(); It != end(); It++)
 		{
 			sl.value = It.get()->data;
-			sl.serialize(&tmpSafeBuffer);
+			sl.serialize(tmpSafeBuffer);
 			if (tmpSafeBuffer.bfLength)
 			{
 				totalLength += tmpSafeBuffer.bfLength;

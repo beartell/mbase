@@ -93,43 +93,43 @@ public:
 		return errors::ASYNC_CTX_SUCCESS;
 	}
 
-	USED_RETURN("io context observation ignored") size_type GetTotalTransferredBytes() const noexcept {
+	MBASE_ND("io context observation ignored") size_type GetTotalTransferredBytes() const noexcept {
 		return bytesTransferred;
 	}
 
-	USED_RETURN("io context observation ignored") size_type GetBytesOnEachIteration() const noexcept {
+	MBASE_ND("io context observation ignored") size_type GetBytesOnEachIteration() const noexcept {
 		return bytesOnEachIteration;
 	}
 
-	USED_RETURN("io context observation ignored") size_type GetRequestedByteCount() const noexcept {
+	MBASE_ND("io context observation ignored") size_type GetRequestedByteCount() const noexcept {
 		return targetBytes;
 	}
 
-	USED_RETURN("io context observation ignored") difference_type GetRemainingBytes() const noexcept {
+	MBASE_ND("io context observation ignored") difference_type GetRemainingBytes() const noexcept {
 		return targetBytes - bytesTransferred;
 	}
 
-	USED_RETURN("io context observation ignored") U32 GetCalculatedHopCount() const noexcept {
+	MBASE_ND("io context observation ignored") U32 GetCalculatedHopCount() const noexcept {
 		return calculatedHop;
 	}
 
-	USED_RETURN("io context observation ignored") U32 GetHopCounter() const noexcept {
+	MBASE_ND("io context observation ignored") U32 GetHopCounter() const noexcept {
 		return hopCounter;
 	}
 
-	USED_RETURN("io context observation ignored") direction GetIoDirection() const noexcept {
+	MBASE_ND("io context observation ignored") direction GetIoDirection() const noexcept {
 		return ioDirection;
 	}
 
-	USED_RETURN("io handle unused") io_base* GetIoHandle() noexcept {
+	MBASE_ND("io handle unused") io_base* GetIoHandle() noexcept {
 		return ioHandle;
 	}
 
-	USED_RETURN("character stream unused") char_stream* GetCharacterStream() noexcept {
+	MBASE_ND("character stream unused") char_stream* GetCharacterStream() noexcept {
 		return srcBuffer;
 	}
 
-	USED_RETURN("io context observation ignored") bool IsActive() const noexcept {
+	MBASE_ND("io context observation ignored") bool IsActive() const noexcept {
 		return isActive;
 	}
 

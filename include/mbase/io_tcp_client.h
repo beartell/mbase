@@ -82,14 +82,14 @@ public:
 		return dcResult;
 	}
 
-	USED_RETURN("requesting ipv4 but not using it") mbase::string get_remote_ipv4() const noexcept
+	MBASE_ND("requesting ipv4 but not using it") mbase::string get_remote_ipv4() const noexcept
 	{	
 		IBYTE ipOut[INET_ADDRSTRLEN] = { 0 };
 		inet_ntop(AF_INET, &sckAddr.sin_addr, ipOut, sizeof(ipOut));
 		return mbase::string(ipOut);
 	}
 
-	USED_RETURN("requesting ipv6 but not using it") mbase::string get_remote_ipv6() const noexcept {
+	MBASE_ND("requesting ipv6 but not using it") mbase::string get_remote_ipv6() const noexcept {
 		IBYTE ipOut[INET6_ADDRSTRLEN] = { 0 };
 		inet_ntop(AF_INET6, &sckAddr.sin_addr, ipOut, sizeof(ipOut));
 		return mbase::string(ipOut);

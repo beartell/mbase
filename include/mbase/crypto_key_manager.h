@@ -60,11 +60,11 @@ public:
 		gen_random_n(secretBuffer, secretLength);
 	}
 
-	USED_RETURN("crypto observation ignored") MBASE_INLINE U64 get_block_length() const noexcept {
+	MBASE_ND("crypto observation ignored") MBASE_INLINE U64 get_block_length() const noexcept {
 		return secretLength;
 	}
 
-	USED_RETURN("crypto observation ignored") MBASE_INLINE U64 get_secret_length() const noexcept {
+	MBASE_ND("crypto observation ignored") MBASE_INLINE U64 get_secret_length() const noexcept {
 		return secretLength;
 	}
 

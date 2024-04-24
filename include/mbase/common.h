@@ -41,10 +41,10 @@
 #define MBASE_CONSTEXPR constexpr
 
 #if MBASE_CPP_VERSION >= 20
-	#define USED_RETURN(in_reason) [[nodiscard(in_reason)]]
+	#define MBASE_ND(in_reason) [[nodiscard(in_reason)]]
 	#define MBASE_INLINE_EXPR constexpr inline
 #else
-	#define USED_RETURN(in_reason) [[nodiscard]]
+	#define MBASE_ND(in_reason) [[nodiscard]]
 	#define MBASE_INLINE_EXPR inline
 #endif
 

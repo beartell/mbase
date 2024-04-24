@@ -19,14 +19,14 @@ public:
 
 	MBASE_INLINE IBYTEBUFFER operator*() noexcept;
 
-	USED_RETURN("first byte being ignored") MBASE_INLINE_EXPR IBYTE front() const noexcept;
-	USED_RETURN("last byte being ignored") MBASE_INLINE_EXPR IBYTE back() const noexcept;
-	USED_RETURN("stream observation ignored") MBASE_INLINE_EXPR size_type buffer_length() const noexcept;
-	USED_RETURN("stream observation ignored") MBASE_INLINE_EXPR IBYTEBUFFER get_buffer() const noexcept;
-	USED_RETURN("stream observation ignored") MBASE_INLINE_EXPR IBYTEBUFFER get_bufferc() const noexcept;
-	USED_RETURN("stream observation ignored") MBASE_INLINE_EXPR difference_type get_pos() const noexcept;
-	USED_RETURN("stream observation ignored") MBASE_INLINE_EXPR IBYTE getc() const noexcept;
-	USED_RETURN("stream data ignored") MBASE_INLINE_EXPR IBYTEBUFFER data() const noexcept;
+	MBASE_ND("first byte being ignored") MBASE_INLINE_EXPR IBYTE front() const noexcept;
+	MBASE_ND("last byte being ignored") MBASE_INLINE_EXPR IBYTE back() const noexcept;
+	MBASE_ND("stream observation ignored") MBASE_INLINE_EXPR size_type buffer_length() const noexcept;
+	MBASE_ND("stream observation ignored") MBASE_INLINE_EXPR IBYTEBUFFER get_buffer() const noexcept;
+	MBASE_ND("stream observation ignored") MBASE_INLINE_EXPR IBYTEBUFFER get_bufferc() const noexcept;
+	MBASE_ND("stream observation ignored") MBASE_INLINE_EXPR difference_type get_pos() const noexcept;
+	MBASE_ND("stream observation ignored") MBASE_INLINE_EXPR IBYTE getc() const noexcept;
+	MBASE_ND("stream data ignored") MBASE_INLINE_EXPR IBYTEBUFFER data() const noexcept;
 
 	MBASE_INLINE_EXPR GENERIC advance() noexcept;
 	MBASE_INLINE_EXPR GENERIC advance(difference_type in_length) noexcept;
@@ -92,35 +92,35 @@ MBASE_INLINE IBYTEBUFFER char_stream::operator*() noexcept {
 	return srcBuffer + streamCursor;
 }
 
-USED_RETURN("first byte being ignored") MBASE_INLINE_EXPR IBYTE char_stream::front() const noexcept {
+MBASE_ND("first byte being ignored") MBASE_INLINE_EXPR IBYTE char_stream::front() const noexcept {
 	return *srcBuffer;
 }
 
-USED_RETURN("last byte being ignored") MBASE_INLINE_EXPR IBYTE char_stream::back() const noexcept {
+MBASE_ND("last byte being ignored") MBASE_INLINE_EXPR IBYTE char_stream::back() const noexcept {
 	return *(srcBuffer + (bufferLength - 1));
 }
 
-USED_RETURN("stream observation ignored") MBASE_INLINE_EXPR char_stream::size_type char_stream::buffer_length() const noexcept {
+MBASE_ND("stream observation ignored") MBASE_INLINE_EXPR char_stream::size_type char_stream::buffer_length() const noexcept {
 	return bufferLength;
 }
 
-USED_RETURN("stream observation ignored") MBASE_INLINE_EXPR IBYTEBUFFER char_stream::get_buffer() const noexcept {
+MBASE_ND("stream observation ignored") MBASE_INLINE_EXPR IBYTEBUFFER char_stream::get_buffer() const noexcept {
 	return srcBuffer;
 }
 
-USED_RETURN("stream observation ignored") MBASE_INLINE_EXPR IBYTEBUFFER char_stream::get_bufferc() const noexcept {
+MBASE_ND("stream observation ignored") MBASE_INLINE_EXPR IBYTEBUFFER char_stream::get_bufferc() const noexcept {
 	return srcBuffer + streamCursor;
 }
 
-USED_RETURN("stream observation ignored") MBASE_INLINE_EXPR char_stream::difference_type char_stream::get_pos() const noexcept {
+MBASE_ND("stream observation ignored") MBASE_INLINE_EXPR char_stream::difference_type char_stream::get_pos() const noexcept {
 	return streamCursor;
 }
 
-USED_RETURN("stream observation ignored") MBASE_INLINE_EXPR IBYTE char_stream::getc() const noexcept {
+MBASE_ND("stream observation ignored") MBASE_INLINE_EXPR IBYTE char_stream::getc() const noexcept {
 	return *(srcBuffer + streamCursor);
 }
 
-USED_RETURN("stream data ignored") MBASE_INLINE_EXPR IBYTEBUFFER char_stream::data() const noexcept {
+MBASE_ND("stream data ignored") MBASE_INLINE_EXPR IBYTEBUFFER char_stream::data() const noexcept {
 	return srcBuffer;
 }
 
