@@ -201,10 +201,18 @@ public:
     MBASE_ND("ignoring equality comparison") MBASE_INLINE bool operator!=(const const_sequence_iterator& in_rhs) const noexcept;
     MBASE_ND("ignoring equality comparison") MBASE_INLINE bool operator==(const sequence_iterator<T>& in_rhs) const noexcept;
     MBASE_ND("ignoring equality comparison") MBASE_INLINE bool operator!=(const sequence_iterator<T>& in_rhs) const noexcept;
-    MBASE_INLINE bool operator<(const const_sequence_iterator& in_rhs) noexcept;
-    MBASE_INLINE bool operator>(const const_sequence_iterator& in_rhs) noexcept;
-    MBASE_INLINE bool operator>=(const const_sequence_iterator& in_rhs) noexcept;
-    MBASE_INLINE bool operator<=(const const_sequence_iterator& in_rhs) noexcept;
+    MBASE_INLINE bool operator<(const const_sequence_iterator& in_rhs) noexcept {
+        return ((_ptr - in_rhs._ptr) < 0);
+    }
+    MBASE_INLINE bool operator>(const const_sequence_iterator& in_rhs) noexcept {
+        return ((_ptr - in_rhs._ptr) > 0);
+    }
+    MBASE_INLINE bool operator>=(const const_sequence_iterator& in_rhs) noexcept {
+        return ((_ptr - in_rhs._ptr) >= 0);
+    }
+    MBASE_INLINE bool operator<=(const const_sequence_iterator& in_rhs) noexcept {
+        return ((_ptr - in_rhs._ptr) <= 0);
+    }
     MBASE_INLINE bool operator<(const sequence_iterator<T>& in_rhs) noexcept;
     MBASE_INLINE bool operator>(const sequence_iterator<T>& in_rhs) noexcept;
     MBASE_INLINE bool operator>=(const sequence_iterator<T>& in_rhs) noexcept;

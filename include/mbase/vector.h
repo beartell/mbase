@@ -52,7 +52,7 @@ public:
 	using reverse_iterator = reverse_sequence_iterator<T>;
 	using const_reverse_iterator = const_reverse_sequence_iterator<T>;
 
-	MBASE_INLINE_EXPR MBASE_EXPLICIT vector() noexcept; // C1F1B1-EXP-NSTD-MANIP
+	MBASE_INLINE_EXPR MBASE_EXPLICIT vector() noexcept; // Signature = C1F1B1-EXP-NSTD-MANIP
 	MBASE_INLINE_EXPR MBASE_EXPLICIT vector(const Allocator& in_alloc) noexcept;
 	MBASE_INLINE_EXPR vector(size_type in_size, const T& in_value, const Allocator& in_alloc = Allocator());
 	MBASE_INLINE_EXPR MBASE_EXPLICIT vector(size_type in_size, const Allocator& in_alloc = Allocator());
@@ -120,7 +120,7 @@ public:
 	MBASE_INLINE_EXPR GENERIC shrink_to_fit();
 	MBASE_INLINE_EXPR GENERIC reserve(size_type in_capacity) noexcept;
 	MBASE_INLINE_EXPR iterator erase(iterator in_pos) noexcept;
-	MBASE_INLINE_EXPR iterator erase(const_iterator in_begin, const_iterator in_end) noexcept; // IMPL
+	MBASE_INLINE_EXPR iterator erase(const_iterator in_begin, const_iterator in_end) noexcept; // IMPLEMENT THIS
 	MBASE_INLINE_EXPR GENERIC push_back(const T& in_val) noexcept;
 	MBASE_INLINE_EXPR GENERIC push_back(T&& in_val) noexcept;
 	MBASE_INLINE_EXPR GENERIC pop_back() noexcept;
