@@ -515,7 +515,7 @@ MBASE_INLINE const_sequence_iterator<T>& const_sequence_iterator<T>::operator++(
 template<typename T>
 MBASE_INLINE const const_sequence_iterator<T> const_sequence_iterator<T>::operator++(int) noexcept {
     const_sequence_iterator csi(*this);
-    --(*this);
+    ++(*this);
     return csi;
 }
 

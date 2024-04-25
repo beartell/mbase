@@ -772,7 +772,7 @@ MBASE_INLINE_EXPR GENERIC vector<T, Allocator>::serialize(safe_buffer& out_buffe
 		for (iterator It = begin(); It != end(); It++)
 		{
 			sl.value = It.get();
-			sl.serialize(&tmpSafeBuffer);
+			sl.serialize(tmpSafeBuffer);
 			if (tmpSafeBuffer.bfLength)
 			{
 				totalLength += tmpSafeBuffer.bfLength;

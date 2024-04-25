@@ -53,10 +53,14 @@ public:
     MBASE_INLINE_EXPR character_sequence(character_sequence&& in_rhs, size_type in_pos, const Allocator& in_alloc = Allocator());
     MBASE_INLINE_EXPR character_sequence(const character_sequence& in_rhs, size_type in_pos, size_type in_count, const Allocator& in_alloc = Allocator());
     MBASE_INLINE_EXPR character_sequence(character_sequence&& in_rhs, size_type in_pos, size_type in_count, const Allocator& in_alloc = Allocator());
-    //MBASE_INLINE_EXPR character_sequence(const_pointer in_string, size_type in_count, const Allocator& in_alloc = Allocator());
-    //MBASE_INLINE_EXPR character_sequence(const_pointer in_string, const Allocator& in_alloc = Allocator());
-    template<typename InputIt>
-    MBASE_INLINE_EXPR character_sequence(InputIt in_begin, InputIt in_end, const Allocator& in_alloc = Allocator());
+    template<typename InputIt, typename = std::enable_if_t<std::is_constructible_v<SeqType, typename std::iterator_traits<InputIt>::value_type>>>
+    MBASE_INLINE_EXPR character_sequence(InputIt in_begin, InputIt in_end, const Allocator& in_alloc = Allocator()) : raw_data(nullptr), mSize(0), mCapacity(8), externalAllocator(Allocator()) {
+        _build_string(mCapacity);
+        for(in_begin; in_begin != in_end; in_begin++)
+        {
+            push_back(*in_begin);
+        }
+    }
     MBASE_INLINE_EXPR character_sequence(const_pointer in_string) noexcept;
     MBASE_INLINE_EXPR character_sequence(const_pointer in_string, size_type in_length) noexcept;
     MBASE_INLINE_EXPR character_sequence(const character_sequence& in_rhs) noexcept;
@@ -251,7 +255,7 @@ public:
     character_sequence& operator+=(std::initializer_list<value_type> in_chars);
 
     MBASE_INLINE GENERIC serialize(safe_buffer& out_buffer);
-    MBASE_INLINE static character_sequence deserialize(pointer in_buffer, SIZE_T in_length) noexcept;
+    MBASE_INLINE static character_sequence deserialize(IBYTEBUFFER in_buffer, SIZE_T in_length) noexcept;
 
     MBASE_ND("converted string not being used.") static I32 to_i32(const character_sequence& in_string) noexcept { return atoi(in_string.c_str()); }
     MBASE_ND("converted string not being used.") static I32 to_i64(const character_sequence& in_string) noexcept { return _atoi64(in_string.c_str()); }
@@ -348,27 +352,28 @@ public:
     friend character_sequence operator+(const_pointer in_lhs, character_sequence&& in_rhs);
     friend character_sequence operator+(value_type in_lhs, character_sequence&& in_rhs);
 
-    friend bool operator==(const character_sequence& in_lhs, const character_sequence& in_rhs) noexcept;
-    friend bool operator!=(const character_sequence& in_lhs, const character_sequence& in_rhs) noexcept;
-    friend bool operator<(const character_sequence& in_lhs, const character_sequence& in_rhs) noexcept; // IMPL
-    friend bool operator<=(const character_sequence& in_lhs, const character_sequence& in_rhs) noexcept; // IMPL
-    friend bool operator>(const character_sequence& in_lhs, const character_sequence& in_rhs) noexcept; // IMPL
-    friend bool operator>=(const character_sequence& in_lhs, const character_sequence& in_rhs) noexcept; // IMPL
-    friend bool operator<=>(const character_sequence& in_lhs, const character_sequence& in_rhs) noexcept; // IMPL
-    friend bool operator==(const character_sequence& in_lhs, const_pointer in_rhs) noexcept; // IMPL
-    friend bool operator!=(const character_sequence& in_lhs, const_pointer in_rhs) noexcept; // IMPL
-    friend bool operator<(const character_sequence& in_lhs, const_pointer in_rhs) noexcept; // IMPL
-    friend bool operator<=(const character_sequence& in_lhs, const_pointer in_rhs) noexcept; // IMPL
-    friend bool operator>(const character_sequence& in_lhs, const_pointer in_rhs) noexcept; // IMPL
-    friend bool operator>=(const character_sequence& in_lhs, const_pointer in_rhs) noexcept; // IMPL
-    friend bool operator<=>(const character_sequence& in_lhs, const_pointer in_rhs) noexcept; // IMPL
-    friend bool operator==(const_pointer in_lhs, const character_sequence& in_rhs) noexcept; // IMPL
-    friend bool operator!=(const_pointer in_lhs, const character_sequence& in_rhs) noexcept; // IMPL
-    friend bool operator<(const_pointer in_lhs, const character_sequence& in_rhs) noexcept; // IMPL
-    friend bool operator<=const_pointer in_lhs, const character_sequence& in_rhs) noexcept; // IMPL
-    friend bool operator>(const_pointer in_lhs, const character_sequence& in_rhs) noexcept; // IMPL
-    friend bool operator>=(const_pointer in_lhs, const character_sequence& in_rhs) noexcept; // IMPL
-
+    MBASE_INLINE_EXPR friend bool operator==(const character_sequence& in_lhs, const character_sequence& in_rhs) noexcept;
+    MBASE_INLINE_EXPR friend bool operator!=(const character_sequence& in_lhs, const character_sequence& in_rhs) noexcept;
+    MBASE_INLINE_EXPR friend bool operator<(const character_sequence& in_lhs, const character_sequence& in_rhs) noexcept; // IMPL
+    MBASE_INLINE_EXPR friend bool operator<=(const character_sequence& in_lhs, const character_sequence& in_rhs) noexcept; // IMPL
+    MBASE_INLINE_EXPR friend bool operator>(const character_sequence& in_lhs, const character_sequence& in_rhs) noexcept; // IMPL
+    MBASE_INLINE_EXPR friend bool operator>=(const character_sequence& in_lhs, const character_sequence& in_rhs) noexcept; // IMPL
+    MBASE_INLINE_EXPR friend bool operator==(const character_sequence& in_lhs, const_pointer in_rhs) noexcept; // IMPL
+    MBASE_INLINE_EXPR friend bool operator!=(const character_sequence& in_lhs, const_pointer in_rhs) noexcept; // IMPL
+    MBASE_INLINE_EXPR friend bool operator<(const character_sequence& in_lhs, const_pointer in_rhs) noexcept; // IMPL
+    MBASE_INLINE_EXPR friend bool operator<=(const character_sequence& in_lhs, const_pointer in_rhs) noexcept; // IMPL
+    MBASE_INLINE_EXPR friend bool operator>(const character_sequence& in_lhs, const_pointer in_rhs) noexcept; // IMPL
+    MBASE_INLINE_EXPR friend bool operator>=(const character_sequence& in_lhs, const_pointer in_rhs) noexcept; // IMPL
+#if MBASE_CPP_VERSION >= 20
+    MBASE_INLINE_EXPR friend bool operator<=>(const character_sequence& in_lhs, const character_sequence& in_rhs) noexcept; // IMPL
+    MBASE_INLINE_EXPR friend bool operator<=>(const character_sequence& in_lhs, const_pointer in_rhs) noexcept; // IMPL
+#endif // MBASE_CPP_VERSION >= 20
+    MBASE_INLINE_EXPR friend bool operator==(const_pointer in_lhs, const character_sequence& in_rhs) noexcept; // IMPL
+    MBASE_INLINE_EXPR friend bool operator!=(const_pointer in_lhs, const character_sequence& in_rhs) noexcept; // IMPL
+    MBASE_INLINE_EXPR friend bool operator<(const_pointer in_lhs, const character_sequence& in_rhs) noexcept; // IMPL
+    MBASE_INLINE_EXPR friend bool operator<=(const_pointer in_lhs, const character_sequence& in_rhs) noexcept; // IMPL
+    MBASE_INLINE_EXPR friend bool operator>(const_pointer in_lhs, const character_sequence& in_rhs) noexcept; // IMPL
+    MBASE_INLINE_EXPR friend bool operator>=(const_pointer in_lhs, const character_sequence& in_rhs) noexcept; // IMPL
 
     friend std::ostream& operator<<(std::ostream& os, const character_sequence& in_rhs) noexcept {
         if (!in_rhs.raw_data)
@@ -383,6 +388,7 @@ public:
     }
 
     static MBASE_INLINE_EXPR const SIZE_T npos = -1;
+
 private:
 
     MBASE_INLINE GENERIC _resize(size_type in_size) noexcept {
@@ -402,14 +408,18 @@ private:
     }
 
     MBASE_INLINE size_type _calculate_capacity(size_type in_size) noexcept {
-        size_type str_length = in_size / 8;
         size_type base_capacity = 8;
-        while(str_length--)
+        while(base_capacity < in_size)
         {
             base_capacity *= 2;
         }
 
         return base_capacity;
+    }
+
+    MBASE_INLINE GENERIC _build_string(size_type in_capacity) noexcept {
+        mCapacity = in_capacity;
+        raw_data = externalAllocator.allocate(mCapacity, true);
     }
     allocator_type externalAllocator;
     pointer raw_data;
@@ -429,8 +439,7 @@ MBASE_INLINE_EXPR character_sequence<SeqType, SeqBase, Allocator>::character_seq
 
 template<typename SeqType, typename SeqBase, typename Allocator>
 MBASE_INLINE_EXPR character_sequence<SeqType, SeqBase, Allocator>::character_sequence(size_type in_size, value_type in_ch, const Allocator& in_alloc) : raw_data(nullptr), mSize(0), externalAllocator(in_alloc) {
-    mCapacity = this->_calculate_capacity(in_size);
-    raw_data = externalAllocator.allocate(mCapacity, true);
+    _build_string(this->_calculate_capacity(in_size));
     for(I32 i = 0; i < in_size; i++)
     {
         push_back(in_ch);
@@ -443,13 +452,12 @@ MBASE_INLINE_EXPR character_sequence<SeqType, SeqBase, Allocator>::character_seq
     const_iterator itr_pos = const_iterator(in_rhs.raw_data + in_pos);
     if (itr_pos > itr_end) {
         // MEANS WE ARE OUT OF BOUNDS
-        // DO NOTHING
-        mCapacity = 8;
-        raw_data = externalAllocator.allocate(mCapacity, true);
+        _build_string(in_rhs.mCapacity);
+        mSize = in_rhs.mSize;
+        this->copy_bytes(raw_data, in_rhs.raw_data, mSize);
     }
     else {
-        mCapacity = in_rhs.mCapacity;
-        raw_data = externalAllocator.allocate(mCapacity, true);
+        _build_string(in_rhs.mCapacity);
         for(itr_pos; itr_pos != itr_end; itr_pos++)
         {
             push_back(*itr_pos);
@@ -458,48 +466,132 @@ MBASE_INLINE_EXPR character_sequence<SeqType, SeqBase, Allocator>::character_seq
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
+MBASE_INLINE_EXPR character_sequence<SeqType, SeqBase, Allocator>::character_sequence(character_sequence&& in_rhs, size_type in_pos, const Allocator& in_alloc) : raw_data(nullptr), mSize(0), externalAllocator(in_alloc) {
+    character_sequence cs(std::move(in_rhs));
+    const_iterator itr_end = cs.cend();
+    const_iterator itr_pos = const_iterator(cs.raw_data + in_pos);
+    if (itr_pos > itr_end) {
+        // MEANS WE ARE OUT OF BOUNDS
+        _build_string(cs.mCapacity);
+        mSize = cs.mSize;
+        this->copy_bytes(raw_data, cs.raw_data, mSize);
+    }
+    else {
+        _build_string(cs.mCapacity);
+        for (itr_pos; itr_pos != itr_end; itr_pos++)
+        {
+            push_back(*itr_pos);
+        }
+    }
+}
+
+template<typename SeqType, typename SeqBase, typename Allocator>
+MBASE_INLINE_EXPR character_sequence<SeqType, SeqBase, Allocator>::character_sequence(const character_sequence& in_rhs, size_type in_pos, size_type in_count, const Allocator& in_alloc) : raw_data(nullptr), mSize(0), externalAllocator(in_alloc) 
+{
+    const_iterator itr_end = in_rhs.cend();
+    const_iterator itr_pos = const_iterator(in_rhs.raw_data + in_pos);
+    if (itr_pos > itr_end || in_count == npos) {
+        // MEANS WE ARE OUT OF BOUNDS
+        _build_string(in_rhs.mCapacity);
+        mSize = in_rhs.mSize;
+        this->copy_bytes(raw_data, in_rhs.raw_data, mSize);
+    }
+    else {
+        _build_string(in_rhs.mCapacity);
+        for (I32 i = 0; i < in_count; i++)
+        {
+            if(itr_pos == itr_end)
+            {
+                break;
+            }
+            push_back(*itr_pos);
+            itr_pos++;
+        }
+    }
+}
+
+template<typename SeqType, typename SeqBase, typename Allocator>
+MBASE_INLINE_EXPR character_sequence<SeqType, SeqBase, Allocator>::character_sequence(character_sequence&& in_rhs, size_type in_pos, size_type in_count, const Allocator& in_alloc) : raw_data(nullptr), mSize(0), externalAllocator(in_alloc) 
+{
+    character_sequence cs(std::move(in_rhs));
+    const_iterator itr_end = cs.cend();
+    const_iterator itr_pos = const_iterator(cs.raw_data + in_pos);
+    if (itr_pos > itr_end || in_count == npos) {
+        // MEANS WE ARE OUT OF BOUNDS
+        _build_string(cs.mCapacity);
+        mSize = cs.mSize;
+        this->copy_bytes(raw_data, cs.raw_data, mSize);
+    }
+    else {
+        _build_string(cs.mCapacity);
+        for (I32 i = 0; i < in_count; i++)
+        {
+            if (itr_pos == itr_end)
+            {
+                break;
+            }
+            push_back(*itr_pos);
+            itr_pos++;
+        }
+    }
+}
+
+template<typename SeqType, typename SeqBase, typename Allocator>
 MBASE_INLINE_EXPR character_sequence<SeqType, SeqBase, Allocator>::character_sequence(const_pointer in_string) noexcept : externalAllocator(Allocator()) {
     mSize = this->length(in_string);
-    mCapacity = this->_calculate_capacity(mSize);
-    raw_data = externalAllocator.allocate(mCapacity, true);
-    if(mSize)
-    {
-        this->copy_bytes(raw_data, in_string, mSize + 1);
-    }
+    _build_string(this->_calculate_capacity(mSize));
+    this->copy_bytes(raw_data, in_string, mSize); // no need the include null-terminator since we zero the memory
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_INLINE_EXPR character_sequence<SeqType, SeqBase, Allocator>::character_sequence(const_pointer in_string, size_type in_length) noexcept {
-    size_type string_length = in_length / 8;
-    size_type base_capacity = 8;
-    while (string_length--)
-    {
-        // calculating capacity
-        base_capacity *= 2;
-    }
-    mCapacity = base_capacity;
+MBASE_INLINE_EXPR character_sequence<SeqType, SeqBase, Allocator>::character_sequence(const_pointer in_string, size_type in_length) noexcept : externalAllocator(Allocator()) {
     mSize = in_length;
-    raw_data = externalAllocator.allocate(base_capacity, true);
-    if (mSize)
-    {
-        this->copy_bytes(raw_data, in_string, mSize + 1);
-    }
+    _build_string(this->_calculate_capacity(mSize));
+    this->copy_bytes(raw_data, in_string, mSize); // no need the include null-terminator since we zero the memory
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_INLINE_EXPR character_sequence<SeqType, SeqBase, Allocator>::character_sequence(const character_sequence& in_rhs) noexcept : raw_data(nullptr), mSize(in_rhs.mSize), mCapacity(in_rhs.mCapacity) {
+MBASE_INLINE_EXPR character_sequence<SeqType, SeqBase, Allocator>::character_sequence(const character_sequence& in_rhs) noexcept : raw_data(nullptr), mSize(in_rhs.mSize), mCapacity(in_rhs.mCapacity), externalAllocator(Allocator()) {
     raw_data = externalAllocator.allocate(mCapacity, true);
-    this->copy_bytes(raw_data, in_rhs.raw_data, mSize);
+    this->copy_bytes(raw_data, in_rhs.raw_data, mSize); // no need the include null-terminator since we zero the memory
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_INLINE_EXPR character_sequence<SeqType, SeqBase, Allocator>::character_sequence(character_sequence&& in_rhs) noexcept : raw_data(in_rhs.raw_data), mSize(in_rhs.mSize), mCapacity(in_rhs.mCapacity) {
+MBASE_INLINE_EXPR character_sequence<SeqType, SeqBase, Allocator>::character_sequence(character_sequence&& in_rhs) noexcept : raw_data(in_rhs.raw_data), mSize(in_rhs.mSize), mCapacity(in_rhs.mCapacity), externalAllocator(Allocator()) {
     in_rhs.raw_data = NULL;
+    in_rhs.mSize = 0;
+    in_rhs.mCapacity = 0;
+}
+
+template<typename SeqType, typename SeqBase, typename Allocator>
+MBASE_INLINE_EXPR character_sequence<SeqType, SeqBase, Allocator>::character_sequence(const character_sequence& in_rhs, const Allocator& in_alloc) : raw_data(nullptr), mSize(in_rhs.mSize), mCapacity(in_rhs.mCapacity), externalAllocator(in_alloc) {
+    raw_data = externalAllocator.allocate(mCapacity, true);
+    this->copy_bytes(raw_data, in_rhs.raw_data, mSize); // no need the include null-terminator since we zero the memory
+}
+
+template<typename SeqType, typename SeqBase, typename Allocator>
+MBASE_INLINE_EXPR character_sequence<SeqType, SeqBase, Allocator>::character_sequence(character_sequence&& in_rhs, const Allocator& in_alloc) : raw_data(in_rhs.raw_data), mSize(in_rhs.mSize), mCapacity(in_rhs.mCapacity), externalAllocator(in_alloc) {
+    in_rhs.raw_data = NULL;
+    in_rhs.mSize = 0;
+    in_rhs.mCapacity = 0;
+}
+
+template<typename SeqType, typename SeqBase, typename Allocator>
+MBASE_INLINE_EXPR character_sequence<SeqType, SeqBase, Allocator>::character_sequence(std::initializer_list<value_type> in_chars, const Allocator& in_alloc) : raw_data(nullptr), mSize(0), mCapacity(8), externalAllocator(in_alloc) {
+    _build_string(this->_calculate_capacity(in_chars.size()));
+    const value_type* vt = in_chars.begin();
+    for(vt; vt != in_chars.end(); vt++)
+    {
+        push_back(*vt);
+    }
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
 MBASE_INLINE_EXPR character_sequence<SeqType, SeqBase, Allocator>::~character_sequence() noexcept {
-    externalAllocator.destroy(raw_data);
+    if (!mSize)
+    {
+        externalAllocator.deallocate(raw_data, 0);
+    }
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
@@ -510,10 +602,8 @@ MBASE_INLINE character_sequence<SeqType, SeqBase, Allocator>& character_sequence
     }
 
     mSize = in_rhs.mSize;
-    mCapacity = in_rhs.mCapacity;
-
-    raw_data = externalAllocator.allocate(in_rhs.mCapacity, true);
-    this->copy_bytes(raw_data, in_rhs.raw_data, in_rhs.mSize);
+    _build_string(in_rhs.mCapacity);
+    this->copy_bytes(raw_data, in_rhs.raw_data, mSize);
     return *this;
 }
 
@@ -526,18 +616,10 @@ MBASE_INLINE character_sequence<SeqType, SeqBase, Allocator>& character_sequence
     }
 
     size_type st_length = this->length(in_rhs);
-    mSize = st_length;
-    mCapacity = 8; // Base capacity
-
-    while (mCapacity <= st_length)
-    {
-        // grow until the capacity exceeds the string
-        mCapacity *= 2;
-    }
+    mCapacity = this->_calculate_capacity(st_length);
 
     raw_data = externalAllocator.allocate(mCapacity, true);
     this->copy_bytes(raw_data, in_rhs, st_length);
-
     return *this;
 }
 
@@ -552,6 +634,9 @@ MBASE_INLINE character_sequence<SeqType, SeqBase, Allocator>& character_sequence
     mCapacity = in_rhs.mCapacity;
     raw_data = in_rhs.raw_data;
     in_rhs.raw_data = nullptr;
+    in_rhs.mSize = 0;
+    in_rhs.mCapacity = 0;
+
     return *this;
 }
 
@@ -1001,12 +1086,7 @@ character_sequence<SeqType, SeqBase, Allocator>& character_sequence<SeqType, Seq
 
 template<typename SeqType, typename SeqBase, typename Allocator>
 character_sequence<SeqType, SeqBase, Allocator>& character_sequence<SeqType, SeqBase, Allocator>::operator+=(const value_type& in_character) noexcept {
-    mSize++;
-    if (mSize >= mCapacity)
-    {
-        _resize(++mCapacity);
-    }
-    raw_data[mSize - 1] = in_character;
+    push_back(in_character);
     return *this;
 }
 
@@ -1021,21 +1101,10 @@ MBASE_INLINE GENERIC character_sequence<SeqType, SeqBase, Allocator>::push_back(
     mSize++;
     if (mSize >= mCapacity)
     {
-        _resize(++mCapacity);
+        _resize(mCapacity *= 2);
     }
     raw_data[mSize - 1] = in_character;
 }
-
-//template<typename SourceContainer>
-//MBASE_INLINE GENERIC character_sequence::split(const character_sequence& in_delimiters, SourceContainer& out_strings) noexcept {
-//    const_pointer delims = in_delimiters.c_str();
-//    pointer stringOut = strtok(raw_data, delims);
-//    while (stringOut != nullptr)
-//    {
-//        out_strings.push_back(stringOut);
-//        stringOut = strtok(nullptr, delims);
-//    }
-//}
 
 template<typename SeqType, typename SeqBase, typename Allocator>
 MBASE_ND("converted string not being used.") MBASE_INLINE I32 character_sequence<SeqType, SeqBase, Allocator>::to_i32() const noexcept {
@@ -1139,24 +1208,24 @@ MBASE_INLINE GENERIC character_sequence<SeqType, SeqBase, Allocator>::serialize(
     if (mSize)
     {
         out_buffer.bfLength = mSize;
-        out_buffer.bfSource = new value_type[mSize];
+        out_buffer.bfSource = this->externalAllocator.allocate(mSize);
 
         this->copy_bytes(out_buffer.bfSource, raw_data, mSize); // DO NOT INCLUDE NULL TERMINATOR
     }
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_INLINE character_sequence<SeqType, SeqBase, Allocator> character_sequence<SeqType, SeqBase, Allocator>::deserialize(pointer in_buffer, SIZE_T in_length) noexcept {
-    return mbase::character_sequence(in_buffer, in_length);
+MBASE_INLINE character_sequence<SeqType, SeqBase, Allocator> character_sequence<SeqType, SeqBase, Allocator>::deserialize(IBYTEBUFFER in_buffer, SIZE_T in_length) noexcept {
+    return character_sequence(in_buffer, in_length);
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-bool operator==(const character_sequence<SeqType, SeqBase, Allocator>& in_lhs, const character_sequence<SeqType, SeqBase, Allocator>& in_rhs) noexcept {
+MBASE_INLINE_EXPR bool operator==(const character_sequence<SeqType, SeqBase, Allocator>& in_lhs, const character_sequence<SeqType, SeqBase, Allocator>& in_rhs) noexcept {
     return type_sequence<SeqType>::is_equal(in_lhs.raw_data, in_rhs.raw_data);
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-bool operator!=(const character_sequence<SeqType, SeqBase, Allocator>& in_lhs, const character_sequence<SeqType, SeqBase, Allocator>& in_rhs) noexcept {
+MBASE_INLINE_EXPR bool operator!=(const character_sequence<SeqType, SeqBase, Allocator>& in_lhs, const character_sequence<SeqType, SeqBase, Allocator>& in_rhs) noexcept {
     return !type_sequence<SeqType>::is_equal(in_lhs.raw_data, in_rhs.raw_data);
 }
 
