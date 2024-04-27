@@ -47,6 +47,7 @@ public:
     using const_reverse_iterator = typename SeqBase::const_reverse_iterator;
 
     MBASE_INLINE_EXPR character_sequence() noexcept;
+    MBASE_INLINE_EXPR character_sequence(pointer in_raw, size_type in_size, size_type in_capacity) noexcept; // THIS CONSTRUCTOR MUST NOT BE CALLED FROM OUTSIDE
     MBASE_INLINE_EXPR MBASE_EXPLICIT character_sequence(const Allocator& in_alloc) noexcept;
     MBASE_INLINE_EXPR character_sequence(size_type in_size, value_type in_ch, const Allocator& in_alloc = Allocator());
     MBASE_INLINE_EXPR character_sequence(const character_sequence& in_rhs, size_type in_pos, const Allocator& in_alloc = Allocator());
@@ -183,9 +184,37 @@ public:
     MBASE_INLINE_EXPR character_sequence& assign(character_sequence&& in_str) noexcept;
     MBASE_INLINE_EXPR character_sequence& assign(const_pointer in_str, size_type in_count);
     MBASE_INLINE_EXPR character_sequence& assign(const_pointer in_str);
-    template<typename InputIt>
-    MBASE_INLINE_EXPR character_sequence& assign(InputIt in_begin, InputIt in_end);
+    template<typename InputIt, typename = std::enable_if_t<std::is_constructible_v<SeqType, typename std::iterator_traits<InputIt>::value_type>>>
+    MBASE_INLINE_EXPR character_sequence& assign(InputIt in_begin, InputIt in_end) {
+        character_sequence in_seq(in_begin, in_end);
+        *this = std::move(in_seq);
+        return *this;
+    }
     MBASE_INLINE_EXPR character_sequence& assign(std::initializer_list<value_type> in_chars);
+    MBASE_INLINE_EXPR character_sequence& append(size_type in_count, value_type in_char);
+    MBASE_INLINE_EXPR character_sequence& append(const character_sequence& in_str);
+    MBASE_INLINE_EXPR character_sequence& append(const character_sequence& in_str, size_type in_pos, size_type in_count = npos);
+    MBASE_INLINE_EXPR character_sequence& append(const_pointer in_str, size_type in_count);
+    MBASE_INLINE_EXPR character_sequence& append(const_pointer in_str);
+    template<typename InputIt, typename = std::enable_if_t<std::is_constructible_v<SeqType, typename std::iterator_traits<InputIt>::value_type>>>
+    MBASE_INLINE_EXPR character_sequence& append(InputIt in_begin, InputIt in_end) {
+        for(in_begin; in_begin != in_end; in_begin++)
+        {
+            push_back(*in_begin);
+        }
+        return *this;
+    }
+    MBASE_INLINE_EXPR character_sequence& append(std::initializer_list<value_type> in_chars);
+    MBASE_INLINE_EXPR character_sequence& insert(size_type in_index, size_type in_count, value_type in_ch);
+    MBASE_INLINE_EXPR character_sequence& insert(size_type in_index, const_pointer in_str);
+    MBASE_INLINE_EXPR character_sequence& insert(size_type in_index, const_pointer in_str, size_type in_count);
+    MBASE_INLINE_EXPR character_sequence& insert(size_type in_index, const character_sequence& in_str);
+    MBASE_INLINE_EXPR character_sequence& insert(size_type in_index, const character_sequence& in_str, size_type in_sindex, size_type in_count = npos);
+    MBASE_INLINE_EXPR iterator insert(const_iterator in_pos, value_type in_char);
+    MBASE_INLINE_EXPR iterator insert(const_iterator in_pos, size_type in_count, value_type in_char);
+    template<typename InputIt, typename = std::enable_if_t<std::is_constructible_v<SeqType, typename std::iterator_traits<InputIt>::value_type>>>
+    MBASE_INLINE_EXPR iterator insert(const_iterator in_pos, InputIt in_begin, InputIt in_end);
+    MBASE_INLINE_EXPR iterator insert(const_iterator in_pos, std::initializer_list<value_type> in_chars);
     MBASE_INLINE GENERIC pop_back() noexcept;
     MBASE_INLINE GENERIC push_back(const value_type& in_character) noexcept;
     MBASE_ND("converted string not being used.") MBASE_INLINE I32 to_i32() const noexcept;
@@ -201,32 +230,15 @@ public:
     MBASE_INLINE GENERIC to_upper(size_t in_from, size_t in_to) noexcept;
     MBASE_INLINE GENERIC to_upper() noexcept;
     MBASE_INLINE GENERIC resize(size_type in_amount);
-    MBASE_INLINE_EXPR GENERIC resize(size_type in_amount, value_type in_char);
+    MBASE_INLINE_EXPR GENERIC resize(size_type in_amount, value_type in_char); // DON'T KNOW WHAT TO IMPLEMENT
     MBASE_INLINE GENERIC swap(character_sequence& in_src) noexcept;
     MBASE_INLINE_EXPR GENERIC copy(pointer in_src, size_t in_len, size_t in_pos = 0) noexcept;
     MBASE_INLINE_EXPR GENERIC reserve(size_type in_new_cap);
     MBASE_INLINE_EXPR GENERIC clear() noexcept;
-    MBASE_INLINE_EXPR character_sequence& insert(size_type in_index, size_type in_count, value_type in_ch);
-    MBASE_INLINE_EXPR character_sequence& insert(size_type in_index, const_pointer in_str);
-    MBASE_INLINE_EXPR character_sequence& insert(size_type in_index, const_pointer in_str, size_type in_count);
-    MBASE_INLINE_EXPR character_sequence& insert(size_type in_index, const character_sequence& in_str);
-    MBASE_INLINE_EXPR character_sequence& insert(size_type in_index, const character_sequence& in_str, size_type in_sindex, size_type in_count = npos);
-    MBASE_INLINE_EXPR iterator insert(const_iterator in_pos, value_type in_char);
-    MBASE_INLINE_EXPR iterator insert(const_iterator in_pos, size_type in_count, value_type in_char);
-    template<typename InputIt>
-    MBASE_INLINE_EXPR iterator insert(const_iterator in_pos, InputIt in_begin, InputIt in_end);
-    MBASE_INLINE_EXPR iterator insert(const_iterator in_pos, std::initializer_list<value_type> in_chars);
     MBASE_INLINE_EXPR character_sequence& erase(size_type in_index = 0, size_type count = npos);
     MBASE_INLINE_EXPR iterator erase(const_iterator in_pos);
     MBASE_INLINE_EXPR iterator erase(const_iterator in_from, const_iterator in_to);
-    MBASE_INLINE_EXPR character_sequence& append(size_type in_count, value_type in_char);
-    MBASE_INLINE_EXPR character_sequence& append(const character_sequence& in_str);
-    MBASE_INLINE_EXPR character_sequence& append(const character_sequence& in_str, size_type in_pos, size_type in_count = npos);
-    MBASE_INLINE_EXPR character_sequence& append(const_pointer in_str, size_type in_count);
-    MBASE_INLINE_EXPR character_sequence& append(const_pointer in_str);
-    template<typename InputIt>
-    MBASE_INLINE_EXPR character_sequence& append(InputIt in_begin, InputIt in_end);
-    MBASE_INLINE_EXPR character_sequence& append(std::initializer_list<value_type> in_chars);
+    MBASE_INLINE_EXPR size_type erase(character_sequence& in_str, value_type in_val);
     MBASE_INLINE_EXPR character_sequence& replace(size_type in_pos, size_type in_count, const character_sequence& in_str);
     MBASE_INLINE_EXPR character_sequence& replace(const_iterator in_begin, const_iterator in_end, const character_sequence& in_str);
     MBASE_INLINE_EXPR character_sequence& replace(size_type in_pos, size_type in_count, const character_sequence& in_str, size_type in_pos2, size_type in_count2);
@@ -237,7 +249,6 @@ public:
     MBASE_INLINE_EXPR character_sequence& replace(size_type in_pos, size_type in_count, size_type in_count2, value_type in_char);
     MBASE_INLINE_EXPR character_sequence& replace(const_iterator in_begin, const_iterator in_end, size_type in_count2, value_type in_char);
     MBASE_INLINE_EXPR character_sequence& replace(const_iterator in_begin, const_iterator in_end, std::initializer_list<value_type> in_chars);
-    MBASE_INLINE_EXPR size_type erase(character_sequence& in_str, value_type in_val);
     template<typename SourceContainer = mbase::vector<character_sequence>>
     MBASE_INLINE GENERIC split(const character_sequence& in_delimiters, SourceContainer& out_strings) noexcept {
         const_pointer delims = in_delimiters.c_str();
@@ -289,7 +300,7 @@ public:
         return newSequence;
     }
 
-    friend character_sequence operator+(const character_sequence& in_lhs, const character_sequence& in_rhs) noexcept {
+    MBASE_INLINE_EXPR friend character_sequence operator+(const character_sequence& in_lhs, const character_sequence& in_rhs) noexcept {
         I32 totalSize = in_lhs.mSize + in_rhs.mSize;
         I32 totalCapacity = in_lhs.mCapacity;
 
@@ -301,10 +312,9 @@ public:
         //this->length();
         type_sequence<value_type>::concat(new_data, in_lhs.raw_data, in_lhs.mSize);
         type_sequence<value_type>::concat(new_data + in_lhs.mSize, in_rhs.raw_data, in_rhs.mSize);
-
         return character_sequence(new_data, totalSize, totalCapacity);
     }
-    friend character_sequence operator+(const character_sequence& in_lhs, const_pointer in_rhs) noexcept {
+    MBASE_INLINE_EXPR friend character_sequence operator+(const character_sequence& in_lhs, const_pointer in_rhs) noexcept {
         size_type rhsSize = this->length(in_rhs);
         if (!rhsSize)
         {
@@ -323,7 +333,7 @@ public:
 
         return character_sequence(new_data, totalSize, totalCapacity);
     }
-    friend character_sequence operator+(const character_sequence& in_lhs, value_type in_rhs) noexcept {
+    MBASE_INLINE_EXPR friend character_sequence operator+(const character_sequence& in_lhs, value_type in_rhs) noexcept {
         size_type rhsSize = this->length(in_rhs);
         if (!rhsSize)
         {
@@ -342,15 +352,33 @@ public:
 
         return character_sequence(new_data, totalSize, totalCapacity);
     }
-    friend character_sequence operator+(const_pointer in_lhs, const character_sequence& in_rhs);
-    friend character_sequence operator+(value_type in_lhs, const character_sequence& in_rhs);
-    friend character_sequence operator+(character_sequence&& in_lhs, character_sequence&& in_rhs);
-    friend character_sequence operator+(character_sequence&& in_lhs, const character_sequence& in_rhs);
-    friend character_sequence operator+(character_sequence&& in_lhs, const_pointer in_rhs);
-    friend character_sequence operator+(character_sequence&& in_lhs, value_type in_rhs);
-    friend character_sequence operator+(const character_sequence& in_lhs, character_sequence&& in_rhs);
-    friend character_sequence operator+(const_pointer in_lhs, character_sequence&& in_rhs);
-    friend character_sequence operator+(value_type in_lhs, character_sequence&& in_rhs);
+    MBASE_INLINE_EXPR friend character_sequence operator+(const_pointer in_lhs, const character_sequence& in_rhs) {
+        return character_sequence(in_lhs) + in_rhs;
+    }
+    MBASE_INLINE_EXPR friend character_sequence operator+(value_type in_lhs, const character_sequence& in_rhs) {
+        return character_sequence(1, in_lhs) + in_rhs;
+    }
+    MBASE_INLINE_EXPR friend character_sequence operator+(character_sequence&& in_lhs, character_sequence&& in_rhs) {
+        return std::move(in_lhs + in_rhs);
+    }
+    MBASE_INLINE_EXPR friend character_sequence operator+(character_sequence&& in_lhs, const character_sequence& in_rhs) {
+        return std::move(in_lhs + in_rhs);
+    }
+    MBASE_INLINE_EXPR friend character_sequence operator+(character_sequence&& in_lhs, const_pointer in_rhs) {
+        return std::move(in_lhs + character_sequence(in_rhs));
+    }
+    MBASE_INLINE_EXPR friend character_sequence operator+(character_sequence&& in_lhs, value_type in_rhs) {
+        return std::move(in_lhs + character_sequence(1, in_rhs));
+    }
+    MBASE_INLINE_EXPR friend character_sequence operator+(const character_sequence& in_lhs, character_sequence&& in_rhs) {
+        return std::move(in_lhs + in_rhs);
+    }
+    MBASE_INLINE_EXPR friend character_sequence operator+(const_pointer in_lhs, character_sequence&& in_rhs) {
+        return std::move(in_lhs + in_rhs);
+    }
+    MBASE_INLINE_EXPR friend character_sequence operator+(value_type in_lhs, character_sequence&& in_rhs) {
+        return std::move(character_sequence(1, in_lhs) + in_rhs);
+    }
 
     MBASE_INLINE_EXPR friend bool operator==(const character_sequence& in_lhs, const character_sequence& in_rhs) noexcept;
     MBASE_INLINE_EXPR friend bool operator!=(const character_sequence& in_lhs, const character_sequence& in_rhs) noexcept;
@@ -391,7 +419,8 @@ public:
 
 private:
 
-    MBASE_INLINE GENERIC _resize(size_type in_size) noexcept {
+    MBASE_INLINE GENERIC _resize(size_type in_size) noexcept 
+    {
         size_type expectedSize = mSize;
         if(in_size < mSize)
         {
@@ -407,7 +436,8 @@ private:
         mSize = expectedSize;
     }
 
-    MBASE_INLINE size_type _calculate_capacity(size_type in_size) noexcept {
+    MBASE_INLINE size_type _calculate_capacity(size_type in_size) noexcept 
+    {
         size_type base_capacity = 8;
         while(base_capacity < in_size)
         {
@@ -417,7 +447,8 @@ private:
         return base_capacity;
     }
 
-    MBASE_INLINE GENERIC _build_string(size_type in_capacity) noexcept {
+    MBASE_INLINE GENERIC _build_string(size_type in_capacity) noexcept 
+    {
         mCapacity = in_capacity;
         raw_data = externalAllocator.allocate(mCapacity, true);
     }
@@ -428,17 +459,27 @@ private:
 };
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_INLINE_EXPR character_sequence<SeqType, SeqBase, Allocator>::character_sequence() noexcept : raw_data(nullptr), mSize(0), mCapacity(8), externalAllocator(Allocator()) {
+MBASE_INLINE_EXPR character_sequence<SeqType, SeqBase, Allocator>::character_sequence() noexcept : raw_data(nullptr), mSize(0), mCapacity(8), externalAllocator(Allocator()) 
+{
     raw_data = externalAllocator.allocate(mCapacity, true);
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_INLINE_EXPR character_sequence<SeqType, SeqBase, Allocator>::character_sequence(const Allocator& in_alloc) noexcept : raw_data(nullptr), mSize(0), mCapacity(8), externalAllocator(in_alloc) {
+MBASE_INLINE_EXPR character_sequence<SeqType, SeqBase, Allocator>::character_sequence(pointer in_raw, size_type in_size, size_type in_capacity) noexcept : raw_data(in_raw), mSize(in_size), mCapacity(in_capacity), externalAllocator(Allocator()) 
+{
+    // THIS CONSTRUCTOR MUST NOT BE CALLED FROM OUTSIDE
+}
+
+
+template<typename SeqType, typename SeqBase, typename Allocator>
+MBASE_INLINE_EXPR character_sequence<SeqType, SeqBase, Allocator>::character_sequence(const Allocator& in_alloc) noexcept : raw_data(nullptr), mSize(0), mCapacity(8), externalAllocator(in_alloc) 
+{
     raw_data = externalAllocator.allocate(mCapacity, true);
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_INLINE_EXPR character_sequence<SeqType, SeqBase, Allocator>::character_sequence(size_type in_size, value_type in_ch, const Allocator& in_alloc) : raw_data(nullptr), mSize(0), externalAllocator(in_alloc) {
+MBASE_INLINE_EXPR character_sequence<SeqType, SeqBase, Allocator>::character_sequence(size_type in_size, value_type in_ch, const Allocator& in_alloc) : raw_data(nullptr), mSize(0), externalAllocator(in_alloc) 
+{
     _build_string(this->_calculate_capacity(in_size));
     for(I32 i = 0; i < in_size; i++)
     {
@@ -447,7 +488,8 @@ MBASE_INLINE_EXPR character_sequence<SeqType, SeqBase, Allocator>::character_seq
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_INLINE_EXPR character_sequence<SeqType, SeqBase, Allocator>::character_sequence(const character_sequence& in_rhs, size_type in_pos, const Allocator& in_alloc) : raw_data(nullptr), mSize(0), externalAllocator(in_alloc) {
+MBASE_INLINE_EXPR character_sequence<SeqType, SeqBase, Allocator>::character_sequence(const character_sequence& in_rhs, size_type in_pos, const Allocator& in_alloc) : raw_data(nullptr), mSize(0), externalAllocator(in_alloc) 
+{
     const_iterator itr_end = in_rhs.cend();
     const_iterator itr_pos = const_iterator(in_rhs.raw_data + in_pos);
     if (itr_pos > itr_end) {
@@ -466,7 +508,8 @@ MBASE_INLINE_EXPR character_sequence<SeqType, SeqBase, Allocator>::character_seq
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_INLINE_EXPR character_sequence<SeqType, SeqBase, Allocator>::character_sequence(character_sequence&& in_rhs, size_type in_pos, const Allocator& in_alloc) : raw_data(nullptr), mSize(0), externalAllocator(in_alloc) {
+MBASE_INLINE_EXPR character_sequence<SeqType, SeqBase, Allocator>::character_sequence(character_sequence&& in_rhs, size_type in_pos, const Allocator& in_alloc) : raw_data(nullptr), mSize(0), externalAllocator(in_alloc) 
+{
     character_sequence cs(std::move(in_rhs));
     const_iterator itr_end = cs.cend();
     const_iterator itr_pos = const_iterator(cs.raw_data + in_pos);
@@ -537,47 +580,54 @@ MBASE_INLINE_EXPR character_sequence<SeqType, SeqBase, Allocator>::character_seq
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_INLINE_EXPR character_sequence<SeqType, SeqBase, Allocator>::character_sequence(const_pointer in_string) noexcept : externalAllocator(Allocator()) {
+MBASE_INLINE_EXPR character_sequence<SeqType, SeqBase, Allocator>::character_sequence(const_pointer in_string) noexcept : externalAllocator(Allocator()) 
+{
     mSize = this->length(in_string);
     _build_string(this->_calculate_capacity(mSize));
     this->copy_bytes(raw_data, in_string, mSize); // no need the include null-terminator since we zero the memory
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_INLINE_EXPR character_sequence<SeqType, SeqBase, Allocator>::character_sequence(const_pointer in_string, size_type in_length) noexcept : externalAllocator(Allocator()) {
+MBASE_INLINE_EXPR character_sequence<SeqType, SeqBase, Allocator>::character_sequence(const_pointer in_string, size_type in_length) noexcept : externalAllocator(Allocator()) 
+{
     mSize = in_length;
     _build_string(this->_calculate_capacity(mSize));
     this->copy_bytes(raw_data, in_string, mSize); // no need the include null-terminator since we zero the memory
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_INLINE_EXPR character_sequence<SeqType, SeqBase, Allocator>::character_sequence(const character_sequence& in_rhs) noexcept : raw_data(nullptr), mSize(in_rhs.mSize), mCapacity(in_rhs.mCapacity), externalAllocator(Allocator()) {
+MBASE_INLINE_EXPR character_sequence<SeqType, SeqBase, Allocator>::character_sequence(const character_sequence& in_rhs) noexcept : raw_data(nullptr), mSize(in_rhs.mSize), mCapacity(in_rhs.mCapacity), externalAllocator(Allocator()) 
+{
     raw_data = externalAllocator.allocate(mCapacity, true);
     this->copy_bytes(raw_data, in_rhs.raw_data, mSize); // no need the include null-terminator since we zero the memory
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_INLINE_EXPR character_sequence<SeqType, SeqBase, Allocator>::character_sequence(character_sequence&& in_rhs) noexcept : raw_data(in_rhs.raw_data), mSize(in_rhs.mSize), mCapacity(in_rhs.mCapacity), externalAllocator(Allocator()) {
+MBASE_INLINE_EXPR character_sequence<SeqType, SeqBase, Allocator>::character_sequence(character_sequence&& in_rhs) noexcept : raw_data(in_rhs.raw_data), mSize(in_rhs.mSize), mCapacity(in_rhs.mCapacity), externalAllocator(Allocator()) 
+{
     in_rhs.raw_data = NULL;
     in_rhs.mSize = 0;
     in_rhs.mCapacity = 0;
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_INLINE_EXPR character_sequence<SeqType, SeqBase, Allocator>::character_sequence(const character_sequence& in_rhs, const Allocator& in_alloc) : raw_data(nullptr), mSize(in_rhs.mSize), mCapacity(in_rhs.mCapacity), externalAllocator(in_alloc) {
+MBASE_INLINE_EXPR character_sequence<SeqType, SeqBase, Allocator>::character_sequence(const character_sequence& in_rhs, const Allocator& in_alloc) : raw_data(nullptr), mSize(in_rhs.mSize), mCapacity(in_rhs.mCapacity), externalAllocator(in_alloc) 
+{
     raw_data = externalAllocator.allocate(mCapacity, true);
     this->copy_bytes(raw_data, in_rhs.raw_data, mSize); // no need the include null-terminator since we zero the memory
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_INLINE_EXPR character_sequence<SeqType, SeqBase, Allocator>::character_sequence(character_sequence&& in_rhs, const Allocator& in_alloc) : raw_data(in_rhs.raw_data), mSize(in_rhs.mSize), mCapacity(in_rhs.mCapacity), externalAllocator(in_alloc) {
+MBASE_INLINE_EXPR character_sequence<SeqType, SeqBase, Allocator>::character_sequence(character_sequence&& in_rhs, const Allocator& in_alloc) : raw_data(in_rhs.raw_data), mSize(in_rhs.mSize), mCapacity(in_rhs.mCapacity), externalAllocator(in_alloc) 
+{
     in_rhs.raw_data = NULL;
     in_rhs.mSize = 0;
     in_rhs.mCapacity = 0;
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_INLINE_EXPR character_sequence<SeqType, SeqBase, Allocator>::character_sequence(std::initializer_list<value_type> in_chars, const Allocator& in_alloc) : raw_data(nullptr), mSize(0), mCapacity(8), externalAllocator(in_alloc) {
+MBASE_INLINE_EXPR character_sequence<SeqType, SeqBase, Allocator>::character_sequence(std::initializer_list<value_type> in_chars, const Allocator& in_alloc) : raw_data(nullptr), mSize(0), mCapacity(8), externalAllocator(in_alloc) 
+{
     _build_string(this->_calculate_capacity(in_chars.size()));
     const value_type* vt = in_chars.begin();
     for(vt; vt != in_chars.end(); vt++)
@@ -587,15 +637,17 @@ MBASE_INLINE_EXPR character_sequence<SeqType, SeqBase, Allocator>::character_seq
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_INLINE_EXPR character_sequence<SeqType, SeqBase, Allocator>::~character_sequence() noexcept {
-    if (!mSize)
+MBASE_INLINE_EXPR character_sequence<SeqType, SeqBase, Allocator>::~character_sequence() noexcept 
+{
+    if(raw_data)
     {
         externalAllocator.deallocate(raw_data, 0);
-    }
+    }   
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_INLINE character_sequence<SeqType, SeqBase, Allocator>& character_sequence<SeqType, SeqBase, Allocator>::operator=(const character_sequence& in_rhs) noexcept {
+MBASE_INLINE character_sequence<SeqType, SeqBase, Allocator>& character_sequence<SeqType, SeqBase, Allocator>::operator=(const character_sequence& in_rhs) noexcept 
+{
     if (raw_data)
     {
         externalAllocator.deallocate(raw_data, 0);
@@ -608,23 +660,8 @@ MBASE_INLINE character_sequence<SeqType, SeqBase, Allocator>& character_sequence
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_INLINE character_sequence<SeqType, SeqBase, Allocator>& character_sequence<SeqType, SeqBase, Allocator>::operator=(const_pointer in_rhs) noexcept {
-
-    if (raw_data)
-    {
-        externalAllocator.deallocate(raw_data, 0);
-    }
-
-    size_type st_length = this->length(in_rhs);
-    mCapacity = this->_calculate_capacity(st_length);
-
-    raw_data = externalAllocator.allocate(mCapacity, true);
-    this->copy_bytes(raw_data, in_rhs, st_length);
-    return *this;
-}
-
-template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_INLINE character_sequence<SeqType, SeqBase, Allocator>& character_sequence<SeqType, SeqBase, Allocator>::operator=(character_sequence&& in_rhs) noexcept {
+MBASE_INLINE character_sequence<SeqType, SeqBase, Allocator>& character_sequence<SeqType, SeqBase, Allocator>::operator=(character_sequence&& in_rhs) noexcept 
+{
     if (raw_data)
     {
         externalAllocator.deallocate(raw_data, 0);
@@ -641,78 +678,139 @@ MBASE_INLINE character_sequence<SeqType, SeqBase, Allocator>& character_sequence
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_ND("raw string data being ignored") MBASE_INLINE_EXPR typename character_sequence<SeqType, SeqBase, Allocator>::pointer character_sequence<SeqType, SeqBase, Allocator>::data() const noexcept {
+MBASE_INLINE character_sequence<SeqType, SeqBase, Allocator>& character_sequence<SeqType, SeqBase, Allocator>::operator=(const_pointer in_rhs) noexcept 
+{
+    if (raw_data)
+    {
+        externalAllocator.deallocate(raw_data, 0);
+    }
+
+    size_type st_length = this->length(in_rhs);
+    mCapacity = this->_calculate_capacity(st_length);
+
+    raw_data = externalAllocator.allocate(mCapacity, true);
+    this->copy_bytes(raw_data, in_rhs, st_length);
+    return *this;
+}
+
+template<typename SeqType, typename SeqBase, typename Allocator>
+MBASE_INLINE character_sequence<SeqType, SeqBase, Allocator>& character_sequence<SeqType, SeqBase, Allocator>::operator=(value_type in_rhs) noexcept 
+{
+    assign(1, in_rhs);
+    return *this;
+}
+
+template<typename SeqType, typename SeqBase, typename Allocator>
+MBASE_INLINE character_sequence<SeqType, SeqBase, Allocator>& character_sequence<SeqType, SeqBase, Allocator>::operator=(std::initializer_list<value_type> in_chars) noexcept 
+{
+    character_sequence chr(in_chars);
+    *this = std::move(chr);
+    return *this;
+}
+
+
+template<typename SeqType, typename SeqBase, typename Allocator>
+MBASE_ND("raw string data being ignored") MBASE_INLINE_EXPR typename character_sequence<SeqType, SeqBase, Allocator>::pointer character_sequence<SeqType, SeqBase, Allocator>::data() const noexcept 
+{
     return raw_data;
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_ND("raw string being ignored") MBASE_INLINE_EXPR typename character_sequence<SeqType, SeqBase, Allocator>::const_pointer character_sequence<SeqType, SeqBase, Allocator>::c_str() const noexcept {
+MBASE_ND("raw string being ignored") MBASE_INLINE_EXPR typename character_sequence<SeqType, SeqBase, Allocator>::const_pointer character_sequence<SeqType, SeqBase, Allocator>::c_str() const noexcept 
+{
     return raw_data;
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_ND("first character being ignored") MBASE_INLINE_EXPR typename character_sequence<SeqType, SeqBase, Allocator>::reference character_sequence<SeqType, SeqBase, Allocator>::front() noexcept {
+MBASE_ND("first character being ignored") MBASE_INLINE_EXPR typename character_sequence<SeqType, SeqBase, Allocator>::reference character_sequence<SeqType, SeqBase, Allocator>::front() noexcept 
+{
     return raw_data[0];
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_ND("last character being ignored") MBASE_INLINE_EXPR typename character_sequence<SeqType, SeqBase, Allocator>::reference character_sequence<SeqType, SeqBase, Allocator>::back() noexcept {
+MBASE_ND("last character being ignored") MBASE_INLINE_EXPR typename character_sequence<SeqType, SeqBase, Allocator>::reference character_sequence<SeqType, SeqBase, Allocator>::back() noexcept 
+{
     return raw_data[mSize - 1];
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_ND("character unused") MBASE_INLINE_EXPR typename character_sequence<SeqType, SeqBase, Allocator>::reference character_sequence<SeqType, SeqBase, Allocator>::at(size_type in_pos) {
+MBASE_ND("character unused") MBASE_INLINE_EXPR typename character_sequence<SeqType, SeqBase, Allocator>::reference character_sequence<SeqType, SeqBase, Allocator>::at(size_type in_pos) 
+{
     // EXCEPTION WILL BE IMPLEMENTED HERE
     return raw_data[in_pos];
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_ND("character unused") MBASE_INLINE_EXPR typename character_sequence<SeqType, SeqBase, Allocator>::reference character_sequence<SeqType, SeqBase, Allocator>::operator[](size_type in_pos) {
+MBASE_ND("character unused") MBASE_INLINE_EXPR typename character_sequence<SeqType, SeqBase, Allocator>::const_reference character_sequence<SeqType, SeqBase, Allocator>::at(size_type in_pos) const 
+{
+    // EXCEPTION WILL BE IMPLEMENTED HERE
+    return raw_data[in_pos];
+}
+
+
+template<typename SeqType, typename SeqBase, typename Allocator>
+MBASE_ND("character unused") MBASE_INLINE_EXPR typename character_sequence<SeqType, SeqBase, Allocator>::reference character_sequence<SeqType, SeqBase, Allocator>::operator[](size_type in_pos) 
+{
     return raw_data[in_pos];
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_ND("iterator being ignored") MBASE_INLINE typename character_sequence<SeqType, SeqBase, Allocator>::iterator character_sequence<SeqType, SeqBase, Allocator>::begin() noexcept {
+MBASE_ND("character unused") MBASE_INLINE_EXPR typename character_sequence<SeqType, SeqBase, Allocator>::const_reference character_sequence<SeqType, SeqBase, Allocator>::operator[](size_type in_pos) const 
+{
+    return raw_data[in_pos];
+}
+
+template<typename SeqType, typename SeqBase, typename Allocator>
+MBASE_ND("iterator being ignored") MBASE_INLINE typename character_sequence<SeqType, SeqBase, Allocator>::iterator character_sequence<SeqType, SeqBase, Allocator>::begin() noexcept 
+{
     return iterator(raw_data);
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_ND("iterator being ignored") MBASE_INLINE typename character_sequence<SeqType, SeqBase, Allocator>::iterator character_sequence<SeqType, SeqBase, Allocator>::end() noexcept {
+MBASE_ND("iterator being ignored") MBASE_INLINE typename character_sequence<SeqType, SeqBase, Allocator>::iterator character_sequence<SeqType, SeqBase, Allocator>::end() noexcept 
+{
     return iterator(raw_data + mSize);
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_ND("const iterator being ignored") MBASE_INLINE typename character_sequence<SeqType, SeqBase, Allocator>::const_iterator character_sequence<SeqType, SeqBase, Allocator>::cbegin() const noexcept {
+MBASE_ND("const iterator being ignored") MBASE_INLINE typename character_sequence<SeqType, SeqBase, Allocator>::const_iterator character_sequence<SeqType, SeqBase, Allocator>::cbegin() const noexcept 
+{
     return const_iterator(raw_data);
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_ND("const iterator being ignored") MBASE_INLINE typename character_sequence<SeqType, SeqBase, Allocator>::const_iterator character_sequence<SeqType, SeqBase, Allocator>::cend() const noexcept {
+MBASE_ND("const iterator being ignored") MBASE_INLINE typename character_sequence<SeqType, SeqBase, Allocator>::const_iterator character_sequence<SeqType, SeqBase, Allocator>::cend() const noexcept 
+{
     return const_iterator(raw_data + mSize);
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_ND("reverse iterator being ignored") MBASE_INLINE typename character_sequence<SeqType, SeqBase, Allocator>::reverse_iterator character_sequence<SeqType, SeqBase, Allocator>::rbegin() noexcept {
+MBASE_ND("reverse iterator being ignored") MBASE_INLINE typename character_sequence<SeqType, SeqBase, Allocator>::reverse_iterator character_sequence<SeqType, SeqBase, Allocator>::rbegin() noexcept 
+{
     return reverse_iterator(raw_data + (mSize - 1));
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_ND("const reverse iterator being ignored") MBASE_INLINE typename character_sequence<SeqType, SeqBase, Allocator>::const_reverse_iterator character_sequence<SeqType, SeqBase, Allocator>::crbegin() const noexcept {
+MBASE_ND("const reverse iterator being ignored") MBASE_INLINE typename character_sequence<SeqType, SeqBase, Allocator>::const_reverse_iterator character_sequence<SeqType, SeqBase, Allocator>::crbegin() const noexcept 
+{
     return const_reverse_iterator(raw_data + (mSize - 1));
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_ND("reverse iterator being ignored") MBASE_INLINE typename character_sequence<SeqType, SeqBase, Allocator>::reverse_iterator character_sequence<SeqType, SeqBase, Allocator>::rend() noexcept {
+MBASE_ND("reverse iterator being ignored") MBASE_INLINE typename character_sequence<SeqType, SeqBase, Allocator>::reverse_iterator character_sequence<SeqType, SeqBase, Allocator>::rend() noexcept 
+{
     return reverse_iterator(raw_data - 1);
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_ND("const reverse iterator being ignored") MBASE_INLINE typename character_sequence<SeqType, SeqBase, Allocator>::const_reverse_iterator character_sequence<SeqType, SeqBase, Allocator>::crend() const noexcept {
+MBASE_ND("const reverse iterator being ignored") MBASE_INLINE typename character_sequence<SeqType, SeqBase, Allocator>::const_reverse_iterator character_sequence<SeqType, SeqBase, Allocator>::crend() const noexcept 
+{
     return const_reverse_iterator(raw_data - 1);
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_ND("founded string not being used") MBASE_INLINE typename character_sequence<SeqType, SeqBase, Allocator>::size_type character_sequence<SeqType, SeqBase, Allocator>::find(const_pointer in_src, size_type in_pos) const noexcept {
+MBASE_ND("founded string not being used") MBASE_INLINE typename character_sequence<SeqType, SeqBase, Allocator>::size_type character_sequence<SeqType, SeqBase, Allocator>::find(const_pointer in_src, size_type in_pos) const noexcept 
+{
     const_pointer tmpResult = strstr(raw_data + in_pos, in_src);
     if (tmpResult)
     {
@@ -723,12 +821,14 @@ MBASE_ND("founded string not being used") MBASE_INLINE typename character_sequen
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_ND("founded string not being used") MBASE_INLINE typename character_sequence<SeqType, SeqBase, Allocator>::size_type character_sequence<SeqType, SeqBase, Allocator>::find(const character_sequence& in_src, size_type in_pos) const noexcept {
+MBASE_ND("founded string not being used") MBASE_INLINE typename character_sequence<SeqType, SeqBase, Allocator>::size_type character_sequence<SeqType, SeqBase, Allocator>::find(const character_sequence& in_src, size_type in_pos) const noexcept 
+{
     return find(in_src.c_str(), in_pos);
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_ND("founded string not being used") MBASE_INLINE typename character_sequence<SeqType, SeqBase, Allocator>::size_type character_sequence<SeqType, SeqBase, Allocator>::find(value_type in_char, size_type in_pos) const noexcept {
+MBASE_ND("founded string not being used") MBASE_INLINE typename character_sequence<SeqType, SeqBase, Allocator>::size_type character_sequence<SeqType, SeqBase, Allocator>::find(value_type in_char, size_type in_pos) const noexcept 
+{
     const_pointer tmpResult = strchr(raw_data + in_pos, in_char);
     if (tmpResult)
     {
@@ -739,17 +839,59 @@ MBASE_ND("founded string not being used") MBASE_INLINE typename character_sequen
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_ND("string observation ignored") MBASE_INLINE_EXPR typename character_sequence<SeqType, SeqBase, Allocator>::size_type character_sequence<SeqType, SeqBase, Allocator>::size() const noexcept {
-    return mSize;
+MBASE_ND("founded string not being used") MBASE_INLINE character_sequence<SeqType, SeqBase, Allocator> character_sequence<SeqType, SeqBase, Allocator>::substr(size_type in_pos, size_type in_count) const 
+{
+    const_iterator inIt = cbegin() + in_pos;
+    if(inIt >= cend())
+    {
+        return *this;
+    }
+
+    else
+    {
+        character_sequence cs;
+        for(difference_type i = 0; i < in_count; i++)
+        {
+            cs.push_back(*inIt);
+            if(inIt == cend())
+            {
+                return cs;
+            }
+            inIt++;
+        }
+        
+        return cs;
+    }
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_ND("string observation ignored") MBASE_INLINE_EXPR typename character_sequence<SeqType, SeqBase, Allocator>::size_type character_sequence<SeqType, SeqBase, Allocator>::capacity() const noexcept {
+MBASE_ND("founded string not being used") MBASE_INLINE character_sequence<SeqType, SeqBase, Allocator> character_sequence<SeqType, SeqBase, Allocator>::subarray(size_type in_pos, size_type in_count) const
+{
+    return std::move(substr(in_pos, in_count));
+}
+
+
+template<typename SeqType, typename SeqBase, typename Allocator>
+MBASE_ND("string observation ignored") MBASE_INLINE_EXPR typename character_sequence<SeqType, SeqBase, Allocator>::size_type character_sequence<SeqType, SeqBase, Allocator>::size() const noexcept 
+{
+    return mSize;
+}
+
+//template<typename SeqType, typename SeqBase, typename Allocator>
+//MBASE_ND("string observation ignored") MBASE_INLINE_EXPR typename character_sequence<SeqType, SeqBase, Allocator>::size_type character_sequence<SeqType, SeqBase, Allocator>::length() const noexcept 
+//{
+//    return mSize;
+//}
+
+template<typename SeqType, typename SeqBase, typename Allocator>
+MBASE_ND("string observation ignored") MBASE_INLINE_EXPR typename character_sequence<SeqType, SeqBase, Allocator>::size_type character_sequence<SeqType, SeqBase, Allocator>::capacity() const noexcept 
+{
     return mCapacity - 1;
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_ND("string observation ignored") MBASE_INLINE bool character_sequence<SeqType, SeqBase, Allocator>::is_alnum(const_iterator in_begin, const_iterator in_end) const noexcept {
+MBASE_ND("string observation ignored") MBASE_INLINE bool character_sequence<SeqType, SeqBase, Allocator>::is_alnum(const_iterator in_begin, const_iterator in_end) const noexcept 
+{
     if (!size())
     {
         return false;
@@ -769,17 +911,20 @@ MBASE_ND("string observation ignored") MBASE_INLINE bool character_sequence<SeqT
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_ND("string observation ignored") MBASE_INLINE bool character_sequence<SeqType, SeqBase, Allocator>::is_alnum(size_type in_from, size_type in_to) const noexcept {
+MBASE_ND("string observation ignored") MBASE_INLINE bool character_sequence<SeqType, SeqBase, Allocator>::is_alnum(size_type in_from, size_type in_to) const noexcept 
+{
     return is_alnum(cbegin() + in_from, cbegin() + in_to);
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_ND("string observation ignored") MBASE_INLINE bool character_sequence<SeqType, SeqBase, Allocator>::is_alnum() const noexcept {
+MBASE_ND("string observation ignored") MBASE_INLINE bool character_sequence<SeqType, SeqBase, Allocator>::is_alnum() const noexcept 
+{
     return is_alnum(cbegin(), cend());
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_ND("string observation ignored") MBASE_INLINE bool character_sequence<SeqType, SeqBase, Allocator>::is_alpha(const_iterator in_begin, const_iterator in_end) const noexcept {
+MBASE_ND("string observation ignored") MBASE_INLINE bool character_sequence<SeqType, SeqBase, Allocator>::is_alpha(const_iterator in_begin, const_iterator in_end) const noexcept 
+{
     if (!size())
     {
         return false;
@@ -799,17 +944,20 @@ MBASE_ND("string observation ignored") MBASE_INLINE bool character_sequence<SeqT
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_ND("string observation ignored") MBASE_INLINE bool character_sequence<SeqType, SeqBase, Allocator>::is_alpha(size_type in_from, size_type in_to) const noexcept {
+MBASE_ND("string observation ignored") MBASE_INLINE bool character_sequence<SeqType, SeqBase, Allocator>::is_alpha(size_type in_from, size_type in_to) const noexcept 
+{
     return is_alpha(cbegin() + in_from, cbegin() + in_to);
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_ND("string observation ignored") MBASE_INLINE bool character_sequence<SeqType, SeqBase, Allocator>::is_alpha() const noexcept {
+MBASE_ND("string observation ignored") MBASE_INLINE bool character_sequence<SeqType, SeqBase, Allocator>::is_alpha() const noexcept 
+{
     return is_alpha(cbegin(), cend());
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_ND("string observation ignored") MBASE_INLINE bool character_sequence<SeqType, SeqBase, Allocator>::is_lower(const_iterator in_begin, const_iterator in_end) const noexcept {
+MBASE_ND("string observation ignored") MBASE_INLINE bool character_sequence<SeqType, SeqBase, Allocator>::is_lower(const_iterator in_begin, const_iterator in_end) const noexcept 
+{
     if (!size())
     {
         return false;
@@ -829,17 +977,20 @@ MBASE_ND("string observation ignored") MBASE_INLINE bool character_sequence<SeqT
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_ND("string observation ignored") MBASE_INLINE bool character_sequence<SeqType, SeqBase, Allocator>::is_lower(size_type in_from, size_type in_to) const noexcept {
+MBASE_ND("string observation ignored") MBASE_INLINE bool character_sequence<SeqType, SeqBase, Allocator>::is_lower(size_type in_from, size_type in_to) const noexcept 
+{
     return is_lower(cbegin() + in_from, cbegin() + in_to);
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_ND("string observation ignored") MBASE_INLINE bool character_sequence<SeqType, SeqBase, Allocator>::is_lower() const noexcept {
+MBASE_ND("string observation ignored") MBASE_INLINE bool character_sequence<SeqType, SeqBase, Allocator>::is_lower() const noexcept 
+{
     return is_lower(cbegin(), cend());
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_ND("string observation ignored") MBASE_INLINE bool character_sequence<SeqType, SeqBase, Allocator>::is_upper(const_iterator in_begin, const_iterator in_end) const noexcept {
+MBASE_ND("string observation ignored") MBASE_INLINE bool character_sequence<SeqType, SeqBase, Allocator>::is_upper(const_iterator in_begin, const_iterator in_end) const noexcept 
+{
     if (!size())
     {
         return false;
@@ -859,17 +1010,20 @@ MBASE_ND("string observation ignored") MBASE_INLINE bool character_sequence<SeqT
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_ND("string observation ignored") MBASE_INLINE bool character_sequence<SeqType, SeqBase, Allocator>::is_upper(size_type in_from, size_type in_to) const noexcept {
+MBASE_ND("string observation ignored") MBASE_INLINE bool character_sequence<SeqType, SeqBase, Allocator>::is_upper(size_type in_from, size_type in_to) const noexcept 
+{
     return is_upper(cbegin() + in_from, cbegin() + in_to);
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_ND("string observation ignored") MBASE_INLINE bool character_sequence<SeqType, SeqBase, Allocator>::is_upper() const noexcept {
+MBASE_ND("string observation ignored") MBASE_INLINE bool character_sequence<SeqType, SeqBase, Allocator>::is_upper() const noexcept 
+{
     return is_upper(cbegin(), cend());
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_ND("string observation ignored") MBASE_INLINE bool character_sequence<SeqType, SeqBase, Allocator>::is_blank(const_iterator in_begin, const_iterator in_end) const noexcept {
+MBASE_ND("string observation ignored") MBASE_INLINE bool character_sequence<SeqType, SeqBase, Allocator>::is_blank(const_iterator in_begin, const_iterator in_end) const noexcept 
+{
     if (!size())
     {
         return false;
@@ -889,17 +1043,20 @@ MBASE_ND("string observation ignored") MBASE_INLINE bool character_sequence<SeqT
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_ND("string observation ignored") MBASE_INLINE bool character_sequence<SeqType, SeqBase, Allocator>::is_blank(size_type in_from, size_type in_to) const noexcept {
+MBASE_ND("string observation ignored") MBASE_INLINE bool character_sequence<SeqType, SeqBase, Allocator>::is_blank(size_type in_from, size_type in_to) const noexcept 
+{
     return is_blank(cbegin() + in_from, cbegin() + in_to);
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_ND("string observation ignored") MBASE_INLINE bool character_sequence<SeqType, SeqBase, Allocator>::is_blank() const noexcept {
+MBASE_ND("string observation ignored") MBASE_INLINE bool character_sequence<SeqType, SeqBase, Allocator>::is_blank() const noexcept 
+{
     return is_blank(cbegin(), cend());
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_ND("string observation ignored") MBASE_INLINE bool character_sequence<SeqType, SeqBase, Allocator>::is_control(const_iterator in_begin, const_iterator in_end) const noexcept {
+MBASE_ND("string observation ignored") MBASE_INLINE bool character_sequence<SeqType, SeqBase, Allocator>::is_control(const_iterator in_begin, const_iterator in_end) const noexcept 
+{
     if (!size())
     {
         return false;
@@ -919,17 +1076,20 @@ MBASE_ND("string observation ignored") MBASE_INLINE bool character_sequence<SeqT
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_ND("string observation ignored") MBASE_INLINE bool character_sequence<SeqType, SeqBase, Allocator>::is_control(size_type in_from, size_type in_to) const noexcept {
+MBASE_ND("string observation ignored") MBASE_INLINE bool character_sequence<SeqType, SeqBase, Allocator>::is_control(size_type in_from, size_type in_to) const noexcept 
+{
     return is_control(cbegin() + in_from, cbegin() + in_to);
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_ND("string observation ignored") MBASE_INLINE bool character_sequence<SeqType, SeqBase, Allocator>::is_control() const noexcept {
+MBASE_ND("string observation ignored") MBASE_INLINE bool character_sequence<SeqType, SeqBase, Allocator>::is_control() const noexcept 
+{
     return is_control(cbegin(), cend());
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_ND("string observation ignored") MBASE_INLINE bool character_sequence<SeqType, SeqBase, Allocator>::is_space(const_iterator in_begin, const_iterator in_end) const noexcept {
+MBASE_ND("string observation ignored") MBASE_INLINE bool character_sequence<SeqType, SeqBase, Allocator>::is_space(const_iterator in_begin, const_iterator in_end) const noexcept 
+{
     if (!size())
     {
         return false;
@@ -949,17 +1109,20 @@ MBASE_ND("string observation ignored") MBASE_INLINE bool character_sequence<SeqT
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_ND("string observation ignored") MBASE_INLINE bool character_sequence<SeqType, SeqBase, Allocator>::is_space(size_type in_from, size_type in_to) const noexcept {
+MBASE_ND("string observation ignored") MBASE_INLINE bool character_sequence<SeqType, SeqBase, Allocator>::is_space(size_type in_from, size_type in_to) const noexcept 
+{
     return is_space(cbegin() + in_from, cbegin() + in_to);
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_ND("string observation ignored") MBASE_INLINE bool character_sequence<SeqType, SeqBase, Allocator>::is_space() const noexcept {
+MBASE_ND("string observation ignored") MBASE_INLINE bool character_sequence<SeqType, SeqBase, Allocator>::is_space() const noexcept 
+{
     return is_space(cbegin(), cend());
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_ND("string observation ignored") MBASE_INLINE bool character_sequence<SeqType, SeqBase, Allocator>::is_punctuation(const_iterator in_begin, const_iterator in_end) const noexcept {
+MBASE_ND("string observation ignored") MBASE_INLINE bool character_sequence<SeqType, SeqBase, Allocator>::is_punctuation(const_iterator in_begin, const_iterator in_end) const noexcept 
+{
     if (!size())
     {
         return false;
@@ -979,64 +1142,423 @@ MBASE_ND("string observation ignored") MBASE_INLINE bool character_sequence<SeqT
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_ND("string observation ignored") MBASE_INLINE bool character_sequence<SeqType, SeqBase, Allocator>::is_punctuation(size_type in_from, size_type in_to) const noexcept {
+MBASE_ND("string observation ignored") MBASE_INLINE bool character_sequence<SeqType, SeqBase, Allocator>::is_punctuation(size_type in_from, size_type in_to) const noexcept 
+{
     return is_punctuation(cbegin() + in_from, cbegin() + in_to);
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_ND("string observation ignored") MBASE_INLINE bool character_sequence<SeqType, SeqBase, Allocator>::is_punctuation() const noexcept {
+MBASE_ND("string observation ignored") MBASE_INLINE bool character_sequence<SeqType, SeqBase, Allocator>::is_punctuation() const noexcept 
+{
     return is_punctuation(cbegin(), cend());
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-bool character_sequence<SeqType, SeqBase, Allocator>::operator==(const character_sequence& in_rhs) noexcept {
+bool character_sequence<SeqType, SeqBase, Allocator>::operator==(const character_sequence& in_rhs) noexcept 
+{
     return this->is_equal(raw_data, in_rhs.raw_data);
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-bool character_sequence<SeqType, SeqBase, Allocator>::operator!=(const character_sequence& in_rhs) noexcept {
+bool character_sequence<SeqType, SeqBase, Allocator>::operator!=(const character_sequence& in_rhs) noexcept 
+{
     return !this->is_equal(raw_data, in_rhs.raw_data);
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_INLINE_EXPR character_sequence<SeqType, SeqBase, Allocator>& character_sequence<SeqType, SeqBase, Allocator>::assign(size_type in_count, value_type in_ch) {
+MBASE_INLINE_EXPR character_sequence<SeqType, SeqBase, Allocator>& character_sequence<SeqType, SeqBase, Allocator>::assign(size_type in_count, value_type in_ch) 
+{
     character_sequence freshString(in_count, in_ch);
     *this = freshString;
     return *this;
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_INLINE_EXPR character_sequence<SeqType, SeqBase, Allocator>& character_sequence<SeqType, SeqBase, Allocator>::assign(const character_sequence& in_str) {
+MBASE_INLINE_EXPR character_sequence<SeqType, SeqBase, Allocator>& character_sequence<SeqType, SeqBase, Allocator>::assign(const character_sequence& in_str) 
+{
     *this = in_str;
     return *this;
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_INLINE_EXPR character_sequence<SeqType, SeqBase, Allocator>& character_sequence<SeqType, SeqBase, Allocator>::assign(const character_sequence& in_str, size_type in_pos, size_type in_count) {
-    // needs to be implemented
+MBASE_INLINE_EXPR character_sequence<SeqType, SeqBase, Allocator>& character_sequence<SeqType, SeqBase, Allocator>::assign(const character_sequence& in_str, size_type in_pos, size_type in_count) 
+{
+    const_iterator iPos = in_str.cbegin() + in_pos;
+    const_iterator iEnd = in_str.cend();
+    if (iPos > iEnd || in_count == npos)
+    {
+        *this = in_str;
+    }
+    else
+    {
+        character_sequence cs;
+        for (I32 i = 0; i < in_count; i++)
+        {
+            cs.push_back(*iPos);
+            iPos++;
+        }
+        *this = std::move(cs);
+    }
     return *this;
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_INLINE_EXPR character_sequence<SeqType, SeqBase, Allocator>& character_sequence<SeqType, SeqBase, Allocator>::assign(character_sequence&& in_str) noexcept {
+MBASE_INLINE_EXPR character_sequence<SeqType, SeqBase, Allocator>& character_sequence<SeqType, SeqBase, Allocator>::assign(character_sequence&& in_str) noexcept 
+{
     *this = std::move(in_str);
     return *this;
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_INLINE_EXPR character_sequence<SeqType, SeqBase, Allocator>& character_sequence<SeqType, SeqBase, Allocator>::assign(const_pointer in_str, size_type in_count) {
-    *this = character_sequence(in_str, in_count);
+MBASE_INLINE_EXPR character_sequence<SeqType, SeqBase, Allocator>& character_sequence<SeqType, SeqBase, Allocator>::assign(const_pointer in_str, size_type in_count) 
+{
+    *this = std::move(character_sequence(in_str, in_count));
     return *this;
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_INLINE_EXPR character_sequence<SeqType, SeqBase, Allocator>& character_sequence<SeqType, SeqBase, Allocator>::assign(const_pointer in_str) {
+MBASE_INLINE_EXPR character_sequence<SeqType, SeqBase, Allocator>& character_sequence<SeqType, SeqBase, Allocator>::assign(const_pointer in_str) 
+{
     *this = in_str;
     return *this;
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-character_sequence<SeqType, SeqBase, Allocator>& character_sequence<SeqType, SeqBase, Allocator>::operator+=(const character_sequence& in_rhs) noexcept {
+MBASE_INLINE_EXPR character_sequence<SeqType, SeqBase, Allocator>& character_sequence<SeqType, SeqBase, Allocator>::assign(std::initializer_list<value_type> in_chars) 
+{
+    character_sequence cseq(in_chars);
+    *this = std::move(cseq);
+    return *this;
+}
+
+template<typename SeqType, typename SeqBase, typename Allocator>
+MBASE_INLINE_EXPR character_sequence<SeqType, SeqBase, Allocator>& character_sequence<SeqType, SeqBase, Allocator>::append(size_type in_count, value_type in_char) 
+{
+    for(I32 i = 0; i < in_count; i++)
+    {
+        push_back(in_char);
+    }
+    return *this;
+}
+
+template<typename SeqType, typename SeqBase, typename Allocator>
+MBASE_INLINE_EXPR character_sequence<SeqType, SeqBase, Allocator>& character_sequence<SeqType, SeqBase, Allocator>::append(const character_sequence& in_str) 
+{
+    *this += in_str;
+    return *this;
+}
+
+template<typename SeqType, typename SeqBase, typename Allocator>
+MBASE_INLINE_EXPR character_sequence<SeqType, SeqBase, Allocator>& character_sequence<SeqType, SeqBase, Allocator>::append(const character_sequence& in_str, size_type in_pos, size_type in_count) 
+{
+    const_iterator iPos = in_str.cbegin() + in_pos;
+    const_iterator iEnd = in_str.cend();
+    if (iPos > iEnd || in_count == npos) 
+    {
+        *this += in_str;
+    }
+    else 
+    {
+        for(I32 i = 0; i < in_count; i++)
+        {
+            push_back(*iPos);
+            iPos++;
+        }
+    }
+
+    return *this;
+}
+
+template<typename SeqType, typename SeqBase, typename Allocator>
+MBASE_INLINE_EXPR character_sequence<SeqType, SeqBase, Allocator>& character_sequence<SeqType, SeqBase, Allocator>::append(const_pointer in_str, size_type in_count) 
+{
+    character_sequence cs(in_str, in_count);
+    *this += cs;
+    return *this;
+}
+
+template<typename SeqType, typename SeqBase, typename Allocator>
+MBASE_INLINE_EXPR character_sequence<SeqType, SeqBase, Allocator>& character_sequence<SeqType, SeqBase, Allocator>::append(const_pointer in_str) 
+{
+    character_sequence cs(in_str);
+    *this += cs;
+    return *this;
+}
+
+template<typename SeqType, typename SeqBase, typename Allocator>
+MBASE_INLINE_EXPR character_sequence<SeqType, SeqBase, Allocator>& character_sequence<SeqType, SeqBase, Allocator>::append(std::initializer_list<value_type> in_chars)
+{
+    const value_type* vt = in_chars.begin();
+    for(vt; vt != in_chars.end(); vt++)
+    {
+        push_back(*vt);
+    }
+    return *this;
+}
+
+template<typename SeqType, typename SeqBase, typename Allocator>
+MBASE_INLINE_EXPR character_sequence<SeqType, SeqBase, Allocator>& character_sequence<SeqType, SeqBase, Allocator>::insert(size_type in_index, size_type in_count, value_type in_ch) 
+{
+    const_iterator inIt = cbegin() + in_index;
+    if(inIt >= cend())
+    {
+        for(I32 i = 0; i < in_count; i++)
+        {
+            push_back(in_ch);
+        }
+    }
+    else
+    {
+        character_sequence newString(cbegin(), inIt);
+        for(I32 i = 0; i < in_count; i++)
+        {
+            newString.push_back(in_ch);
+        }
+
+        for(inIt; inIt != cend(); inIt++)
+        {
+            newString.push_back(*inIt);
+        }
+        *this = std::move(newString);
+    }
+
+    return *this;
+}
+
+template<typename SeqType, typename SeqBase, typename Allocator>
+MBASE_INLINE_EXPR character_sequence<SeqType, SeqBase, Allocator>& character_sequence<SeqType, SeqBase, Allocator>::insert(size_type in_index, const_pointer in_str)
+{
+    const_iterator inIt = cbegin() + in_index;
+    if (inIt >= cend())
+    {
+        *this += in_str;
+    }
+    else
+    {
+        character_sequence newString(cbegin(), inIt);
+        newString += in_str;
+        for (inIt; inIt != cend(); inIt++)
+        {
+            newString.push_back(*inIt);
+        }
+        *this = std::move(newString);
+    }
+    return *this;
+}
+
+template<typename SeqType, typename SeqBase, typename Allocator>
+MBASE_INLINE_EXPR character_sequence<SeqType, SeqBase, Allocator>& character_sequence<SeqType, SeqBase, Allocator>::insert(size_type in_index, const_pointer in_str, size_type in_count)
+{
+    const_iterator inIt = cbegin() + in_index;
+    if (inIt >= cend())
+    {
+        character_sequence cs(in_str, in_count);
+        *this += cs;
+    }
+    else
+    {
+        character_sequence newString(cbegin(), inIt);
+        character_sequence cs(in_str, in_count);
+        newString += cs;
+        for (inIt; inIt != cend(); inIt++)
+        {
+            newString.push_back(*inIt);
+        }
+        *this = std::move(newString);
+    }
+    return *this;
+}
+
+template<typename SeqType, typename SeqBase, typename Allocator>
+MBASE_INLINE_EXPR character_sequence<SeqType, SeqBase, Allocator>& character_sequence<SeqType, SeqBase, Allocator>::insert(size_type in_index, const character_sequence& in_str)
+{
+    const_iterator inIt = cbegin() + in_index;
+    if (inIt >= cend())
+    {
+        *this += in_str;
+    }
+    else
+    {
+        character_sequence newString(cbegin(), inIt);
+        newString += in_str;
+        for (inIt; inIt != cend(); inIt++)
+        {
+            newString.push_back(*inIt);
+        }
+
+        *this = std::move(newString);
+    }
+
+    return *this;
+}
+
+template<typename SeqType, typename SeqBase, typename Allocator>
+MBASE_INLINE_EXPR character_sequence<SeqType, SeqBase, Allocator>& character_sequence<SeqType, SeqBase, Allocator>::insert(size_type in_index, const character_sequence& in_str, size_type in_sindex, size_type in_count) 
+{
+    // NPOS RELATED
+    const_iterator inIt = cbegin() + in_index;
+    if (inIt >= cend() || in_count == npos)
+    {
+        *this += in_str;
+    }
+    else
+    {
+        const_iterator otherInIt = in_str.cbegin() + in_sindex;
+    }
+    return *this;
+}
+
+template<typename SeqType, typename SeqBase, typename Allocator>
+MBASE_INLINE_EXPR typename character_sequence<SeqType, SeqBase, Allocator>::iterator character_sequence<SeqType, SeqBase, Allocator>::insert(const_iterator in_pos, value_type in_char) 
+{
+    return begin();
+}
+
+template<typename SeqType, typename SeqBase, typename Allocator>
+MBASE_INLINE_EXPR typename character_sequence<SeqType, SeqBase, Allocator>::iterator character_sequence<SeqType, SeqBase, Allocator>::insert(const_iterator in_pos, size_type in_count, value_type in_char) 
+{
+    return begin();
+}
+
+template<typename SeqType, typename SeqBase, typename Allocator>
+MBASE_INLINE_EXPR typename character_sequence<SeqType, SeqBase, Allocator>::iterator character_sequence<SeqType, SeqBase, Allocator>::insert(const_iterator in_pos, std::initializer_list<value_type> in_chars)
+{
+    return begin();
+}
+
+template<typename SeqType, typename SeqBase, typename Allocator>
+MBASE_INLINE GENERIC character_sequence<SeqType, SeqBase, Allocator>::pop_back() noexcept 
+{
+    mSize--;
+    raw_data[mSize] = '\0';
+}
+
+template<typename SeqType, typename SeqBase, typename Allocator>
+MBASE_INLINE GENERIC character_sequence<SeqType, SeqBase, Allocator>::push_back(const value_type& in_character) noexcept 
+{
+    mSize++;
+    if (mSize >= mCapacity)
+    {
+        _resize(mCapacity *= 2);
+    }
+    raw_data[mSize - 1] = in_character;
+}
+
+template<typename SeqType, typename SeqBase, typename Allocator>
+MBASE_ND("converted string not being used.") MBASE_INLINE I32 character_sequence<SeqType, SeqBase, Allocator>::to_i32() const noexcept 
+{
+    return atoi(raw_data);
+}
+
+template<typename SeqType, typename SeqBase, typename Allocator>
+MBASE_ND("converted string not being used.") MBASE_INLINE I64 character_sequence<SeqType, SeqBase, Allocator>::to_i64() const noexcept 
+{
+    return _atoi64(raw_data);
+}
+
+template<typename SeqType, typename SeqBase, typename Allocator>
+MBASE_ND("converted string not being used.") MBASE_INLINE F32 character_sequence<SeqType, SeqBase, Allocator>::to_f32() const noexcept 
+{
+    return strtof(raw_data, nullptr);
+}
+
+template<typename SeqType, typename SeqBase, typename Allocator>
+MBASE_ND("converted string not being used.") MBASE_INLINE F64 character_sequence<SeqType, SeqBase, Allocator>::to_f64() const noexcept 
+{
+    return atof(raw_data);
+}
+
+template<typename SeqType, typename SeqBase, typename Allocator>
+MBASE_INLINE GENERIC character_sequence<SeqType, SeqBase, Allocator>::to_lower(iterator in_from, iterator in_to) noexcept 
+{
+    iterator It = in_from;
+    iterator endIt = in_to;
+    for (It; It != endIt; It++)
+    {
+        *It = tolower(*It);
+    }
+}
+
+template<typename SeqType, typename SeqBase, typename Allocator>
+MBASE_INLINE GENERIC character_sequence<SeqType, SeqBase, Allocator>::to_lower(reverse_iterator in_from, reverse_iterator in_to) noexcept 
+{
+    reverse_iterator rIt = in_from;
+    reverse_iterator endrIt = in_to;
+    for (rIt; rIt != endrIt; rIt++)
+    {
+        *rIt = tolower(*rIt);
+    }
+}
+
+template<typename SeqType, typename SeqBase, typename Allocator>
+MBASE_INLINE GENERIC character_sequence<SeqType, SeqBase, Allocator>::to_lower(size_t in_from, size_t in_to) noexcept 
+{
+    to_lower(begin() + in_from, end() + in_to);
+}
+
+template<typename SeqType, typename SeqBase, typename Allocator>
+MBASE_INLINE GENERIC character_sequence<SeqType, SeqBase, Allocator>::to_lower() noexcept 
+{
+    to_lower(begin(), end());
+}
+
+template<typename SeqType, typename SeqBase, typename Allocator>
+MBASE_INLINE GENERIC character_sequence<SeqType, SeqBase, Allocator>::to_upper(iterator in_from, iterator in_to) noexcept 
+{
+    iterator It = in_from;
+    iterator endIt = in_to;
+    for (It; It != endIt; It++)
+    {
+        *It = toupper(*It);
+    }
+}
+
+template<typename SeqType, typename SeqBase, typename Allocator>
+MBASE_INLINE GENERIC character_sequence<SeqType, SeqBase, Allocator>::to_upper(reverse_iterator in_from, reverse_iterator in_to) noexcept 
+{
+    reverse_iterator rIt = in_from;
+    reverse_iterator endrIt = in_to;
+    for (rIt; rIt != endrIt; rIt++)
+    {
+        *rIt = toupper(*rIt);
+    }
+}
+
+template<typename SeqType, typename SeqBase, typename Allocator>
+MBASE_INLINE GENERIC character_sequence<SeqType, SeqBase, Allocator>::to_upper(size_t in_from, size_t in_to) noexcept 
+{
+    to_upper(begin() + in_from, end() + in_to);
+}
+
+template<typename SeqType, typename SeqBase, typename Allocator>
+MBASE_INLINE GENERIC character_sequence<SeqType, SeqBase, Allocator>::to_upper() noexcept 
+{
+    to_upper(begin(), end());
+}
+
+template<typename SeqType, typename SeqBase, typename Allocator>
+MBASE_INLINE GENERIC character_sequence<SeqType, SeqBase, Allocator>::resize(size_type in_amount) 
+{
+    _resize(in_amount);
+}
+
+template<typename SeqType, typename SeqBase, typename Allocator>
+MBASE_INLINE GENERIC character_sequence<SeqType, SeqBase, Allocator>::swap(character_sequence& in_src) noexcept 
+{
+    std::swap(raw_data, in_src.raw_data);
+    std::swap(mCapacity, in_src.mCapacity);
+    std::swap(mSize, in_src.mSize);
+}
+
+template<typename SeqType, typename SeqBase, typename Allocator>
+MBASE_INLINE_EXPR GENERIC character_sequence<SeqType, SeqBase, Allocator>::copy(pointer in_src, size_t in_len, size_t in_pos) noexcept 
+{
+    this->copy_bytes(in_src, raw_data + in_pos, in_len);
+}
+
+template<typename SeqType, typename SeqBase, typename Allocator>
+character_sequence<SeqType, SeqBase, Allocator>& character_sequence<SeqType, SeqBase, Allocator>::operator+=(const character_sequence& in_rhs) noexcept 
+{
     if (!in_rhs.mSize)
     {
         return *this;
@@ -1058,7 +1580,8 @@ character_sequence<SeqType, SeqBase, Allocator>& character_sequence<SeqType, Seq
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-character_sequence<SeqType, SeqBase, Allocator>& character_sequence<SeqType, SeqBase, Allocator>::operator+=(const_pointer in_rhs) noexcept {
+character_sequence<SeqType, SeqBase, Allocator>& character_sequence<SeqType, SeqBase, Allocator>::operator+=(const_pointer in_rhs) noexcept 
+{
     if (!in_rhs)
     {
         return *this;
@@ -1085,126 +1608,15 @@ character_sequence<SeqType, SeqBase, Allocator>& character_sequence<SeqType, Seq
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-character_sequence<SeqType, SeqBase, Allocator>& character_sequence<SeqType, SeqBase, Allocator>::operator+=(const value_type& in_character) noexcept {
+character_sequence<SeqType, SeqBase, Allocator>& character_sequence<SeqType, SeqBase, Allocator>::operator+=(const value_type& in_character) noexcept 
+{
     push_back(in_character);
     return *this;
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_INLINE GENERIC character_sequence<SeqType, SeqBase, Allocator>::pop_back() noexcept {
-    mSize--;
-    raw_data[mSize] = '\0';
-}
-
-template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_INLINE GENERIC character_sequence<SeqType, SeqBase, Allocator>::push_back(const value_type& in_character) noexcept {
-    mSize++;
-    if (mSize >= mCapacity)
-    {
-        _resize(mCapacity *= 2);
-    }
-    raw_data[mSize - 1] = in_character;
-}
-
-template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_ND("converted string not being used.") MBASE_INLINE I32 character_sequence<SeqType, SeqBase, Allocator>::to_i32() const noexcept {
-    return atoi(raw_data);
-}
-
-template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_ND("converted string not being used.") MBASE_INLINE I64 character_sequence<SeqType, SeqBase, Allocator>::to_i64() const noexcept {
-    return _atoi64(raw_data);
-}
-
-template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_ND("converted string not being used.") MBASE_INLINE F32 character_sequence<SeqType, SeqBase, Allocator>::to_f32() const noexcept {
-    return strtof(raw_data, nullptr);
-}
-
-template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_ND("converted string not being used.") MBASE_INLINE F64 character_sequence<SeqType, SeqBase, Allocator>::to_f64() const noexcept {
-    return atof(raw_data);
-}
-
-template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_INLINE GENERIC character_sequence<SeqType, SeqBase, Allocator>::to_lower(iterator in_from, iterator in_to) noexcept {
-    iterator It = in_from;
-    iterator endIt = in_to;
-    for (It; It != endIt; It++)
-    {
-        *It = tolower(*It);
-    }
-}
-
-template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_INLINE GENERIC character_sequence<SeqType, SeqBase, Allocator>::to_lower(reverse_iterator in_from, reverse_iterator in_to) noexcept {
-    reverse_iterator rIt = in_from;
-    reverse_iterator endrIt = in_to;
-    for (rIt; rIt != endrIt; rIt++)
-    {
-        *rIt = tolower(*rIt);
-    }
-}
-
-template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_INLINE GENERIC character_sequence<SeqType, SeqBase, Allocator>::to_lower(size_t in_from, size_t in_to) noexcept {
-    to_lower(begin() + in_from, end() + in_to);
-}
-
-template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_INLINE GENERIC character_sequence<SeqType, SeqBase, Allocator>::to_lower() noexcept {
-    to_lower(begin(), end());
-}
-
-template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_INLINE GENERIC character_sequence<SeqType, SeqBase, Allocator>::to_upper(iterator in_from, iterator in_to) noexcept {
-    iterator It = in_from;
-    iterator endIt = in_to;
-    for (It; It != endIt; It++)
-    {
-        *It = toupper(*It);
-    }
-}
-
-template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_INLINE GENERIC character_sequence<SeqType, SeqBase, Allocator>::to_upper(reverse_iterator in_from, reverse_iterator in_to) noexcept {
-    reverse_iterator rIt = in_from;
-    reverse_iterator endrIt = in_to;
-    for (rIt; rIt != endrIt; rIt++)
-    {
-        *rIt = toupper(*rIt);
-    }
-}
-
-template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_INLINE GENERIC character_sequence<SeqType, SeqBase, Allocator>::to_upper(size_t in_from, size_t in_to) noexcept {
-    to_upper(begin() + in_from, end() + in_to);
-}
-
-template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_INLINE GENERIC character_sequence<SeqType, SeqBase, Allocator>::to_upper() noexcept {
-    to_upper(begin(), end());
-}
-
-template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_INLINE GENERIC character_sequence<SeqType, SeqBase, Allocator>::resize(size_type in_amount) {
-    _resize(in_amount);
-}
-
-template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_INLINE GENERIC character_sequence<SeqType, SeqBase, Allocator>::swap(character_sequence& in_src) noexcept {
-    std::swap(raw_data, in_src.raw_data);
-    std::swap(mCapacity, in_src.mCapacity);
-    std::swap(mSize, in_src.mSize);
-}
-
-template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_INLINE_EXPR GENERIC character_sequence<SeqType, SeqBase, Allocator>::copy(pointer in_src, size_t in_len, size_t in_pos) noexcept {
-    this->copy_bytes(in_src, raw_data + in_pos, in_len);
-}
-
-template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_INLINE GENERIC character_sequence<SeqType, SeqBase, Allocator>::serialize(safe_buffer& out_buffer) {
+MBASE_INLINE GENERIC character_sequence<SeqType, SeqBase, Allocator>::serialize(safe_buffer& out_buffer) 
+{
     if (mSize)
     {
         out_buffer.bfLength = mSize;
@@ -1215,17 +1627,20 @@ MBASE_INLINE GENERIC character_sequence<SeqType, SeqBase, Allocator>::serialize(
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_INLINE character_sequence<SeqType, SeqBase, Allocator> character_sequence<SeqType, SeqBase, Allocator>::deserialize(IBYTEBUFFER in_buffer, SIZE_T in_length) noexcept {
+MBASE_INLINE character_sequence<SeqType, SeqBase, Allocator> character_sequence<SeqType, SeqBase, Allocator>::deserialize(IBYTEBUFFER in_buffer, SIZE_T in_length) noexcept 
+{
     return character_sequence(in_buffer, in_length);
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_INLINE_EXPR bool operator==(const character_sequence<SeqType, SeqBase, Allocator>& in_lhs, const character_sequence<SeqType, SeqBase, Allocator>& in_rhs) noexcept {
+MBASE_INLINE_EXPR bool operator==(const character_sequence<SeqType, SeqBase, Allocator>& in_lhs, const character_sequence<SeqType, SeqBase, Allocator>& in_rhs) noexcept 
+{
     return type_sequence<SeqType>::is_equal(in_lhs.raw_data, in_rhs.raw_data);
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_INLINE_EXPR bool operator!=(const character_sequence<SeqType, SeqBase, Allocator>& in_lhs, const character_sequence<SeqType, SeqBase, Allocator>& in_rhs) noexcept {
+MBASE_INLINE_EXPR bool operator!=(const character_sequence<SeqType, SeqBase, Allocator>& in_lhs, const character_sequence<SeqType, SeqBase, Allocator>& in_rhs) noexcept 
+{
     return !type_sequence<SeqType>::is_equal(in_lhs.raw_data, in_rhs.raw_data);
 }
 
