@@ -69,8 +69,12 @@ template<typename T = I8>
 class allocator {
 public:
 	using value_type = T;
-	using size_type = SIZE_T;
+	using pointer = T*;
+	using const_pointer = const pointer;
+	using void_pointer = PTRGENERIC;
+	using const_void_pointer = CPTRGENERIC;
 	using difference_type = PTRDIFF;
+	using size_type = SIZE_T;
 	
 	MBASE_ND("dynamically allocated memory unused") MBASE_INLINE_EXPR T* allocate(SIZE_T in_amount) const;
 	MBASE_ND("dynamically allocated memory unused") MBASE_INLINE_EXPR T* allocate(SIZE_T in_amount, bool in_zero_memory) const;

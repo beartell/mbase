@@ -1939,9 +1939,7 @@ MBASE_INLINE GENERIC character_sequence<SeqType, SeqBase, Allocator>::serialize(
 {
     if (mSize)
     {
-        out_buffer.bfLength = mSize;
-        out_buffer.bfSource = this->externalAllocator.allocate(mSize);
-
+        MB_SET_SAFE_BUFFER(out_buffer, mSize);
         this->copy_bytes(out_buffer.bfSource, raw_data, mSize); // DO NOT INCLUDE NULL TERMINATOR
     }
 }

@@ -129,6 +129,10 @@ public:
 		return srcBuffer;
 	}
 
+	MBASE_ND("ignoring status") status GetIoStatus() {
+		return ais;
+	}
+
 	MBASE_ND("io context observation ignored") bool IsActive() const noexcept {
 		return isActive;
 	}

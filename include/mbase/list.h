@@ -47,7 +47,7 @@ private:
 		clear();
 		mSize = 1;
 
-		firstNode = new node_type(in_value, in_alloc);
+		firstNode = new node_type(in_value);
 		lastNode = firstNode;
 	}
 
@@ -226,7 +226,7 @@ list<T, Allocator>::list(size_type in_count, const T& in_value, const Allocator&
 	}
 	mSize = 1;
 
-	firstNode = new node_type(in_value, in_alloc);
+	firstNode = new node_type(in_value);
 	lastNode = firstNode;
 	for(I32 i = 0; i < in_count - 1; i++)
 	{
@@ -247,7 +247,7 @@ MBASE_INLINE list<T, Allocator>::list(size_type in_count, const Allocator& in_al
 	mSize = 1;
 
 	T defaultValue;
-	firstNode = new node_type(defaultValue, in_alloc);
+	firstNode = new node_type(defaultValue);
 	lastNode = firstNode;
 	for (I32 i = 0; i < in_count - 1; i++)
 	{
@@ -287,7 +287,7 @@ list<T, Allocator>::list(const list& in_rhs, const Allocator& in_alloc) {
 	mSize = 1;
 
 	const_iterator cit = in_rhs.cbegin();
-	firstNode = new node_type(*(cit++), in_alloc);
+	firstNode = new node_type(*(cit++));
 	lastNode = firstNode;
 	for (cit; cit != in_rhs.cend(); cit++)
 	{
@@ -877,8 +877,7 @@ MBASE_INLINE GENERIC list<T, Allocator>::serialize(safe_buffer& out_buffer) noex
 			SIZE_T totalBufferLength = totalLength + (totalBuffer.size() * sizeof(U32)) + sizeof(U32);
 
 			mbase::vector<safe_buffer>::iterator It = totalBuffer.begin();
-			out_buffer.bfLength = totalBufferLength;
-			out_buffer.bfSource = new IBYTE[totalBufferLength];
+			MB_SET_SAFE_BUFFER(out_buffer, totalBufferLength);
 
 			IBYTEBUFFER _bfSource = out_buffer.bfSource;
 			PTRU32 elemCount = reinterpret_cast<PTRU32>(_bfSource);

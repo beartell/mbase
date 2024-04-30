@@ -31,10 +31,9 @@ struct serialize_helper<I8> {
 	pointer value;
 
     MBASE_INLINE GENERIC serialize(safe_buffer& out_buffer) noexcept {
-		PTR8 serializedBuffer = new I8;
-		*serializedBuffer = *value;
-		out_buffer.bfLength = sizeof(I8);
-        out_buffer.bfSource = reinterpret_cast<IBYTEBUFFER>(serializedBuffer);
+        MB_SET_SAFE_BUFFER(out_buffer, sizeof(I8));
+        PTR8 serializedBuffer = reinterpret_cast<PTR8>(out_buffer.bfSource);
+        *serializedBuffer = *value;
 	}
 
     MBASE_INLINE value_type deserialize(IBYTEBUFFER in_src, SIZE_T in_length) noexcept {
@@ -51,10 +50,9 @@ struct serialize_helper<I16> {
     pointer value;
 
     MBASE_INLINE GENERIC serialize(safe_buffer& out_buffer) noexcept {
-        PTR16 serializedBuffer = new I16;
+        MB_SET_SAFE_BUFFER(out_buffer, sizeof(I16));
+        PTR16 serializedBuffer = reinterpret_cast<PTR16>(out_buffer.bfSource);
         *serializedBuffer = *value;
-        out_buffer.bfLength = sizeof(I16);
-        out_buffer.bfSource = reinterpret_cast<IBYTEBUFFER>(serializedBuffer);
     }
 
     MBASE_INLINE value_type deserialize(IBYTEBUFFER in_src, SIZE_T in_length) noexcept {
@@ -71,10 +69,9 @@ struct serialize_helper<I32> {
     pointer value;
 
     MBASE_INLINE GENERIC serialize(safe_buffer& out_buffer) noexcept {
-        PTR32 serializedBuffer = new I32;
+        MB_SET_SAFE_BUFFER(out_buffer, sizeof(I32));
+        PTR32 serializedBuffer = reinterpret_cast<PTR32>(out_buffer.bfSource);
         *serializedBuffer = *value;
-        out_buffer.bfLength = sizeof(I32);
-        out_buffer.bfSource = reinterpret_cast<IBYTEBUFFER>(serializedBuffer);
     }
 
     MBASE_INLINE value_type deserialize(IBYTEBUFFER in_src, SIZE_T in_length) noexcept {
@@ -91,10 +88,9 @@ struct serialize_helper<I64> {
     pointer value;
 
     MBASE_INLINE GENERIC serialize(safe_buffer& out_buffer) noexcept {
-        PTR64 serializedBuffer = new I64;
+        MB_SET_SAFE_BUFFER(out_buffer, sizeof(I64));
+        PTR64 serializedBuffer = reinterpret_cast<PTR64>(out_buffer.bfSource);
         *serializedBuffer = *value;
-        out_buffer.bfLength = sizeof(I64);
-        out_buffer.bfSource = reinterpret_cast<IBYTEBUFFER>(serializedBuffer);
     }
 
     MBASE_INLINE value_type deserialize(IBYTEBUFFER in_src, SIZE_T in_length) noexcept {
@@ -111,10 +107,9 @@ struct serialize_helper<U8> {
     pointer value;
 
     MBASE_INLINE GENERIC serialize(safe_buffer& out_buffer) noexcept {
-        PTRU8 serializedBuffer = new U8;
+        MB_SET_SAFE_BUFFER(out_buffer, sizeof(U8));
+        PTRU8 serializedBuffer = reinterpret_cast<PTRU8>(out_buffer.bfSource);
         *serializedBuffer = *value;
-        out_buffer.bfLength = sizeof(U8);
-        out_buffer.bfSource = reinterpret_cast<IBYTEBUFFER>(serializedBuffer);
     }
 
     MBASE_INLINE value_type deserialize(IBYTEBUFFER in_src, SIZE_T in_length) noexcept {
@@ -131,10 +126,9 @@ struct serialize_helper<U16> {
     pointer value;
 
     MBASE_INLINE GENERIC serialize(safe_buffer& out_buffer) noexcept {
-        PTRU16 serializedBuffer = new U16;
+        MB_SET_SAFE_BUFFER(out_buffer, sizeof(U16));
+        PTRU16 serializedBuffer = reinterpret_cast<PTRU16>(out_buffer.bfSource);
         *serializedBuffer = *value;
-        out_buffer.bfLength = sizeof(U16);
-        out_buffer.bfSource = reinterpret_cast<IBYTEBUFFER>(serializedBuffer);
     }
 
     MBASE_INLINE value_type deserialize(IBYTEBUFFER in_src, SIZE_T in_length) noexcept {
@@ -151,10 +145,9 @@ struct serialize_helper<U32> {
     pointer value;
 
     MBASE_INLINE GENERIC serialize(safe_buffer& out_buffer) noexcept {
-        PTRU32 serializedBuffer = new U32;
+        MB_SET_SAFE_BUFFER(out_buffer, sizeof(U32));
+        PTRU32 serializedBuffer = reinterpret_cast<PTRU32>(out_buffer.bfSource);
         *serializedBuffer = *value;
-        out_buffer.bfLength = sizeof(U32);
-        out_buffer.bfSource = reinterpret_cast<IBYTEBUFFER>(serializedBuffer);
     }
 
     MBASE_INLINE value_type deserialize(IBYTEBUFFER in_src, SIZE_T in_length) noexcept {
@@ -171,10 +164,9 @@ struct serialize_helper<U64> {
     pointer value;
 
     MBASE_INLINE GENERIC serialize(safe_buffer& out_buffer) noexcept {
-        PTRU64 serializedBuffer = new U64;
+        MB_SET_SAFE_BUFFER(out_buffer, sizeof(U64));
+        PTRU64 serializedBuffer = reinterpret_cast<PTRU64>(out_buffer.bfSource);
         *serializedBuffer = *value;
-        out_buffer.bfLength = sizeof(U64);
-        out_buffer.bfSource = reinterpret_cast<IBYTEBUFFER>(serializedBuffer);
     }
 
     MBASE_INLINE value_type deserialize(IBYTEBUFFER in_src, SIZE_T in_length) noexcept {

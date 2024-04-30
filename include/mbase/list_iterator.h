@@ -247,27 +247,12 @@ struct list_node {
     using const_reference = const T&;
     using move_reference = T&&;
 
-    Allocator externalAllocator;
     list_node* prev;
     list_node* next;
-    pointer data;
+    value_type data;
 
-    list_node(const_reference in_object, const Allocator& in_alloc = Allocator()) noexcept : prev(nullptr), next(nullptr), externalAllocator(in_alloc){
-        data = externalAllocator.allocate(1);
-        externalAllocator.construct(data, in_object);
-    }
-
-    list_node(move_reference in_object, const Allocator& in_alloc = Allocator()) noexcept : prev(nullptr), next(nullptr), externalAllocator(in_alloc) {
-        data = externalAllocator.allocate(1);
-        externalAllocator.construct(data, std::move(in_object));
-    }
-
-    ~list_node() noexcept {
-        // data is guaranteed to be present
-        // so no need to null check
-        data->~value_type();
-        externalAllocator.deallocate(data, 0);
-    }
+    list_node(const_reference in_object) noexcept : prev(nullptr), next(nullptr), data(in_object){}
+    list_node(move_reference in_object) noexcept : prev(nullptr), next(nullptr), data(std::move(in_object)) {}
 };
 
 /* <-- FORWARD LIST ITERATOR IMPLEMENTATION --> */
@@ -288,12 +273,12 @@ MBASE_ND("internal data that is access through the iterator should be used") MBA
 
 template<typename T, typename DataT>
 MBASE_ND("internal data that is access through the iterator should be used") MBASE_INLINE DataT& forward_list_iterator<T, DataT>::operator*() const noexcept {
-    return *_ptr->data;
+    return _ptr->data;
 }
 
 template<typename T, typename DataT>
 MBASE_INLINE DataT* forward_list_iterator<T, DataT>::operator->() const noexcept {
-    return _ptr->data;
+    return &_ptr->data;
 }
 
 template<typename T, typename DataT>
@@ -378,12 +363,12 @@ MBASE_ND("internal data that is access through the iterator should be used") MBA
 
 template<typename T, typename DataT>
 MBASE_ND("internal data that is access through the iterator should be used") MBASE_INLINE const DataT& const_forward_list_iterator<T, DataT>::operator*() const noexcept {
-    return *_ptr->data;
+    return _ptr->data;
 }
 
 template<typename T, typename DataT>
 MBASE_INLINE const DataT* const_forward_list_iterator<T, DataT>::operator->() const noexcept {
-    return _ptr->data;
+    return &_ptr->data;
 }
 
 template<typename T, typename DataT>
@@ -461,12 +446,12 @@ MBASE_INLINE typename backward_list_iterator<T, DataT>::pointer backward_list_it
 
 template<typename T, typename DataT>
 MBASE_ND("internal data that is access through the iterator should be used") MBASE_INLINE DataT& backward_list_iterator<T, DataT>::operator*() const noexcept {
-    return *_ptr->data;
+    return _ptr->data;
 }
 
 template<typename T, typename DataT>
 MBASE_ND("internal data that is access through the iterator should be used") MBASE_INLINE DataT* backward_list_iterator<T, DataT>::operator->() const noexcept {
-    return _ptr->data;
+    return &_ptr->data;
 }
 
 template<typename T, typename DataT>
@@ -550,12 +535,12 @@ MBASE_ND("internal data that is access through the iterator should be used") MBA
 
 template<typename T, typename DataT>
 MBASE_ND("internal data that is access through the iterator should be used") MBASE_INLINE const DataT& const_backward_list_iterator<T, DataT>::operator*() const noexcept {
-    return *_ptr->data;
+    return _ptr->data;
 }
 
 template<typename T, typename DataT>
 MBASE_INLINE const DataT* const_backward_list_iterator<T, DataT>::operator->() const noexcept {
-    return _ptr->data;
+    return &_ptr->data;
 }
 
 template<typename T, typename DataT>
