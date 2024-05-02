@@ -5,6 +5,7 @@
 #include <mbase/allocator.h>
 #include <mbase/list_iterator.h>
 #include <mbase/safe_buffer.h>
+#include <mbase/node_type.h>
 #include <iterator>
 #include <initializer_list>
 #include <type_traits>
@@ -30,7 +31,7 @@ MBASE_STD_BEGIN
 template<typename T, typename Allocator = mbase::allocator<T>>
 class list {
 private:
-	using node_type = typename list_node<T, Allocator>;
+	using node_type = typename list_node<T>;
 	node_type* firstNode;
 	node_type* lastNode;
 	SIZE_T mSize;

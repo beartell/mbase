@@ -239,22 +239,6 @@ public:
     MBASE_INLINE const_reverse_bi_list_iterator& operator--(int) noexcept;
 };
 
-template<typename T, typename Allocator = mbase::allocator<T>>
-struct list_node {
-    using value_type = T;
-    using pointer = T*;
-    using reference = T&;
-    using const_reference = const T&;
-    using move_reference = T&&;
-
-    list_node* prev;
-    list_node* next;
-    value_type data;
-
-    list_node(const_reference in_object) noexcept : prev(nullptr), next(nullptr), data(in_object){}
-    list_node(move_reference in_object) noexcept : prev(nullptr), next(nullptr), data(std::move(in_object)) {}
-};
-
 /* <-- FORWARD LIST ITERATOR IMPLEMENTATION --> */
 template<typename T, typename DataT>
 MBASE_INLINE forward_list_iterator<T, DataT>::forward_list_iterator(pointer in_ptr) noexcept : _ptr(in_ptr) 
