@@ -88,22 +88,13 @@ public:
     MBASE_INLINE bst_iterator& operator--() noexcept {
         if(_ptr->left)
         {
-            if(_ptr->parent)
+            
+            pointer lrTraverse = _ptr->left;
+            while(lrTraverse->right)
             {
-                _ptr = _ptr->left;
+                lrTraverse = lrTraverse->right;
             }
-            else
-            {
-                // MEANS WE ARE THE ROOT
-                if(_ptr->left->right)
-                {
-                    _ptr = _ptr->left->right;
-                }
-                else
-                {
-                    _ptr = nullptr;
-                }
-            }
+            _ptr = lrTraverse;
         }
         else
         {
@@ -111,13 +102,13 @@ public:
             {
                 if(_ptr == _ptr->parent->left)
                 {
-                    pointer parentTraverse = _ptr->parent->parent;
-                    while((_ptr->data > parentTraverse->data) && parentTraverse->parent)
+                    pointer parentTraverse = _ptr;
+                    while(parentTraverse->parent && (_ptr->data < parentTraverse->parent->data))
                     {
                         parentTraverse = parentTraverse->parent;
                     }
 
-                    _ptr = parentTraverse;
+                    _ptr = parentTraverse->parent;
                 }
                 else if(_ptr == _ptr->parent->right)
                 {
