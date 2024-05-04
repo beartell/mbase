@@ -16,22 +16,22 @@ template<
 >
 class set {
 public:
-	using _node_type = avl_node<Key, Compare>;
 	using key_type = typename Key;
 	using value_type = typename Key;
 	using size_type = SIZE_T;
 	using difference_type = PTRDIFF;
 	using key_compare = typename Compare;
 	using value_compare = typename Compare;
+	using _node_type = avl_node<Key, typename key_compare>;
 	using allocator_type = typename Allocator;
 	using reference = Key&;
 	using const_reference = const Key&;
 	using pointer = Key*;
 	using const_pointer = const Key*;
 	using iterator = typename bst_iterator<_node_type, value_type>;
-	using const_iterator = I64;
-	using reverse_iterator = F32;
-	using const_reverse_iterator = F64;
+	using const_iterator = typename const_bst_iterator<_node_type, value_type>;
+	using reverse_iterator = typename reverse_bst_iterator<_node_type, value_type>;
+	using const_reverse_iterator = typename const_reverse_bst_iterator<_node_type, value_type>;
 	using node_type = I32;
 	using insert_return_type = I32;
 
@@ -112,17 +112,39 @@ public:
 	iterator begin() noexcept {
 		return iterator(rootNode);
 	}
-	const_iterator begin() const noexcept;
-	const_iterator cbegin() const noexcept;
-	iterator end() noexcept;
-	const_iterator end() const noexcept;
-	const_iterator cend() const noexcept;
-	reverse_iterator rbegin() noexcept;
-	const_reverse_iterator rbegin() const noexcept;
-	const_reverse_iterator crbegin() const noexcept;
-	reverse_iterator rend() noexcept;
-	const_reverse_iterator rend() const noexcept;
-	const_reverse_iterator crend() const noexcept;
+	const_iterator begin() const noexcept {
+		return const_iterator(rootNode);
+	}
+	const_iterator cbegin() const noexcept {
+		return const_iterator(rootNode);
+	}
+	iterator end() noexcept {
+		return iterator(nullptr);
+	}
+	const_iterator end() const noexcept {
+		return const_iterator(nullptr);
+	}
+	const_iterator cend() const noexcept {
+		return const_iterator(nullptr);
+	}
+	reverse_iterator rbegin() noexcept {
+		return reverse_iterator(rootNode);
+	}
+	const_reverse_iterator rbegin() const noexcept {
+		return const_reverse_iterator(rootNode);
+	}
+	const_reverse_iterator crbegin() const noexcept {
+		return const_reverse_iterator(rootNode);
+	}
+	reverse_iterator rend() noexcept {
+		return reverse_iterator(nullptr);
+	}
+	const_reverse_iterator rend() const noexcept {
+		return const_reverse_iterator(nullptr);
+	}
+	const_reverse_iterator crend() const noexcept {
+		return const_reverse_iterator(nullptr);
+	}
 
 	GENERIC clear() noexcept;
 	iterator insert(const value_type& in_value) {
