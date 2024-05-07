@@ -49,24 +49,26 @@ struct avl_node {
 
     static I32 get_height(avl_node* in_node) { return in_node == nullptr ? -1 : in_node->height; }
 
-    static avl_node* insert_node(avl_node*& in_node, const T& in_value, avl_node* in_parent) 
+    template<typename ExternalIterator>
+    static std::pair<ExternalIterator, bool> insert_node(avl_node*& in_node, const T& in_value, avl_node* in_parent)
     {
         key_compare comparator;
-
+        std::pair<ExternalIterator, bool> resultPair = std::make_pair(nullptr, false);
         if (in_node == nullptr)
         {
             in_node = new avl_node(in_value);
             in_node->parent = in_parent;
+            resultPair = std::make_pair(in_node, true);
             balance(in_node);
         }
         else if (comparator(in_value, in_node->data))
         {
-            insert_node(in_node->left, in_value, in_node);
+            insert_node<ExternalIterator>(in_node->left, in_value, in_node);
             balance(in_node);
         }
         else if (comparator(in_node->data, in_value))
         {
-            insert_node(in_node->right, in_value, in_node);
+            insert_node<ExternalIterator>(in_node->right, in_value, in_node);
             balance(in_node);
         }
         else
@@ -75,27 +77,29 @@ struct avl_node {
             // MEANS, VALUES ARE EQUAL
             // do nothing
         }
-        return nullptr;
+        return resultPair;
     }
-
-    static avl_node* insert_node(avl_node*& in_node, T&& in_value, avl_node* in_parent)
+    
+    template<typename ExternalIterator>
+    static std::pair<ExternalIterator, bool> insert_node(avl_node*& in_node, T&& in_value, avl_node* in_parent)
     {
         key_compare comparator;
-
+        std::pair<ExternalIterator, bool> resultPair = std::make_pair(nullptr, false);
         if (in_node == nullptr)
         {
             in_node = new avl_node(std::move(in_value));
             in_node->parent = in_parent;
+            resultPair = std::make_pair(in_node, true);
             balance(in_node);
         }
         else if (comparator(in_value, in_node->data))
         {
-            insert_node(in_node->left, std::move(in_value), in_node);
+            return insert_node<ExternalIterator>(in_node->left, std::move(in_value), in_node);
             balance(in_node);
         }
         else if (comparator(in_node->data, in_value))
         {
-            insert_node(in_node->right, std::move(in_value), in_node);
+            return insert_node<ExternalIterator>(in_node->right, std::move(in_value), in_node);
             balance(in_node);
         }
         else
@@ -103,7 +107,7 @@ struct avl_node {
             // MEANS, VALUES ARE EQUAL
             // do nothing
         }
-        return nullptr;
+        return resultPair;
     }
 
     static GENERIC rotate_with_left_child(avl_node*& in_k2)
@@ -181,6 +185,167 @@ struct avl_node {
         }
 
         in_node->height = std::max(get_height(in_node->left), get_height(in_node->right)) + 1;
+    }
+
+    static avl_node* find_min(avl_node* in_node) {
+        if(!in_node)
+        {
+            return nullptr;
+        }
+        if(!in_node->left)
+        {
+            return in_node;
+        }
+        return find_min(in_node->left);
+    }
+
+    static avl_node* find_max(avl_node* in_node) {
+        if (!in_node)
+        {
+            return nullptr;
+        }
+        if (!in_node->right)
+        {
+            return in_node;
+        }
+        return find_max(in_node->right);
+    }
+
+
+    static GENERIC remove_node(avl_node*& in_node, const T& in_value)
+    {
+        if (!in_node)
+        {
+            return;
+        }
+        else
+        {
+            key_compare comparator;
+            if (comparator(in_value, in_node->data))
+            {
+                remove_node(in_node->left, in_value);
+            }
+            else if (comparator(in_node->data, in_value))
+            {
+                remove_node(in_node->right, in_value);
+            }
+            else
+            {
+                avl_node* oldNode = in_node;
+                if(in_node->left && in_node->right)
+                {
+                    avl_node* traverseRemove = in_node->left;
+                    while(traverseRemove)
+                    {
+                        in_node = traverseRemove;
+                        traverseRemove = traverseRemove->right;
+                    }
+                    printf("%x %x, %d\n", in_node->left, in_node->right, in_node->data);
+                    oldNode->data = in_node->data;
+                    remove_node(in_node, in_node->data);
+                    return;
+                }
+
+                if(in_node->left)
+                {
+                    if (in_node->parent)
+                    {
+                        if (in_node->parent->left == in_node)
+                        {
+                            in_node->parent->left = in_node->left;
+                        }
+                        else if (in_node->parent->right == in_node)
+                        {
+                            in_node->parent->right = in_node->left;
+                        }
+                        in_node->left->parent = in_node->parent;
+                    }
+
+                    /*if(in_node->left->right)
+                    {
+                        avl_node* rightTraversal = in_node->left->right;
+                        while (rightTraversal)
+                        {
+                            in_node = rightTraversal;
+                            rightTraversal = rightTraversal->right;
+                        }
+
+                        in_node->parent->right = nullptr;
+                        in_node->left = oldNode->left;
+                        in_node->right = oldNode->right;
+                        in_node->parent = oldNode->parent;
+                        
+                        if(in_node->parent->right == oldNode)
+                        {
+                            in_node->parent->right = in_node;
+                        }
+                        else if(in_node->parent->left == oldNode)
+                        {
+                            in_node->parent->left = in_node;
+                        }
+
+                        in_node->left->parent = in_node;
+                        in_node->right->parent = in_node;
+                    }
+                    else
+                    {
+                        if(in_node->parent)
+                        {
+                            if(in_node->parent->right == in_node)
+                            {
+                                in_node->parent->right = in_node->left;
+                                in_node->left->parent = in_node->parent;
+                                in_node->right->parent = in_node->left;
+                                in_node->left->right = in_node->right;
+                            }
+                            else if(in_node->parent->left == in_node)
+                            {
+                                in_node->parent->left = in_node->left;
+                                in_node->left->parent = in_node->parent;
+                                in_node->right->parent = in_node->left;
+                                in_node->left->right = in_node->right;
+                            }
+                        }
+                    }*/
+                }
+                else if(in_node->right)
+                {
+                    // NOTE:
+                    // in_node will be deleted in this case
+                    if(in_node->parent)
+                    {
+                        if(in_node->parent->left == in_node) 
+                        {
+                            in_node->parent->left = in_node->right;
+                        }
+                        else if(in_node->parent->right == in_node)
+                        {
+                            in_node->parent->right = in_node->right;
+                        }
+                        in_node->right->parent = in_node->parent;
+                    }
+                }
+                else
+                {
+                    // MEANS WE ARE THE LEAF
+                    if(in_node->parent)
+                    {
+                        if(in_node->parent->right == in_node)
+                        {
+                            in_node->parent->right = nullptr;
+                        }
+                        else if(in_node->parent->left == in_node)
+                        {
+                            in_node->parent->left = nullptr;
+                        }
+                        in_node = in_node->parent;
+                        
+                    }
+                }
+                
+                delete oldNode;
+            }
+        }
     }
 };
 

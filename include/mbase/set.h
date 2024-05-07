@@ -36,12 +36,10 @@ public:
 	using insert_return_type = I32;
 
 	set() : rootNode(nullptr), mSize(0) {}
-	MBASE_EXPLICIT set(const Compare& in_comp, const Allocator& in_alloc = Allocator());
+	MBASE_EXPLICIT set(const Compare& in_comp, const Allocator& in_alloc = Allocator()) : rootNode(nullptr), mSize(0){}
 	//MBASE_EXPLICIT set(const Allocator& in_alloc = Allocator());
 	template<typename InputIt>
-	set(InputIt in_begin, InputIt in_end, const Compare& in_comp = Compare(), const Allocator& in_alloc = Allocator());
-	template<typename InputIt>
-	set(InputIt in_begin, InputIt in_end, const Allocator& in_alloc = Allocator());
+	set(InputIt in_begin, InputIt in_end, const Allocator& in_alloc = Allocator()) : rootNode(nullptr), mSize(0);
 	set(const set& in_rhs);
 	set(const set& in_rhs, const Allocator& in_alloc);
 	set(set&& in_rhs);
@@ -55,59 +53,133 @@ public:
 	set& operator=(set&& in_rhs) noexcept;
 	set& operator=(std::initializer_list<value_type> in_list);
 
-	allocator_type get_allocator() const noexcept;
+	allocator_type get_allocator() const noexcept {
+		return allocator_type();
+	}
+
 	key_compare key_comp() const 
 	{ 
 		key_compare kc;
 		return kc; 
 	}
+
 	value_compare value_comp() const
 	{
 		value_compare vc;
 		return vc;
 	}
+
 	bool empty() const noexcept
 	{
 		return mSize == 0;
 	}
+
 	size_type size() const noexcept
 	{
 		return mSize;
 	}
+
 	size_type max_size() const noexcept
 	{
 		return std::numeric_limits<difference_type>::max();
 	}
-	size_type count(const Key& in_key) const;
-	template<typename K>
-	size_type count(const K& in_key) const;
-	iterator find(const Key& in_key);
-	const_iterator find(const Key& in_key) const;
-	template<typename K>
-	iterator find(const K& in_key);
-	template<typename K>
-	const_iterator find(const K& in_key) const;
-	bool contains(const Key& in_key) const;
-	template<typename K>
-	bool contains(const K& in_key) const;
-	std::pair<iterator, iterator> equal_range(const Key& in_key);
-	std::pair<const_iterator, const_iterator> equal_range(const Key& in_key) const;
-	template<typename K>
-	std::pair<iterator, iterator> equal_range(const K& in_key);
-	template<typename K>
-	std::pair<const_iterator, const_iterator> equal_range(const K& in_key) const;
-	iterator lower_bound(const Key& in_key);
-	const_iterator lower_bound(const Key& in_key) const;
-	template<typename K>
-	iterator lower_bound(const K& in_key);
-	template<typename K>
-	const_iterator lower_bound(const K& in_key) const;
-	iterator upper_bound(const Key& in_key);
-	const_iterator upper_bound(const Key& in_key) const;
-	template<typename K>
-	iterator upper_bound(const K& in_key);
-	template<typename K>
-	const_iterator upper_bound(const K& in_key) const;
+
+	size_type count(const Key& in_key) const {
+		return static_cast<size_type>(this->contains(in_key));
+	}
+
+	iterator find(const Key& in_key) {
+		iterator itBegin = iterator(rootNode);
+		for(itBegin; itBegin != end(); itBegin++)
+		{
+			if(*itBegin == in_key)
+			{
+				return iterator(itBegin);
+			}
+		}
+
+		return end();
+	}
+
+	const_iterator find(const Key& in_key) const {
+		const_iterator itBegin = const_iterator(rootNode);
+		for(itBegin; itBegin != cend(); itBegin++)
+		{
+			if(*itBegin == in_key)
+			{
+				return const_iterator(itBegin);
+			}
+		}
+		return cend();
+	}
+
+	bool contains(const Key& in_key) const {
+		if(this->find(in_key) != cend())
+		{
+			return true;
+		}
+		return false;
+	}
+
+	std::pair<iterator, iterator> equal_range(const Key& in_key) {
+		return std::make_pair(this->lower_bound(in_key), this->upper_bound(in_key));
+	}
+
+	std::pair<const_iterator, const_iterator> equal_range(const Key& in_key) const {
+		return std::make_pair(this->lower_bound(in_key), this->upper_bound(in_key));
+	}
+
+	iterator lower_bound(const Key& in_key) {
+		iterator itBegin = begin();
+		for (itBegin; itBegin != end(); itBegin++)
+		{
+			if (*itBegin >= in_key)
+			{
+				return iterator(itBegin);
+			}
+		}
+
+		return end();
+	}
+
+	const_iterator lower_bound(const Key& in_key) const {
+		const_iterator itBegin = begin();
+		for (itBegin; itBegin != end(); itBegin++)
+		{
+			if (*itBegin >= in_key)
+			{
+				return const_iterator(itBegin);
+			}
+		}
+
+		return cend();
+	}
+
+	iterator upper_bound(const Key& in_key) {
+		iterator itBegin = begin();
+		for(itBegin; itBegin != end(); itBegin++)
+		{
+			if(*itBegin > in_key)
+			{
+				return iterator(itBegin);
+			}
+		}
+
+		return end();
+	}
+
+	const_iterator upper_bound(const Key& in_key) const {
+		const_iterator itBegin = begin();
+		for (itBegin; itBegin != end(); itBegin++)
+		{
+			if (*itBegin > in_key)
+			{
+				return const_iterator(itBegin);
+			}
+		}
+
+		return cend();
+	}
 
 	iterator begin() noexcept {
 		return iterator(rootNode);
@@ -147,26 +219,49 @@ public:
 	}
 
 	GENERIC clear() noexcept;
-	iterator insert(const value_type& in_value) {
-		_node_type::insert_node(rootNode, in_value, rootNode);
-		return iterator(rootNode);
+	std::pair<iterator, bool> insert(const value_type& in_value) {
+		return _node_type::insert_node<iterator>(rootNode, in_value, rootNode);
 	}
-	iterator insert(value_type&& in_value) {
-		_node_type::insert_node(rootNode, std::move(in_value), rootNode);
-		return iterator(rootNode);
+
+	std::pair<iterator, bool> insert(value_type&& in_value) {
+		return _node_type::insert_node<iterator>(rootNode, std::move(in_value), rootNode);
 	}
-	//iterator insert(const_iterator in_pos, const value_type& in_value);
-	//iterator insert(const_iterator in_pos, value_type&& in_value);
-	template<typename InputIt>
-	GENERIC insert(InputIt in_begin, InputIt in_end);
-	GENERIC insert(std::initializer_list<value_type> in_list);
+
+	iterator insert(const_iterator in_pos, const value_type& in_value) {
+		// SELF-NOTE: IMPLEMENTATION IS INCOMPLETE, MAKE SURE TO COME BACK HERE
+		// IT DOES NORMAL INSERTION AT THIS POINT
+		return insert(in_value).first;
+	}
+	iterator insert(const_iterator in_pos, value_type&& in_value) {
+		// SELF-NOTE: IMPLEMENTATION IS INCOMPLETE, MAKE SURE TO COME BACK HERE
+		// IT DOES NORMAL INSERTION AT THIS POINT
+		return insert(std::move(in_value)).first;
+	}
+	template<typename InputIt, typename = std::enable_if_t<std::is_constructible_v<value_type, typename std::iterator_traits<InputIt>::value_type>>>
+	GENERIC insert(InputIt in_begin, InputIt in_end) {
+		for(in_begin; in_begin != in_end; in_begin++)
+		{
+			insert(*in_begin);
+		}
+	}
+	GENERIC insert(std::initializer_list<value_type> in_list) {
+		insert(in_list.begin(), in_list.end());
+	}
 	//insert_return_type insert(node_type&& in_node);
-	iterator insert(const_iterator in_pos, node_type&& in_node);
+	//iterator insert(const_iterator in_pos, node_type&& in_node);
 	template<typename ... Args>
-	std::pair<iterator, bool> emplace(Args&& ... args);
+	std::pair<iterator, bool> emplace(Args&& ... in_args) {
+		return insert(std::move(std::forward<Args>(in_args)...));
+	}
 	template<typename ... Args>
-	// emplace_hint(const_iterator in_hint, Args&& ... args);
-	//iterator erase(iterator in_pos);
+	std::pair<iterator, bool> emplace_hint(const_iterator in_hint, Args&& ... in_args) {
+		return insert(in_hint, std::move(std::forward<Args>(in_args)...));
+	}
+	iterator erase(iterator in_pos) {
+		_node_type* nt = in_pos.get();
+		rootNode->remove_node(nt, *in_pos);
+		return begin();
+	}
 	//iterator erase(const_iterator in_pos);
 	//iterator erase(iterator in_first, iterator in_last);
 	//iterator erase(const_iterator in_first, const_iterator in_last);
@@ -180,7 +275,6 @@ public:
 	GENERIC merge(set<Key, Compare2, Allocator>&& in_src);*/
 	_node_type* rootNode;
 private:
-	
 	size_type mSize;
 };
 
