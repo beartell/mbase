@@ -47,7 +47,7 @@ struct avl_node {
     avl_node(const_reference in_object) noexcept : parent(nullptr), left(nullptr), right(nullptr), height(0), data(in_object){}
     avl_node(move_reference in_object) noexcept : parent(nullptr), left(nullptr), right(nullptr), height(0), data(std::move(in_object)) {}
 
-    static I32 get_height(avl_node* in_node) { return in_node == nullptr ? -1 : in_node->height; }
+    static I32 get_height(avl_node* in_node) { return (in_node == nullptr) ? -1 : in_node->height; }
 
     template<typename ExternalIterator>
     static std::pair<ExternalIterator, bool> insert_node(avl_node*& in_node, const T& in_value, avl_node* in_parent)
@@ -63,12 +63,12 @@ struct avl_node {
         }
         else if (comparator(in_value, in_node->data))
         {
-            insert_node<ExternalIterator>(in_node->left, in_value, in_node);
+            resultPair = insert_node<ExternalIterator>(in_node->left, in_value, in_node);
             balance(in_node);
         }
         else if (comparator(in_node->data, in_value))
         {
-            insert_node<ExternalIterator>(in_node->right, in_value, in_node);
+            resultPair = insert_node<ExternalIterator>(in_node->right, in_value, in_node);
             balance(in_node);
         }
         else
@@ -94,13 +94,11 @@ struct avl_node {
         }
         else if (comparator(in_value, in_node->data))
         {
-            return insert_node<ExternalIterator>(in_node->left, std::move(in_value), in_node);
-            balance(in_node);
+            resultPair = insert_node<ExternalIterator>(in_node->left, std::move(in_value), in_node);
         }
         else if (comparator(in_node->data, in_value))
         {
-            return insert_node<ExternalIterator>(in_node->right, std::move(in_value), in_node);
-            balance(in_node);
+            resultPair = insert_node<ExternalIterator>(in_node->right, std::move(in_value), in_node);
         }
         else
         {
@@ -240,8 +238,8 @@ struct avl_node {
                         in_node = traverseRemove;
                         traverseRemove = traverseRemove->right;
                     }
-                    printf("%x %x, %d\n", in_node->left, in_node->right, in_node->data);
-                    oldNode->data = in_node->data;
+
+                    oldNode->data = std::move(in_node->data);
                     remove_node(in_node, in_node->data);
                     return;
                 }
@@ -250,6 +248,7 @@ struct avl_node {
                 {
                     if (in_node->parent)
                     {
+                        in_node->left->parent = in_node->parent;
                         if (in_node->parent->left == in_node)
                         {
                             in_node->parent->left = in_node->left;
@@ -258,62 +257,18 @@ struct avl_node {
                         {
                             in_node->parent->right = in_node->left;
                         }
-                        in_node->left->parent = in_node->parent;
-                    }
-
-                    /*if(in_node->left->right)
-                    {
-                        avl_node* rightTraversal = in_node->left->right;
-                        while (rightTraversal)
-                        {
-                            in_node = rightTraversal;
-                            rightTraversal = rightTraversal->right;
-                        }
-
-                        in_node->parent->right = nullptr;
-                        in_node->left = oldNode->left;
-                        in_node->right = oldNode->right;
-                        in_node->parent = oldNode->parent;
-                        
-                        if(in_node->parent->right == oldNode)
-                        {
-                            in_node->parent->right = in_node;
-                        }
-                        else if(in_node->parent->left == oldNode)
-                        {
-                            in_node->parent->left = in_node;
-                        }
-
-                        in_node->left->parent = in_node;
-                        in_node->right->parent = in_node;
                     }
                     else
                     {
-                        if(in_node->parent)
-                        {
-                            if(in_node->parent->right == in_node)
-                            {
-                                in_node->parent->right = in_node->left;
-                                in_node->left->parent = in_node->parent;
-                                in_node->right->parent = in_node->left;
-                                in_node->left->right = in_node->right;
-                            }
-                            else if(in_node->parent->left == in_node)
-                            {
-                                in_node->parent->left = in_node->left;
-                                in_node->left->parent = in_node->parent;
-                                in_node->right->parent = in_node->left;
-                                in_node->left->right = in_node->right;
-                            }
-                        }
-                    }*/
+                        in_node->left->parent = nullptr;
+                        in_node = in_node->left;
+                    }
                 }
                 else if(in_node->right)
                 {
-                    // NOTE:
-                    // in_node will be deleted in this case
                     if(in_node->parent)
                     {
+                        in_node->right->parent = in_node->parent;
                         if(in_node->parent->left == in_node) 
                         {
                             in_node->parent->left = in_node->right;
@@ -322,7 +277,11 @@ struct avl_node {
                         {
                             in_node->parent->right = in_node->right;
                         }
-                        in_node->right->parent = in_node->parent;
+                    }
+                    else
+                    {
+                        in_node->right->parent = nullptr;
+                        in_node = in_node->right;
                     }
                 }
                 else
@@ -338,11 +297,16 @@ struct avl_node {
                         {
                             in_node->parent->left = nullptr;
                         }
-                        in_node = in_node->parent;
-                        
+                    }
+                    else
+                    {
+                        // MEANS WE ARE THE ROOT
+                        delete in_node;
+                        in_node = nullptr;
+                        return;
                     }
                 }
-                
+
                 delete oldNode;
             }
         }

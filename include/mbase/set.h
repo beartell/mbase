@@ -47,7 +47,10 @@ public:
 	set(std::initializer_list<value_type> in_list, const Compare& in_comp = Compare(), const Allocator& in_alloc = Allocator());
 	set(std::initializer_list<value_type> in_list, const Allocator& in_alloc);
 
-	~set(){}
+	~set()
+	{
+		clear();
+	}
 
 	set& operator=(const set& in_rhs);
 	set& operator=(set&& in_rhs) noexcept;
@@ -89,7 +92,8 @@ public:
 	}
 
 	iterator find(const Key& in_key) {
-		iterator itBegin = iterator(rootNode);
+		iterator itBegin(rootNode);
+
 		for(itBegin; itBegin != end(); itBegin++)
 		{
 			if(*itBegin == in_key)
@@ -218,13 +222,25 @@ public:
 		return const_reverse_iterator(nullptr);
 	}
 
-	GENERIC clear() noexcept;
+	
 	std::pair<iterator, bool> insert(const value_type& in_value) {
-		return _node_type::insert_node<iterator>(rootNode, in_value, rootNode);
+		std::pair<iterator, bool> insertResult = _node_type::insert_node<iterator>(rootNode, in_value, rootNode);
+		if (insertResult.second)
+		{
+			++mSize;
+		}
+
+		return insertResult;
 	}
 
 	std::pair<iterator, bool> insert(value_type&& in_value) {
-		return _node_type::insert_node<iterator>(rootNode, std::move(in_value), rootNode);
+		std::pair<iterator, bool> insertResult = _node_type::insert_node<iterator>(rootNode, std::move(in_value), rootNode);
+		if (insertResult.second)
+		{
+			++mSize;
+		}
+
+		return insertResult;
 	}
 
 	iterator insert(const_iterator in_pos, const value_type& in_value) {
@@ -257,22 +273,80 @@ public:
 	std::pair<iterator, bool> emplace_hint(const_iterator in_hint, Args&& ... in_args) {
 		return insert(in_hint, std::move(std::forward<Args>(in_args)...));
 	}
-	iterator erase(iterator in_pos) {
-		_node_type* nt = in_pos.get();
-		rootNode->remove_node(nt, *in_pos);
-		return begin();
+
+	iterator erase(const_iterator in_pos) {
+		if (!mSize)
+		{
+			return end();
+		}
+
+		if (in_pos == cend()) {
+			return end();
+		}
+
+		iterator itBegin(in_pos._ptr, false);
+		++itBegin;
+		_node_type* nt = in_pos._ptr;
+		if (rootNode == nt)
+		{
+			rootNode->remove_node(nt, *in_pos);
+			rootNode = nt;
+		}
+		else
+		{
+			rootNode->remove_node(nt, *in_pos);
+		}
+		_node_type::balance(rootNode); // FOR NOW, WE ARE BALANCING THE ENTIRE TREE ON EVERY DELETION, WE WILL GO BACK 
+
+		--mSize;
+		return itBegin;
 	}
-	//iterator erase(const_iterator in_pos);
-	//iterator erase(iterator in_first, iterator in_last);
-	//iterator erase(const_iterator in_first, const_iterator in_last);
-	//size_type erase(const Key& in_key);
+
+	iterator erase(iterator in_pos) {
+		const_iterator cit = in_pos;
+		return erase(cit);
+	}
+	
+	iterator erase(iterator in_first, iterator in_last) {
+		for(in_first; in_first != in_last; in_first++)
+		{
+			in_first = erase(in_first);
+		}
+		return in_first;
+	}
+	iterator erase(const_iterator in_first, const_iterator in_last)
+	{
+		for (in_first; in_first != in_last; in_first++)
+		{
+			in_first = erase(in_first);
+		}
+		return in_first;
+	}
+	size_type erase(const value_type& in_key) 
+	{
+		const_iterator ci = find(in_key);
+		erase(ci);
+		return 0;
+	}
+
+	GENERIC clear() noexcept {
+		for (iterator It = begin(); It != end();)
+		{
+			It = erase(It);
+		}
+	}
+
 	GENERIC swap(set& in_rhs) noexcept;
 	//node_type extract(const_iterator in_pos);
 	//node_type extract(const Key& in_key);
-	/*template<typename Compare2>
-	GENERIC merge(set<Key, Compare2, Allocator>& in_src);
 	template<typename Compare2>
-	GENERIC merge(set<Key, Compare2, Allocator>&& in_src);*/
+	GENERIC merge(set<Key, Compare2, Allocator>& in_src) {
+		for(set<Key, Compare2, Allocator>::iterator It = in_src.begin(); It != in_src.end(); It++)
+		{
+			this->insert(*It);
+		}
+		in_src.clear();
+	}
 	_node_type* rootNode;
 private:
 	size_type mSize;

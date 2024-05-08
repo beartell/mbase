@@ -29,6 +29,7 @@ public:
     using iterator_category = std::bidirectional_iterator_tag;
 
     MBASE_INLINE bst_iterator(pointer in_ptr) noexcept;
+    MBASE_INLINE bst_iterator(pointer in_ptr, bool in_noTraverse) noexcept;
     MBASE_INLINE bst_iterator(const bst_iterator& in_rhs) noexcept;
 
     MBASE_ND("internal data that is access through the iterator should be used") MBASE_INLINE pointer get() const noexcept;
@@ -42,8 +43,7 @@ public:
 
     MBASE_ND("ignoring equality comparison") MBASE_INLINE bool operator==(const bst_iterator& in_rhs) const noexcept;
     MBASE_ND("ignoring equality comparison") MBASE_INLINE bool operator!=(const bst_iterator& in_rhs) const noexcept;
-
-private:
+    
     pointer _ptr;
 };
 
@@ -74,7 +74,6 @@ public:
     MBASE_ND("ignoring equality comparison") MBASE_INLINE bool operator==(const const_bst_iterator& in_rhs) const noexcept;
     MBASE_ND("ignoring equality comparison") MBASE_INLINE bool operator!=(const const_bst_iterator& in_rhs) const noexcept;
 
-private:
     pointer _ptr;
 };
 
@@ -103,7 +102,7 @@ public:
 
     MBASE_ND("ignoring equality comparison") MBASE_INLINE bool operator==(const reverse_bst_iterator& in_rhs) const noexcept;
     MBASE_ND("ignoring equality comparison") MBASE_INLINE bool operator!=(const reverse_bst_iterator& in_rhs) const noexcept;
-private:
+
     pointer _ptr;
 };
 
@@ -134,7 +133,6 @@ public:
     MBASE_ND("ignoring equality comparison") MBASE_INLINE bool operator==(const const_reverse_bst_iterator& in_rhs) const noexcept;
     MBASE_ND("ignoring equality comparison") MBASE_INLINE bool operator!=(const const_reverse_bst_iterator& in_rhs) const noexcept;
 
-private:
     pointer _ptr;
 };
 
@@ -148,6 +146,12 @@ MBASE_INLINE bst_iterator<T, DataT>::bst_iterator(pointer in_ptr) noexcept : _pt
         in_ptr = in_ptr->left;
     }
 }
+
+template<typename T, typename DataT>
+MBASE_INLINE bst_iterator<T, DataT>::bst_iterator(pointer in_ptr, bool in_noTraverse) noexcept : _ptr(in_ptr) {
+
+}
+
 
 template<typename T, typename DataT>
 MBASE_INLINE bst_iterator<T, DataT>::bst_iterator(const bst_iterator& in_rhs) noexcept
@@ -175,6 +179,11 @@ MBASE_INLINE DataT* bst_iterator<T, DataT>::operator->() const noexcept {
 template<typename T, typename DataT>
 MBASE_INLINE bst_iterator<T, DataT>& bst_iterator<T, DataT>::operator++() noexcept 
 {
+    if(!_ptr)
+    {
+        return *this;
+    }
+
     if (_ptr->right)
     {
         pointer leftTraverse = _ptr->right;
@@ -223,6 +232,11 @@ MBASE_INLINE bst_iterator<T, DataT>& bst_iterator<T, DataT>::operator++(I32) noe
 template<typename T, typename DataT>
 MBASE_INLINE bst_iterator<T, DataT>& bst_iterator<T, DataT>::operator--() noexcept 
 {
+    if (!_ptr)
+    {
+        return *this;
+    }
+
     if (_ptr->left)
     {
 
@@ -326,6 +340,11 @@ MBASE_INLINE const DataT* const_bst_iterator<T, DataT>::operator->() const noexc
 template<typename T, typename DataT>
 MBASE_INLINE const_bst_iterator<T, DataT>& const_bst_iterator<T, DataT>::operator++() noexcept
 {
+    if (!_ptr)
+    {
+        return *this;
+    }
+
     if (_ptr->right)
     {
         pointer leftTraverse = _ptr->right;
@@ -374,6 +393,11 @@ MBASE_INLINE const_bst_iterator<T, DataT>& const_bst_iterator<T, DataT>::operato
 template<typename T, typename DataT>
 MBASE_INLINE const_bst_iterator<T, DataT>& const_bst_iterator<T, DataT>::operator--() noexcept
 {
+    if (!_ptr)
+    {
+        return *this;
+    }
+
     if (_ptr->left)
     {
 
@@ -470,6 +494,11 @@ MBASE_INLINE DataT* reverse_bst_iterator<T, DataT>::operator->() const noexcept 
 template<typename T, typename DataT>
 MBASE_INLINE reverse_bst_iterator<T, DataT>& reverse_bst_iterator<T, DataT>::operator++() noexcept
 {
+    if (!_ptr)
+    {
+        return *this;
+    }
+
     if (_ptr->left)
     {
 
@@ -519,6 +548,11 @@ MBASE_INLINE reverse_bst_iterator<T, DataT>& reverse_bst_iterator<T, DataT>::ope
 template<typename T, typename DataT>
 MBASE_INLINE reverse_bst_iterator<T, DataT>& reverse_bst_iterator<T, DataT>::operator--() noexcept
 {
+    if (!_ptr)
+    {
+        return *this;
+    }
+
     if (_ptr->right)
     {
         pointer leftTraverse = _ptr->right;
@@ -620,6 +654,11 @@ MBASE_INLINE const DataT* const_reverse_bst_iterator<T, DataT>::operator->() con
 template<typename T, typename DataT>
 MBASE_INLINE const_reverse_bst_iterator<T, DataT>& const_reverse_bst_iterator<T, DataT>::operator++() noexcept
 {
+    if (!_ptr)
+    {
+        return *this;
+    }
+
     if (_ptr->left)
     {
 
@@ -669,6 +708,11 @@ MBASE_INLINE const_reverse_bst_iterator<T, DataT>& const_reverse_bst_iterator<T,
 template<typename T, typename DataT>
 MBASE_INLINE const_reverse_bst_iterator<T, DataT>& const_reverse_bst_iterator<T, DataT>::operator--() noexcept
 {
+    if (!_ptr)
+    {
+        return *this;
+    }
+
     if (_ptr->right)
     {
         pointer leftTraverse = _ptr->right;
