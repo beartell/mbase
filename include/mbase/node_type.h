@@ -24,6 +24,42 @@ struct list_node {
     list_node(move_reference in_object) noexcept : prev(nullptr), next(nullptr), data(std::move(in_object)) {}
 };
 
+template<typename T, typename Allocator>
+struct exposed_set_node {
+    using value_type = T;
+    using allocator_type = typename Allocator;
+    MBASE_INLINE_EXPR exposed_set_node() noexcept : dataSet(false){}
+    MBASE_INLINE_EXPR exposed_set_node(T&& in_data) noexcept : nodeData(std::move(in_data)), dataSet(true){}
+    MBASE_INLINE_EXPR exposed_set_node(exposed_set_node&& in_rhs) noexcept: nodeData(std::move(in_rhs.nodeData)), dataSet(true){}
+    MBASE_INLINE_EXPR ~exposed_set_node(){}
+
+    MBASE_INLINE_EXPR exposed_set_node& operator=(exposed_set_node&& in_rhs)
+    {
+        nodeData = std::move(in_rhs.nodeData);
+    }
+    MBASE_EXPLICIT operator bool() const noexcept
+    {
+        return dataSet;
+    }
+    MBASE_INLINE_EXPR allocator_type get_allocator() const
+    {
+        return allocator_type();
+    }
+    MBASE_INLINE_EXPR value_type& value() const
+    {
+        return nodeData;
+    }
+
+    GENERIC swap(exposed_set_node& in_rhs) noexcept
+    {
+        std::swap(nodeData, in_rhs.nodeData);
+        std::swap(dataSet, in_rhs.dataSet);
+    }
+
+    value_type nodeData;
+    bool dataSet;
+};
+
 /*
     IMPLEMENTATION BELOW IS TAKEN FROM the book called: 
     'Data Structures and Algorithm Analysis in C++' by Mark Allen Weiss

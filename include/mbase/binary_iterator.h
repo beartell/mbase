@@ -56,6 +56,7 @@ public:
     using reference = T&;
     using size_type = SIZE_T;
     using difference_type = PTRDIFF;
+    using dt = DataT;
     using iterator_category = std::bidirectional_iterator_tag;
 
     MBASE_INLINE const_bst_iterator(pointer in_ptr) noexcept;

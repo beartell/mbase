@@ -864,7 +864,7 @@ MBASE_INLINE GENERIC list<T, Allocator>::serialize(safe_buffer& out_buffer) noex
 
 		for (iterator It = begin(); It != end(); It++)
 		{
-			sl.value = It.get()->data;
+			sl.value = &It.get()->data;
 			sl.serialize(tmpSafeBuffer);
 			if (tmpSafeBuffer.bfLength)
 			{

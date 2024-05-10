@@ -127,12 +127,59 @@ public:
     MBASE_ND("founded string not being used") MBASE_INLINE size_type find_last_not_of(value_type in_char, size_type in_pos = 0) const noexcept;
     MBASE_ND("founded string not being used") MBASE_INLINE character_sequence substr(size_type in_pos = 0, size_type in_count = npos) const;
     MBASE_ND("founded string not being used") MBASE_INLINE character_sequence subarray(size_type in_pos = 0, size_type in_count = npos) const;
-    MBASE_ND("string observation ignored") MBASE_INLINE bool starts_with(value_type in_char) const noexcept;
-    MBASE_ND("string observation ignored") MBASE_INLINE bool starts_with(MSTRING in_str) const;
-    MBASE_ND("string observation ignored") MBASE_INLINE bool ends_with(value_type in_char) const noexcept;
-    MBASE_ND("string observation ignored") MBASE_INLINE bool ends_with(MSTRING in_str) const;
-    MBASE_ND("string observation ignored") MBASE_INLINE bool contains(value_type in_char) const noexcept;
-    MBASE_ND("string observation ignored") MBASE_INLINE bool contains(MSTRING in_str) const;
+    MBASE_ND("string observation ignored") MBASE_INLINE bool starts_with(value_type in_char) const noexcept {
+        if(front() == in_char)
+        {
+            return true;
+        }
+
+        return false;
+    }
+    MBASE_ND("string observation ignored") MBASE_INLINE bool starts_with(MSTRING in_str) const 
+    {
+        size_type stringSize = this->length(in_str);
+        if(stringSize > mSize)
+        {
+            return false;
+        }
+
+        return this->is_equal(raw_data, in_str, stringSize);
+    }
+    MBASE_ND("string observation ignored") MBASE_INLINE bool ends_with(value_type in_char) const noexcept 
+    {
+        if(back() == in_char)
+        {
+            return true;
+        }
+        return false;
+    }
+    MBASE_ND("string observation ignored") MBASE_INLINE bool ends_with(MSTRING in_str) const 
+    {
+        // MAY NOT WORK FOR NOW
+        size_type stringSize = this->length(in_str);
+        if(stringSize > mSize)
+        {
+            return false;
+        }
+        pointer lookupLocation = raw_data + (mSize - stringSize);
+        return this->is_equal(lookupLocation, in_str, stringSize);
+    }
+    MBASE_ND("string observation ignored") MBASE_INLINE bool contains(value_type in_char) const noexcept 
+    {
+        if(this->find(in_char) != npos)
+        {
+            return true;
+        }
+        return false;
+    }
+    MBASE_ND("string observation ignored") MBASE_INLINE bool contains(MSTRING in_str) const 
+    {
+        if(this->find(in_str) != npos) 
+        {
+            return true;
+        }
+        return false;
+    }
     MBASE_ND("string observation ignored") MBASE_INLINE I32 compare(const character_sequence& in_src) const noexcept;
     MBASE_ND("string observation ignored") MBASE_INLINE I32 compare(size_type in_pos1, size_type in_pos2, const character_sequence& in_src) const;
     MBASE_ND("string observation ignored") MBASE_INLINE I32 compare(size_type in_pos1, size_type in_count1, const character_sequence& in_src, size_type in_pos2, size_type in_count2 = npos) const;
