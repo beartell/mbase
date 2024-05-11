@@ -4,6 +4,26 @@
 #include <mbase/common.h>
 
 MBASE_STD_BEGIN
+/*
+
+	--- CLASS INFORMATION ---
+Identification: S0C4-STR-UD-ST
+
+Name: non_copyable
+
+Parent: None
+
+Behaviour List:
+- Default Constructible
+- Move Constructible
+- Move Assignable
+- Stateless
+
+Description:
+By inheriting this class, it makes the derived
+class non copyable.
+
+*/
 
 class non_copyable {
 public:
@@ -12,12 +32,52 @@ public:
 	non_copyable& operator=(const non_copyable&) = delete;
 };
 
+/*
+
+	--- CLASS INFORMATION ---
+Identification: S0C5-STR-UD-ST
+
+Name: non_movable
+
+Parent: None
+
+Behaviour List:
+- Default Constructible
+- Copy Constructible
+- Copy Assignable
+- Stateless
+
+Description:
+By inheriting this class, it makes the derived
+class non movable.
+
+*/
+
 class non_movable {
 public:
 	non_movable() = default;
 	non_movable(non_movable&&) = delete;
 	non_movable& operator=(non_movable&&) = delete;
 };
+
+/*
+
+	--- CLASS INFORMATION ---
+Identification: S0C6-STR-UD-ST
+
+Name: non_copymovable
+
+Parent: None
+
+Behaviour List:
+- Default Constructible
+- Stateless
+
+Description:
+By inheriting this class, it makes the derived
+both non copyable and non movable.
+
+*/
 
 class non_copymovable {
 public:

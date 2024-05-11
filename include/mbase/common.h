@@ -95,64 +95,64 @@ if(MBASE_NULL_CHECK(in_arg))\
 
 MBASE_STD_BEGIN
 
-using I8		  = char;
-using I16		  = int16_t;
-using I32		  = int32_t;
-using I64		  = int64_t;
+using I8 = char;
+using I16 = int16_t;
+using I32 = int32_t;
+using I64 = int64_t;
 
 using C8 = char;
 using C16 = char16_t;
 using C32 = char32_t;
 using WIDE = wchar_t;
 
-using U8		  = uint8_t;
-using U16		  = uint16_t;
-using U32		  = uint32_t;
-using U64		  = uint64_t;
+using U8 = uint8_t;
+using U16 = uint16_t;
+using U32 = uint32_t;
+using U64 = uint64_t;
 
-using F32		  = float;
-using F64		  = double;
+using F32 = float;
+using F64 = double;
 
-using SIZE_T	  = U64;
-using PTRDIFF	  = I64;
+using SIZE_T = U64;
+using PTRDIFF = I64;
 
-using PTR8	      = I8*;
-using PTR16		  = I16*;
-using PTR32		  = I32*;
-using PTR64		  = I64*;
+using PTR8 = I8*;
+using PTR16 = I16*;
+using PTR32 = I32*;
+using PTR64 = I64*;
 
 using PTRC8 = C8*;
 using PTRC16 = C16*;
 using PTRC32 = C32*;
 
-using PTRU8		  = U8*;
-using PTRU16	  = U16*;
-using PTRU32	  = U32*;
-using PTRU64      = U64*;
+using PTRU8 = U8*;
+using PTRU16 = U16*;
+using PTRU32 = U32*;
+using PTRU64 = U64*;
 
-using PTRF32	  = F32*;
-using PTRF64	  = F64*;
+using PTRF32 = F32*;
+using PTRF64 = F64*;
 
-using IBYTE		  = I8;
-using UBYTE		  = U8;
+using IBYTE = I8;
+using UBYTE = U8;
 
-using IBYTEPTR    = PTR8;
-using UBYTEPTR    = PTRU8;
+using IBYTEPTR = PTR8;
+using UBYTEPTR = PTRU8;
 
 using IBYTEBUFFER = IBYTEPTR;
 using UBYTEBUFFER = UBYTEPTR;
 
-using MSTRING     = const I8*;
+using MSTRING = const I8*;
 using MSTRING16 = const C16*;
 using MSTRING32 = const C32*;
 using MWSTRING = const WIDE*;
 
-using GENERIC     = void;
-using PTRGENERIC  = GENERIC*;
+using GENERIC = void;
+using PTRGENERIC = GENERIC*;
 using CPTRGENERIC = const PTRGENERIC;
 
-using VBUFF       = PTRGENERIC;
-using PTRVBUFF    = PTRGENERIC*;
+using VBUFF = PTRGENERIC;
+using PTRVBUFF = PTRGENERIC*;
 
 MBASE_STD_END
 

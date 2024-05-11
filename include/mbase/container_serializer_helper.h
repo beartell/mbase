@@ -6,6 +6,24 @@
 
 MBASE_STD_BEGIN
 
+/*
+
+    --- CLASS INFORMATION ---
+Identification: S0C13-OBJ-NA-ST
+
+Name: serialize_helper
+
+Parent: None
+
+Behaviour List:
+- Serializable
+
+Description:
+
+
+*/
+
+
 template <typename SerializedType>
 struct serialize_helper {
 	using value_type = SerializedType;

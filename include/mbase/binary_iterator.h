@@ -5,14 +5,119 @@
 
 MBASE_STD_BEGIN
 
+/*
+
+    --- CLASS INFORMATION ---
+Identification: S0C7-OBJ-NA-ST
+
+Name: bst_iterator
+
+Parent: None
+
+Behaviour List:
+- Default Constructible
+- Copy Constructible
+- Swappable
+- Arithmetic Operable
+- Equality Comparable
+- Sign Comparable
+- Templated
+- Type Aware
+
+Description:
+This class provides an interface for iteration of binary search trees(bst).
+It's interface is mostly identical to the standard library iterators.
+For this reason, <algorithm> library can utilize this class.
+
+*/
+
 template<typename T, typename DataT>
 class bst_iterator;
+
+/*
+
+    --- CLASS INFORMATION ---
+Identification: S0C8-OBJ-NA-ST
+
+Name: const_bst_iterator
+
+Parent: None
+
+Behaviour List:
+- Default Constructible
+- Copy Constructible
+- Swappable
+- Arithmetic Operable
+- Equality Comparable
+- Sign Comparable
+- Templated
+- Type Aware
+
+Description:
+This class provides an interface for constant iteration of binary search trees(bst).
+It's interface is mostly identical to the standard library iterators.
+For this reason, <algorithm> library can utilize this class.
+
+*/
+
 
 template<typename T, typename DataT>
 class const_bst_iterator;
 
+/*
+
+    --- CLASS INFORMATION ---
+Identification: S0C9-OBJ-NA-ST
+
+Name: reverse_bst_iterator
+
+Parent: None
+
+Behaviour List:
+- Default Constructible
+- Copy Constructible
+- Swappable
+- Arithmetic Operable
+- Equality Comparable
+- Sign Comparable
+- Templated
+- Type Aware
+
+Description:
+This class provides an interface for reverse iteration of binary search trees(bst).
+It's interface is mostly identical to the standard library iterators.
+For this reason, <algorithm> library can utilize this class.
+
+*/
+
 template<typename T, typename DataT>
 class reverse_bst_iterator;
+
+/*
+
+    --- CLASS INFORMATION ---
+Identification: S0C10-OBJ-NA-ST
+
+Name: const_reverse_bst_iterator
+
+Parent: None
+
+Behaviour List:
+- Default Constructible
+- Copy Constructible
+- Swappable
+- Arithmetic Operable
+- Equality Comparable
+- Sign Comparable
+- Templated
+- Type Aware
+
+Description:
+This class provides an interface for constant reverse iteration of binary search trees(bst).
+It's interface is mostly identical to the standard library iterators.
+For this reason, <algorithm> library can utilize this class.
+
+*/
 
 template<typename T, typename DataT>
 class const_reverse_bst_iterator;

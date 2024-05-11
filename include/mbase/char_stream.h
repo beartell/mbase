@@ -6,7 +6,41 @@
 
 MBASE_STD_BEGIN
 
-// NOTE THAT THE CONSTRUCTOR DOES NOT COPY THE IBYTEBUFFER
+/*
+
+	--- CLASS INFORMATION ---
+Identification: S0C11-OBJ-DV-ST
+
+Name: char_stream
+
+Parent: NONE
+
+Behaviour List:
+- Default Constructible
+- Copy Constructible
+- Swappable
+- Arithmetic Operable
+- Equality Comparable
+- Sign Comparable
+
+Description:
+char_stream allows user to store the byte buffer inside an object
+and do pointer arithmetic operations in a managed way.
+
+User will use methods such as advance, reverse, putc, put_data etc. to do
+pointer arithmetic operations on the pointer.
+
+Along with pointer arithmetic, the char_stream also stores the state of the pointer such as,
+where the cursor is, and the size of the data our pointer points to. By storing these 
+informations, developer will be able to do pointer arithmetic operations in much more safer environment.
+
+Be aware that the char_stream class will not either copy, delete, or allocate new buffer. For this reason,
+developer must be sure that the buffer that is supplied to the char_stream class will remain valid.
+Otherwise, it will be undefined behavior.
+
+Both char_stream and deep_char_stream should be used with utmost care.
+
+*/
 
 class char_stream : protected mbase::type_sequence<IBYTE> {
 public:
@@ -60,6 +94,33 @@ protected:
 	difference_type streamCursor;
 	IBYTEBUFFER srcBuffer;
 };
+
+/*
+
+	--- CLASS INFORMATION ---
+Identification: S0C12-OBJ-UD-ST
+
+Name: deep_char_stream
+
+Parent: S0C11-OBJ-UD-ST
+
+Behaviour List:
+- Default Constructible
+- Copy Constructible
+- Move Constructible
+- Destructible
+- Arithmetic Operable
+- Equality Comparable
+- Sign Comparable
+
+Description:
+deep_char_stream is all identical with char_stream with a little exception that,
+the deep_char_stream will have it's own copy of the byte buffer and handle the allocation and destruction of it.
+
+Both char_stream and deep_char_stream should be used with utmost care.
+
+*/
+
 
 class deep_char_stream : public char_stream {
 public:

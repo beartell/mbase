@@ -1,3 +1,14 @@
+/*
+			_
+		   | |                     _     _
+  _ __ ___ | |__   __ _ ___  ___ _| |_ _| |_
+ | '_ ` _ \| '_ \ / _` / __|/ _ \_   _|_   _|
+ | | | | | | |_) | (_| \__ \  __/ |_|   |_|
+ |_| |_| |_|_.__/ \__,_|___/\___|
+
+*/
+
+
 #ifndef MBASE_ALLOCATOR_H
 #define MBASE_ALLOCATOR_H
 
@@ -5,8 +16,27 @@
 #include <type_traits>
 MBASE_STD_BEGIN
 
-// DEFAULT SPECIAL MEMBERS
-// NOTE: SINCE ALLOCATOR CLASS IS STATELESS, NO NEED FOR SPECIAL MEMBERS
+/* 
+
+	--- CLASS INFORMATION ---
+Identification: S0C1-UTL-NA-ST
+
+Name: allocator_simple
+
+Parent: None
+
+Behaviour List:
+- Allocate Aware
+- Templated
+- Stateless
+- Type Aware
+
+Description:
+It provides an allocation interface to the user,
+without the necessity of object instantiation.
+
+*/
+
 template <typename T = I8>
 class allocator_simple {
 public:
@@ -64,6 +94,32 @@ public:
 		delete [] src;
 	}
 };
+
+/*
+
+	--- CLASS INFORMATION ---
+Identification: S0C2-UTL-NA-ST
+
+Name: allocator
+
+Parent: None
+
+Behaviour List:
+- Allocate Aware
+- Templated
+- Stateless
+- Type Aware
+
+Description:
+It provides an allocation interface to the user
+identical to the std::allocator. Which means that for
+allocation routines to be used, it must be instantiated first.
+
+Most containers in the library use this class as an internal
+allocator for their data.
+
+*/
+
 
 template<typename T = I8>
 class allocator {

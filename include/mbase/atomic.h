@@ -6,6 +6,32 @@
 
 MBASE_STD_BEGIN
 
+/*
+
+	--- CLASS INFORMATION ---
+Identification: S0C3-OBJ-UD-NS
+
+Name: atomic
+
+Parent: None
+
+Behaviour List:
+- Default Constructible
+- Copy Constructible
+- Equality Comparable
+- Copy Assignable
+- Templated
+- Type Aware
+- Sign Comparable
+
+Description:
+This class is identical to std::atomic. 
+However, it will most possibly be deprecated and not be used in the future.
+Reason: It's because std::atomic seems sufficient
+
+*/
+
+
 template<typename T>
 class atomic {
 public:
