@@ -27,7 +27,7 @@ Behaviour List:
 Description:
 This class is identical to std::atomic. 
 However, it will most possibly be deprecated and not be used in the future.
-Reason: It's because std::atomic seems sufficient
+Reason: It's because std::atomic seems sufficient.
 
 */
 
@@ -37,33 +37,42 @@ class atomic {
 public:
 	using value_type = T;
 
+	/* ===== BUILDER METHODS BEGIN ===== */
 	atomic(const T& in_rhs) noexcept;
 	atomic() noexcept;
 	atomic(const atomic& in_rhs) noexcept;
+	/* ===== BUILDER METHODS END ===== */
 
+	/* ===== OPERATOR BUILDER METHODS BEGIN ===== */
 	atomic& operator=(const atomic& in_rhs) noexcept;
 	atomic& operator=(const T& in_rhs) noexcept;
+	/* ===== OPERATOR BUILDER METHODS END ===== */
 
+	/* ===== OBSERVATION METHODS BEGIN ===== */
+	MBASE_ND("ignoring the atomic variable") value_type get_val() noexcept;
+	/* ===== OBSERVATION METHODS END ===== */
+
+	/* ===== OPERATOR STATE-MODIFIER METHODS BEGIN ===== */
 	atomic& operator+=(const T& in_rhs) noexcept;
 	atomic& operator++() noexcept;
 	atomic& operator++(int) noexcept;
 	atomic& operator-=(const T& in_rhs) noexcept;
 	atomic& operator--() noexcept;
 	atomic& operator--(int) noexcept;
+	/* ===== OPERATOR STATE-MODIFIER METHODS END ===== */
 
-	MBASE_ND("ignoring the atomic variable") value_type get_val() noexcept;
-
+	/* ===== NON-MEMBER FUNCTIONS BEGIN ===== */
 	friend atomic operator+(const atomic& in_lhs, const T& in_rhs) noexcept {
 		value_type vt = InterlockedExchange64((LONG64*)&in_lhs.val, in_lhs.val);
 		vt += in_rhs;
 		return atomic(vt);
 	}
-
 	friend atomic operator-(const atomic& in_lhs, const T& in_rhs) noexcept {
 		value_type vt = InterlockedExchange64((LONG64*)&in_lhs.val, in_lhs.val);
 		vt -= in_rhs;
 		return atomic(vt);
 	}
+	/* ===== NON-MEMBER FUNCTIONS END ===== */
 
 private:
 	__declspec(align(sizeof(value_type))) volatile value_type val;
@@ -94,6 +103,11 @@ template<typename T>
 atomic<T>& atomic<T>::operator=(const T& in_rhs) noexcept {
 	InterlockedExchange64((LONG64*)&val, in_rhs);
 	return *this;
+}
+
+template<typename T>
+MBASE_ND("ignoring the atomic variable") T atomic<T>::get_val() noexcept {
+	return val;
 }
 
 template<typename T>
@@ -130,11 +144,6 @@ template<typename T>
 atomic<T>& atomic<T>::operator--(int) noexcept {
 	InterlockedDecrement64((LONG64*)&val);
 	return *this;
-}
-
-template<typename T>
-MBASE_ND("ignoring the atomic variable") T atomic<T>::get_val() noexcept {
-	return val;
 }
 
 using atomic_i8 = mbase::atomic<I8>;

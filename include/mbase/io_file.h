@@ -10,6 +10,32 @@
 
 MBASE_STD_BEGIN
 
+/*
+
+	--- CLASS INFORMATION ---
+Identification: S0C17-OBJ-UD-ST
+
+Name: io_file
+
+Parent: S0C16-SAB-UD-ST, S0C6-STR-NA-ST 
+
+Behaviour List:
+- Default Constructible
+- Destructible
+
+Description:
+io_file is a class that implements the io_base abstract class.
+It is providing file io operations through it's corresponding methods such as:
+open_file, close_file, get_file_size, get_file_name etc.
+
+The read/write operation which are through read_data/write_data methods are synchronized,
+blocking operations. Attempting to write to an invalid file will result in a OS dependant behavior.
+io_file does not make further control on read/write operations whether the file handle is valid or not.
+
+To achieve async io behavior, refer to the section Async I/O in MBASE.
+
+*/
+
 class io_file : public io_base, public non_copymovable {
 public:
 	enum class access_mode : U32 {

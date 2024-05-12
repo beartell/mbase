@@ -7,6 +7,33 @@
 
 MBASE_STD_BEGIN
 
+/*
+
+	--- CLASS INFORMATION ---
+Identification: S0C18-OBJ-UD-ST
+
+Name: io_tcp_client
+
+Parent: S0C16-SAB-UD-ST, S0C6-STR-NA-ST
+
+Behaviour List:
+- Default Constructible
+- Destructible
+
+Description:
+io_tcp_client is a class that implements the io_base abstract class.
+It is providing tcp client operations through it's corresponding methods such as:
+connect_target, disconnect, get_remote_ipv4 etc.
+
+The read/write operation which are through read_data/write_data methods are synchronized,
+blocking operations. Attempting to write to an invalid socket handle will result in a OS dependant behavior.
+io_tcp_client does not make further control on read/write operations whether the socket handle is valid or not.
+
+To achieve async io behavior, refer to the section Async I/O in MBASE.
+
+*/
+
+
 class io_tcp_client : public io_base, public non_copymovable {
 public:
 	io_tcp_client() noexcept : rawHandle(INVALID_SOCKET) {

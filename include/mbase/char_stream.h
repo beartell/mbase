@@ -47,12 +47,13 @@ public:
 	using size_type = SIZE_T;
 	using difference_type = PTRDIFF;
 
+	/* ===== BUILDER METHODS BEGIN ===== */
 	MBASE_INLINE char_stream() noexcept;
 	MBASE_INLINE MBASE_STD_EXPLICIT char_stream(IBYTEBUFFER in_src) noexcept;
 	MBASE_INLINE MBASE_STD_EXPLICIT char_stream(IBYTEBUFFER in_src, size_type in_length) noexcept;
+	/* ===== BUILDER METHODS END ===== */
 
-	MBASE_INLINE IBYTEBUFFER operator*() noexcept;
-
+	/* ===== OBSERVATION METHODS BEGIN ===== */
 	MBASE_ND("first byte being ignored") MBASE_INLINE_EXPR IBYTE front() const noexcept;
 	MBASE_ND("last byte being ignored") MBASE_INLINE_EXPR IBYTE back() const noexcept;
 	MBASE_ND("stream observation ignored") MBASE_INLINE_EXPR size_type buffer_length() const noexcept;
@@ -61,7 +62,13 @@ public:
 	MBASE_ND("stream observation ignored") MBASE_INLINE_EXPR difference_type get_pos() const noexcept;
 	MBASE_ND("stream observation ignored") MBASE_INLINE_EXPR IBYTE getc() const noexcept;
 	MBASE_ND("stream data ignored") MBASE_INLINE_EXPR IBYTEBUFFER data() const noexcept;
+	/* ===== OBSERVATION METHODS END ===== */
 
+	/* ===== OPERATOR OBSERVATION METHODS BEGIN ===== */
+	MBASE_INLINE IBYTEBUFFER operator*() noexcept;
+	/* ===== OPERATOR OBSERVATION METHODS END ===== */
+
+	/* ===== STATE-MODIFIER METHODS BEGIN ===== */
 	MBASE_INLINE_EXPR GENERIC advance() noexcept;
 	MBASE_INLINE_EXPR GENERIC advance(difference_type in_length) noexcept;
 	MBASE_INLINE_EXPR GENERIC reverse() noexcept;
@@ -73,14 +80,18 @@ public:
 	MBASE_INLINE_EXPR GENERIC set_cursor_pos(difference_type in_pos) noexcept;
 	MBASE_INLINE_EXPR GENERIC set_cursor_front() noexcept;
 	MBASE_INLINE_EXPR GENERIC set_cursor_end() noexcept;
+	/* ===== STATE-MODIFIER METHODS END ===== */
 
+	/* ===== OPERATOR STATE-MODIFIER METHODS BEGIN ===== */
 	MBASE_INLINE IBYTEBUFFER operator+=(difference_type in_rhs) noexcept;
 	MBASE_INLINE IBYTEBUFFER operator++() noexcept;
 	MBASE_INLINE IBYTEBUFFER operator++(I32) noexcept;
 	MBASE_INLINE IBYTEBUFFER operator-=(difference_type in_rhs) noexcept;
 	MBASE_INLINE IBYTEBUFFER operator--() noexcept;
 	MBASE_INLINE IBYTEBUFFER operator--(I32) noexcept;
+	/* ===== OPERATOR STATE-MODIFIER METHODS END ===== */
 
+	/* ===== OPERATOR NON-MEMBER FUNCTIONS BEGIN ===== */
 	friend bool operator==(const char_stream& in_lhs, const char_stream& in_rhs) noexcept {
 		return mbase::type_sequence<IBYTE>::is_equal(in_lhs.srcBuffer, in_rhs.srcBuffer, in_lhs.bufferLength);
 	}
@@ -88,6 +99,7 @@ public:
 	friend bool operator!=(const char_stream& in_lhs, const char_stream& in_rhs) noexcept {
 		return !mbase::type_sequence<IBYTE>::is_equal(in_lhs.srcBuffer, in_rhs.srcBuffer, in_lhs.bufferLength);
 	}
+	/* ===== OPERATOR NON-MEMBER FUNCTIONS END ===== */
 
 protected:
 	size_type bufferLength;
@@ -124,15 +136,19 @@ Both char_stream and deep_char_stream should be used with utmost care.
 
 class deep_char_stream : public char_stream {
 public:
+	/* ===== BUILDER METHODS BEGIN ===== */
 	MBASE_INLINE MBASE_EXPLICIT deep_char_stream(IBYTEBUFFER in_src) noexcept;
 	MBASE_INLINE MBASE_EXPLICIT deep_char_stream(IBYTEBUFFER in_src, size_type in_length) noexcept;
 	MBASE_INLINE MBASE_EXPLICIT deep_char_stream(size_type in_length);
 	MBASE_INLINE deep_char_stream(const deep_char_stream& in_rhs) noexcept;
 	MBASE_INLINE deep_char_stream(deep_char_stream&& in_rhs) noexcept;
 	MBASE_INLINE ~deep_char_stream();
+	/* ===== BUILDER METHODS END ===== */
 
+	/* ===== OPERATOR BUILDER METHODS BEGIN ===== */
 	MBASE_INLINE deep_char_stream& operator=(const deep_char_stream& in_rhs) noexcept;
 	MBASE_INLINE deep_char_stream& operator=(deep_char_stream&& in_rhs) noexcept;
+	/* ===== OPERATOR BUILDER METHODS END ===== */
 };
 
 MBASE_INLINE char_stream::char_stream() noexcept : bufferLength(0), streamCursor(0), srcBuffer(nullptr)

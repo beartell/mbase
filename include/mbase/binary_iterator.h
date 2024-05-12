@@ -133,22 +133,30 @@ public:
     using difference_type = PTRDIFF;
     using iterator_category = std::bidirectional_iterator_tag;
 
+    /* ===== BUILDER METHODS BEGIN ===== */
     MBASE_INLINE bst_iterator(pointer in_ptr) noexcept;
     MBASE_INLINE bst_iterator(pointer in_ptr, bool in_noTraverse) noexcept;
     MBASE_INLINE bst_iterator(const bst_iterator& in_rhs) noexcept;
+    /* ===== BUILDER METHODS END ===== */
 
+    /* ===== OBSERVATION METHODS BEGIN ===== */
     MBASE_ND("internal data that is access through the iterator should be used") MBASE_INLINE pointer get() const noexcept;
     MBASE_ND("internal data that is access through the iterator should be used") MBASE_INLINE DataT& operator*() const noexcept;
     MBASE_INLINE DataT* operator->() const noexcept;
+    /* ===== OBSERVATION METHODS END ===== */
 
+    /* ===== OPERATOR STATE-MODIFIER METHODS BEGIN ===== */
     MBASE_INLINE bst_iterator& operator++() noexcept;
     MBASE_INLINE bst_iterator& operator++(I32) noexcept;
     MBASE_INLINE bst_iterator& operator--() noexcept;
     MBASE_INLINE bst_iterator& operator--(I32) noexcept;
+    /* ===== OPERATOR STATE-MODIFIER METHODS END ===== */
 
+    /* ===== OPERATOR NON-MODIFIER METHODS BEGIN ===== */
     MBASE_ND("ignoring equality comparison") MBASE_INLINE bool operator==(const bst_iterator& in_rhs) const noexcept;
     MBASE_ND("ignoring equality comparison") MBASE_INLINE bool operator!=(const bst_iterator& in_rhs) const noexcept;
-    
+    /* ===== OPERATOR NON-MODIFIER METHODS END ===== */
+
     pointer _ptr;
 };
 
@@ -164,21 +172,29 @@ public:
     using dt = DataT;
     using iterator_category = std::bidirectional_iterator_tag;
 
+    /* ===== BUILDER METHODS BEGIN ===== */
     MBASE_INLINE const_bst_iterator(pointer in_ptr) noexcept;
     MBASE_INLINE const_bst_iterator(const const_bst_iterator& in_rhs) noexcept;
     MBASE_INLINE const_bst_iterator(const bst_iterator<T, DataT>& in_rhs) noexcept;
+    /* ===== BUILDER METHODS END ===== */
 
+    /* ===== OBSERVATION METHODS BEGIN ===== */
     MBASE_ND("internal data that is access through the iterator should be used") MBASE_INLINE const_pointer get() const noexcept;
     MBASE_ND("internal data that is access through the iterator should be used") MBASE_INLINE const DataT& operator*() const noexcept;
     MBASE_INLINE const DataT* operator->() const noexcept;
+    /* ===== OBSERVATION METHODS END ===== */
 
+    /* ===== OPERATOR STATE-MODIFIER METHODS BEGIN ===== */
     MBASE_INLINE const_bst_iterator& operator++() noexcept;
     MBASE_INLINE const_bst_iterator& operator++(I32) noexcept;
     MBASE_INLINE const_bst_iterator& operator--() noexcept;
     MBASE_INLINE const_bst_iterator& operator--(I32) noexcept;
+    /* ===== OPERATOR STATE-MODIFIER METHODS END ===== */
 
+    /* ===== OPERATOR NON-MODIFIER METHODS BEGIN ===== */
     MBASE_ND("ignoring equality comparison") MBASE_INLINE bool operator==(const const_bst_iterator& in_rhs) const noexcept;
     MBASE_ND("ignoring equality comparison") MBASE_INLINE bool operator!=(const const_bst_iterator& in_rhs) const noexcept;
+    /* ===== OPERATOR NON-MODIFIER METHODS END ===== */
 
     pointer _ptr;
 };
@@ -194,20 +210,28 @@ public:
     using difference_type = PTRDIFF;
     using iterator_category = std::bidirectional_iterator_tag;
 
+    /* ===== BUILDER METHODS BEGIN ===== */
     MBASE_INLINE reverse_bst_iterator(pointer in_ptr) noexcept;
     MBASE_INLINE reverse_bst_iterator(const reverse_bst_iterator& in_rhs) noexcept;
+    /* ===== BUILDER METHODS END ===== */
 
+    /* ===== OBSERVATION METHODS BEGIN ===== */
     MBASE_ND("internal data that is access through the iterator should be used") MBASE_INLINE pointer get() const noexcept;
     MBASE_ND("internal data that is access through the iterator should be used") MBASE_INLINE DataT& operator*() const noexcept;
     MBASE_INLINE DataT* operator->() const noexcept;
+    /* ===== OBSERVATION METHODS END ===== */
 
+    /* ===== OPERATOR STATE-MODIFIER METHODS BEGIN ===== */
     MBASE_INLINE reverse_bst_iterator& operator++() noexcept;
     MBASE_INLINE reverse_bst_iterator& operator++(I32) noexcept;
     MBASE_INLINE reverse_bst_iterator& operator--() noexcept;
     MBASE_INLINE reverse_bst_iterator& operator--(I32) noexcept;
+    /* ===== OPERATOR STATE-MODIFIER METHODS END ===== */
 
+    /* ===== OPERATOR NON-MODIFIER METHODS BEGIN ===== */
     MBASE_ND("ignoring equality comparison") MBASE_INLINE bool operator==(const reverse_bst_iterator& in_rhs) const noexcept;
     MBASE_ND("ignoring equality comparison") MBASE_INLINE bool operator!=(const reverse_bst_iterator& in_rhs) const noexcept;
+    /* ===== OPERATOR NON-MODIFIER METHODS END ===== */
 
     pointer _ptr;
 };
@@ -223,21 +247,29 @@ public:
     using difference_type = PTRDIFF;
     using iterator_category = std::bidirectional_iterator_tag;
 
+    /* ===== BUILDER METHODS BEGIN ===== */
     MBASE_INLINE const_reverse_bst_iterator(pointer in_ptr) noexcept;
     MBASE_INLINE const_reverse_bst_iterator(const const_reverse_bst_iterator& in_rhs) noexcept;
     MBASE_INLINE const_reverse_bst_iterator(const reverse_bst_iterator<T, DataT>& in_rhs) noexcept;
+    /* ===== BUILDER METHODS END ===== */
 
+    /* ===== OBSERVATION METHODS BEGIN ===== */
     MBASE_ND("internal data that is access through the iterator should be used") MBASE_INLINE const_pointer get() const noexcept;
     MBASE_ND("internal data that is access through the iterator should be used") MBASE_INLINE const DataT& operator*() const noexcept;
     MBASE_INLINE const DataT* operator->() const noexcept;
+    /* ===== OBSERVATION METHODS END ===== */
 
+    /* ===== OPERATOR STATE-MODIFIER METHODS BEGIN ===== */
     MBASE_INLINE const_reverse_bst_iterator& operator++() noexcept;
     MBASE_INLINE const_reverse_bst_iterator& operator++(I32) noexcept;
     MBASE_INLINE const_reverse_bst_iterator& operator--() noexcept;
     MBASE_INLINE const_reverse_bst_iterator& operator--(I32) noexcept;
+    /* ===== OPERATOR STATE-MODIFIER METHODS END ===== */
 
+    /* ===== OPERATOR NON-MODIFIER METHODS BEGIN ===== */
     MBASE_ND("ignoring equality comparison") MBASE_INLINE bool operator==(const const_reverse_bst_iterator& in_rhs) const noexcept;
     MBASE_ND("ignoring equality comparison") MBASE_INLINE bool operator!=(const const_reverse_bst_iterator& in_rhs) const noexcept;
+    /* ===== OPERATOR NON-MODIFIER METHODS END ===== */
 
     pointer _ptr;
 };

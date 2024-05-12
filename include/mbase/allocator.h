@@ -1,14 +1,3 @@
-/*
-			_
-		   | |                     _     _
-  _ __ ___ | |__   __ _ ___  ___ _| |_ _| |_
- | '_ ` _ \| '_ \ / _` / __|/ _ \_   _|_   _|
- | | | | | | |_) | (_| \__ \  __/ |_|   |_|
- |_| |_| |_|_.__/ \__,_|___/\___|
-
-*/
-
-
 #ifndef MBASE_ALLOCATOR_H
 #define MBASE_ALLOCATOR_H
 
@@ -48,6 +37,7 @@ public:
 	using difference_type = PTRDIFF;
 	using size_type = SIZE_T;
 
+	/* ===== NON-MEMBER FUNCTIONS BEGIN ===== */
 	MBASE_ND("dynamically allocated memory unused") static MBASE_INLINE_EXPR T* allocate(SIZE_T in_amount) noexcept {
 		if (in_amount <= 0)
 		{
@@ -93,6 +83,7 @@ public:
 
 		delete [] src;
 	}
+	/* ===== NON-MEMBER FUNCTIONS END ===== */
 };
 
 /*
@@ -132,14 +123,15 @@ public:
 	using difference_type = PTRDIFF;
 	using size_type = SIZE_T;
 	
+	/* ===== NON-MODIFIER METHODS BEGIN ===== */
 	MBASE_ND("dynamically allocated memory unused") MBASE_INLINE_EXPR T* allocate(SIZE_T in_amount) const;
 	MBASE_ND("dynamically allocated memory unused") MBASE_INLINE_EXPR T* allocate(SIZE_T in_amount, bool in_zero_memory) const;
 	MBASE_ND("dynamically allocated memory unused") MBASE_INLINE_EXPR T* allocate(SIZE_T in_amount, const T* base) const;
 	MBASE_INLINE_EXPR GENERIC deallocate(T* src, SIZE_T in_amount) const;
-
 	template< class... Args >
 	MBASE_INLINE_EXPR GENERIC construct(T* src, Args&& ... args) const;
 	MBASE_INLINE_EXPR GENERIC destroy(T* src) const;
+	/* ===== NON-MODIFIER METHODS END ===== */
 };
 
 template<typename T>

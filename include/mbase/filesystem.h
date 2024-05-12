@@ -29,14 +29,7 @@ MBASE_ND("current path unused") MBASE_INLINE mbase::string get_current_path() no
 MBASE_ND("temp file unused") MBASE_INLINE mbase::string get_temp_file(const mbase::string_view& in_prefix) noexcept;
 MBASE_INLINE GENERIC get_directory(const mbase::string_view& in_path, mbase::vector<FS_FILE_INFORMATION>& out_files) noexcept;
 
-
-
-
-
-
-
-
-
+/* IMPLEMENTATIONS */
 
 MBASE_INLINE FS_ERROR create_directory(const mbase::string_view& in_path) noexcept {
 	if (!CreateDirectoryA(in_path.c_str(), nullptr))

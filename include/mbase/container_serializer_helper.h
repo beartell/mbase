@@ -31,14 +31,14 @@ struct serialize_helper {
 
 	pointer value;
 
+    /* ===== NON-MODIFIER METHODS BEGIN ===== */
 	MBASE_INLINE GENERIC serialize(safe_buffer& out_buffer) noexcept {
-		// FOR GENERIC TYPES
 		value->serialize(out_buffer);
 	}
-
     MBASE_INLINE value_type deserialize(IBYTEBUFFER in_src, SIZE_T in_length) noexcept {
         return value->deserialize(in_src, in_length);
     }
+    /* ===== NON-MODIFIER METHODS END ===== */
 };
 
 template<>

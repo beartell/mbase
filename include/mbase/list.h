@@ -10,23 +10,51 @@
 #include <initializer_list>
 #include <type_traits>
 
-// TODO: Reconsider list_node structure's destructor and constructor
-// TODO: Consider implementing a list_pool
-// TODO: Do not forget to implement copy constructor
-
 MBASE_STD_BEGIN
 
-/* CONTAINER REQUIREMENTS */
-// default constructible
-// copy constructible
-// equality constructible
-// swappable
-// serializable
+/*
 
-/* TYPE REQUIREMENTS */
-// copy insertable
-// equality comparable
-// destructible
+	--- CLASS INFORMATION ---
+Identification: S0C19-OBJ-UD-ST
+
+Name: list
+
+Parent: None
+
+Behaviour List:
+- Default Constructible
+- Move Constructible
+- Copy Constructible
+- Destructible
+- Copy Assignable
+- Move Assignable
+- Arithmetic Operable
+- Templated
+- Type Aware
+- Iterable
+- Swappable
+- Equality Comparable
+- Sign Comparable
+- Serializable
+
+Description:
+list is a generic sequential container that can hold any stateful data. 
+Here, list is implemented as a doubly-linked list and its subject to the time complexity of
+the list as we see in common data structures. The time complexities of corresponding operations
+are listed below:
+
+=== Access: O(N) ===
+=== Search: O(N) ===
+=== Insert: O(1) ===
+=== Delete: O(1) ===
+
+For it's internal allocation/deallocation of data, list uses the supplied generic Allocator interface.
+For Allocator to be used by the container, the provided Allocator interface must be compatible with the named requirement "Allocator" that is 
+defined in the standard specification.
+
+// SELF-NOTE: TELL USERS ABOUT HOW THE LIST IS COMPATIBLE WITH STD //
+
+*/
 
 template<typename T, typename Allocator = mbase::allocator<T>>
 class list {
@@ -63,12 +91,12 @@ public:
 	using move_reference = T&&;
 	using size_type = SIZE_T;
 	using difference_type = PTRDIFF;
-
 	using iterator = typename bi_list_iterator<node_type, value_type>;
 	using const_iterator = typename const_bi_list_iterator<node_type, value_type>;
 	using reverse_iterator = typename reverse_bi_list_iterator<node_type, value_type>;
 	using const_reverse_iterator = typename const_reverse_bi_list_iterator<node_type, value_type>;
 
+	/* ===== BUILDER METHODS BEGIN ===== */
 	MBASE_INLINE list() noexcept;
 	MBASE_INLINE MBASE_EXPLICIT list(const Allocator& in_alloc);
 	list(size_type in_count, const T& in_value, const Allocator& in_alloc = Allocator());
@@ -95,11 +123,15 @@ public:
 	list(list&& in_rhs, const Allocator& in_alloc);
 	MBASE_INLINE list(std::initializer_list<value_type> in_list) noexcept;
 	MBASE_INLINE ~list() noexcept;
+	/* ===== BUILDER METHODS END ===== */
 
+	/* ===== OPERATOR BUILDER METHODS BEGIN ===== */
 	list& operator=(const list& in_rhs);
 	list& operator=(list&& in_rhs) noexcept;
 	list& operator=(std::initializer_list<value_type> in_vals);
+	/* ===== OPERATOR BUILDER METHODS END ===== */
 
+	/* ===== ITERATOR METHODS BEGIN ===== */
 	MBASE_ND("iterator being ignored") MBASE_INLINE_EXPR iterator begin() noexcept;
 	MBASE_ND("iterator being ignored") MBASE_INLINE_EXPR iterator end() noexcept;
 	MBASE_ND("const iterator being ignored") MBASE_INLINE_EXPR const_iterator cbegin() const noexcept;
@@ -108,7 +140,9 @@ public:
 	MBASE_ND("reverse iterator being ignored") MBASE_INLINE_EXPR reverse_iterator rend() const noexcept;
 	MBASE_ND("const reverse iterator being ignored") MBASE_INLINE const_reverse_iterator crbegin() const noexcept;
 	MBASE_ND("const reverse iterator being ignored") MBASE_INLINE_EXPR const_reverse_iterator crend() const noexcept;
+	/* ===== ITERATOR METHODS END ===== */
 
+	/* ===== OBSERVATION METHODS BEGIN ===== */
 	MBASE_ND("first element being ignored") MBASE_INLINE_EXPR reference front() noexcept;
 	MBASE_ND("first element being ignored") MBASE_INLINE_EXPR const_reference front() const noexcept;
 	MBASE_ND("last element being ignored") MBASE_INLINE_EXPR reference back() noexcept;
@@ -117,7 +151,9 @@ public:
 	MBASE_ND("container observation ignored") MBASE_INLINE_EXPR size_type size() const noexcept;
 	MBASE_ND("ignoring max size") MBASE_INLINE size_type max_size() const noexcept;
 	MBASE_ND("ignoring allocator") MBASE_INLINE_EXPR Allocator get_allocator() const noexcept;
+	/* ===== OBSERVATION METHODS END ===== */
 
+	/* ===== STATE-MODIFIER METHODS BEGIN ===== */
 	MBASE_INLINE GENERIC assign(size_type in_count, const_reference in_value);
 	template<typename InputIt, typename = std::enable_if_t<std::is_constructible_v<T, typename std::iterator_traits<InputIt>::value_type>>>
 	MBASE_INLINE GENERIC assign(InputIt in_begin, InputIt in_end) {
@@ -201,8 +237,15 @@ public:
 	MBASE_INLINE GENERIC unique(); // IMPLEMENT
 	template<typename BinaryPredicate>
 	MBASE_INLINE GENERIC unique(BinaryPredicate in_p); // IMPLEMENT
+	/* ===== STATE-MODIFIER METHODS BEGIN ===== */
+
+	/* ===== NON-MODIFIER METHODS BEGIN ===== */
 	MBASE_INLINE GENERIC serialize(safe_buffer& out_buffer) noexcept;
+	/* ===== NON-MODIFIER METHODS END ===== */
+
+	/* ===== NON-MEMBER FUNCTIONS BEGIN ===== */
 	MBASE_INLINE static mbase::list<T, Allocator> deserialize(IBYTEBUFFER in_src, SIZE_T in_length) noexcept;
+	/* ===== NON-MEMBER FUNCTIONS END ===== */
 };
 
 template<typename T, typename Allocator>

@@ -10,27 +10,64 @@ MBASE_STD_BEGIN
 
 #define MBASE_DEFAULT_INDEX_ASSIGNER_CAPACITY 512
 
+/*
+
+	--- CLASS INFORMATION ---
+Identification: S0C14-OBJ-UD-ST
+
+Name: index_assigner
+
+Parent: None
+
+Behaviour List:
+- Default Constructible
+- Copy Constructible
+- Move Constructible
+- Destructible
+- Copy Assignable
+- Move Assignable
+- Templated
+- Serializable
+
+Description:
+index_assigner is used for indexing the external sequential data types.
+Everytime user gets an index using get_index, the index counter is incremented by one.
+
+Whenever an index being returned using release_index, index_assigner will hold a stack of
+inactive indexes and if there is any inactive index, get_index will return the recent inactive
+index to the user, which will make the index reusable.
+
+*/
+
+
 template<typename IndexType = SIZE_T, typename InactiveIndexContainer = mbase::vector<IndexType>>
 class index_assigner {
 public:
 	using _InactiveIndexContainer = mbase::stack<IndexType, InactiveIndexContainer>;
 	using size_type = SIZE_T;
 
+	/* ===== BUILDER METHODS BEGIN ===== */
 	MBASE_INLINE index_assigner() noexcept;
 	MBASE_INLINE MBASE_EXPLICIT index_assigner(size_type in_capacity) noexcept;
-
 	MBASE_INLINE index_assigner(const index_assigner& in_rhs) noexcept;
 	MBASE_INLINE index_assigner(index_assigner&& in_rhs) noexcept;
+	/* ===== BUILDER METHODS END ===== */
 
+	/* ===== OPERATOR BUILDER METHODS BEGIN ===== */
 	index_assigner& operator=(const index_assigner& in_rhs) noexcept;
 	index_assigner& operator=(index_assigner&& in_rhs) noexcept;
+	/* ===== OPERATOR BUILDER METHODS END ===== */
 
+	/* ===== OBSERVATION METHODS BEGIN ===== */
+	MBASE_ND("ignoring the container observation") MBASE_INLINE size_type iic_size() const noexcept;
+	MBASE_ND("ignoring the container observation") MBASE_INLINE size_type capacity() const noexcept;
+	/* ===== OBSERVATION METHODS END ===== */
+
+	/* ===== STATE-MODIFIER METHODS BEGIN ===== */
 	MBASE_ND("ignoring the returned index") MBASE_INLINE IndexType peek_index() noexcept;
 	MBASE_ND("ignoring the returned index") MBASE_INLINE IndexType get_index() noexcept;
 	MBASE_INLINE GENERIC release_index(const IndexType& in_index) noexcept;
-
-	MBASE_ND("ignoring the container observation") MBASE_INLINE size_type iic_size() const noexcept;
-	MBASE_ND("ignoring the container observation") MBASE_INLINE size_type capacity() const noexcept;
+	/* ===== STATE-MODIFIER METHODS END ===== */
 
 	//MBASE_INLINE GENERIC serialize(safe_buffer* out_buffer);
 	//MBASE_INLINE static index_assigner deserialize(IBYTEBUFFER in_buffer, SIZE_T in_length) noexcept;
@@ -82,6 +119,18 @@ MBASE_INLINE index_assigner<IndexType, InactiveIndexContainer>& index_assigner<I
 }
 
 template<typename IndexType, typename InactiveIndexContainer>
+MBASE_ND("ignoring the container observation") MBASE_INLINE SIZE_T index_assigner<IndexType, InactiveIndexContainer>::iic_size() const noexcept
+{
+	return IIH.size();
+}
+
+template<typename IndexType, typename InactiveIndexContainer>
+MBASE_ND("ignoring the container observation") MBASE_INLINE SIZE_T index_assigner<IndexType, InactiveIndexContainer>::capacity() const noexcept
+{
+	return mCapacity;
+}
+
+template<typename IndexType, typename InactiveIndexContainer>
 MBASE_ND("ignoring the returned index") MBASE_INLINE IndexType index_assigner<IndexType, InactiveIndexContainer>::peek_index() noexcept
 {
 	IndexType iT;
@@ -118,19 +167,6 @@ MBASE_INLINE GENERIC index_assigner<IndexType, InactiveIndexContainer>::release_
 {
 	IIH.push(in_index);
 }
-
-template<typename IndexType, typename InactiveIndexContainer>
-MBASE_ND("ignoring the container observation") MBASE_INLINE SIZE_T index_assigner<IndexType, InactiveIndexContainer>::iic_size() const noexcept
-{
-	return IIH.size();
-}
-
-template<typename IndexType, typename InactiveIndexContainer>
-MBASE_ND("ignoring the container observation") MBASE_INLINE SIZE_T index_assigner<IndexType, InactiveIndexContainer>::capacity() const noexcept
-{
-	return mCapacity;
-}
-
 
 MBASE_STD_END
 
