@@ -178,6 +178,10 @@ public:
 
     bool operator==(const character_sequence& in_rhs) noexcept;
     bool operator!=(const character_sequence& in_rhs) noexcept;
+    bool operator<(const character_sequence& in_rhs) noexcept;
+    bool operator<=(const character_sequence& in_rhs) noexcept;
+    bool operator>(const character_sequence& in_rhs) noexcept;
+    bool operator>=(const character_sequence& in_rhs) noexcept;
 
     MBASE_INLINE_EXPR character_sequence& assign(size_type in_count, value_type in_ch);
     MBASE_INLINE_EXPR character_sequence& assign(const character_sequence& in_str);
@@ -408,28 +412,15 @@ public:
         return std::move(character_sequence(1, in_lhs) + in_rhs);
     }
 
-    MBASE_INLINE_EXPR friend bool operator==(const character_sequence& in_lhs, const character_sequence& in_rhs) noexcept;
-    MBASE_INLINE_EXPR friend bool operator!=(const character_sequence& in_lhs, const character_sequence& in_rhs) noexcept;
-    MBASE_INLINE_EXPR friend bool operator<(const character_sequence& in_lhs, const character_sequence& in_rhs) noexcept;
-    MBASE_INLINE_EXPR friend bool operator<=(const character_sequence& in_lhs, const character_sequence& in_rhs) noexcept;
-    MBASE_INLINE_EXPR friend bool operator>(const character_sequence& in_lhs, const character_sequence& in_rhs) noexcept;
-    MBASE_INLINE_EXPR friend bool operator>=(const character_sequence& in_lhs, const character_sequence& in_rhs) noexcept;
-    MBASE_INLINE_EXPR friend bool operator==(const character_sequence& in_lhs, const_pointer in_rhs) noexcept;
-    MBASE_INLINE_EXPR friend bool operator!=(const character_sequence& in_lhs, const_pointer in_rhs) noexcept;
-    MBASE_INLINE_EXPR friend bool operator<(const character_sequence& in_lhs, const_pointer in_rhs) noexcept;
-    MBASE_INLINE_EXPR friend bool operator<=(const character_sequence& in_lhs, const_pointer in_rhs) noexcept;
-    MBASE_INLINE_EXPR friend bool operator>(const character_sequence& in_lhs, const_pointer in_rhs) noexcept; // IMPL
-    MBASE_INLINE_EXPR friend bool operator>=(const character_sequence& in_lhs, const_pointer in_rhs) noexcept; // IMPL
+    MBASE_INLINE_EXPR friend bool operator==(const character_sequence& in_lhs, const character_sequence& in_rhs) noexcept { return in_lhs == in_rhs; }
+    MBASE_INLINE_EXPR friend bool operator!=(const character_sequence& in_lhs, const character_sequence& in_rhs) noexcept { return in_lhs != in_rhs; }
+    MBASE_INLINE_EXPR friend bool operator<(const character_sequence& in_lhs, const character_sequence& in_rhs) noexcept { return in_lhs < in_rhs; }
+    MBASE_INLINE_EXPR friend bool operator<=(const character_sequence& in_lhs, const character_sequence& in_rhs) noexcept { return in_lhs <= in_rhs; }
+    MBASE_INLINE_EXPR friend bool operator>(const character_sequence& in_lhs, const character_sequence& in_rhs) noexcept { return in_lhs > in_rhs; }
+    MBASE_INLINE_EXPR friend bool operator>=(const character_sequence& in_lhs, const character_sequence& in_rhs) noexcept { return in_lhs >= in_rhs; }
 #if MBASE_CPP_VERSION >= 20
     MBASE_INLINE_EXPR friend bool operator<=>(const character_sequence& in_lhs, const character_sequence& in_rhs) noexcept; // IMPL
-    MBASE_INLINE_EXPR friend bool operator<=>(const character_sequence& in_lhs, const_pointer in_rhs) noexcept; // IMPL
 #endif // MBASE_CPP_VERSION >= 20
-    MBASE_INLINE_EXPR friend bool operator==(const_pointer in_lhs, const character_sequence& in_rhs) noexcept; // IMPL
-    MBASE_INLINE_EXPR friend bool operator!=(const_pointer in_lhs, const character_sequence& in_rhs) noexcept; // IMPL
-    MBASE_INLINE_EXPR friend bool operator<(const_pointer in_lhs, const character_sequence& in_rhs) noexcept; // IMPL
-    MBASE_INLINE_EXPR friend bool operator<=(const_pointer in_lhs, const character_sequence& in_rhs) noexcept; // IMPL
-    MBASE_INLINE_EXPR friend bool operator>(const_pointer in_lhs, const character_sequence& in_rhs) noexcept; // IMPL
-    MBASE_INLINE_EXPR friend bool operator>=(const_pointer in_lhs, const character_sequence& in_rhs) noexcept; // IMPL
 
     friend std::ostream& operator<<(std::ostream& os, const character_sequence& in_rhs) noexcept {
         if (!in_rhs.raw_data)
@@ -493,7 +484,7 @@ private:
         // SELF-NOTE: MAY NOT BE PERFORMANT
         // SELF-NOTE: CONSIDER THE IMPLEMENTATION AGAIN
         size_type base_capacity = 8;
-        while(base_capacity < in_size)
+        while(base_capacity <= in_size)
         {
             base_capacity *= 2;
         }
@@ -1309,6 +1300,30 @@ template<typename SeqType, typename SeqBase, typename Allocator>
 bool character_sequence<SeqType, SeqBase, Allocator>::operator!=(const character_sequence& in_rhs) noexcept 
 {
     return !this->is_equal(raw_data, in_rhs.raw_data);
+}
+
+template<typename SeqType, typename SeqBase, typename Allocator>
+bool character_sequence<SeqType, SeqBase, Allocator>::operator<(const character_sequence& in_rhs) noexcept
+{
+    return std::lexicographical_compare(this->cbegin(), this->cend(), in_rhs.cbegin(), in_rhs.cend());
+}
+
+template<typename SeqType, typename SeqBase, typename Allocator>
+bool character_sequence<SeqType, SeqBase, Allocator>::operator<=(const character_sequence& in_rhs) noexcept
+{
+    return std::lexicographical_compare(this->cbegin(), this->cend(), in_rhs.cbegin(), in_rhs.cend()) || this->is_equal(raw_data, in_rhs.raw_data);
+}
+
+template<typename SeqType, typename SeqBase, typename Allocator>
+bool character_sequence<SeqType, SeqBase, Allocator>::operator>(const character_sequence& in_rhs) noexcept
+{
+    return std::lexicographical_compare(in_rhs.cbegin(), in_rhs.cend(), this->cbegin(), this->cend());
+}
+
+template<typename SeqType, typename SeqBase, typename Allocator>
+bool character_sequence<SeqType, SeqBase, Allocator>::operator>=(const character_sequence& in_rhs) noexcept
+{
+    return std::lexicographical_compare(in_rhs.cbegin(), in_rhs.cend(), this->cbegin(), this->cend()) || this->is_equal(raw_data, in_rhs.raw_data);
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>

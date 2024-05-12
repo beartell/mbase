@@ -21,13 +21,13 @@ Parent: None
 Behaviour List:
 
 Description:
-it is used for storing the raw file handle and it's OS dependant context.
+it is used for storing the raw file handle and it's OS dependant 'context'.
 
 */
 
 struct io_context {
 	PTRGENERIC raw_handle;
-	PTRGENERIC context_body; // NOT USED OFTEN
+	PTRGENERIC context_body;
 };
 
 /*

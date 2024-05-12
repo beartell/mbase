@@ -554,7 +554,6 @@ MBASE_INLINE_EXPR GENERIC list<T, Allocator>::clear() noexcept {
 	}
 }
 
-
 template<typename T, typename Allocator>
 MBASE_INLINE_EXPR GENERIC list<T, Allocator>::push_back(const_reference in_data) noexcept {
 	
@@ -666,7 +665,7 @@ MBASE_INLINE_EXPR typename list<T, Allocator>::iterator list<T, Allocator>::inse
 		return iterator(lastNode);
 	}
 
-	node_type* mNode = const_cast<node_type*>(in_pos.get());
+	node_type* mNode = const_cast<node_type*>(in_pos._get_node());
 	node_type* newNode = new node_type(in_object);
 	newNode->prev = mNode->prev;
 	if (mNode->prev)
@@ -693,7 +692,7 @@ MBASE_INLINE_EXPR typename list<T, Allocator>::iterator list<T, Allocator>::inse
 		return iterator(lastNode);
 	}
 
-	node_type* mNode = const_cast<node_type*>(in_pos.get());
+	node_type* mNode = const_cast<node_type*>(in_pos._get_node());
 	node_type* newNode = new node_type(std::move(in_object));
 	newNode->prev = mNode->prev;
 	if (mNode->prev)
@@ -745,7 +744,7 @@ MBASE_INLINE_EXPR typename list<T, Allocator>::iterator list<T, Allocator>::inse
 
 template<typename T, typename Allocator>
 MBASE_INLINE_EXPR typename list<T, Allocator>::iterator list<T, Allocator>::erase(iterator in_pos) noexcept {
-	node_type* mNode = in_pos.get();
+	node_type* mNode = in_pos._get_node();
 	node_type* returnedNode = mNode->next;
 
 	if (mNode == firstNode)
@@ -771,7 +770,7 @@ MBASE_INLINE_EXPR typename list<T, Allocator>::iterator list<T, Allocator>::eras
 
 template<typename T, typename Allocator>
 MBASE_INLINE_EXPR typename list<T, Allocator>::iterator list<T, Allocator>::erase(const_iterator in_pos) {
-	node_type* mNode = const_cast<node_type*>(in_pos.get());
+	node_type* mNode = const_cast<node_type*>(in_pos._get_node());
 	node_type* returnedNode = mNode->next;
 
 	if (mNode == firstNode)
@@ -820,7 +819,7 @@ MBASE_INLINE_EXPR GENERIC list<T, Allocator>::splice(const_iterator in_pos, list
 	iterator in_begin = in_rhs.begin();
 	for(in_begin; in_begin != in_rhs.end();)
 	{
-		node_type* nt = in_begin.get();
+		node_type* nt = in_begin._get_node();
 		in_begin++;
 		_insert_node(in_pos, nt);
 	}
@@ -837,7 +836,7 @@ MBASE_INLINE_EXPR GENERIC list<T, Allocator>::splice(const_iterator in_pos, list
 	iterator in_begin = in_rhs.begin();
 	for (in_begin; in_begin != in_rhs.end();)
 	{
-		node_type* nt = in_begin.get();
+		node_type* nt = in_begin._get_node();
 		in_begin++;
 		_insert_node(in_pos, nt);
 	}
@@ -907,7 +906,7 @@ MBASE_INLINE GENERIC list<T, Allocator>::serialize(safe_buffer& out_buffer) noex
 
 		for (iterator It = begin(); It != end(); It++)
 		{
-			sl.value = &It.get()->data;
+			sl.value = It.get();
 			sl.serialize(tmpSafeBuffer);
 			if (tmpSafeBuffer.bfLength)
 			{

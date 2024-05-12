@@ -50,137 +50,29 @@ public:
 		OPEN = OPEN_ALWAYS // always succeeds
 	};
 
-	io_file()  noexcept : rawHandle(nullptr) {}
+	io_file() noexcept;
+	io_file(const mbase::string& in_filename, access_mode in_accmode = access_mode::RW_ACCESS, disposition in_disp = disposition::OVERWRITE) noexcept;
+	~io_file() noexcept;
 
-	io_file(const mbase::string& in_filename, access_mode in_accmode = access_mode::RW_ACCESS, disposition in_disp = disposition::OVERWRITE) noexcept {
-		DWORD fileAttrs = FILE_ATTRIBUTE_NORMAL;
+	MBASE_ND("is file open unused") MBASE_INLINE bool is_file_open() const noexcept;
+	MBASE_ND("file name unused") MBASE_INLINE mbase::string get_file_name() const noexcept;
+	MBASE_ND("file size unused") MBASE_INLINE size_type get_file_size() const noexcept;
 
-		rawHandle = CreateFileA(in_filename.c_str(), (DWORD)in_accmode, FILE_SHARE_READ, nullptr, (DWORD)in_disp, fileAttrs, nullptr);
-		if(!rawHandle)
-		{
-			_set_last_error(GetLastError());
-		}
-		else
-		{
-			_set_raw_context(rawHandle);
-			if(in_disp == disposition::APPEND)
-			{
-				SetFilePointer(rawHandle, 0, nullptr, FILE_END);
-			}
-		}
-	}
-
-	~io_file() noexcept {
-		close_file();
-	}
-
-	MBASE_INLINE PTRGENERIC open_file(const mbase::string& in_filename, access_mode in_accmode = access_mode::RW_ACCESS, disposition in_disp = disposition::OVERWRITE) noexcept {
-		close_file();
-		DWORD fileAttrs = FILE_ATTRIBUTE_NORMAL;
-
-		rawHandle = CreateFileA(in_filename.c_str(), (DWORD)in_accmode, FILE_SHARE_READ, nullptr, (DWORD)in_disp, fileAttrs, nullptr);
-		if (!rawHandle)
-		{
-			_set_last_error(GetLastError());
-		}
-		else
-		{
-			isFileOpen = true;
-			_set_raw_context(rawHandle);
-			if (in_disp == disposition::APPEND)
-			{
-				SetFilePointer(rawHandle, 0, nullptr, FILE_END);
-			}
-		}
-		return rawHandle;
-	}
-
-	MBASE_INLINE GENERIC close_file() noexcept {
-		if(rawHandle)
-		{
-			CloseHandle(rawHandle);
-		}
-		isFileOpen = false;
-		rawHandle = nullptr;
-	}
-
-	size_type write_data(IBYTEBUFFER in_src) override 
-	{
-		DWORD dataWritten = 0;
-		SIZE_T dataLength = type_sequence<IBYTE>::length(in_src);
-		WriteFile(rawHandle, in_src, dataLength, &dataWritten, nullptr);
-		_set_last_error(GetLastError());
-		return dataWritten;
-	}
-
-	size_type write_data(IBYTEBUFFER in_src, size_type in_length) override
-	{
-		DWORD dataWritten = 0;
-		WriteFile(rawHandle, in_src, in_length, &dataWritten, nullptr);
-		_set_last_error(GetLastError());
-		return dataWritten;
-	}
-
-	size_type write_data(const mbase::string& in_src) override
-	{
-		DWORD dataWritten = 0;
-		WriteFile(rawHandle, in_src.c_str(), in_src.size(), &dataWritten, nullptr);
-		_set_last_error(GetLastError());
-		return dataWritten;
-	}
-
-	size_type write_data(char_stream& in_src) override
-	{
-		DWORD dataWritten = 0;
-		PTRDIFF cursorPos = in_src.get_pos();
-		IBYTEBUFFER tmpBuffer = in_src.get_bufferc();
-		WriteFile(rawHandle, tmpBuffer, in_src.buffer_length() - cursorPos, &dataWritten, nullptr);
-		_set_last_error(GetLastError());
-		return dataWritten;
-	}
-
-	size_type write_data(char_stream& in_src, size_type in_length) override
-	{
-		DWORD dataWritten = 0;
-		IBYTEBUFFER tmpBuffer = in_src.get_bufferc();
-		WriteFile(rawHandle, tmpBuffer, in_length, &dataWritten, nullptr);
-		in_src.advance(dataWritten);
-		_set_last_error(GetLastError());
-		return dataWritten;
-	}
-
-	size_type read_data(IBYTEBUFFER in_src, size_type in_length) override
-	{
-		DWORD dataRead = 0;
-		ReadFile(rawHandle, in_src, in_length, &dataRead, nullptr);
-		_set_last_error(GetLastError());
-		return dataRead;
-	}
-
-	size_type read_data(char_stream& in_src) override
-	{
-		DWORD dataRead = 0;
-		PTRDIFF cursorPos = in_src.get_pos();
-		IBYTEBUFFER tmpBuffer = in_src.get_bufferc();
-		ReadFile(rawHandle, tmpBuffer, in_src.buffer_length() - cursorPos, &dataRead, nullptr);
-		_set_last_error(GetLastError());
-		return dataRead;
-	}
-
-	size_type read_data(char_stream& in_src, size_type in_length) override
-	{
-		DWORD dataRead = 0;
-		IBYTEBUFFER tmpBuffer = in_src.get_bufferc();
-		ReadFile(rawHandle, tmpBuffer, in_length, &dataRead, nullptr);	
-		in_src.advance(dataRead);
-		_set_last_error(GetLastError());
-		return dataRead;
-	}
+	MBASE_INLINE PTRGENERIC open_file(const mbase::string& in_filename, access_mode in_accmode = access_mode::RW_ACCESS, disposition in_disp = disposition::OVERWRITE) noexcept;
+	MBASE_INLINE GENERIC close_file() noexcept;
+	size_type write_data(IBYTEBUFFER in_src) override;
+	size_type write_data(IBYTEBUFFER in_src, size_type in_length) override;
+	size_type write_data(const mbase::string& in_src) override;
+	size_type write_data(char_stream& in_src) override;
+	size_type write_data(char_stream& in_src, size_type in_length) override;
+	size_type read_data(IBYTEBUFFER in_src, size_type in_length) override;
+	size_type read_data(char_stream& in_src) override;
+	size_type read_data(char_stream& in_src, size_type in_length) override;
 
 	template<typename SerializableObject>
 	size_type write_data(SerializableObject& in_src) {
 		safe_buffer mBuffer;
-		in_src.serialize(&mBuffer);
+		in_src.serialize(mBuffer);
 		return write_data(mBuffer.bfSource, mBuffer.bfLength);
 	}
 
@@ -191,25 +83,155 @@ public:
 		return readLength;
 	}
 
-	MBASE_ND("is file open unused") MBASE_INLINE bool is_file_open() const noexcept {
-		return isFileOpen;
-	}
-
-	MBASE_ND("file name unused") MBASE_INLINE mbase::string get_file_name() const noexcept {
-		return fileName;
-	}
-
-	MBASE_ND("file size unused") MBASE_INLINE SIZE_T get_file_size() const noexcept {
-		LARGE_INTEGER lInt;
-		GetFileSizeEx(rawHandle, &lInt);
-		return lInt.QuadPart;
-	}
-	
 private:
 	bool isFileOpen;
 	mbase::string fileName;
 	HANDLE rawHandle;
 };
+
+io_file::io_file() noexcept : rawHandle(nullptr)
+{
+
+}
+
+io_file::io_file(const mbase::string& in_filename, access_mode in_accmode, disposition in_disp) noexcept {
+	DWORD fileAttrs = FILE_ATTRIBUTE_NORMAL;
+	
+	rawHandle = CreateFileA(in_filename.c_str(), (DWORD)in_accmode, FILE_SHARE_READ, nullptr, (DWORD)in_disp, fileAttrs, nullptr);
+	if (!rawHandle)
+	{
+		_set_last_error(GetLastError());
+	}
+	else
+	{
+		_set_raw_context(rawHandle);
+		if (in_disp == disposition::APPEND)
+		{
+			SetFilePointer(rawHandle, 0, nullptr, FILE_END);
+		}
+	}
+}
+
+io_file::~io_file() noexcept {
+	close_file();
+}
+
+MBASE_ND("is file open unused") MBASE_INLINE bool io_file::is_file_open() const noexcept {
+	return isFileOpen;
+}
+
+MBASE_ND("file name unused") MBASE_INLINE mbase::string io_file::get_file_name() const noexcept {
+	return fileName;
+}
+
+MBASE_ND("file size unused") MBASE_INLINE typename io_file::size_type io_file::get_file_size() const noexcept {
+	LARGE_INTEGER lInt;
+	GetFileSizeEx(rawHandle, &lInt);
+	return lInt.QuadPart;
+}
+
+MBASE_INLINE PTRGENERIC io_file::open_file(const mbase::string& in_filename, access_mode in_accmode, disposition in_disp) noexcept {
+	close_file();
+	DWORD fileAttrs = FILE_ATTRIBUTE_NORMAL;
+
+	rawHandle = CreateFileA(in_filename.c_str(), (DWORD)in_accmode, FILE_SHARE_READ, nullptr, (DWORD)in_disp, fileAttrs, nullptr);
+	if (!rawHandle)
+	{
+		_set_last_error(GetLastError());
+	}
+	else
+	{
+		isFileOpen = true;
+		_set_raw_context(rawHandle);
+		if (in_disp == disposition::APPEND)
+		{
+			SetFilePointer(rawHandle, 0, nullptr, FILE_END);
+		}
+	}
+	return rawHandle;
+}
+
+MBASE_INLINE GENERIC io_file::close_file() noexcept {
+	if (rawHandle)
+	{
+		CloseHandle(rawHandle);
+	}
+	isFileOpen = false;
+	rawHandle = nullptr;
+}
+
+typename io_file::size_type io_file::write_data(IBYTEBUFFER in_src)
+{
+	DWORD dataWritten = 0;
+	SIZE_T dataLength = type_sequence<IBYTE>::length(in_src);
+	WriteFile(rawHandle, in_src, dataLength, &dataWritten, nullptr);
+	_set_last_error(GetLastError());
+	return dataWritten;
+}
+
+typename io_file::size_type io_file::write_data(IBYTEBUFFER in_src, size_type in_length)
+{
+	DWORD dataWritten = 0;
+	WriteFile(rawHandle, in_src, in_length, &dataWritten, nullptr);
+	_set_last_error(GetLastError());
+	return dataWritten;
+}
+
+typename io_file::size_type io_file::write_data(const mbase::string& in_src)
+{
+	DWORD dataWritten = 0;
+	WriteFile(rawHandle, in_src.c_str(), in_src.size(), &dataWritten, nullptr);
+	_set_last_error(GetLastError());
+	return dataWritten;
+}
+
+typename io_file::size_type io_file::write_data(char_stream& in_src)
+{
+	DWORD dataWritten = 0;
+	PTRDIFF cursorPos = in_src.get_pos();
+	IBYTEBUFFER tmpBuffer = in_src.get_bufferc();
+	WriteFile(rawHandle, tmpBuffer, in_src.buffer_length() - cursorPos, &dataWritten, nullptr);
+	_set_last_error(GetLastError());
+	return dataWritten;
+}
+
+typename io_file::size_type io_file::write_data(char_stream& in_src, size_type in_length)
+{
+	DWORD dataWritten = 0;
+	IBYTEBUFFER tmpBuffer = in_src.get_bufferc();
+	WriteFile(rawHandle, tmpBuffer, in_length, &dataWritten, nullptr);
+	in_src.advance(dataWritten);
+	_set_last_error(GetLastError());
+	return dataWritten;
+}
+
+typename io_file::size_type io_file::read_data(IBYTEBUFFER in_src, size_type in_length)
+{
+	DWORD dataRead = 0;
+	ReadFile(rawHandle, in_src, in_length, &dataRead, nullptr);
+	_set_last_error(GetLastError());
+	return dataRead;
+}
+
+typename io_file::size_type io_file::read_data(char_stream& in_src)
+{
+	DWORD dataRead = 0;
+	PTRDIFF cursorPos = in_src.get_pos();
+	IBYTEBUFFER tmpBuffer = in_src.get_bufferc();
+	ReadFile(rawHandle, tmpBuffer, in_src.buffer_length() - cursorPos, &dataRead, nullptr);
+	_set_last_error(GetLastError());
+	return dataRead;
+}
+
+typename io_file::size_type io_file::read_data(char_stream& in_src, size_type in_length)
+{
+	DWORD dataRead = 0;
+	IBYTEBUFFER tmpBuffer = in_src.get_bufferc();
+	ReadFile(rawHandle, tmpBuffer, in_length, &dataRead, nullptr);
+	in_src.advance(dataRead);
+	_set_last_error(GetLastError());
+	return dataRead;
+}
 
 MBASE_STD_END
 
