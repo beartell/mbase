@@ -6,9 +6,28 @@
 
 MBASE_STD_BEGIN
 
+/*
+
+	--- CLASS INFORMATION ---
+Identification: S0C33-OBJ-UD-ST
+
+Name: safe_buffer
+
+Parent: None
+
+Behaviour List:
+- Default Constructible
+- Destructible
+- Move Constructible
+- Move Assignable
+
+Description:
+
+*/
+
+
 struct safe_buffer {
 	safe_buffer() noexcept : bfSource(nullptr), bfLength(0) {}
-
 	safe_buffer(IBYTEBUFFER in_src, SIZE_T in_length) noexcept : bfSource(in_src), bfLength(in_length) {}
 	safe_buffer(safe_buffer&& in_rhs) noexcept {
 		bfSource = in_rhs.bfSource;
@@ -37,6 +56,12 @@ struct safe_buffer {
 			free(bfSource);
 		}
 		bfLength = 0;
+	}
+	
+	GENERIC swap(safe_buffer &sfb)
+	{
+		std::swap(bfLength, sfb.bfLength);
+		std::swap(bfSource, sfb.bfSource);
 	}
 
 	SIZE_T bfLength;

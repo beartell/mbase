@@ -116,7 +116,7 @@ public:
 	MBASE_INLINE_EXPR GENERIC swap(mbase::vector<value_type, Allocator>& in_src) noexcept;
 	MBASE_INLINE_EXPR GENERIC clear() noexcept;
 	MBASE_INLINE_EXPR GENERIC resize(size_type in_size) noexcept;
-	MBASE_INLINE_EXPR GENERIC resize(size_type in_size, const T& in_value) noexcept; // DON'T UNDERSTAND HOW TO IMPLEMENT
+	MBASE_INLINE_EXPR GENERIC resize(size_type in_size, const T& in_value) noexcept; // IMPLEMENT ONE DAY
 	MBASE_INLINE_EXPR GENERIC shrink_to_fit();
 	MBASE_INLINE_EXPR GENERIC reserve(size_type in_capacity) noexcept;
 	MBASE_INLINE_EXPR iterator erase(iterator in_pos) noexcept;
@@ -549,6 +549,12 @@ MBASE_INLINE_EXPR GENERIC vector<T, Allocator>::resize(size_type in_size) noexce
 	{
 		reserve(in_size * 2);
 	}
+	size_type sizeDifference = mSize - in_size;
+	for(difference_type i = 0; i < sizeDifference; i++)
+	{
+		pop_back();
+	}
+
 	mSize = in_size;
 }
 

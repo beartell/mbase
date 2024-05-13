@@ -7,6 +7,32 @@
 
 MBASE_STD_BEGIN
 
+/*
+
+	--- CLASS INFORMATION ---
+Identification: S0C28-OBJ-NA-NU
+
+Name: map
+
+Parent: None
+
+Behaviour List:
+- Default Constructible
+- Copy Constructible
+- Move Constructible
+- Copy Assignable
+- Move Assignable
+- Arithmetic Operable
+- Templated
+- Serializable
+- Swappable
+- Type Aware
+
+Description:
+
+*/
+
+
 template<typename Key,
 	typename T,
 	typename Compare = std::less<Key>,

@@ -109,9 +109,7 @@ Behaviour List:
 
 Description:
 
-
 */
-
 
 template<typename T, typename DataT>
 class const_backward_list_iterator;
@@ -127,25 +125,34 @@ public:
     using size_type = SIZE_T;
     using difference_type = PTRDIFF;
 
+    /* ===== BUILDER METHODS BEGIN ===== */
     MBASE_INLINE forward_list_iterator() noexcept;
     MBASE_INLINE forward_list_iterator(pointer in_ptr) noexcept;
     MBASE_INLINE forward_list_iterator(const forward_list_iterator& in_rhs) noexcept;
+    /* ===== BUILDER METHODS END ===== */
 
+    /* ===== OBSERVATION METHODS BEGIN ===== */
     MBASE_INLINE pointer _get_node() const noexcept;
     MBASE_ND("internal data that is access through the iterator should be used") MBASE_INLINE DataT* get() const noexcept;
     MBASE_ND("internal data that is access through the iterator should be used") MBASE_INLINE DataT& operator*() const noexcept;
     MBASE_INLINE DataT* operator->() const noexcept;
+    /* ===== OBSERVATION METHODS END ===== */
 
+    /* ===== OPERATOR STATE-MODIFIER METHODS BEGIN ===== */
     MBASE_ND("ignoring iterator index") MBASE_INLINE forward_list_iterator operator+(difference_type in_rhs) noexcept;
     MBASE_INLINE forward_list_iterator& operator+=(difference_type in_rhs) noexcept;
     MBASE_INLINE forward_list_iterator& operator++() noexcept;
     MBASE_INLINE forward_list_iterator operator++(int) noexcept;
+    /* ===== OPERATOR STATE-MODIFIER METHODS END ===== */
 
+    /* ===== NON-MODIFIER METHODS BEGIN ===== */
     MBASE_ND("ignoring equality comparison") MBASE_INLINE bool operator==(const forward_list_iterator& in_rhs) const noexcept;
     MBASE_ND("ignoring equality comparison") MBASE_INLINE bool operator!=(const forward_list_iterator& in_rhs) const noexcept;
     MBASE_ND("ignoring equality comparison") MBASE_INLINE bool operator==(const const_forward_list_iterator<T, DataT>& in_rhs) const noexcept;
     MBASE_ND("ignoring equality comparison") MBASE_INLINE bool operator!=(const const_forward_list_iterator<T, DataT>& in_rhs) const noexcept;
+    /* ===== NON-MODIFIER METHODS END ===== */
 
+protected:
     pointer _ptr;
 };
 
@@ -160,24 +167,33 @@ public:
     using size_type = SIZE_T;
     using difference_type = PTRDIFF;
 
+    /* ===== BUILDER METHODS BEGIN ===== */
     const_forward_list_iterator() noexcept;
     const_forward_list_iterator(pointer in_ptr) noexcept;
     const_forward_list_iterator(const const_forward_list_iterator& in_rhs) noexcept;
     const_forward_list_iterator(const forward_list_iterator<T, DataT>& in_rhs) noexcept;
+    /* ===== BUILDER METHODS END ===== */
 
+    /* ===== OBSERVATION METHODS BEGIN ===== */
     MBASE_INLINE const_pointer _get_node() const noexcept;
     MBASE_ND("internal data that is access through the iterator should be used") MBASE_INLINE const DataT* get() const noexcept;
     MBASE_ND("internal data that is access through the iterator should be used") MBASE_INLINE const DataT& operator*() const noexcept;
     MBASE_INLINE const DataT* operator->() const noexcept;
+    /* ===== OBSERVATION METHODS END ===== */
 
+    /* ===== STATE-MODIFIER METHODS BEGIN ===== */
     MBASE_ND("ignoring iterator index") MBASE_INLINE const_forward_list_iterator operator+(difference_type in_rhs) noexcept;
     MBASE_INLINE const_forward_list_iterator& operator+=(difference_type in_rhs) noexcept;
     MBASE_INLINE const_forward_list_iterator& operator++() noexcept;
     MBASE_INLINE const_forward_list_iterator operator++(int) noexcept;
+    /* ===== STATE-MODIFIER METHODS END ===== */
 
+    /* ===== NON-MODIFIER METHODS BEGIN ===== */
     MBASE_ND("ignoring equality comparison") MBASE_INLINE bool operator==(const const_forward_list_iterator& in_rhs) const noexcept;
     MBASE_ND("ignoring equality comparison") MBASE_INLINE bool operator!=(const const_forward_list_iterator& in_rhs) const noexcept;
+    /* ===== NON-MODIFIER METHODS END ===== */
 
+protected:
     pointer _ptr;
 };
 
@@ -192,25 +208,34 @@ public:
     using size_type = SIZE_T;
     using difference_type = PTRDIFF;
 
+    /* ===== BUILDER METHODS BEGIN ===== */
     backward_list_iterator() noexcept;
     backward_list_iterator(pointer in_ptr) noexcept;
     backward_list_iterator(const backward_list_iterator& in_rhs) noexcept;
+    /* ===== BUILDER METHODS END ===== */
 
+    /* ===== OBSERVATION METHODS BEGIN ===== */
     MBASE_INLINE pointer _get_node() const noexcept;
     MBASE_INLINE DataT* get() const noexcept;
     MBASE_ND("internal data that is access through the iterator should be used") MBASE_INLINE DataT& operator*() const noexcept;
     MBASE_ND("internal data that is access through the iterator should be used") MBASE_INLINE DataT* operator->() const noexcept;
+    /* ===== OBSERVATION METHODS END ===== */
 
+    /* ===== STATE-MODIFIER METHODS BEGIN ===== */
     MBASE_ND("ignoring iterator index") MBASE_INLINE backward_list_iterator operator+(difference_type in_rhs) noexcept;
     MBASE_INLINE backward_list_iterator& operator+=(difference_type in_rhs) noexcept;
     MBASE_INLINE backward_list_iterator& operator++() noexcept;
     MBASE_INLINE backward_list_iterator operator++(int) noexcept;
+    /* ===== STATE-MODIFIER METHODS END ===== */
 
+    /* ===== NON-MODIFIER METHODS BEGIN ===== */
     MBASE_ND("ignoring equality comparison") MBASE_INLINE bool operator==(const backward_list_iterator& in_rhs) const noexcept;
     MBASE_ND("ignoring equality comparison") MBASE_INLINE bool operator!=(const backward_list_iterator& in_rhs) const noexcept;
     MBASE_ND("ignoring equality comparison") MBASE_INLINE bool operator==(const const_backward_list_iterator<T, DataT>& in_rhs) const noexcept;
     MBASE_ND("ignoring equality comparison") MBASE_INLINE bool operator!=(const const_backward_list_iterator<T, DataT>& in_rhs) const noexcept;
+    /* ===== NON-MODIFIER METHODS END ===== */
 
+protected:
     pointer _ptr;
 };
 
@@ -225,24 +250,33 @@ public:
     using size_type = SIZE_T;
     using difference_type = PTRDIFF;
 
+    /* ===== BUILDER METHODS BEGIN ===== */
     const_backward_list_iterator() noexcept;
     const_backward_list_iterator(pointer in_ptr) noexcept;
     const_backward_list_iterator(const const_backward_list_iterator& in_rhs) noexcept;
     const_backward_list_iterator(const backward_list_iterator<T, DataT>& in_rhs) noexcept;
+    /* ===== BUILDER METHODS END ===== */
 
+    /* ===== OBSERVATION METHODS BEGIN ===== */
     MBASE_INLINE const_pointer _get_node() const noexcept;
     MBASE_ND("internal data that is access through the iterator should be used") MBASE_INLINE const DataT* get() const noexcept;
     MBASE_ND("internal data that is access through the iterator should be used") MBASE_INLINE const DataT& operator*() const noexcept;
     MBASE_INLINE const DataT* operator->() const noexcept;
+    /* ===== OBSERVATION METHODS END ===== */
 
+    /* ===== STATE-MODIFIER METHODS BEGIN ===== */
     MBASE_ND("ignoring iterator index") MBASE_INLINE const_backward_list_iterator operator+(difference_type in_rhs) noexcept;
     MBASE_INLINE const_backward_list_iterator& operator+=(difference_type in_rhs) noexcept;
     MBASE_INLINE const_backward_list_iterator& operator++() noexcept;
     MBASE_INLINE const_backward_list_iterator operator++(int) noexcept;
+    /* ===== STATE-MODIFIER METHODS END ===== */
 
+    /* ===== NON-MODIFIER METHODS BEGIN ===== */
     MBASE_ND("ignoring equality comparison") MBASE_INLINE bool operator==(const const_backward_list_iterator& in_rhs) const noexcept;
     MBASE_ND("ignoring equality comparison") MBASE_INLINE bool operator!=(const const_backward_list_iterator& in_rhs) const noexcept;
+    /* ===== NON-MODIFIER METHODS END ===== */
 
+protected:
     pointer _ptr;
 };
 
@@ -281,14 +315,18 @@ public:
     using difference_type = typename forward_list_iterator<Type, DataT>::difference_type;
     using iterator_category = std::bidirectional_iterator_tag;
 
+    /* ===== BUILDER METHODS BEGIN ===== */
     bi_list_iterator() noexcept;
     bi_list_iterator(pointer in_ptr) noexcept;
     bi_list_iterator(const bi_list_iterator& in_rhs) noexcept;
+    /* ===== BUILDER METHODS END ===== */
 
+    /* ===== STATE-MODIFIER METHODS BEGIN ===== */
     MBASE_INLINE bi_list_iterator operator-(difference_type in_rhs) noexcept;
     MBASE_INLINE bi_list_iterator& operator-=(difference_type in_rhs) noexcept;
     MBASE_INLINE bi_list_iterator& operator--() noexcept;
     MBASE_INLINE bi_list_iterator& operator--(int) noexcept;
+    /* ===== STATE-MODIFIER METHODS END ===== */
 };
 
 /*
@@ -326,15 +364,19 @@ public:
     using difference_type = typename const_forward_list_iterator<Type, DataT>::difference_type;
     using iterator_category = std::bidirectional_iterator_tag;
 
+    /* ===== BUILDER METHODS BEGIN ===== */
     const_bi_list_iterator() noexcept;
     const_bi_list_iterator(pointer in_ptr) noexcept;
     const_bi_list_iterator(const const_bi_list_iterator& in_rhs) noexcept;
     const_bi_list_iterator(const bi_list_iterator<Type, DataT>& in_rhs) noexcept;
+    /* ===== BUILDER METHODS END ===== */
 
+    /* ===== OPERATOR STATE-MODIFIER METHODS BEGIN ===== */
     MBASE_INLINE const_bi_list_iterator operator-(difference_type in_rhs) noexcept;
     MBASE_INLINE const_bi_list_iterator& operator-=(difference_type in_rhs) noexcept;
     MBASE_INLINE const_bi_list_iterator& operator--() noexcept;
     MBASE_INLINE const_bi_list_iterator& operator--(int) noexcept;
+    /* ===== OPERATOR STATE-MODIFIER METHODS END ===== */
 };
 
 /*
@@ -372,14 +414,18 @@ public:
     using difference_type = typename backward_list_iterator<Type, DataT>::difference_type;
     using iterator_category = std::bidirectional_iterator_tag;
 
+    /* ===== BUILDER METHODS BEGIN ===== */
     reverse_bi_list_iterator() noexcept;
     reverse_bi_list_iterator(pointer in_ptr) noexcept;
     reverse_bi_list_iterator(const reverse_bi_list_iterator& in_rhs) noexcept;
+    /* ===== BUILDER METHODS END ===== */
 
+    /* ===== OPERATOR STATE-MODIFIER METHODS BEGIN ===== */
     MBASE_INLINE reverse_bi_list_iterator operator-(difference_type in_rhs) noexcept;
     MBASE_INLINE reverse_bi_list_iterator& operator-=(difference_type in_rhs) noexcept;
     MBASE_INLINE reverse_bi_list_iterator& operator--() noexcept;
     MBASE_INLINE reverse_bi_list_iterator& operator--(int) noexcept;
+    /* ===== OPERATOR STATE-MODIFIER METHODS END ===== */
 };
 
 /*
@@ -417,17 +463,21 @@ public:
     using difference_type = typename const_backward_list_iterator<Type, DataT>::difference_type;
     using iterator_category = std::bidirectional_iterator_tag;
 
+    /* ===== BUILDER METHODS BEGIN ===== */
     const_reverse_bi_list_iterator() noexcept;
     const_reverse_bi_list_iterator(pointer in_ptr) noexcept;
     const_reverse_bi_list_iterator(const const_reverse_bi_list_iterator& in_rhs) noexcept;
     const_reverse_bi_list_iterator(const reverse_bi_list_iterator<Type, DataT>& in_rhs) noexcept;
+    /* ===== BUILDER METHODS END ===== */
 
     MBASE_INLINE const_pointer get() const noexcept;
 
+    /* ===== STATE-MODIFIER METHODS BEGIN ===== */
     MBASE_INLINE const_reverse_bi_list_iterator operator-(difference_type in_rhs) noexcept;
     MBASE_INLINE const_reverse_bi_list_iterator& operator-=(difference_type in_rhs) noexcept;
     MBASE_INLINE const_reverse_bi_list_iterator& operator--() noexcept;
     MBASE_INLINE const_reverse_bi_list_iterator& operator--(int) noexcept;
+    /* ===== STATE-MODIFIER METHODS END ===== */
 };
 
 /* <-- FORWARD LIST ITERATOR IMPLEMENTATION --> */

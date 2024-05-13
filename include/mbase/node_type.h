@@ -8,6 +8,25 @@ MBASE_STD_BEGIN
 
 #define MBASE_AVL_ALLOWED_IMBALANCE 1
 
+/*
+
+    --- CLASS INFORMATION ---
+Identification: S0C29-OBJ-NA-ST
+
+Name: list_node
+
+Parent: None
+
+Behaviour List:
+- Copy Constructible
+- Move Constructible
+- Templated
+- Type Aware
+
+Description:
+
+*/
+
 template<typename T>
 struct list_node {
     using value_type = T;
@@ -24,10 +43,33 @@ struct list_node {
     list_node(move_reference in_object) noexcept : prev(nullptr), next(nullptr), data(std::move(in_object)) {}
 };
 
+/*
+
+    --- CLASS INFORMATION ---
+Identification: S0C30-OBJ-NA-NS
+
+Name: exposed_set_node
+
+Parent: None
+
+Behaviour List:
+- Default Constructible
+- Destructible
+- Move Constructible
+- Move Assignable
+- Templated
+- Type Aware
+- Swappable
+
+Description:
+
+*/
+
 template<typename T, typename Allocator>
 struct exposed_set_node {
     using value_type = T;
     using allocator_type = typename Allocator;
+
     MBASE_INLINE_EXPR exposed_set_node() noexcept : dataSet(false){}
     MBASE_INLINE_EXPR exposed_set_node(T&& in_data) noexcept : nodeData(std::move(in_data)), dataSet(true){}
     MBASE_INLINE_EXPR exposed_set_node(exposed_set_node&& in_rhs) noexcept: nodeData(std::move(in_rhs.nodeData)), dataSet(true){}
@@ -63,6 +105,25 @@ struct exposed_set_node {
 /*
     IMPLEMENTATION BELOW IS TAKEN FROM the book called: 
     'Data Structures and Algorithm Analysis in C++' by Mark Allen Weiss
+*/
+
+/*
+
+    --- CLASS INFORMATION ---
+Identification: S0C31-OBJ-NA-ST
+
+Name: avl_node
+
+Parent: None
+
+Behaviour List:
+- Copy Constructible
+- Move Constructible
+- Templated
+- Type Aware
+
+Description:
+
 */
 
 template<typename T, typename Compare>
@@ -110,6 +171,9 @@ struct avl_node {
         else
         {
             // SELF-NOTE : we will insert the node if it is multiset
+            // 
+            // 
+            // 
             // MEANS, VALUES ARE EQUAL
             // do nothing
         }
