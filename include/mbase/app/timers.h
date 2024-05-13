@@ -9,25 +9,26 @@ MBASE_BEGIN
 
 class timer_base : public handler_base {
 public:
-	enum class timer_type : U8 {
-		TIMER_TIMEOUT = 0,
-		TIMER_INTERVAL = 1
-	};
-
-	enum class timer_exec_policy : U8 {
-		TIMER_POLICY_IMMEDIATE = 0,
-		TIMER_POLICY_ASYNC = 1
+	enum class timer_flag : U8 {
+		TIMER_STATE_FINISHED = 0,
+		TIMER_STATE_ABANDONED = 1,
+		TIMER_STATE_ACTIVE = 15,
+		TIMER_STATE_INACTIVE = 17,
+		TIMER_TYPE_TIMEOUT = 2,
+		TIMER_TYPE_INTERVAL = 3,
+		TIMER_POLICY_IMMEDIATE = 4,
+		TIMER_POLICY_ASYNC = 5
 	};
 
 	using user_data = PTRGENERIC;
 
-	timer_base() noexcept :  handler_base(), mCurrentTime(0), mTargetTime(0), mPolicy(timer_exec_policy::TIMER_POLICY_IMMEDIATE) {}
+	timer_base() noexcept :  handler_base(), mCurrentTime(0), mTargetTime(0), mPolicy(timer_flag::TIMER_POLICY_IMMEDIATE), mStatus(timer_flag::TIMER_STATE_INACTIVE), mIsRegistered(false), mTimerId(-1) {}
 
-	MBASE_EXPLICIT timer_base(user_data in_data) noexcept : mCurrentTime(0), mTargetTime(0), mPolicy(timer_exec_policy::TIMER_POLICY_IMMEDIATE) {
+	MBASE_EXPLICIT timer_base(user_data in_data) noexcept : mCurrentTime(0), mTargetTime(0), mPolicy(timer_flag::TIMER_POLICY_IMMEDIATE), mStatus(timer_flag::TIMER_STATE_INACTIVE), mIsRegistered(false), mTimerId(-1) {
 		suppliedData = in_data;
 	}
 
-	MBASE_ND("timer observation ignored") U32 GetTimerId() const noexcept {
+	MBASE_ND("timer observation ignored") I32 GetTimerId() const noexcept {
 		return mTimerId;
 	}
 
@@ -43,25 +44,30 @@ public:
 		return mTargetTime - mCurrentTime;
 	}
 
-	MBASE_ND("timer observation ignored") timer_type GetTimerType() const noexcept {
+	MBASE_ND("timer observation ignored") timer_flag GetTimerStatus() const noexcept 
+	{
+		return mStatus;
+	}
+
+	MBASE_ND("timer observation ignored") timer_flag GetTimerType() const noexcept {
 		return tt;
 	}
 
-	MBASE_ND("timer observation ignored") timer_exec_policy GetExecutionPolicy() const noexcept {
+	MBASE_ND("timer observation ignored") timer_flag GetExecutionPolicy() const noexcept {
 		return mPolicy;
 	}
 
-	MBASE_ND("timer observation ignored") bool IsActive() const noexcept {
-		return mIsActive;
+	MBASE_ND("timer observation ignored") bool IsRegistered() const noexcept {
+		return mIsRegistered;
 	}
 
-	GENERIC SetTargetTime(U32 in_time_inms, timer_exec_policy in_policy = timer_exec_policy::TIMER_POLICY_IMMEDIATE) noexcept {
+	GENERIC SetTargetTime(U32 in_time_inms, timer_flag in_policy = timer_flag::TIMER_POLICY_IMMEDIATE) noexcept {
 		mCurrentTime = 0;
 		mTargetTime = in_time_inms;
 		mPolicy = in_policy;
 	}
 
-	GENERIC SetExecutionPolicy(timer_exec_policy in_policy) noexcept {
+	GENERIC SetExecutionPolicy(timer_flag in_policy) noexcept {
 		mPolicy = in_policy;
 	}
 
@@ -74,18 +80,19 @@ public:
 	virtual GENERIC on_call(user_data in_data) {/* do nothing */ };
 
 protected:
-	bool mIsActive;
-	timer_type tt;
-	U32 mTimerId;
+	bool mIsRegistered;
+	timer_flag mStatus;
+	timer_flag tt;
+	timer_flag mPolicy;
+	I32 mTimerId;
 	F64 mCurrentTime;
 	F64 mTargetTime;
-	timer_exec_policy mPolicy;
 };
 
 class timeout : public timer_base {
 public:
 	timeout() noexcept : timer_base(nullptr) {
-		tt = timer_type::TIMER_TIMEOUT;
+		tt = timer_flag::TIMER_TYPE_TIMEOUT;
 	}
 
 	virtual GENERIC on_call(user_data in_data) override { /* Do nothing literally */ }
@@ -94,7 +101,7 @@ public:
 class time_interval : public timer_base {
 public:
 	time_interval() noexcept : timer_base(nullptr) {
-		tt = timer_type::TIMER_INTERVAL;
+		tt = timer_flag::TIMER_TYPE_INTERVAL;
 	}
 
 	virtual GENERIC on_call(user_data in_data) override { /* Do nothing literally */ }

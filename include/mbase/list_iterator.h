@@ -25,11 +25,7 @@ Behaviour List:
 - Equality Comparable
 
 Description:
-forward_list_iterator provides an iteration interface for singly linked list iteration.
-Supplied T, must be a node type that has a "next" member.
-The supplied node type is list_node which is defined in node_type.h
 
-The exposed interface is mostly identical to the forward iterator that is defined in the standard specification.
 
 */
 
@@ -57,11 +53,7 @@ Behaviour List:
 - Equality Comparable
 
 Description:
-forward_list_iterator provides an iteration interface for singly linked list iteration.
-Supplied T, must be a node type that has a "next" member.
-The supplied node type is list_node which is defined in node_type.h
 
-The exposed interface is mostly identical to the forward iterator that is defined in the standard specification.
 
 */
 
@@ -89,11 +81,7 @@ Behaviour List:
 - Equality Comparable
 
 Description:
-backward_list_iterator provides an iteration interface for singly linked list iteration.
-Supplied T, must be a node type that has a "previous" member.
-The supplied node type is list_node which is defined in node_type.h
 
-The exposed interface is mostly identical to the forward iterator that is defined in the standard specification.
 
 */
 
@@ -120,11 +108,7 @@ Behaviour List:
 - Equality Comparable
 
 Description:
-const_backward_list_iterator provides an iteration interface for singly linked list iteration.
-Supplied T, must be a node type that has a "previous" member.
-The supplied node type is list_node which is defined in node_type.h
 
-The exposed interface is mostly identical to the forward iterator that is defined in the standard specification.
 
 */
 
@@ -143,6 +127,7 @@ public:
     using size_type = SIZE_T;
     using difference_type = PTRDIFF;
 
+    MBASE_INLINE forward_list_iterator() noexcept;
     MBASE_INLINE forward_list_iterator(pointer in_ptr) noexcept;
     MBASE_INLINE forward_list_iterator(const forward_list_iterator& in_rhs) noexcept;
 
@@ -175,6 +160,7 @@ public:
     using size_type = SIZE_T;
     using difference_type = PTRDIFF;
 
+    const_forward_list_iterator() noexcept;
     const_forward_list_iterator(pointer in_ptr) noexcept;
     const_forward_list_iterator(const const_forward_list_iterator& in_rhs) noexcept;
     const_forward_list_iterator(const forward_list_iterator<T, DataT>& in_rhs) noexcept;
@@ -206,6 +192,7 @@ public:
     using size_type = SIZE_T;
     using difference_type = PTRDIFF;
 
+    backward_list_iterator() noexcept;
     backward_list_iterator(pointer in_ptr) noexcept;
     backward_list_iterator(const backward_list_iterator& in_rhs) noexcept;
 
@@ -238,6 +225,7 @@ public:
     using size_type = SIZE_T;
     using difference_type = PTRDIFF;
 
+    const_backward_list_iterator() noexcept;
     const_backward_list_iterator(pointer in_ptr) noexcept;
     const_backward_list_iterator(const const_backward_list_iterator& in_rhs) noexcept;
     const_backward_list_iterator(const backward_list_iterator<T, DataT>& in_rhs) noexcept;
@@ -258,6 +246,30 @@ public:
     pointer _ptr;
 };
 
+/*
+
+    --- CLASS INFORMATION ---
+Identification: S0C24-OBJ-NA-ST
+
+Name: bi_list_iterator
+
+Parent: S0C20-OBJ-NA-ST
+
+Behaviour List:
+- Default Constructible
+- Copy Constructible
+- Copy Assignable
+- Arithmetic Operable
+- Templated
+- Type Aware
+- Swappable
+- Equality Comparable
+
+Description:
+
+*/
+
+
 template<typename Type, typename DataT>
 class bi_list_iterator : public forward_list_iterator<Type, DataT> {
 public:
@@ -269,6 +281,7 @@ public:
     using difference_type = typename forward_list_iterator<Type, DataT>::difference_type;
     using iterator_category = std::bidirectional_iterator_tag;
 
+    bi_list_iterator() noexcept;
     bi_list_iterator(pointer in_ptr) noexcept;
     bi_list_iterator(const bi_list_iterator& in_rhs) noexcept;
 
@@ -277,6 +290,30 @@ public:
     MBASE_INLINE bi_list_iterator& operator--() noexcept;
     MBASE_INLINE bi_list_iterator& operator--(int) noexcept;
 };
+
+/*
+
+    --- CLASS INFORMATION ---
+Identification: S0C25-OBJ-NA-ST
+
+Name: const_bi_list_iterator
+
+Parent: S0C21-OBJ-NA-ST
+
+Behaviour List:
+- Default Constructible
+- Copy Constructible
+- Copy Assignable
+- Arithmetic Operable
+- Templated
+- Type Aware
+- Swappable
+- Equality Comparable
+
+Description:
+
+*/
+
 
 template<typename Type, typename DataT>
 class const_bi_list_iterator : public const_forward_list_iterator<Type, DataT> {
@@ -289,6 +326,7 @@ public:
     using difference_type = typename const_forward_list_iterator<Type, DataT>::difference_type;
     using iterator_category = std::bidirectional_iterator_tag;
 
+    const_bi_list_iterator() noexcept;
     const_bi_list_iterator(pointer in_ptr) noexcept;
     const_bi_list_iterator(const const_bi_list_iterator& in_rhs) noexcept;
     const_bi_list_iterator(const bi_list_iterator<Type, DataT>& in_rhs) noexcept;
@@ -298,6 +336,30 @@ public:
     MBASE_INLINE const_bi_list_iterator& operator--() noexcept;
     MBASE_INLINE const_bi_list_iterator& operator--(int) noexcept;
 };
+
+/*
+
+    --- CLASS INFORMATION ---
+Identification: S0C26-OBJ-NA-ST
+
+Name: reverse_bi_list_iterator
+
+Parent: S0C22-OBJ-NA-ST
+
+Behaviour List:
+- Default Constructible
+- Copy Constructible
+- Copy Assignable
+- Arithmetic Operable
+- Templated
+- Type Aware
+- Swappable
+- Equality Comparable
+
+Description:
+
+*/
+
 
 template<typename Type, typename DataT>
 class reverse_bi_list_iterator : public backward_list_iterator<Type, DataT> {
@@ -310,6 +372,7 @@ public:
     using difference_type = typename backward_list_iterator<Type, DataT>::difference_type;
     using iterator_category = std::bidirectional_iterator_tag;
 
+    reverse_bi_list_iterator() noexcept;
     reverse_bi_list_iterator(pointer in_ptr) noexcept;
     reverse_bi_list_iterator(const reverse_bi_list_iterator& in_rhs) noexcept;
 
@@ -318,6 +381,30 @@ public:
     MBASE_INLINE reverse_bi_list_iterator& operator--() noexcept;
     MBASE_INLINE reverse_bi_list_iterator& operator--(int) noexcept;
 };
+
+/*
+
+    --- CLASS INFORMATION ---
+Identification: S0C27-OBJ-NA-ST
+
+Name: const_reverse_bi_list_iterator
+
+Parent: S0C23-OBJ-NA-ST
+
+Behaviour List:
+- Default Constructible
+- Copy Constructible
+- Copy Assignable
+- Arithmetic Operable
+- Templated
+- Type Aware
+- Swappable
+- Equality Comparable
+
+Description:
+
+*/
+
 
 template<typename Type, typename DataT>
 class const_reverse_bi_list_iterator : public const_backward_list_iterator<Type, DataT> {
@@ -330,6 +417,7 @@ public:
     using difference_type = typename const_backward_list_iterator<Type, DataT>::difference_type;
     using iterator_category = std::bidirectional_iterator_tag;
 
+    const_reverse_bi_list_iterator() noexcept;
     const_reverse_bi_list_iterator(pointer in_ptr) noexcept;
     const_reverse_bi_list_iterator(const const_reverse_bi_list_iterator& in_rhs) noexcept;
     const_reverse_bi_list_iterator(const reverse_bi_list_iterator<Type, DataT>& in_rhs) noexcept;
@@ -343,6 +431,11 @@ public:
 };
 
 /* <-- FORWARD LIST ITERATOR IMPLEMENTATION --> */
+template<typename T, typename DataT>
+MBASE_INLINE forward_list_iterator<T, DataT>::forward_list_iterator() noexcept : _ptr(nullptr)
+{
+}
+
 template<typename T, typename DataT>
 MBASE_INLINE forward_list_iterator<T, DataT>::forward_list_iterator(pointer in_ptr) noexcept : _ptr(in_ptr) 
 {
@@ -434,6 +527,11 @@ MBASE_ND("ignoring equality comparison") MBASE_INLINE bool forward_list_iterator
 
 /* <-- CONST FORWARD LIST ITERATOR IMPLEMENTATION --> */
 template<typename T, typename DataT>
+const_forward_list_iterator<T, DataT>::const_forward_list_iterator() noexcept : _ptr(nullptr)
+{
+}
+
+template<typename T, typename DataT>
 const_forward_list_iterator<T, DataT>::const_forward_list_iterator(pointer in_ptr) noexcept : _ptr(in_ptr) 
 {
 }
@@ -518,6 +616,11 @@ MBASE_ND("ignoring equality comparison") MBASE_INLINE bool const_forward_list_it
 }
 
 /* <-- REVERSE LIST ITERATOR IMPLEMENTATION --> */
+template<typename T, typename DataT>
+backward_list_iterator<T, DataT>::backward_list_iterator() noexcept : _ptr(nullptr)
+{
+}
+
 template<typename T, typename DataT>
 backward_list_iterator<T, DataT>::backward_list_iterator(pointer in_ptr) noexcept : _ptr(in_ptr) 
 {
@@ -606,6 +709,11 @@ MBASE_ND("ignoring equality comparison") MBASE_INLINE bool backward_list_iterato
 
 /* <-- CONST REVERSE LIST ITERATOR IMPLEMENTATION --> */
 template<typename T, typename DataT>
+const_backward_list_iterator<T, DataT>::const_backward_list_iterator() noexcept : _ptr(nullptr)
+{
+}
+
+template<typename T, typename DataT>
 const_backward_list_iterator<T, DataT>::const_backward_list_iterator(pointer in_ptr) noexcept : _ptr(in_ptr) 
 {
 }
@@ -690,6 +798,11 @@ MBASE_ND("ignoring equality comparison") MBASE_INLINE bool const_backward_list_i
 
 /* <-- BIDIRECTIONAL LIST ITERATOR IMPLEMENTATION -->*/
 template<typename Type, typename DataT>
+bi_list_iterator<Type, DataT>::bi_list_iterator() noexcept : forward_list_iterator<Type, DataT>()
+{
+}
+
+template<typename Type, typename DataT>
 bi_list_iterator<Type, DataT>::bi_list_iterator(pointer in_ptr) noexcept : forward_list_iterator<Type, DataT>(in_ptr) 
 {
 }
@@ -729,6 +842,11 @@ MBASE_INLINE bi_list_iterator<Type, DataT>& bi_list_iterator<Type, DataT>::opera
 }
 
 /* <-- CONST BIDIRECTIONAL LIST ITERATOR IMPLEMENTATION -->*/
+template<typename Type, typename DataT>
+const_bi_list_iterator<Type, DataT>::const_bi_list_iterator() noexcept : const_forward_list_iterator<Type, DataT>()
+{
+}
+
 template<typename Type, typename DataT>
 const_bi_list_iterator<Type, DataT>::const_bi_list_iterator(pointer in_ptr) noexcept : const_forward_list_iterator<Type, DataT>(in_ptr) 
 {
@@ -774,6 +892,11 @@ MBASE_INLINE const_bi_list_iterator<Type, DataT>& const_bi_list_iterator<Type, D
 
 /* <-- REVERSE BIDIRECTIONAL LIST ITERATOR IMPLEMENTATION -->*/
 template<typename Type, typename DataT>
+reverse_bi_list_iterator<Type, DataT>::reverse_bi_list_iterator() noexcept : backward_list_iterator<Type, DataT>()
+{
+}
+
+template<typename Type, typename DataT>
 reverse_bi_list_iterator<Type, DataT>::reverse_bi_list_iterator(pointer in_ptr) noexcept : backward_list_iterator<Type, DataT>(in_ptr) 
 {
 }
@@ -812,6 +935,11 @@ MBASE_INLINE reverse_bi_list_iterator<Type, DataT>& reverse_bi_list_iterator<Typ
 }
 
 /* <-- CONST REVERSE BIDIRECTIONAL LIST ITERATOR IMPLEMENTATION -->*/
+template<typename Type, typename DataT>
+const_reverse_bi_list_iterator<Type, DataT>::const_reverse_bi_list_iterator() noexcept : const_backward_list_iterator<Type, DataT>()
+{
+}
+
 template<typename Type, typename DataT>
 const_reverse_bi_list_iterator<Type, DataT>::const_reverse_bi_list_iterator(pointer in_ptr) noexcept : const_backward_list_iterator<Type, DataT>(in_ptr) 
 {

@@ -3,17 +3,18 @@
 
 #include <mbase/common.h>
 #include <mbase/list.h>
+#include <mbase/index_assigner.h>
 #include <mbase/app/timers.h>
 #include <mbase/app/thread_pool.h>
 #include <Windows.h>
 
-#define MBASE_DEFAULT_TIMER_LIMIT 1024
+#define MBASE_DEFAULT_TIMER_LIMIT 2048
 
 MBASE_BEGIN
 
 class timer_loop : public non_copymovable {
 public:
-	using timer_element_iterator = mbase::list<timer_base*>::iterator;
+	using timer_element = mbase::list<timer_base*>::iterator;
 
 	enum class timer_err : U32 {
 		TIMER_SUCCESS = 0,
@@ -31,28 +32,28 @@ public:
 
 	~timer_loop() {}
 
-	timer_err RegisterTimer(timer_base& in_timer, timer_element_iterator* out_timer) noexcept {
+	timer_err RegisterTimer(timer_base& in_timer, timer_element& out_timer) noexcept {
 		if(registeredTimers.size() > timerLimit)
 		{
 			return timer_err::TIMER_ERR_LIMIT_REACHED;
 		}
 
-		in_timer.mTimerId = ++timerIdCounter; // Timer ids will start from 1
+		in_timer.mTimerId = ++timerIdCounter;
 		timer_err terr = timer_err::TIMER_SUCCESS;
 
 		if(in_timer.GetTargetTime() <= 0)
 		{
-			// WARN THE USER THAT THE TIMER WILL BE EXECUTED IMMEDIATELY
 			terr = timer_err::TIMER_WARN_TIMER_WILL_EXECUTE_IMM;
 		}
-		in_timer.mIsActive = true;
+
+		in_timer.mIsRegistered = true;
 		registeredTimers.push_back(&in_timer);
-		out_timer = &registeredTimers.end();
+		out_timer = registeredTimers.end();
 
 		return terr;
 	}
 
-	timer_err RegisterTimer(timer_base& in_timer, PTRGENERIC in_usr_data, timer_element_iterator* out_timer) noexcept {
+	timer_err RegisterTimer(timer_base& in_timer, PTRGENERIC in_usr_data, timer_element& out_timer) noexcept {
 		if (registeredTimers.size() > timerLimit)
 		{
 			return timer_err::TIMER_ERR_LIMIT_REACHED;
@@ -66,19 +67,23 @@ public:
 			// WARN THE USER THAT THE TIMER WILL BE EXECUTED IMMEDIATELY
 			terr = timer_err::TIMER_WARN_TIMER_WILL_EXECUTE_IMM;
 		}
-		in_timer.mIsActive = true;
+
+		in_timer.mIsRegistered = true;
 		in_timer.suppliedData = in_usr_data;
 		registeredTimers.push_back(&in_timer);
-		out_timer = &registeredTimers.end();
+		out_timer = registeredTimers.end();
 
 		return terr;
 	}
 
-	timer_err UnregisterTimer(timer_element_iterator* out_timer) noexcept {
-		MBASE_NULL_CHECK_RETURN_VAL(out_timer, timer_err::TIMER_ERR_INVALID_DATA);
-		timer_base* tb = **out_timer;
-		tb->mIsActive = false;
-		registeredTimers.erase(*out_timer);
+	timer_err UnregisterTimer(timer_element& out_timer) noexcept {
+		MBASE_NULL_CHECK_RETURN_VAL(out_timer.get(), timer_err::TIMER_ERR_INVALID_DATA);
+		timer_base* tb = *out_timer;
+		if(tb->mIsRegistered)
+		{
+			registeredTimers.erase(out_timer);
+			tb->mIsRegistered = false;
+		}
 		return timer_err::TIMER_SUCCESS;
 	}
 
@@ -94,7 +99,7 @@ public:
 		return &registeredTimers;
 	}
 
-	GENERIC RunTimerOnly() noexcept {
+	GENERIC RunTimerLoop() noexcept {
 		if(isRunning)
 		{
 			return;
@@ -119,10 +124,10 @@ public:
 			{
 				timer_base* tmpTimerBase = *It;
 				tmpTimerBase->mCurrentTime += deltaTime;
-				tmpTimerBase->mIsActive = true;
+				tmpTimerBase->mIsRegistered = true;
 				if (tmpTimerBase->mCurrentTime >= tmpTimerBase->mTargetTime)
 				{
-					if(tmpTimerBase->GetExecutionPolicy() == mbase::timer_base::timer_exec_policy::TIMER_POLICY_ASYNC)
+					if(tmpTimerBase->GetExecutionPolicy() == mbase::timer_base::timer_flag::TIMER_POLICY_ASYNC)
 					{
 						threadPool.ExecuteJob(tmpTimerBase);
 					}
@@ -131,7 +136,7 @@ public:
 						tmpTimerBase->on_call(tmpTimerBase->GetUserData());
 					}
 					
-					if (tmpTimerBase->GetTimerType() == mbase::timer_base::timer_type::TIMER_TIMEOUT)
+					if (tmpTimerBase->GetTimerType() == mbase::timer_base::timer_flag::TIMER_TYPE_TIMEOUT)
 					{
 						It = registeredTimers.erase(It);
 					}
@@ -155,7 +160,7 @@ public:
 			if (tmpTimerBase->mCurrentTime >= tmpTimerBase->mTargetTime)
 			{
 				tmpTimerBase->on_call(tmpTimerBase->GetUserData());
-				if (tmpTimerBase->GetTimerType() == mbase::timer_base::timer_type::TIMER_TIMEOUT)
+				if (tmpTimerBase->GetTimerType() == mbase::timer_base::timer_flag::TIMER_TYPE_TIMEOUT)
 				{
 					It = registeredTimers.erase(It);
 				}
