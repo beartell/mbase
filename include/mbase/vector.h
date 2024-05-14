@@ -120,7 +120,7 @@ public:
 	MBASE_INLINE_EXPR GENERIC shrink_to_fit();
 	MBASE_INLINE_EXPR GENERIC reserve(size_type in_capacity) noexcept;
 	MBASE_INLINE_EXPR iterator erase(iterator in_pos) noexcept;
-	MBASE_INLINE_EXPR iterator erase(const_iterator in_begin, const_iterator in_end) noexcept; // IMPLEMENT THIS
+	MBASE_INLINE_EXPR iterator erase(iterator in_begin, iterator in_end) noexcept;
 	MBASE_INLINE_EXPR GENERIC push_back(const T& in_val) noexcept;
 	MBASE_INLINE_EXPR GENERIC push_back(T&& in_val) noexcept;
 	MBASE_INLINE_EXPR GENERIC pop_back() noexcept;
@@ -616,6 +616,7 @@ MBASE_INLINE_EXPR GENERIC vector<T, Allocator>::reserve(size_type in_capacity) n
 		externalAllocator.construct(new_data + i, std::move(*(raw_data + i)));
 		raw_data[i].~value_type();
 	}
+
 	externalAllocator.deallocate(raw_data, 0);
 	raw_data = nullptr;
 
@@ -636,34 +637,49 @@ MBASE_INLINE_EXPR typename vector<T, Allocator>::iterator vector<T, Allocator>::
 	{
 		if (mSize)
 		{
-			pointer new_data = externalAllocator.allocate(mCapacity);
-			difference_type i = 0;
-			difference_type j = 0;
-			difference_type foundIndex = 0;
-			for (iterator It = begin(); It != end(); It++)
+			vector vc(mCapacity);
+			for(iterator It = begin(); It != end(); It++)
 			{
-				if (It == in_pos)
+				if(It == in_pos)
 				{
-					raw_data[j].~value_type();
-					foundIndex = j;
-					++j;
+					continue;
 				}
-				else
-				{
-					raw_data[j].~value_type();
-				}
-				externalAllocator.construct(new_data + i, std::move(*(raw_data + j)));
-				++i;
-				++j;
+				vc.push_back(std::move(*It));
 			}
-			externalAllocator.deallocate(raw_data, 0);
-			raw_data = new_data;
-			--mSize;
-			return begin() + foundIndex;
+			*this = std::move(vc);
 		}
 	}
 	return end();
 }
+
+template<typename T, typename Allocator>
+MBASE_INLINE_EXPR typename vector<T, Allocator>::iterator vector<T, Allocator>::erase(iterator in_begin, iterator in_end) noexcept 
+{
+	if(in_begin == in_end)
+	{
+		return erase(in_begin);
+	}
+	else if(in_begin > in_end)
+	{
+		return end();
+	}
+
+	vector newVector;
+	iterator itBegin = begin();
+
+	for(itBegin; itBegin != in_begin; itBegin++)
+	{
+		newVector.push_back(std::move(*itBegin));
+	}
+	itBegin = in_end;
+	for(itBegin; itBegin != end(); itBegin++)
+	{
+		newVector.push_back(std::move(*itBegin));
+	}
+	*this = std::move(newVector);
+	return begin();
+}
+
 
 template<typename T, typename Allocator>
 MBASE_INLINE_EXPR typename vector<T, Allocator>::iterator vector<T, Allocator>::insert(const_iterator in_pos, const T& in_val) noexcept {

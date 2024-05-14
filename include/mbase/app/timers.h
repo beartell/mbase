@@ -11,9 +11,7 @@ class timer_base : public handler_base {
 public:
 	enum class timer_flag : U8 {
 		TIMER_STATE_FINISHED = 0,
-		TIMER_STATE_ABANDONED = 1,
-		TIMER_STATE_ACTIVE = 15,
-		TIMER_STATE_INACTIVE = 17,
+		TIMER_STATE_INACTIVE = 1,
 		TIMER_TYPE_TIMEOUT = 2,
 		TIMER_TYPE_INTERVAL = 3,
 		TIMER_POLICY_IMMEDIATE = 4,
@@ -22,9 +20,9 @@ public:
 
 	using user_data = PTRGENERIC;
 
-	timer_base() noexcept :  handler_base(), mCurrentTime(0), mTargetTime(0), mPolicy(timer_flag::TIMER_POLICY_IMMEDIATE), mStatus(timer_flag::TIMER_STATE_INACTIVE), mIsRegistered(false), mTimerId(-1) {}
+	timer_base() noexcept :  handler_base(), mCurrentTime(0), mTargetTime(0), mPolicy(timer_flag::TIMER_POLICY_IMMEDIATE), mStatus(timer_flag::TIMER_STATE_INACTIVE), mIsRegistered(false), mTimerId(-1), teSelf(nullptr) {}
 
-	MBASE_EXPLICIT timer_base(user_data in_data) noexcept : mCurrentTime(0), mTargetTime(0), mPolicy(timer_flag::TIMER_POLICY_IMMEDIATE), mStatus(timer_flag::TIMER_STATE_INACTIVE), mIsRegistered(false), mTimerId(-1) {
+	MBASE_EXPLICIT timer_base(user_data in_data) noexcept : mCurrentTime(0), mTargetTime(0), mPolicy(timer_flag::TIMER_POLICY_IMMEDIATE), mStatus(timer_flag::TIMER_STATE_INACTIVE), mIsRegistered(false), mTimerId(-1), teSelf(nullptr) {
 		suppliedData = in_data;
 	}
 
@@ -87,6 +85,9 @@ protected:
 	I32 mTimerId;
 	F64 mCurrentTime;
 	F64 mTargetTime;
+private:
+	using timer_element = mbase::list<timer_base*>::iterator;
+	timer_element teSelf;
 };
 
 class timeout : public timer_base {

@@ -14,8 +14,6 @@ MBASE_BEGIN
 
 class timer_loop : public non_copymovable {
 public:
-	using timer_element = mbase::list<timer_base*>::iterator;
-
 	enum class timer_err : U32 {
 		TIMER_SUCCESS = 0,
 		TIMER_ERR_LIMIT_REACHED = 1,
@@ -32,7 +30,7 @@ public:
 
 	~timer_loop() {}
 
-	timer_err RegisterTimer(timer_base& in_timer, timer_element& out_timer) noexcept {
+	timer_err RegisterTimer(timer_base& in_timer) noexcept {
 		if(registeredTimers.size() > timerLimit)
 		{
 			return timer_err::TIMER_ERR_LIMIT_REACHED;
@@ -48,12 +46,12 @@ public:
 
 		in_timer.mIsRegistered = true;
 		registeredTimers.push_back(&in_timer);
-		out_timer = registeredTimers.end();
+		in_timer.teSelf = registeredTimers.begin();
 
 		return terr;
 	}
 
-	timer_err RegisterTimer(timer_base& in_timer, PTRGENERIC in_usr_data, timer_element& out_timer) noexcept {
+	timer_err RegisterTimer(timer_base& in_timer, PTRGENERIC in_usr_data) noexcept {
 		if (registeredTimers.size() > timerLimit)
 		{
 			return timer_err::TIMER_ERR_LIMIT_REACHED;
@@ -71,17 +69,17 @@ public:
 		in_timer.mIsRegistered = true;
 		in_timer.suppliedData = in_usr_data;
 		registeredTimers.push_back(&in_timer);
-		out_timer = registeredTimers.end();
+		in_timer.teSelf = registeredTimers.begin();
 
 		return terr;
 	}
 
-	timer_err UnregisterTimer(timer_element& out_timer) noexcept {
-		MBASE_NULL_CHECK_RETURN_VAL(out_timer.get(), timer_err::TIMER_ERR_INVALID_DATA);
-		timer_base* tb = *out_timer;
+	timer_err UnregisterTimer(timer_base& in_timer) noexcept {
+		MBASE_NULL_CHECK_RETURN_VAL(in_timer.teSelf.get(), timer_err::TIMER_ERR_INVALID_DATA);
+		timer_base* tb = *in_timer.teSelf;
 		if(tb->mIsRegistered)
 		{
-			registeredTimers.erase(out_timer);
+			registeredTimers.erase(in_timer.teSelf);
 			tb->mIsRegistered = false;
 		}
 		return timer_err::TIMER_SUCCESS;
@@ -124,7 +122,7 @@ public:
 			{
 				timer_base* tmpTimerBase = *It;
 				tmpTimerBase->mCurrentTime += deltaTime;
-				tmpTimerBase->mIsRegistered = true;
+				++It;
 				if (tmpTimerBase->mCurrentTime >= tmpTimerBase->mTargetTime)
 				{
 					if(tmpTimerBase->GetExecutionPolicy() == mbase::timer_base::timer_flag::TIMER_POLICY_ASYNC)
@@ -135,17 +133,23 @@ public:
 					{
 						tmpTimerBase->on_call(tmpTimerBase->GetUserData());
 					}
-					
+
+					if (!tmpTimerBase->mIsRegistered)
+					{
+						continue;
+					}
+
 					if (tmpTimerBase->GetTimerType() == mbase::timer_base::timer_flag::TIMER_TYPE_TIMEOUT)
 					{
-						It = registeredTimers.erase(It);
+						tmpTimerBase->mIsRegistered = false;
+						tmpTimerBase->mStatus = mbase::timer_base::timer_flag::TIMER_STATE_FINISHED;
+						It = registeredTimers.erase(tmpTimerBase->teSelf);
 					}
 					else
 					{
 						tmpTimerBase->ResetTime();
 					}
 				}
-				It++;
 			}
 		}
 	}
