@@ -57,6 +57,7 @@ public:
 	/* ===== OBSERVATION METHODS BEGIN ===== */
 	MBASE_ND("first byte being ignored") MBASE_INLINE_EXPR IBYTE front() const noexcept;
 	MBASE_ND("last byte being ignored") MBASE_INLINE_EXPR IBYTE back() const noexcept;
+	MBASE_ND("stream observation ignored") MBASE_INLINE_EXPR bool is_cursor_end() const noexcept;
 	MBASE_ND("stream observation ignored") MBASE_INLINE_EXPR size_type buffer_length() const noexcept;
 	MBASE_ND("stream observation ignored") MBASE_INLINE_EXPR IBYTEBUFFER get_buffer() const noexcept;
 	MBASE_ND("stream observation ignored") MBASE_INLINE_EXPR IBYTEBUFFER get_bufferc() const noexcept;
@@ -81,6 +82,8 @@ public:
 	MBASE_INLINE_EXPR GENERIC set_cursor_pos(difference_type in_pos) noexcept;
 	MBASE_INLINE_EXPR GENERIC set_cursor_front() noexcept;
 	MBASE_INLINE_EXPR GENERIC set_cursor_end() noexcept;
+	MBASE_INLINE_EXPR GENERIC zero_out_buffer() noexcept;
+	MBASE_INLINE_EXPR GENERIC zero_out_buffern() noexcept;
 	MBASE_INLINE virtual GENERIC _destroy_self() noexcept;
 	/* ===== STATE-MODIFIER METHODS END ===== */
 
@@ -188,6 +191,11 @@ MBASE_ND("last byte being ignored") MBASE_INLINE_EXPR IBYTE char_stream::back() 
 	return *(srcBuffer + (bufferLength - 1));
 }
 
+MBASE_ND("stream observation ignored") MBASE_INLINE_EXPR bool char_stream::is_cursor_end() const noexcept 
+{
+	return streamCursor == bufferLength;
+}
+
 MBASE_ND("stream observation ignored") MBASE_INLINE_EXPR char_stream::size_type char_stream::buffer_length() const noexcept {
 	return bufferLength;
 }
@@ -267,6 +275,19 @@ MBASE_INLINE_EXPR GENERIC char_stream::set_cursor_front() noexcept {
 
 MBASE_INLINE_EXPR GENERIC char_stream::set_cursor_end() noexcept {
 	streamCursor = bufferLength - 1;
+}
+
+MBASE_INLINE_EXPR GENERIC char_stream::zero_out_buffer() noexcept 
+{
+	difference_type oldCursorPos = streamCursor;
+	set_cursor_front();
+	putcn(0);
+	set_cursor_pos(oldCursorPos);
+}
+
+MBASE_INLINE_EXPR GENERIC char_stream::zero_out_buffern() noexcept
+{
+	putcn(0);
 }
 
 MBASE_INLINE GENERIC char_stream::_destroy_self() noexcept {

@@ -67,7 +67,7 @@ public:
 		return flags::AIO_MNG_SUCCESS;
 	}
 
-	flags EnqueueWriteContext(async_io_context* in_ctx, size_type in_bytes_to_write, size_type in_bytes_on_each) noexcept {
+	flags EnqueueWriteContext(async_io_context* in_ctx, IBYTEBUFFER in_data, size_type in_bytes_to_write, size_type in_bytes_on_each) noexcept {
 		MBASE_NULL_CHECK_RETURN_VAL(in_ctx, flags::AIO_MNG_ERR_MISSING_CONTEXT);
 		if (in_ctx->GetIoDirection() != async_io_context::flags::IO_CTX_DIRECTION_OUTPUT)
 		{
@@ -91,17 +91,21 @@ public:
 			err = flags::AIO_MNG_WARN_INTERNAL_STREAM_ALTERED;
 			if(in_ctx->srcBuffer->buffer_length() == in_bytes_to_write)
 			{
-				type_sequence<IBYTE>::fill(in_ctx->srcBuffer->get_buffer(), 0, in_ctx->srcBuffer->buffer_length());
+				in_ctx->srcBuffer->zero_out_buffer();
 			}
 			else
 			{
 				//deep_char_stream* dcsTemp = static_cast<deep_char_stream*>(in_ctx->srcBuffer);
 				delete in_ctx->srcBuffer;
 				in_ctx->srcBuffer = nullptr;
-				in_ctx->srcBuffer = new deep_char_stream(in_bytes_to_write);
+				in_ctx->srcBuffer = new deep_char_stream(in_data, in_bytes_to_write);
 			}
 		}
-		
+		else
+		{
+			in_ctx->srcBuffer = new deep_char_stream(in_data, in_bytes_to_write);
+		}
+
 		in_ctx->isBufferInternal = false;
 
 		in_ctx->ais = async_io_context::flags::ASYNC_IO_STAT_IDLE;
@@ -178,7 +182,7 @@ public:
 			err = flags::AIO_MNG_WARN_INTERNAL_STREAM_ALTERED;
 			if (in_ctx->srcBuffer->buffer_length() == in_bytes_to_read)
 			{
-				type_sequence<IBYTE>::fill(in_ctx->srcBuffer->get_buffer(), 0, in_ctx->srcBuffer->buffer_length());
+				in_ctx->srcBuffer->zero_out_buffer();
 			}
 			else
 			{
@@ -187,6 +191,10 @@ public:
 				in_ctx->srcBuffer = nullptr;
 				in_ctx->srcBuffer = new deep_char_stream(in_bytes_to_read);
 			}
+		}
+		else
+		{
+			in_ctx->srcBuffer = new deep_char_stream(in_bytes_to_read);
 		}
 
 		in_ctx->isBufferInternal = false;
@@ -266,6 +274,7 @@ public:
 			async_io_context* iCtx = *It;
 			if(!iCtx->isActive)
 			{
+				std::cout << "shit" << std::endl;
 				continue;
 			}
 			iCtx->isActive = true;
