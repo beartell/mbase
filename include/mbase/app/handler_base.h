@@ -34,6 +34,7 @@ public:
 	GENERIC _SetThreadIndex(I32 in_index) noexcept {
 		threadIndex = in_index;
 	}
+
 protected:
 	U32 handlerId;
 	I32 threadIndex;

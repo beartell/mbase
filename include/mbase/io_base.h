@@ -26,8 +26,8 @@ it is used for storing the raw file handle and it's OS dependant 'context'.
 */
 
 struct io_context {
-	PTRGENERIC raw_handle;
-	PTRGENERIC context_body;
+	PTRGENERIC raw_handle = nullptr;
+	PTRGENERIC context_body = nullptr;
 };
 
 /*
@@ -93,7 +93,13 @@ public:
 	size_type sync_os() noexcept { return write_data(*ostream); }
 	size_type sync_os(size_type in_length) noexcept { return write_data(*ostream, in_length); }
 	// this is valid if the subclass is io_file,
-	GENERIC set_file_pointer(size_type in_distance, move_method in_method) noexcept { SetFilePointer(rawContext.raw_handle, in_distance, nullptr, (DWORD)in_method); }
+	GENERIC set_file_pointer(size_type in_distance, move_method in_method) noexcept 
+	{ 
+		if(rawContext.raw_handle)
+		{
+			SetFilePointer(rawContext.raw_handle, in_distance, nullptr, (DWORD)in_method);
+		}
+	}
 	/* ===== STATE-MODIFIER METHODS END ===== */
 
 protected:

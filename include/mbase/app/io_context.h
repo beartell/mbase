@@ -169,13 +169,11 @@ private:
 	size_type bytesTransferred;
 	size_type targetBytes;
 	size_type bytesOnEachIteration;
-
 	U32 lastFraction;
 	U32 calculatedHop;
 	U32 hopCounter;
 	bool isActive;
 	bool isBufferInternal; // true if io context use char_stream of io_base
-
 	io_base* ioHandle;
 	char_stream* srcBuffer;
 	flags ais;
