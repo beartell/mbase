@@ -46,7 +46,7 @@ public:
 
 		in_timer.mIsRegistered = true;
 		registeredTimers.push_back(&in_timer);
-		in_timer.teSelf = registeredTimers.begin();
+		in_timer.teSelf = registeredTimers.insert(registeredTimers.cend(), &in_timer); // WE WILL FIX IT LATER
 
 		return terr;
 	}
@@ -68,8 +68,8 @@ public:
 
 		in_timer.mIsRegistered = true;
 		in_timer.suppliedData = in_usr_data;
-		registeredTimers.push_back(&in_timer);
-		in_timer.teSelf = registeredTimers.begin();
+		//registeredTimers.push_back(&in_timer);
+		in_timer.teSelf = registeredTimers.insert(registeredTimers.cend(), &in_timer); // WE WILL FIX IT LATER
 
 		return terr;
 	}
