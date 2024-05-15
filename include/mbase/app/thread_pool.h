@@ -34,7 +34,7 @@ public:
 			return 0;
 		}
 
-		thread_pool_routine_args() : selfClass(nullptr), tHandler(nullptr), selfThread(_PoolRoutine, nullptr) {}
+		thread_pool_routine_args() : selfClass(nullptr), tHandler(nullptr), selfThread(_PoolRoutine, nullptr), tIndex(0) {}
 		tpool* selfClass;
 		I32 tIndex;
 		handler_base* tHandler;
@@ -83,7 +83,7 @@ public:
 		{
 			// finish all execution
 			tpra->selfThread.resume();
-			tpra++;
+			++tpra;
 		}
 
 		delete[]threadPool;
@@ -101,7 +101,7 @@ public:
 
 		I32 freeIndex = freeThreadIndex.top();
 		freeThreadIndex.pop();
-		activeThreadCounter++;
+		++activeThreadCounter;
 
 		threadPool[freeIndex].tHandler = in_handler;
 		threadPool[freeIndex].tHandler->_SetThreadIndex(freeIndex);
@@ -123,7 +123,7 @@ public:
 		mtx.acquire();
 
 		freeThreadIndex.push(in_index);
-		activeThreadCounter--;
+		++activeThreadCounter;
 
 		mtx.release();
 	}

@@ -136,6 +136,7 @@ public:
 
 					if (!tmpTimerBase->mIsRegistered)
 					{
+						// which means that the handler in on_call method unregistered itself
 						continue;
 					}
 

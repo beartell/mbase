@@ -12,28 +12,22 @@ public:
 	using size_type = SIZE_T;
 	using difference_type = PTRDIFF;
 
-	enum class errors : U8 {
+	enum class flags : U32 {
 		ASYNC_CTX_SUCCESS = 0,
 		ASYNC_CTX_ERR_CONTEXT_ACTIVE = 1,
-		ASYNC_CTX_ERR_ALREADY_HALTED = 2
+		ASYNC_CTX_ERR_ALREADY_HALTED = 2,
+		ASYNC_IO_STAT_UNREGISTERED = 3,
+		ASYNC_IO_STAT_IDLE = 4,
+		ASYNC_IO_STAT_ABANDONED = 5,
+		ASYNC_IO_STAT_FAILED = 6,
+		ASYNC_IO_STAT_FLUSHED = 7,
+		ASYNC_IO_STAT_OPERATING = 8,
+		ASYNC_IO_STAT_FINISHED = 9,
+		IO_CTX_DIRECTION_INPUT = 10,
+		IO_CTX_DIRECTION_OUTPUT = 11
 	};
 
-	enum class direction : U8 {
-		IO_CTX_DIRECTION_INPUT = 0,
-		IO_CTX_DIRECTION_OUTPUT = 1
-	};
-
-	enum class status : U8 {
-		ASYNC_IO_STAT_UNREGISTERED = 0,
-		ASYNC_IO_STAT_IDLE = 1,
-		ASYNC_IO_STAT_ABANDONED = 2,
-		ASYNC_IO_STAT_FAILED = 3,
-		ASYNC_IO_STAT_FLUSHED = 4,
-		ASYNC_IO_STAT_OPERATING = 5,
-		ASYNC_IO_STAT_FINISHED = 6
-	};
-
-	async_io_context(io_base& in_base, direction in_io_direction = direction::IO_CTX_DIRECTION_INPUT) noexcept : 
+	async_io_context(io_base& in_base, flags in_io_direction = flags::IO_CTX_DIRECTION_INPUT) noexcept :
 		bytesTransferred(0),
 		targetBytes(0),
 		bytesOnEachIteration(0),
@@ -45,7 +39,7 @@ public:
 		isBufferInternal(true)
 	{
 		ioHandle = &in_base;
-		if(in_io_direction == direction::IO_CTX_DIRECTION_OUTPUT)
+		if(in_io_direction == flags::IO_CTX_DIRECTION_OUTPUT)
 		{
 			srcBuffer = ioHandle->get_os();
 		}
@@ -58,30 +52,30 @@ public:
 	~async_io_context() noexcept {
 		if(!isBufferInternal)
 		{
-			deep_char_stream* dcsTemp = static_cast<deep_char_stream*>(srcBuffer);
-			delete dcsTemp;
+			//deep_char_stream* dcsTemp = static_cast<deep_char_stream*>(srcBuffer);
+			delete srcBuffer;
 		}
 		
 		ioHandle = nullptr;
 		srcBuffer = nullptr;
 	}
 
-	errors ConstructContext(io_base& in_base, direction in_io_direction = direction::IO_CTX_DIRECTION_INPUT) {
+	flags ConstructContext(io_base& in_base, flags in_io_direction = flags::IO_CTX_DIRECTION_INPUT) {
 		if (isActive)
 		{
-			return errors::ASYNC_CTX_ERR_CONTEXT_ACTIVE;
+			return flags::ASYNC_CTX_ERR_CONTEXT_ACTIVE;
 		}
 
 		ioHandle = &in_base;
 		if (!isBufferInternal)
 		{
-			deep_char_stream* dcsTemp = static_cast<deep_char_stream*>(srcBuffer);
-			delete dcsTemp;
+			//deep_char_stream* dcsTemp = static_cast<deep_char_stream*>(srcBuffer);
+			delete srcBuffer;
 		}
 
 		srcBuffer = nullptr;
 
-		if (in_io_direction == direction::IO_CTX_DIRECTION_OUTPUT)
+		if (in_io_direction == flags::IO_CTX_DIRECTION_OUTPUT)
 		{
 			srcBuffer = ioHandle->get_os();
 		}
@@ -90,7 +84,7 @@ public:
 			srcBuffer = ioHandle->get_is();
 		}
 
-		return errors::ASYNC_CTX_SUCCESS;
+		return flags::ASYNC_CTX_SUCCESS;
 	}
 
 	MBASE_ND("io context observation ignored") size_type GetTotalTransferredBytes() const noexcept {
@@ -117,7 +111,7 @@ public:
 		return hopCounter;
 	}
 
-	MBASE_ND("io context observation ignored") direction GetIoDirection() const noexcept {
+	MBASE_ND("io context observation ignored") flags GetIoDirection() const noexcept {
 		return ioDirection;
 	}
 
@@ -129,7 +123,7 @@ public:
 		return srcBuffer;
 	}
 
-	MBASE_ND("ignoring status") status GetIoStatus() {
+	MBASE_ND("ignoring status") flags GetIoStatus() {
 		return ais;
 	}
 
@@ -142,31 +136,31 @@ public:
 		ioHandle->set_file_pointer(0, mbase::io_base::move_method::MV_BEGIN);
 		hopCounter = 0;
 		bytesTransferred = 0;
-		ais = status::ASYNC_IO_STAT_FLUSHED;
+		ais = flags::ASYNC_IO_STAT_FLUSHED;
 	}
 
-	errors HaltContext() noexcept {
+	flags HaltContext() noexcept {
 		if(!isActive)
 		{
-			return errors::ASYNC_CTX_ERR_ALREADY_HALTED;
+			return flags::ASYNC_CTX_ERR_ALREADY_HALTED;
 		}
 
 		isActive = false;
 		srcBuffer->set_cursor_front();
 		ioHandle->set_file_pointer(0, mbase::io_base::move_method::MV_BEGIN);
-		return errors::ASYNC_CTX_SUCCESS;
+		return flags::ASYNC_CTX_SUCCESS;
 	}
 
-	errors ResumeContext() noexcept {
+	flags ResumeContext() noexcept {
 		if (isActive)
 		{
-			return errors::ASYNC_CTX_ERR_CONTEXT_ACTIVE;
+			return flags::ASYNC_CTX_ERR_CONTEXT_ACTIVE;
 		}
 
 		isActive = true;
 		srcBuffer->advance(bytesTransferred);
 		ioHandle->set_file_pointer(bytesTransferred, mbase::io_base::move_method::MV_BEGIN);
-		return errors::ASYNC_CTX_SUCCESS;
+		return flags::ASYNC_CTX_SUCCESS;
 	}
 
 	friend class async_io_manager;
@@ -184,8 +178,8 @@ private:
 
 	io_base* ioHandle;
 	char_stream* srcBuffer;
-	status ais;
-	direction ioDirection;
+	flags ais;
+	flags ioDirection;
 };
 
 MBASE_END

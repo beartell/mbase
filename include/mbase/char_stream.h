@@ -51,6 +51,7 @@ public:
 	MBASE_INLINE char_stream() noexcept;
 	MBASE_INLINE MBASE_STD_EXPLICIT char_stream(IBYTEBUFFER in_src) noexcept;
 	MBASE_INLINE MBASE_STD_EXPLICIT char_stream(IBYTEBUFFER in_src, size_type in_length) noexcept;
+	MBASE_INLINE ~char_stream() noexcept;
 	/* ===== BUILDER METHODS END ===== */
 
 	/* ===== OBSERVATION METHODS BEGIN ===== */
@@ -80,6 +81,7 @@ public:
 	MBASE_INLINE_EXPR GENERIC set_cursor_pos(difference_type in_pos) noexcept;
 	MBASE_INLINE_EXPR GENERIC set_cursor_front() noexcept;
 	MBASE_INLINE_EXPR GENERIC set_cursor_end() noexcept;
+	MBASE_INLINE virtual GENERIC _destroy_self() noexcept;
 	/* ===== STATE-MODIFIER METHODS END ===== */
 
 	/* ===== OPERATOR STATE-MODIFIER METHODS BEGIN ===== */
@@ -149,6 +151,10 @@ public:
 	MBASE_INLINE deep_char_stream& operator=(const deep_char_stream& in_rhs) noexcept;
 	MBASE_INLINE deep_char_stream& operator=(deep_char_stream&& in_rhs) noexcept;
 	/* ===== OPERATOR BUILDER METHODS END ===== */
+
+	/* ===== STATE-MODIFIER METHODS BEGIN ===== */
+	MBASE_INLINE GENERIC _destroy_self() noexcept override;
+	/* ===== STATE-MODIFIER METHODS END ===== */
 };
 
 MBASE_INLINE char_stream::char_stream() noexcept : bufferLength(0), streamCursor(0), srcBuffer(nullptr)
@@ -163,6 +169,11 @@ MBASE_INLINE char_stream::char_stream(IBYTEBUFFER in_src) noexcept {
 
 MBASE_INLINE char_stream::char_stream(IBYTEBUFFER in_src, size_type in_length) noexcept : bufferLength(in_length), streamCursor(0), srcBuffer(in_src)
 {
+}
+
+MBASE_INLINE char_stream::~char_stream() noexcept
+{
+	_destroy_self();
 }
 
 MBASE_INLINE IBYTEBUFFER char_stream::operator*() noexcept {
@@ -258,6 +269,10 @@ MBASE_INLINE_EXPR GENERIC char_stream::set_cursor_end() noexcept {
 	streamCursor = bufferLength - 1;
 }
 
+MBASE_INLINE GENERIC char_stream::_destroy_self() noexcept {
+	// do nothing
+}
+
 MBASE_INLINE IBYTEBUFFER char_stream::operator+=(difference_type in_rhs) noexcept {
 	advance(in_rhs);
 	return srcBuffer;
@@ -287,7 +302,6 @@ MBASE_INLINE IBYTEBUFFER char_stream::operator--(I32) noexcept {
 	reverse();
 	return srcBuffer;
 }
-
 
 MBASE_INLINE deep_char_stream::deep_char_stream(IBYTEBUFFER in_src) noexcept : char_stream(in_src) {
 	IBYTEBUFFER freshBuffer = static_cast<IBYTEBUFFER>(malloc(bufferLength));
@@ -322,12 +336,7 @@ MBASE_INLINE deep_char_stream::deep_char_stream(deep_char_stream&& in_rhs) noexc
 }
 
 MBASE_INLINE deep_char_stream::~deep_char_stream() {
-	if (!srcBuffer)
-	{
-		return;
-	}
-
-	free(srcBuffer);
+	_destroy_self();
 }
 
 MBASE_INLINE deep_char_stream& deep_char_stream::operator=(const deep_char_stream& in_rhs) noexcept {
@@ -355,6 +364,16 @@ MBASE_INLINE deep_char_stream& deep_char_stream::operator=(deep_char_stream&& in
 	srcBuffer = in_rhs.srcBuffer;
 	in_rhs.srcBuffer = nullptr;
 	return *this;
+}
+
+MBASE_INLINE GENERIC deep_char_stream::_destroy_self() noexcept {
+	if (!srcBuffer)
+	{
+		return;
+	}
+
+	free(srcBuffer);
+	srcBuffer = nullptr;
 }
 
 MBASE_STD_END
