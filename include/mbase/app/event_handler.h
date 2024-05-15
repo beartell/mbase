@@ -31,6 +31,7 @@ private:
 	event_element selfIter;
 	std::string eventName;
 	flags eventType;
+	I32 managerId = -1;
 };
 
 MBASE_END

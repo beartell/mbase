@@ -7,6 +7,7 @@
 #include <mbase/app/event_handler.h>
 #include <string>
 #include <unordered_map>
+#include <time.h>
 
 MBASE_BEGIN
 
@@ -31,7 +32,13 @@ public:
 		EVENT_MNG_ERR_REACHED_MAX_LISTENERS = 5
 	};
 
-	flags DispatchEvent(const std::string& in_event, user_data in_data) {
+	MBASE_INLINE event_manager() noexcept {
+		this->managerId = 1 + (rand() % 1000000);
+		srand(time(0));
+
+	}
+
+	MBASE_INLINE flags DispatchEvent(const std::string& in_event, user_data in_data) {
 		auto foundElement = eventMap.find(in_event);
 		if (foundElement != eventMap.end())
 		{
@@ -49,6 +56,7 @@ public:
 				suppliedHandler->on_call(in_data);
 				if(suppliedHandler->eventType == event_handler::flags::EVENT_ONCE)
 				{
+					suppliedHandler->managerId = -1;
 					It = eventList.erase(suppliedHandler->selfIter);
 				}
 			}
@@ -57,7 +65,12 @@ public:
 		return flags::EVENT_MNG_ERR_NOT_FOUND;
 	}
 
-	flags AddEventListener(const std::string& in_event, event_handler& in_handler) {
+	MBASE_INLINE flags AddEventListener(const std::string& in_event, event_handler& in_handler) {
+		if(in_handler.managerId != -1)
+		{
+			return flags::EVENT_MNG_ERR_BELONGS_TO_FOREIGN_MANAGER;
+		}
+
 		auto foundElement = eventMap.find(in_event);
 		if(foundElement != eventMap.end())
 		{
@@ -87,11 +100,18 @@ public:
 			in_handler.selfIter = eventList.insert(eventList.cend(), &in_handler);
 		}
 
+		in_handler.managerId = this->managerId;
+
 		return flags::EVENT_MNG_SUCCESS;
 	}
 
-	flags RemoveListener(event_handler& in_handler)
+	MBASE_INLINE flags RemoveListener(event_handler& in_handler)
 	{
+		if(in_handler.managerId != this->managerId)
+		{
+			return flags::EVENT_MNG_ERR_BELONGS_TO_FOREIGN_MANAGER;
+		}
+
 		auto foundElement = eventMap.find(in_handler.eventName);
 		if(foundElement != eventMap.end())
 		{
@@ -108,7 +128,7 @@ public:
 		return flags::EVENT_MNG_SUCCESS;
 	}
 
-	flags RemoveAllListeners(const std::string& in_event)
+	MBASE_INLINE flags RemoveAllListeners(const std::string& in_event)
 	{
 		auto foundElement = eventMap.find(in_event);
 		if(foundElement != eventMap.end())
@@ -123,7 +143,7 @@ public:
 		return flags::EVENT_MNG_ERR_NOT_FOUND;
 	}
 private:
-	I32 managerId;
+	I32 managerId = 0;
 	std::unordered_map<std::string, event_group> eventMap;
 };
 
