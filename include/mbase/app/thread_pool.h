@@ -3,13 +3,10 @@
 
 #include <mbase/common.h>
 #include <mbase/stack.h>
-#include <mbase/queue.h>
 #include <mbase/synchronization.h>
 #include <mbase/app/handler_base.h>
 #include <mbase/thread.h>
 #include <mbase/atomic.h>
-#include <iostream>
-#include <tuple>
 
 #define MBASE_TPOOL_MAX_THREADS 1024 // ARBITRARY NUMBER. FIND A WAY TO CALCULATE MAX THREAD COUNT
 #define MBASE_TPOOL_DEFAULT_THREADS 32

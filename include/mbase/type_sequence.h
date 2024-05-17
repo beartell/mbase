@@ -53,7 +53,7 @@ public:
         return false;
     }
 
-    MBASE_ND("sequence length control ignored") static MBASE_INLINE_EXPR size_type length(const_pointer in_target) noexcept {
+    MBASE_ND("sequence length control ignored") static MBASE_INLINE_EXPR size_type length_bytes(const_pointer in_target) noexcept {
         return strlen(in_target);
     }
 

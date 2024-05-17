@@ -16,18 +16,18 @@ public:
 		ASYNC_CTX_SUCCESS = 0,
 		ASYNC_CTX_ERR_CONTEXT_ACTIVE = 1,
 		ASYNC_CTX_ERR_ALREADY_HALTED = 2,
-		ASYNC_IO_STAT_UNREGISTERED = 3,
-		ASYNC_IO_STAT_IDLE = 4,
-		ASYNC_IO_STAT_ABANDONED = 5,
-		ASYNC_IO_STAT_FAILED = 6,
-		ASYNC_IO_STAT_FLUSHED = 7,
-		ASYNC_IO_STAT_OPERATING = 8,
-		ASYNC_IO_STAT_FINISHED = 9,
-		IO_CTX_DIRECTION_INPUT = 10,
-		IO_CTX_DIRECTION_OUTPUT = 11
+		ASYNC_CTX_STAT_UNREGISTERED = 3,
+		ASYNC_CTX_STAT_IDLE = 4,
+		ASYNC_CTX_STAT_ABANDONED = 5,
+		ASYNC_CTX_STAT_FAILED = 6,
+		ASYNC_CTX_STAT_FLUSHED = 7,
+		ASYNC_CTX_STAT_OPERATING = 8,
+		ASYNC_CTX_STAT_FINISHED = 9,
+		ASYNC_CTX_DIRECTION_INPUT = 10,
+		ASYNC_CTX_DIRECTION_OUTPUT = 11
 	};
 
-	async_io_context(io_base& in_base, flags in_io_direction = flags::IO_CTX_DIRECTION_INPUT) noexcept :
+	async_io_context(io_base& in_base, flags in_io_direction = flags::ASYNC_CTX_DIRECTION_INPUT) noexcept :
 		bytesTransferred(0),
 		targetBytes(0),
 		bytesOnEachIteration(0),
@@ -39,7 +39,7 @@ public:
 		isBufferInternal(true)
 	{
 		ioHandle = &in_base;
-		if(in_io_direction == flags::IO_CTX_DIRECTION_OUTPUT)
+		if(in_io_direction == flags::ASYNC_CTX_DIRECTION_OUTPUT)
 		{
 			srcBuffer = ioHandle->get_os();
 		}
@@ -60,7 +60,7 @@ public:
 		srcBuffer = nullptr;
 	}
 
-	flags ConstructContext(io_base& in_base, flags in_io_direction = flags::IO_CTX_DIRECTION_INPUT) {
+	flags ConstructContext(io_base& in_base, flags in_io_direction = flags::ASYNC_CTX_DIRECTION_INPUT) {
 		if (isActive)
 		{
 			return flags::ASYNC_CTX_ERR_CONTEXT_ACTIVE;
@@ -75,7 +75,7 @@ public:
 
 		srcBuffer = nullptr;
 
-		if (in_io_direction == flags::IO_CTX_DIRECTION_OUTPUT)
+		if (in_io_direction == flags::ASYNC_CTX_DIRECTION_OUTPUT)
 		{
 			srcBuffer = ioHandle->get_os();
 		}
@@ -136,7 +136,7 @@ public:
 		ioHandle->set_file_pointer(0, mbase::io_base::move_method::MV_BEGIN);
 		hopCounter = 0;
 		bytesTransferred = 0;
-		ais = flags::ASYNC_IO_STAT_FLUSHED;
+		ais = flags::ASYNC_CTX_STAT_FLUSHED;
 	}
 
 	flags HaltContext() noexcept {

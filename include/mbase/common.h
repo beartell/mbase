@@ -68,6 +68,10 @@
 #define MBASE_STD_BEGIN namespace mbase{
 #define MBASE_STD_END }
 
+#define MBASE_OBS_IGNORE "observation return value ignored"
+#define MBASE_IGNORE_NONTRIVIAL "non-trivial observation ignored"
+#define MBASE_RESULT_IGNORE "result of the operation is ignored"
+
 #define MBASE_BEGIN MBASE_STD_BEGIN
 #define MBASE_END MBASE_STD_END
 

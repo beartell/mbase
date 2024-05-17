@@ -140,8 +140,8 @@ public:
     /* ===== BUILDER METHODS END ===== */
 
     /* ===== OBSERVATION METHODS BEGIN ===== */
-    MBASE_ND("internal data that is access through the iterator should be used") MBASE_INLINE pointer get() const noexcept;
-    MBASE_ND("internal data that is access through the iterator should be used") MBASE_INLINE DataT& operator*() const noexcept;
+    MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE pointer get() const noexcept;
+    MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE DataT& operator*() const noexcept;
     MBASE_INLINE DataT* operator->() const noexcept;
     /* ===== OBSERVATION METHODS END ===== */
 
@@ -153,8 +153,8 @@ public:
     /* ===== OPERATOR STATE-MODIFIER METHODS END ===== */
 
     /* ===== OPERATOR NON-MODIFIER METHODS BEGIN ===== */
-    MBASE_ND("ignoring equality comparison") MBASE_INLINE bool operator==(const bst_iterator& in_rhs) const noexcept;
-    MBASE_ND("ignoring equality comparison") MBASE_INLINE bool operator!=(const bst_iterator& in_rhs) const noexcept;
+    MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE bool operator==(const bst_iterator& in_rhs) const noexcept;
+    MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE bool operator!=(const bst_iterator& in_rhs) const noexcept;
     /* ===== OPERATOR NON-MODIFIER METHODS END ===== */
 
     pointer _ptr;
@@ -179,8 +179,8 @@ public:
     /* ===== BUILDER METHODS END ===== */
 
     /* ===== OBSERVATION METHODS BEGIN ===== */
-    MBASE_ND("internal data that is access through the iterator should be used") MBASE_INLINE const_pointer get() const noexcept;
-    MBASE_ND("internal data that is access through the iterator should be used") MBASE_INLINE const DataT& operator*() const noexcept;
+    MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE const_pointer get() const noexcept;
+    MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE const DataT& operator*() const noexcept;
     MBASE_INLINE const DataT* operator->() const noexcept;
     /* ===== OBSERVATION METHODS END ===== */
 
@@ -192,8 +192,8 @@ public:
     /* ===== OPERATOR STATE-MODIFIER METHODS END ===== */
 
     /* ===== OPERATOR NON-MODIFIER METHODS BEGIN ===== */
-    MBASE_ND("ignoring equality comparison") MBASE_INLINE bool operator==(const const_bst_iterator& in_rhs) const noexcept;
-    MBASE_ND("ignoring equality comparison") MBASE_INLINE bool operator!=(const const_bst_iterator& in_rhs) const noexcept;
+    MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE bool operator==(const const_bst_iterator& in_rhs) const noexcept;
+    MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE bool operator!=(const const_bst_iterator& in_rhs) const noexcept;
     /* ===== OPERATOR NON-MODIFIER METHODS END ===== */
 
     pointer _ptr;
@@ -216,8 +216,8 @@ public:
     /* ===== BUILDER METHODS END ===== */
 
     /* ===== OBSERVATION METHODS BEGIN ===== */
-    MBASE_ND("internal data that is access through the iterator should be used") MBASE_INLINE pointer get() const noexcept;
-    MBASE_ND("internal data that is access through the iterator should be used") MBASE_INLINE DataT& operator*() const noexcept;
+    MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE pointer get() const noexcept;
+    MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE DataT& operator*() const noexcept;
     MBASE_INLINE DataT* operator->() const noexcept;
     /* ===== OBSERVATION METHODS END ===== */
 
@@ -229,8 +229,8 @@ public:
     /* ===== OPERATOR STATE-MODIFIER METHODS END ===== */
 
     /* ===== OPERATOR NON-MODIFIER METHODS BEGIN ===== */
-    MBASE_ND("ignoring equality comparison") MBASE_INLINE bool operator==(const reverse_bst_iterator& in_rhs) const noexcept;
-    MBASE_ND("ignoring equality comparison") MBASE_INLINE bool operator!=(const reverse_bst_iterator& in_rhs) const noexcept;
+    MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE bool operator==(const reverse_bst_iterator& in_rhs) const noexcept;
+    MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE bool operator!=(const reverse_bst_iterator& in_rhs) const noexcept;
     /* ===== OPERATOR NON-MODIFIER METHODS END ===== */
 
     pointer _ptr;
@@ -254,8 +254,8 @@ public:
     /* ===== BUILDER METHODS END ===== */
 
     /* ===== OBSERVATION METHODS BEGIN ===== */
-    MBASE_ND("internal data that is access through the iterator should be used") MBASE_INLINE const_pointer get() const noexcept;
-    MBASE_ND("internal data that is access through the iterator should be used") MBASE_INLINE const DataT& operator*() const noexcept;
+    MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE const_pointer get() const noexcept;
+    MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE const DataT& operator*() const noexcept;
     MBASE_INLINE const DataT* operator->() const noexcept;
     /* ===== OBSERVATION METHODS END ===== */
 
@@ -267,8 +267,8 @@ public:
     /* ===== OPERATOR STATE-MODIFIER METHODS END ===== */
 
     /* ===== OPERATOR NON-MODIFIER METHODS BEGIN ===== */
-    MBASE_ND("ignoring equality comparison") MBASE_INLINE bool operator==(const const_reverse_bst_iterator& in_rhs) const noexcept;
-    MBASE_ND("ignoring equality comparison") MBASE_INLINE bool operator!=(const const_reverse_bst_iterator& in_rhs) const noexcept;
+    MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE bool operator==(const const_reverse_bst_iterator& in_rhs) const noexcept;
+    MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE bool operator!=(const const_reverse_bst_iterator& in_rhs) const noexcept;
     /* ===== OPERATOR NON-MODIFIER METHODS END ===== */
 
     pointer _ptr;
@@ -298,13 +298,13 @@ MBASE_INLINE bst_iterator<T, DataT>::bst_iterator(const bst_iterator& in_rhs) no
 }
 
 template<typename T, typename DataT>
-MBASE_ND("internal data that is access through the iterator should be used") MBASE_INLINE typename bst_iterator<T, DataT>::pointer bst_iterator<T, DataT>::get() const noexcept 
+MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE typename bst_iterator<T, DataT>::pointer bst_iterator<T, DataT>::get() const noexcept
 {
     return _ptr;
 }
 
 template<typename T, typename DataT>
-MBASE_ND("internal data that is access through the iterator should be used") MBASE_INLINE DataT& bst_iterator<T, DataT>::operator*() const noexcept 
+MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE DataT& bst_iterator<T, DataT>::operator*() const noexcept
 {
     return _ptr->data;
 }
@@ -422,13 +422,13 @@ MBASE_INLINE bst_iterator<T, DataT>& bst_iterator<T, DataT>::operator--(I32) noe
 }
 
 template<typename T, typename DataT>
-MBASE_ND("ignoring equality comparison") MBASE_INLINE bool bst_iterator<T, DataT>::operator==(const bst_iterator& in_rhs) const noexcept
+MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE bool bst_iterator<T, DataT>::operator==(const bst_iterator& in_rhs) const noexcept
 {
     return _ptr == in_rhs.get();
 }
 
 template<typename T, typename DataT>
-MBASE_ND("ignoring equality comparison") MBASE_INLINE bool bst_iterator<T, DataT>::operator!=(const bst_iterator& in_rhs) const noexcept
+MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE bool bst_iterator<T, DataT>::operator!=(const bst_iterator& in_rhs) const noexcept
 {
     return _ptr != in_rhs.get();
 }
@@ -459,13 +459,13 @@ MBASE_INLINE const_bst_iterator<T, DataT>::const_bst_iterator(const bst_iterator
 
 
 template<typename T, typename DataT>
-MBASE_ND("internal data that is access through the iterator should be used") MBASE_INLINE typename const_bst_iterator<T, DataT>::const_pointer const_bst_iterator<T, DataT>::get() const noexcept
+MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE typename const_bst_iterator<T, DataT>::const_pointer const_bst_iterator<T, DataT>::get() const noexcept
 {
     return _ptr;
 }
 
 template<typename T, typename DataT>
-MBASE_ND("internal data that is access through the iterator should be used") MBASE_INLINE const DataT& const_bst_iterator<T, DataT>::operator*() const noexcept
+MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE const DataT& const_bst_iterator<T, DataT>::operator*() const noexcept
 {
     return _ptr->data;
 }
@@ -583,13 +583,13 @@ MBASE_INLINE const_bst_iterator<T, DataT>& const_bst_iterator<T, DataT>::operato
 }
 
 template<typename T, typename DataT>
-MBASE_ND("ignoring equality comparison") MBASE_INLINE bool const_bst_iterator<T, DataT>::operator==(const const_bst_iterator& in_rhs) const noexcept
+MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE bool const_bst_iterator<T, DataT>::operator==(const const_bst_iterator& in_rhs) const noexcept
 {
     return _ptr == in_rhs.get();
 }
 
 template<typename T, typename DataT>
-MBASE_ND("ignoring equality comparison") MBASE_INLINE bool const_bst_iterator<T, DataT>::operator!=(const const_bst_iterator& in_rhs) const noexcept
+MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE bool const_bst_iterator<T, DataT>::operator!=(const const_bst_iterator& in_rhs) const noexcept
 {
     return _ptr != in_rhs.get();
 }
@@ -613,13 +613,13 @@ MBASE_INLINE reverse_bst_iterator<T, DataT>::reverse_bst_iterator(const reverse_
 }
 
 template<typename T, typename DataT>
-MBASE_ND("internal data that is access through the iterator should be used") MBASE_INLINE typename reverse_bst_iterator<T, DataT>::pointer reverse_bst_iterator<T, DataT>::get() const noexcept
+MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE typename reverse_bst_iterator<T, DataT>::pointer reverse_bst_iterator<T, DataT>::get() const noexcept
 {
     return _ptr;
 }
 
 template<typename T, typename DataT>
-MBASE_ND("internal data that is access through the iterator should be used") MBASE_INLINE DataT& reverse_bst_iterator<T, DataT>::operator*() const noexcept
+MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE DataT& reverse_bst_iterator<T, DataT>::operator*() const noexcept
 {
     return _ptr->data;
 }
@@ -736,13 +736,13 @@ MBASE_INLINE reverse_bst_iterator<T, DataT>& reverse_bst_iterator<T, DataT>::ope
 }
 
 template<typename T, typename DataT>
-MBASE_ND("ignoring equality comparison") MBASE_INLINE bool reverse_bst_iterator<T, DataT>::operator==(const reverse_bst_iterator& in_rhs) const noexcept
+MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE bool reverse_bst_iterator<T, DataT>::operator==(const reverse_bst_iterator& in_rhs) const noexcept
 {
     return _ptr == in_rhs.get();
 }
 
 template<typename T, typename DataT>
-MBASE_ND("ignoring equality comparison") MBASE_INLINE bool reverse_bst_iterator<T, DataT>::operator!=(const reverse_bst_iterator& in_rhs) const noexcept
+MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE bool reverse_bst_iterator<T, DataT>::operator!=(const reverse_bst_iterator& in_rhs) const noexcept
 {
     return _ptr != in_rhs.get();
 }
@@ -773,13 +773,13 @@ MBASE_INLINE const_reverse_bst_iterator<T, DataT>::const_reverse_bst_iterator(co
 
 
 template<typename T, typename DataT>
-MBASE_ND("internal data that is access through the iterator should be used") MBASE_INLINE typename const_reverse_bst_iterator<T, DataT>::const_pointer const_reverse_bst_iterator<T, DataT>::get() const noexcept
+MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE typename const_reverse_bst_iterator<T, DataT>::const_pointer const_reverse_bst_iterator<T, DataT>::get() const noexcept
 {
     return _ptr;
 }
 
 template<typename T, typename DataT>
-MBASE_ND("internal data that is access through the iterator should be used") MBASE_INLINE const DataT& const_reverse_bst_iterator<T, DataT>::operator*() const noexcept
+MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE const DataT& const_reverse_bst_iterator<T, DataT>::operator*() const noexcept
 {
     return _ptr->data;
 }
@@ -896,13 +896,13 @@ MBASE_INLINE const_reverse_bst_iterator<T, DataT>& const_reverse_bst_iterator<T,
 }
 
 template<typename T, typename DataT>
-MBASE_ND("ignoring equality comparison") MBASE_INLINE bool const_reverse_bst_iterator<T, DataT>::operator==(const const_reverse_bst_iterator& in_rhs) const noexcept
+MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE bool const_reverse_bst_iterator<T, DataT>::operator==(const const_reverse_bst_iterator& in_rhs) const noexcept
 {
     return _ptr == in_rhs.get();
 }
 
 template<typename T, typename DataT>
-MBASE_ND("ignoring equality comparison") MBASE_INLINE bool const_reverse_bst_iterator<T, DataT>::operator!=(const const_reverse_bst_iterator& in_rhs) const noexcept
+MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE bool const_reverse_bst_iterator<T, DataT>::operator!=(const const_reverse_bst_iterator& in_rhs) const noexcept
 {
     return _ptr != in_rhs.get();
 }

@@ -161,7 +161,7 @@ I32 io_tcp_client::disconnect() noexcept
 typename io_tcp_client::size_type io_tcp_client::write_data(IBYTEBUFFER in_src) override
 {
 	DWORD dataWritten = 0;
-	SIZE_T dataLength = type_sequence<IBYTE>::length(in_src);
+	SIZE_T dataLength = type_sequence<IBYTE>::length_bytes(in_src);
 
 	dataWritten = send(rawHandle, in_src, dataLength, 0);
 	if (dataWritten == SOCKET_ERROR)

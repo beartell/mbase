@@ -29,7 +29,6 @@ MBASE_STD_BEGIN
 
 /* --- OBJECT BEHAVIOURS --- */
 
-
 template<typename SeqType, typename SeqBase = type_sequence<SeqType>, typename Allocator = mbase::allocator<SeqType>>
 class character_sequence : public SeqBase {
 public:
@@ -140,7 +139,7 @@ public:
     MBASE_ND("string observation ignored") MBASE_INLINE I32 compare(size_type in_pos1, size_type in_count1, const_pointer in_str) const;
     MBASE_ND("string observation ignored") MBASE_INLINE I32 compare(size_type in_pos1, size_type in_count1, const_pointer in_src, size_type in_count2) const;
     MBASE_ND("string observation ignored") MBASE_INLINE_EXPR size_type size() const noexcept;
-    //MBASE_ND("string observation ignored") MBASE_INLINE_EXPR size_type length() const noexcept;
+    MBASE_ND("string observation ignored") MBASE_INLINE_EXPR size_type length() const noexcept;
     MBASE_ND("string observation ignored") MBASE_INLINE_EXPR size_type max_size() const noexcept;
     MBASE_ND("string observation ignored") MBASE_INLINE_EXPR size_type capacity() const noexcept;
     MBASE_ND("string observation ignored") MBASE_INLINE_EXPR bool empty() const noexcept;
@@ -627,7 +626,7 @@ MBASE_INLINE_EXPR character_sequence<SeqType, SeqBase, Allocator>::character_seq
 template<typename SeqType, typename SeqBase, typename Allocator>
 MBASE_INLINE_EXPR character_sequence<SeqType, SeqBase, Allocator>::character_sequence(const_pointer in_string) noexcept : externalAllocator(Allocator()) 
 {
-    mSize = this->length(in_string);
+    mSize = this->length_bytes(in_string);
     _build_string(this->_calculate_capacity(mSize));
     this->copy_bytes(raw_data, in_string, mSize); // no need the include null-terminator since we zero the memory
 }
@@ -730,7 +729,7 @@ MBASE_INLINE character_sequence<SeqType, SeqBase, Allocator>& character_sequence
         externalAllocator.deallocate(raw_data, 0);
     }
 
-    size_type st_length = this->length(in_rhs);
+    size_type st_length = this->length_bytes(in_rhs);
     mCapacity = this->_calculate_capacity(st_length);
 
     raw_data = externalAllocator.allocate(mCapacity, true);
@@ -946,7 +945,7 @@ MBASE_ND("string observation ignored") MBASE_INLINE bool character_sequence<SeqT
 template<typename SeqType, typename SeqBase, typename Allocator>
 MBASE_ND("string observation ignored") MBASE_INLINE bool character_sequence<SeqType, SeqBase, Allocator>::starts_with(MSTRING in_str) const
 {
-    size_type stringSize = this->length(in_str);
+    size_type stringSize = this->length_bytes(in_str);
     if (stringSize > mSize)
     {
         return false;
@@ -969,7 +968,7 @@ template<typename SeqType, typename SeqBase, typename Allocator>
 MBASE_ND("string observation ignored") MBASE_INLINE bool character_sequence<SeqType, SeqBase, Allocator>::ends_with(MSTRING in_str) const
 {
     // MAY NOT WORK FOR NOW
-    size_type stringSize = this->length(in_str);
+    size_type stringSize = this->length_bytes(in_str);
     if (stringSize > mSize)
     {
         return false;
@@ -1004,15 +1003,17 @@ MBASE_ND("string observation ignored") MBASE_INLINE_EXPR typename character_sequ
     return mSize;
 }
 
-//template<typename SeqType, typename SeqBase, typename Allocator>
-//MBASE_ND("string observation ignored") MBASE_INLINE_EXPR typename character_sequence<SeqType, SeqBase, Allocator>::size_type character_sequence<SeqType, SeqBase, Allocator>::length() const noexcept 
-//{
-//    return mSize;
-//}
+template<typename SeqType, typename SeqBase, typename Allocator>
+MBASE_ND("string observation ignored") MBASE_INLINE_EXPR typename character_sequence<SeqType, SeqBase, Allocator>::size_type character_sequence<SeqType, SeqBase, Allocator>::length() const noexcept 
+{
+    return mSize;
+}
+
 template<typename SeqType, typename SeqBase, typename Allocator>
 MBASE_ND("string observation ignored") MBASE_INLINE_EXPR typename character_sequence<SeqType, SeqBase, Allocator>::size_type character_sequence<SeqType, SeqBase, Allocator>::max_size() const noexcept 
 {
-    return std::numeric_limits<difference_type>::max();
+    size_type result = (std::numeric_limits<difference_type>::max)();
+    return result;
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
@@ -1973,7 +1974,7 @@ character_sequence<SeqType, SeqBase, Allocator>& character_sequence<SeqType, Seq
     {
         return *this;
     }
-    size_type rhsSize = this->length(in_rhs);
+    size_type rhsSize = this->length_bytes(in_rhs);
     size_type totalSize = mSize + rhsSize;
     if (totalSize == mSize)
     {

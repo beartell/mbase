@@ -55,19 +55,19 @@ public:
 	/* ===== BUILDER METHODS END ===== */
 
 	/* ===== OBSERVATION METHODS BEGIN ===== */
-	MBASE_ND("first byte being ignored") MBASE_INLINE_EXPR IBYTE front() const noexcept;
-	MBASE_ND("last byte being ignored") MBASE_INLINE_EXPR IBYTE back() const noexcept;
-	MBASE_ND("stream observation ignored") MBASE_INLINE_EXPR bool is_cursor_end() const noexcept;
-	MBASE_ND("stream observation ignored") MBASE_INLINE_EXPR size_type buffer_length() const noexcept;
-	MBASE_ND("stream observation ignored") MBASE_INLINE_EXPR IBYTEBUFFER get_buffer() const noexcept;
-	MBASE_ND("stream observation ignored") MBASE_INLINE_EXPR IBYTEBUFFER get_bufferc() const noexcept;
-	MBASE_ND("stream observation ignored") MBASE_INLINE_EXPR difference_type get_pos() const noexcept;
-	MBASE_ND("stream observation ignored") MBASE_INLINE_EXPR IBYTE getc() const noexcept;
-	MBASE_ND("stream data ignored") MBASE_INLINE_EXPR IBYTEBUFFER data() const noexcept;
+	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR IBYTE front() const noexcept;
+	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR IBYTE back() const noexcept;
+	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR bool is_cursor_end() const noexcept;
+	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR size_type buffer_length() const noexcept;
+	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR IBYTEBUFFER get_buffer() const noexcept;
+	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR IBYTEBUFFER get_bufferc() const noexcept;
+	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR difference_type get_pos() const noexcept;
+	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR IBYTE getc() const noexcept;
+	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR IBYTEBUFFER data() const noexcept;
 	/* ===== OBSERVATION METHODS END ===== */
 
 	/* ===== OPERATOR OBSERVATION METHODS BEGIN ===== */
-	MBASE_INLINE IBYTEBUFFER operator*() noexcept;
+	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE IBYTEBUFFER operator*() noexcept;
 	/* ===== OPERATOR OBSERVATION METHODS END ===== */
 
 	/* ===== STATE-MODIFIER METHODS BEGIN ===== */
@@ -97,11 +97,11 @@ public:
 	/* ===== OPERATOR STATE-MODIFIER METHODS END ===== */
 
 	/* ===== OPERATOR NON-MEMBER FUNCTIONS BEGIN ===== */
-	friend bool operator==(const char_stream& in_lhs, const char_stream& in_rhs) noexcept {
+	MBASE_ND(MBASE_RESULT_IGNORE) friend bool operator==(const char_stream& in_lhs, const char_stream& in_rhs) noexcept {
 		return mbase::type_sequence<IBYTE>::is_equal(in_lhs.srcBuffer, in_rhs.srcBuffer, in_lhs.bufferLength);
 	}
 
-	friend bool operator!=(const char_stream& in_lhs, const char_stream& in_rhs) noexcept {
+	MBASE_ND(MBASE_RESULT_IGNORE) friend bool operator!=(const char_stream& in_lhs, const char_stream& in_rhs) noexcept {
 		return !mbase::type_sequence<IBYTE>::is_equal(in_lhs.srcBuffer, in_rhs.srcBuffer, in_lhs.bufferLength);
 	}
 	/* ===== OPERATOR NON-MEMBER FUNCTIONS END ===== */
@@ -165,7 +165,7 @@ MBASE_INLINE char_stream::char_stream() noexcept : bufferLength(0), streamCursor
 }
 
 MBASE_INLINE char_stream::char_stream(IBYTEBUFFER in_src) noexcept {
-	bufferLength = length(in_src) + 1; // CHAR STREAM WILL INCLUDE NULL TERMINATOR
+	bufferLength = length_bytes(in_src) + 1; // CHAR STREAM WILL INCLUDE NULL TERMINATOR
 	streamCursor = 0;
 	srcBuffer = in_src;
 }
@@ -179,44 +179,44 @@ MBASE_INLINE char_stream::~char_stream() noexcept
 	_destroy_self();
 }
 
-MBASE_INLINE IBYTEBUFFER char_stream::operator*() noexcept {
+MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE IBYTEBUFFER char_stream::operator*() noexcept {
 	return srcBuffer + streamCursor;
 }
 
-MBASE_ND("first byte being ignored") MBASE_INLINE_EXPR IBYTE char_stream::front() const noexcept {
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR IBYTE char_stream::front() const noexcept {
 	return *srcBuffer;
 }
 
-MBASE_ND("last byte being ignored") MBASE_INLINE_EXPR IBYTE char_stream::back() const noexcept {
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR IBYTE char_stream::back() const noexcept {
 	return *(srcBuffer + (bufferLength - 1));
 }
 
-MBASE_ND("stream observation ignored") MBASE_INLINE_EXPR bool char_stream::is_cursor_end() const noexcept 
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR bool char_stream::is_cursor_end() const noexcept
 {
 	return streamCursor == bufferLength;
 }
 
-MBASE_ND("stream observation ignored") MBASE_INLINE_EXPR char_stream::size_type char_stream::buffer_length() const noexcept {
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR char_stream::size_type char_stream::buffer_length() const noexcept {
 	return bufferLength;
 }
 
-MBASE_ND("stream observation ignored") MBASE_INLINE_EXPR IBYTEBUFFER char_stream::get_buffer() const noexcept {
+MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR IBYTEBUFFER char_stream::get_buffer() const noexcept {
 	return srcBuffer;
 }
 
-MBASE_ND("stream observation ignored") MBASE_INLINE_EXPR IBYTEBUFFER char_stream::get_bufferc() const noexcept {
+MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR IBYTEBUFFER char_stream::get_bufferc() const noexcept {
 	return srcBuffer + streamCursor;
 }
 
-MBASE_ND("stream observation ignored") MBASE_INLINE_EXPR char_stream::difference_type char_stream::get_pos() const noexcept {
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR char_stream::difference_type char_stream::get_pos() const noexcept {
 	return streamCursor;
 }
 
-MBASE_ND("stream observation ignored") MBASE_INLINE_EXPR IBYTE char_stream::getc() const noexcept {
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR IBYTE char_stream::getc() const noexcept {
 	return *(srcBuffer + streamCursor);
 }
 
-MBASE_ND("stream data ignored") MBASE_INLINE_EXPR IBYTEBUFFER char_stream::data() const noexcept {
+MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR IBYTEBUFFER char_stream::data() const noexcept {
 	return srcBuffer;
 }
 

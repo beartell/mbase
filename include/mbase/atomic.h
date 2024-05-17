@@ -49,7 +49,7 @@ public:
 	/* ===== OPERATOR BUILDER METHODS END ===== */
 
 	/* ===== OBSERVATION METHODS BEGIN ===== */
-	MBASE_ND("ignoring the atomic variable") value_type get_val() noexcept;
+	MBASE_ND(MBASE_OBS_IGNORE) value_type get_val() noexcept;
 	/* ===== OBSERVATION METHODS END ===== */
 
 	/* ===== OPERATOR STATE-MODIFIER METHODS BEGIN ===== */

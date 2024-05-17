@@ -161,7 +161,7 @@ MBASE_INLINE GENERIC io_file::close_file() noexcept {
 typename io_file::size_type io_file::write_data(IBYTEBUFFER in_src)
 {
 	DWORD dataWritten = 0;
-	SIZE_T dataLength = type_sequence<IBYTE>::length(in_src);
+	SIZE_T dataLength = type_sequence<IBYTE>::length_bytes(in_src);
 	WriteFile(rawContext.raw_handle, in_src, dataLength, &dataWritten, nullptr);
 	_set_last_error(GetLastError());
 	return dataWritten;

@@ -513,7 +513,8 @@ MBASE_ND("container observation ignored") MBASE_INLINE_EXPR typename list<T, All
 
 template<typename T, typename Allocator>
 MBASE_ND("ignoring max size") MBASE_INLINE typename list<T, Allocator>::size_type list<T, Allocator>::max_size() const noexcept {
-	return std::numeric_limits<difference_type>::max();
+	size_type result = (std::numeric_limits<difference_type>::max)();
+	return result;
 }
 
 template<typename T, typename Allocator>

@@ -26,6 +26,8 @@ without the necessity of object instantiation.
 
 */
 
+#define MBASE_ALLOCATE_WARNING "dynamically allocated memory unused"
+
 template <typename T = I8>
 class allocator_simple {
 public:
@@ -38,7 +40,7 @@ public:
 	using size_type = SIZE_T;
 
 	/* ===== NON-MEMBER FUNCTIONS BEGIN ===== */
-	MBASE_ND("dynamically allocated memory unused") static MBASE_INLINE_EXPR T* allocate(SIZE_T in_amount) noexcept {
+	MBASE_ND(MBASE_ALLOCATE_WARNING) static MBASE_INLINE_EXPR T* allocate(SIZE_T in_amount) noexcept {
 		if (in_amount <= 0)
 		{
 			return nullptr;
@@ -46,7 +48,7 @@ public:
 		return static_cast<pointer>(::operator new(sizeof(value_type) * in_amount));
 	}
 
-	MBASE_ND("dynamically allocated memory unused") static MBASE_INLINE_EXPR T* allocate(SIZE_T in_amount, bool in_zero_memory) noexcept {
+	MBASE_ND(MBASE_ALLOCATE_WARNING) static MBASE_INLINE_EXPR T* allocate(SIZE_T in_amount, bool in_zero_memory) noexcept {
 		if (in_amount <= 0)
 		{
 			return nullptr;
@@ -124,9 +126,9 @@ public:
 	using size_type = SIZE_T;
 	
 	/* ===== NON-MODIFIER METHODS BEGIN ===== */
-	MBASE_ND("dynamically allocated memory unused") MBASE_INLINE_EXPR T* allocate(SIZE_T in_amount) const;
-	MBASE_ND("dynamically allocated memory unused") MBASE_INLINE_EXPR T* allocate(SIZE_T in_amount, bool in_zero_memory) const;
-	MBASE_ND("dynamically allocated memory unused") MBASE_INLINE_EXPR T* allocate(SIZE_T in_amount, const T* base) const;
+	MBASE_ND(MBASE_ALLOCATE_WARNING) MBASE_INLINE_EXPR T* allocate(SIZE_T in_amount) const;
+	MBASE_ND(MBASE_ALLOCATE_WARNING) MBASE_INLINE_EXPR T* allocate(SIZE_T in_amount, bool in_zero_memory) const;
+	MBASE_ND(MBASE_ALLOCATE_WARNING) MBASE_INLINE_EXPR T* allocate(SIZE_T in_amount, const T* base) const;
 	MBASE_INLINE_EXPR GENERIC deallocate(T* src, SIZE_T in_amount) const;
 	template< class... Args >
 	MBASE_INLINE_EXPR GENERIC construct(T* src, Args&& ... args) const;
@@ -135,7 +137,7 @@ public:
 };
 
 template<typename T>
-MBASE_ND("dynamically allocated memory unused") MBASE_INLINE_EXPR T* allocator<T>::allocate(SIZE_T in_amount) const
+MBASE_ND(MBASE_ALLOCATE_WARNING) MBASE_INLINE_EXPR T* allocator<T>::allocate(SIZE_T in_amount) const
 {
 	if(in_amount <= 0)
 	{
@@ -145,7 +147,7 @@ MBASE_ND("dynamically allocated memory unused") MBASE_INLINE_EXPR T* allocator<T
 }
 
 template<typename T>
-MBASE_ND("dynamically allocated memory unused") MBASE_INLINE_EXPR T* allocator<T>::allocate(SIZE_T in_amount, bool in_zero_memory) const
+MBASE_ND(MBASE_ALLOCATE_WARNING) MBASE_INLINE_EXPR T* allocator<T>::allocate(SIZE_T in_amount, bool in_zero_memory) const
 {
 	if(in_amount <= 0)
 	{
@@ -159,7 +161,7 @@ MBASE_ND("dynamically allocated memory unused") MBASE_INLINE_EXPR T* allocator<T
 }
 
 template<typename T>
-MBASE_ND("dynamically allocated memory unused") MBASE_INLINE_EXPR T* allocator<T>::allocate(SIZE_T in_amount, const T* base) const
+MBASE_ND(MBASE_ALLOCATE_WARNING) MBASE_INLINE_EXPR T* allocator<T>::allocate(SIZE_T in_amount, const T* base) const
 {
 	if(in_amount <= 0 || !base)
 	{

@@ -474,7 +474,8 @@ MBASE_ND("const reverse iterator being ignored") MBASE_INLINE_EXPR typename vect
 
 template<typename T, typename Allocator>
 MBASE_ND("container observation ignored") MBASE_INLINE_EXPR typename vector<T, Allocator>::size_type vector<T, Allocator>::max_size() const noexcept {
-	return std::numeric_limits<difference_type>::max();
+	size_type result = (std::numeric_limits<difference_type>::max)();
+	return result;
 }
 
 template<typename T, typename Allocator>

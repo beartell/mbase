@@ -118,7 +118,7 @@ public:
 	GENERIC swap(set& in_rhs) noexcept;
 	template<typename Compare2>
 	GENERIC merge(const set<Key, Compare2, Allocator>& in_src) {
-		for(set<Key, Compare2, Allocator>::iterator It = in_src.begin(); It != in_src.end(); It++)
+		for(typename set<Key, Compare2, Allocator>::iterator It = in_src.begin(); It != in_src.end(); It++)
 		{
 			this->insert(*It);
 		}
@@ -315,7 +315,8 @@ typename set<Key, Compare, Allocator>::size_type set<Key, Compare, Allocator>::s
 template<typename Key, typename Compare, typename Allocator>
 typename set<Key, Compare, Allocator>::size_type set<Key, Compare, Allocator>::max_size() const noexcept
 {
-	return std::numeric_limits<difference_type>::max();
+	size_type result = (std::numeric_limits<difference_type>::max)();
+	return result;
 }
 
 template<typename Key, typename Compare, typename Allocator>
