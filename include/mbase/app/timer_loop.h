@@ -6,6 +6,7 @@
 #include <mbase/index_assigner.h>
 #include <mbase/app/timers.h>
 #include <mbase/app/thread_pool.h>
+#include <time.h>
 #include <Windows.h>
 
 #define MBASE_DEFAULT_TIMER_LIMIT 2048
@@ -14,75 +15,105 @@ MBASE_BEGIN
 
 class timer_loop : public non_copymovable {
 public:
-	enum class timer_err : U32 {
+	enum class flags : U32 {
 		TIMER_SUCCESS = 0,
 		TIMER_ERR_LIMIT_REACHED = 1,
 		TIMER_ERR_INVALID_DATA = 2,
-		TIMER_WARN_TIMER_WILL_EXECUTE_IMM = 3
+		TIMER_WARN_TIMER_WILL_EXECUTE_IMM = 3,
+		TIMER_ERR_BELONGS_TO_FOREIGN_LOOP = 4,
+		TIMER_ERR_ALREADY_REGISTERED = 5
 	};
 
-	timer_loop() : timerLimit(MBASE_DEFAULT_TIMER_LIMIT), timerIdCounter(0), isRunning(false) {
+	timer_loop() : timerLimit(MBASE_DEFAULT_TIMER_LIMIT), timerIdCounter(0), isRunning(false), timerLoopId(0) {
 		LARGE_INTEGER performanceFrequency = {};
 		QueryPerformanceFrequency(&performanceFrequency);
 		frequency = 1000 / (F64)performanceFrequency.QuadPart; // MS ACCURACY
 		deltaTime = frequency;
+		timerLoopId = 1 + (rand() % 1000000);
+		srand(time(0));
 	}
 
 	~timer_loop() {}
 
-	timer_err RegisterTimer(timer_base& in_timer) noexcept {
-		if(registeredTimers.size() > timerLimit)
+	flags RegisterTimer(timer_base& in_timer) noexcept {
+		if (in_timer.mIsRegistered)
 		{
-			return timer_err::TIMER_ERR_LIMIT_REACHED;
+			return flags::TIMER_ERR_ALREADY_REGISTERED;
 		}
 
-		in_timer.mTimerId = ++timerIdCounter;
-		timer_err terr = timer_err::TIMER_SUCCESS;
+		if(registeredTimers.size() > timerLimit)
+		{
+			return flags::TIMER_ERR_LIMIT_REACHED;
+		}
+
+		in_timer.handlerId = ++timerIdCounter;
+		flags terr = flags::TIMER_SUCCESS;
 
 		if(in_timer.GetTargetTime() <= 0)
 		{
-			terr = timer_err::TIMER_WARN_TIMER_WILL_EXECUTE_IMM;
+			terr = flags::TIMER_WARN_TIMER_WILL_EXECUTE_IMM;
 		}
 
 		in_timer.mIsRegistered = true;
-		registeredTimers.push_back(&in_timer);
-		in_timer.teSelf = registeredTimers.insert(registeredTimers.cend(), &in_timer); // WE WILL FIX IT LATER
-
-		return terr;
-	}
-
-	timer_err RegisterTimer(timer_base& in_timer, PTRGENERIC in_usr_data) noexcept {
-		if (registeredTimers.size() > timerLimit)
-		{
-			return timer_err::TIMER_ERR_LIMIT_REACHED;
-		}
-
-		in_timer.mTimerId = ++timerIdCounter; // Timer ids will start from 1
-		timer_err terr = timer_err::TIMER_SUCCESS;
-
-		if (in_timer.GetTargetTime() <= 0)
-		{
-			// WARN THE USER THAT THE TIMER WILL BE EXECUTED IMMEDIATELY
-			terr = timer_err::TIMER_WARN_TIMER_WILL_EXECUTE_IMM;
-		}
-
-		in_timer.mIsRegistered = true;
-		in_timer.suppliedData = in_usr_data;
+		in_timer.loopId = timerLoopId;
+		in_timer.on_register();
 		//registeredTimers.push_back(&in_timer);
 		in_timer.teSelf = registeredTimers.insert(registeredTimers.cend(), &in_timer); // WE WILL FIX IT LATER
 
 		return terr;
 	}
 
-	timer_err UnregisterTimer(timer_base& in_timer) noexcept {
-		MBASE_NULL_CHECK_RETURN_VAL(in_timer.teSelf.get(), timer_err::TIMER_ERR_INVALID_DATA);
-		timer_base* tb = *in_timer.teSelf;
-		if(tb->mIsRegistered)
+	flags RegisterTimer(timer_base& in_timer, PTRGENERIC in_usr_data) noexcept {
+		if (in_timer.mIsRegistered)
 		{
-			registeredTimers.erase(in_timer.teSelf);
-			tb->mIsRegistered = false;
+			return flags::TIMER_ERR_ALREADY_REGISTERED;
 		}
-		return timer_err::TIMER_SUCCESS;
+
+		if (registeredTimers.size() > timerLimit)
+		{
+			return flags::TIMER_ERR_LIMIT_REACHED;
+		}
+
+		in_timer.handlerId = ++timerIdCounter; // Timer ids will start from 1
+		flags terr = flags::TIMER_SUCCESS;
+
+		if (in_timer.GetTargetTime() <= 0)
+		{
+			// WARN THE USER THAT THE TIMER WILL BE EXECUTED IMMEDIATELY
+			terr = flags::TIMER_WARN_TIMER_WILL_EXECUTE_IMM;
+		}
+
+		in_timer.mIsRegistered = true;
+		in_timer.suppliedData = in_usr_data;
+		in_timer.loopId = timerLoopId;
+		in_timer.on_register();
+		//registeredTimers.push_back(&in_timer);
+		in_timer.teSelf = registeredTimers.insert(registeredTimers.cend(), &in_timer); // WE WILL FIX IT LATER
+
+		return terr;
+	}
+
+	flags UnregisterTimer(timer_base& in_timer) noexcept {
+		if (!in_timer.mIsRegistered)
+		{
+			return flags::TIMER_SUCCESS;
+		}
+
+		if(in_timer.loopId != timerLoopId)
+		{
+			return flags::TIMER_ERR_BELONGS_TO_FOREIGN_LOOP;
+		}
+
+		MBASE_NULL_CHECK_RETURN_VAL(in_timer.teSelf.get(), flags::TIMER_ERR_INVALID_DATA); // SERIOUS PROBLEM IF THIS OCCURS
+		timer_base* tb = *in_timer.teSelf;
+		
+		tb->mIsRegistered = false;
+		tb->loopId = -1;
+		tb->suppliedData = nullptr;
+		tb->on_unregister();
+		registeredTimers.erase(in_timer.teSelf);
+		
+		return flags::TIMER_SUCCESS;
 	}
 
 	MBASE_ND("timer loop observation being ignored") U32 GetDeltaSeconds() const noexcept {
@@ -125,7 +156,7 @@ public:
 				++It;
 				if (tmpTimerBase->mCurrentTime >= tmpTimerBase->mTargetTime)
 				{
-					if(tmpTimerBase->GetExecutionPolicy() == mbase::timer_base::timer_flag::TIMER_POLICY_ASYNC)
+					if(tmpTimerBase->GetExecutionPolicy() == mbase::timer_base::flags::TIMER_POLICY_ASYNC)
 					{
 						threadPool.ExecuteJob(tmpTimerBase);
 					}
@@ -140,15 +171,30 @@ public:
 						continue;
 					}
 
-					if (tmpTimerBase->GetTimerType() == mbase::timer_base::timer_flag::TIMER_TYPE_TIMEOUT)
+					if (tmpTimerBase->GetTimerType() == mbase::timer_base::flags::TIMER_TYPE_TIMEOUT)
 					{
 						tmpTimerBase->mIsRegistered = false;
-						tmpTimerBase->mStatus = mbase::timer_base::timer_flag::TIMER_STATE_FINISHED;
+						tmpTimerBase->loopId = -1;
+						//tmpTimerBase->suppliedData = nullptr;
+						tmpTimerBase->on_unregister();
 						It = registeredTimers.erase(tmpTimerBase->teSelf);
 					}
 					else
 					{
-						tmpTimerBase->ResetTime();
+						time_interval* ti = static_cast<time_interval*>(tmpTimerBase);
+						ti->ResetTime();
+						ti->tickCount++;
+						if(ti->tickLimit != 0)
+						{
+							if(ti->tickCount >= ti->tickLimit)
+							{
+								ti->mIsRegistered = false;
+								ti->loopId = -1;
+								//ti->suppliedData = nullptr;
+								ti->on_unregister();
+								It = registeredTimers.erase(ti->teSelf);
+							}
+						}
 					}
 				}
 			}
@@ -165,7 +211,7 @@ public:
 			if (tmpTimerBase->mCurrentTime >= tmpTimerBase->mTargetTime)
 			{
 				tmpTimerBase->on_call(tmpTimerBase->GetUserData());
-				if (tmpTimerBase->GetTimerType() == mbase::timer_base::timer_flag::TIMER_TYPE_TIMEOUT)
+				if (tmpTimerBase->GetTimerType() == mbase::timer_base::flags::TIMER_TYPE_TIMEOUT)
 				{
 					It = registeredTimers.erase(It);
 				}
@@ -195,6 +241,7 @@ protected:
 	F64 frequency;
 	U32 timerLimit;
 	U32 timerIdCounter;
+	I32 timerLoopId;
 	bool isRunning;
 	mbase::list<timer_base*> registeredTimers;
 	mbase::tpool threadPool;

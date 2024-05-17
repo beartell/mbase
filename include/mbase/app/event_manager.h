@@ -35,7 +35,6 @@ public:
 	MBASE_INLINE event_manager() noexcept {
 		this->managerId = 1 + (rand() % 1000000);
 		srand(time(0));
-
 	}
 
 	MBASE_INLINE flags DispatchEvent(const std::string& in_event, user_data in_data) {
@@ -141,6 +140,10 @@ public:
 			// no need to erase
 		}
 		return flags::EVENT_MNG_ERR_NOT_FOUND;
+	}
+
+	MBASE_INLINE I32 GetManagerId() {
+		return managerId;
 	}
 private:
 	I32 managerId = 0;
