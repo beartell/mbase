@@ -60,7 +60,6 @@ For this reason, <algorithm> library can utilize this class.
 
 */
 
-
 template<typename T, typename DataT>
 class const_bst_iterator;
 

@@ -27,46 +27,68 @@ Description:
 
 
 struct safe_buffer {
-	safe_buffer() noexcept : bfSource(nullptr), bfLength(0) {}
-	safe_buffer(IBYTEBUFFER in_src, SIZE_T in_length) noexcept : bfSource(in_src), bfLength(in_length) {}
-	safe_buffer(safe_buffer&& in_rhs) noexcept {
-		bfSource = in_rhs.bfSource;
-		bfLength = in_rhs.bfLength;
+	safe_buffer() noexcept;
+	safe_buffer(IBYTEBUFFER in_src, SIZE_T in_length) noexcept;
+	safe_buffer(safe_buffer&& in_rhs) noexcept;
+	~safe_buffer() noexcept;
 
-		in_rhs.bfSource = nullptr;
-		in_rhs.bfLength = 0;
-	}
-	~safe_buffer() noexcept {
-		clear();
-	}
-
-	safe_buffer& operator=(safe_buffer&& in_rhs) noexcept {
-		clear();
-
-		bfSource = in_rhs.bfSource;
-		bfLength = in_rhs.bfLength;
-
-		in_rhs.bfSource = nullptr;
-		in_rhs.bfLength = 0;
-	}
-
-	GENERIC clear() noexcept {
-		if(bfSource)
-		{
-			free(bfSource);
-		}
-		bfLength = 0;
-	}
-	
-	GENERIC swap(safe_buffer &sfb)
-	{
-		std::swap(bfLength, sfb.bfLength);
-		std::swap(bfSource, sfb.bfSource);
-	}
+	safe_buffer& operator=(safe_buffer&& in_rhs) noexcept;
+	GENERIC clear() noexcept;
+	GENERIC swap(safe_buffer& sfb) noexcept;
 
 	SIZE_T bfLength;
 	IBYTEBUFFER bfSource;
 };
+
+safe_buffer::safe_buffer() noexcept : bfSource(nullptr), bfLength(0) 
+{
+}
+
+safe_buffer::safe_buffer(IBYTEBUFFER in_src, SIZE_T in_length) noexcept : bfSource(in_src), bfLength(in_length)
+{
+}
+
+safe_buffer::safe_buffer(safe_buffer&& in_rhs) noexcept
+{
+	bfSource = in_rhs.bfSource;
+	bfLength = in_rhs.bfLength;
+
+	in_rhs.bfSource = nullptr;
+	in_rhs.bfLength = 0;
+}
+
+safe_buffer::~safe_buffer() noexcept
+{
+	clear();
+}
+
+safe_buffer& safe_buffer::operator=(safe_buffer&& in_rhs) noexcept 
+{
+	clear();
+
+	bfSource = in_rhs.bfSource;
+	bfLength = in_rhs.bfLength;
+
+	in_rhs.bfSource = nullptr;
+	in_rhs.bfLength = 0;
+
+	return *this;
+}
+
+GENERIC safe_buffer::clear() noexcept 
+{
+	if (bfSource)
+	{
+		free(bfSource);
+	}
+	bfLength = 0;
+}
+
+GENERIC safe_buffer::swap(safe_buffer& sfb) noexcept
+{
+	std::swap(bfLength, sfb.bfLength);
+	std::swap(bfSource, sfb.bfSource);
+}
 
 #define MB_SET_SAFE_BUFFER(in_sfb, in_size)\
 in_sfb.bfLength = in_size;\

@@ -37,7 +37,7 @@ public:
         return static_cast<pointer>(strncat(out_target, in_source, sizeof(value_type) * in_length));
     }
 
-    MBASE_ND("sequence equality comparison ignored") static MBASE_INLINE_EXPR bool is_equal(const_pointer in_lhs, const_pointer in_rhs, size_type in_length) noexcept {
+    MBASE_ND(MBASE_RESULT_IGNORE) static MBASE_INLINE_EXPR bool is_equal(const_pointer in_lhs, const_pointer in_rhs, size_type in_length) noexcept {
         if (!memcmp(in_lhs, in_rhs, sizeof(value_type) * in_length))
         {
             return true;
@@ -45,7 +45,7 @@ public:
         return false;
     }
 
-    MBASE_ND("sequence equality comparison ignored") static MBASE_INLINE_EXPR bool is_equal(const_pointer in_lhs, const_pointer in_rhs) noexcept {
+    MBASE_ND(MBASE_RESULT_IGNORE) static MBASE_INLINE_EXPR bool is_equal(const_pointer in_lhs, const_pointer in_rhs) noexcept {
         if (!strcmp(in_lhs, in_rhs))
         {
             return true;
@@ -53,15 +53,15 @@ public:
         return false;
     }
 
-    MBASE_ND("sequence length control ignored") static MBASE_INLINE_EXPR size_type length_bytes(const_pointer in_target) noexcept {
+    MBASE_ND(MBASE_RESULT_IGNORE) static MBASE_INLINE_EXPR size_type length_bytes(const_pointer in_target) noexcept {
         return strlen(in_target);
     }
 
-    MBASE_ND("sequence memory comparison ignored") static MBASE_INLINE_EXPR I32 compare(const_pointer in_lhs, const_pointer in_rhs, size_type in_length) noexcept {
+    MBASE_ND(MBASE_RESULT_IGNORE) static MBASE_INLINE_EXPR I32 compare(const_pointer in_lhs, const_pointer in_rhs, size_type in_length) noexcept {
         return memcmp(in_lhs, in_rhs, sizeof(value_type) * in_length);
     }
 
-    MBASE_ND("raw string comparison ignored") static MBASE_INLINE_EXPR I32 compare(const_pointer in_lhs, const_pointer in_rhs) noexcept {
+    MBASE_ND(MBASE_RESULT_IGNORE) static MBASE_INLINE_EXPR I32 compare(const_pointer in_lhs, const_pointer in_rhs) noexcept {
         return strcmp(in_lhs, in_rhs);
     }
 

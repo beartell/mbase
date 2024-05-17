@@ -24,14 +24,15 @@ enum class FS_ERROR : I32{
 MBASE_INLINE FS_ERROR create_directory(const mbase::string_view& in_path) noexcept;
 MBASE_INLINE FS_ERROR copy_file(const mbase::string_view& in_path, const mbase::string_view& in_copypath) noexcept;
 MBASE_INLINE FS_ERROR delete_file(const mbase::string_view& in_path) noexcept;
-MBASE_ND("temp path unused") MBASE_INLINE mbase::string get_temp_path() noexcept;
-MBASE_ND("current path unused") MBASE_INLINE mbase::string get_current_path() noexcept;
-MBASE_ND("temp file unused") MBASE_INLINE mbase::string get_temp_file(const mbase::string_view& in_prefix) noexcept;
+MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE mbase::string get_temp_path() noexcept;
+MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE mbase::string get_current_path() noexcept;
+MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE mbase::string get_temp_file(const mbase::string_view& in_prefix) noexcept;
 MBASE_INLINE GENERIC get_directory(const mbase::string_view& in_path, mbase::vector<FS_FILE_INFORMATION>& out_files) noexcept;
 
 /* IMPLEMENTATIONS */
 
-MBASE_INLINE FS_ERROR create_directory(const mbase::string_view& in_path) noexcept {
+MBASE_INLINE FS_ERROR create_directory(const mbase::string_view& in_path) noexcept 
+{
 	if (!CreateDirectoryA(in_path.c_str(), nullptr))
 	{
 		return (FS_ERROR)(GetLastError());
@@ -40,7 +41,8 @@ MBASE_INLINE FS_ERROR create_directory(const mbase::string_view& in_path) noexce
 	return FS_ERROR::FS_SUCCESS;
 }
 
-MBASE_INLINE FS_ERROR copy_file(const mbase::string_view& in_path, const mbase::string_view& in_copypath) noexcept {
+MBASE_INLINE FS_ERROR copy_file(const mbase::string_view& in_path, const mbase::string_view& in_copypath) noexcept 
+{
 	if (!CopyFileA(in_path.c_str(), in_copypath.c_str(), false))
 	{
 		return (FS_ERROR)(GetLastError());
@@ -49,7 +51,8 @@ MBASE_INLINE FS_ERROR copy_file(const mbase::string_view& in_path, const mbase::
 	return FS_ERROR::FS_SUCCESS;
 }
 
-MBASE_INLINE FS_ERROR delete_file(const mbase::string_view& in_path) noexcept {
+MBASE_INLINE FS_ERROR delete_file(const mbase::string_view& in_path) noexcept 
+{
 	if (!DeleteFileA(in_path.c_str()))
 	{
 		return (FS_ERROR)(GetLastError());
@@ -58,25 +61,29 @@ MBASE_INLINE FS_ERROR delete_file(const mbase::string_view& in_path) noexcept {
 	return FS_ERROR::FS_SUCCESS;
 }
 
-MBASE_ND("temp path unused") MBASE_INLINE mbase::string get_temp_path() noexcept {
+MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE mbase::string get_temp_path() noexcept 
+{
 	IBYTE pathString[MAX_PATH + 1] = { 0 };
 	GetTempPathA(MAX_PATH + 1, pathString);
 	return mbase::string(pathString);
 }
 
-MBASE_ND("current path unused") MBASE_INLINE mbase::string get_current_path() noexcept {
+MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE mbase::string get_current_path() noexcept 
+{
 	IBYTE pathString[MAX_PATH + 1] = { 0 };
 	GetCurrentDirectoryA(MAX_PATH + 1, pathString);
 	return mbase::string(pathString);
 }
 
-MBASE_ND("temp file unused") MBASE_INLINE mbase::string get_temp_file(const mbase::string_view& in_prefix) noexcept {
+MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE mbase::string get_temp_file(const mbase::string_view& in_prefix) noexcept 
+{
 	IBYTE pathString[MAX_PATH + 1] = { 0 };
 	GetTempFileNameA(".", in_prefix.c_str(), 0, pathString);
 	return mbase::string(pathString);
 }
 
-MBASE_INLINE GENERIC get_directory(const mbase::string_view& in_path, mbase::vector<FS_FILE_INFORMATION>& out_files) noexcept {
+MBASE_INLINE GENERIC get_directory(const mbase::string_view& in_path, mbase::vector<FS_FILE_INFORMATION>& out_files) noexcept 
+{
 	WIN32_FIND_DATAA findData;
 	HANDLE findHandle = FindFirstFileA(in_path.c_str(), &findData);
 	do {

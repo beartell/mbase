@@ -79,69 +79,81 @@ private:
 };
 
 template<typename T>
-atomic<T>::atomic(const T& in_rhs) noexcept : val(in_rhs) {
+atomic<T>::atomic(const T& in_rhs) noexcept : val(in_rhs) 
+{
 
 }
 
 template<typename T>
-atomic<T>::atomic() noexcept : val(0) {
+atomic<T>::atomic() noexcept : val(0) 
+{
 
 }
 
 template<typename T>
-atomic<T>::atomic(const atomic& in_rhs) noexcept {
+atomic<T>::atomic(const atomic& in_rhs) noexcept
+{
 	val = in_rhs.val;
 }
 
 template<typename T>
-atomic<T>& atomic<T>::operator=(const atomic& in_rhs) noexcept {
+atomic<T>& atomic<T>::operator=(const atomic& in_rhs) noexcept
+{
 	val = in_rhs.val;
 	return *this;
 }
 
 template<typename T>
-atomic<T>& atomic<T>::operator=(const T& in_rhs) noexcept {
+atomic<T>& atomic<T>::operator=(const T& in_rhs) noexcept
+{
 	InterlockedExchange64((LONG64*)&val, in_rhs);
 	return *this;
 }
 
 template<typename T>
-MBASE_ND("ignoring the atomic variable") T atomic<T>::get_val() noexcept {
+MBASE_ND(MBASE_OBS_IGNORE) T atomic<T>::get_val() noexcept
+{
 	return val;
 }
 
 template<typename T>
-atomic<T>& atomic<T>::operator+=(const T& in_rhs) noexcept {
+atomic<T>& atomic<T>::operator+=(const T& in_rhs) noexcept 
+{
 	InterlockedAdd64((LONG64*)&val, in_rhs);
 	return *this;
 }
 
 template<typename T>
-atomic<T>& atomic<T>::operator++() noexcept {
+atomic<T>& atomic<T>::operator++() noexcept 
+{
 	InterlockedIncrement64((LONG64*)&val);
 	return *this;
 }
 
 template<typename T>
-atomic<T>& atomic<T>::operator++(int) noexcept {
+atomic<T>& atomic<T>::operator++(int) noexcept 
+{
 	InterlockedIncrement64((LONG64*)&val);
 	return *this;
 }
 
 template<typename T>
-atomic<T>& atomic<T>::operator-=(const T& in_rhs) noexcept {
+atomic<T>& atomic<T>::operator-=(const T& in_rhs) noexcept
+{
 	InterlockedAdd64((LONG64*)&val, -in_rhs);
 	return *this;
 }
 
 template<typename T>
-atomic<T>& atomic<T>::operator--() noexcept {
+atomic<T>& atomic<T>::operator--() noexcept 
+{
 	InterlockedDecrement64((LONG64*)&val);
 	return *this;
 }
 
 template<typename T>
-atomic<T>& atomic<T>::operator--(int) noexcept {
+atomic<T>& atomic<T>::operator--(int) noexcept
+{
 	InterlockedDecrement64((LONG64*)&val);
 	return *this;
 }

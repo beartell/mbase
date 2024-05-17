@@ -40,8 +40,8 @@ public:
 	io_tcp_client(const mbase::string& in_name, const mbase::string& in_port) noexcept;
 	~io_tcp_client() noexcept;
 
-	MBASE_ND("requesting ipv4 but not using it") mbase::string get_remote_ipv4() const noexcept;
-	MBASE_ND("requesting ipv6 but not using it") mbase::string get_remote_ipv6() const noexcept;
+	MBASE_ND(MBASE_OBS_IGNORE) mbase::string get_remote_ipv4() const noexcept;
+	MBASE_ND(MBASE_OBS_IGNORE) mbase::string get_remote_ipv6() const noexcept;
 
 	I32 connect_target(const mbase::string& in_name, const mbase::string& in_port) noexcept;
 	I32 disconnect() noexcept;
@@ -71,11 +71,13 @@ private:
 	sockaddr_in sckAddr = {0};
 };
 
-io_tcp_client::io_tcp_client() noexcept : rawHandle(INVALID_SOCKET) {
+io_tcp_client::io_tcp_client() noexcept : rawHandle(INVALID_SOCKET) 
+{
 
 }
 
-io_tcp_client::io_tcp_client(const mbase::string& in_name, const mbase::string& in_port) noexcept {
+io_tcp_client::io_tcp_client(const mbase::string& in_name, const mbase::string& in_port) noexcept 
+{
 	connect_target(in_name, in_port);
 }
 
@@ -83,20 +85,22 @@ io_tcp_client::~io_tcp_client() noexcept {
 	disconnect();
 }
 
-MBASE_ND("requesting ipv4 but not using it") mbase::string io_tcp_client::get_remote_ipv4() const noexcept
+MBASE_ND(MBASE_OBS_IGNORE) mbase::string io_tcp_client::get_remote_ipv4() const noexcept
 {
 	IBYTE ipOut[INET_ADDRSTRLEN] = { 0 };
 	inet_ntop(AF_INET, &sckAddr.sin_addr, ipOut, sizeof(ipOut));
 	return mbase::string(ipOut);
 }
 
-MBASE_ND("requesting ipv6 but not using it") mbase::string io_tcp_client::get_remote_ipv6() const noexcept {
+MBASE_ND(MBASE_OBS_IGNORE) mbase::string io_tcp_client::get_remote_ipv6() const noexcept 
+{
 	IBYTE ipOut[INET6_ADDRSTRLEN] = { 0 };
 	inet_ntop(AF_INET6, &sckAddr.sin_addr, ipOut, sizeof(ipOut));
 	return mbase::string(ipOut);
 }
 
-I32 io_tcp_client::connect_target(const mbase::string& in_name, const mbase::string& in_port) noexcept {
+I32 io_tcp_client::connect_target(const mbase::string& in_name, const mbase::string& in_port) noexcept 
+{
 	rawHandle = INVALID_SOCKET;
 
 	addrinfo* result = nullptr;

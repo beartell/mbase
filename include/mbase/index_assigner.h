@@ -59,13 +59,13 @@ public:
 	/* ===== OPERATOR BUILDER METHODS END ===== */
 
 	/* ===== OBSERVATION METHODS BEGIN ===== */
-	MBASE_ND("ignoring the container observation") MBASE_INLINE size_type iic_size() const noexcept;
-	MBASE_ND("ignoring the container observation") MBASE_INLINE size_type capacity() const noexcept;
+	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE size_type iic_size() const noexcept;
+	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE size_type capacity() const noexcept;
 	/* ===== OBSERVATION METHODS END ===== */
 
 	/* ===== STATE-MODIFIER METHODS BEGIN ===== */
-	MBASE_ND("ignoring the returned index") MBASE_INLINE IndexType peek_index() noexcept;
-	MBASE_ND("ignoring the returned index") MBASE_INLINE IndexType get_index() noexcept;
+	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE IndexType peek_index() noexcept;
+	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE IndexType get_index() noexcept;
 	MBASE_INLINE GENERIC release_index(const IndexType& in_index) noexcept;
 	/* ===== STATE-MODIFIER METHODS END ===== */
 
@@ -119,19 +119,19 @@ MBASE_INLINE index_assigner<IndexType, InactiveIndexContainer>& index_assigner<I
 }
 
 template<typename IndexType, typename InactiveIndexContainer>
-MBASE_ND("ignoring the container observation") MBASE_INLINE SIZE_T index_assigner<IndexType, InactiveIndexContainer>::iic_size() const noexcept
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE SIZE_T index_assigner<IndexType, InactiveIndexContainer>::iic_size() const noexcept
 {
 	return IIH.size();
 }
 
 template<typename IndexType, typename InactiveIndexContainer>
-MBASE_ND("ignoring the container observation") MBASE_INLINE SIZE_T index_assigner<IndexType, InactiveIndexContainer>::capacity() const noexcept
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE SIZE_T index_assigner<IndexType, InactiveIndexContainer>::capacity() const noexcept
 {
 	return mCapacity;
 }
 
 template<typename IndexType, typename InactiveIndexContainer>
-MBASE_ND("ignoring the returned index") MBASE_INLINE IndexType index_assigner<IndexType, InactiveIndexContainer>::peek_index() noexcept
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE IndexType index_assigner<IndexType, InactiveIndexContainer>::peek_index() noexcept
 {
 	IndexType iT;
 	if(IIH.size())
@@ -147,7 +147,7 @@ MBASE_ND("ignoring the returned index") MBASE_INLINE IndexType index_assigner<In
 }
 
 template<typename IndexType, typename InactiveIndexContainer>
-MBASE_ND("ignoring the returned index") MBASE_INLINE IndexType index_assigner<IndexType, InactiveIndexContainer>::get_index() noexcept
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE IndexType index_assigner<IndexType, InactiveIndexContainer>::get_index() noexcept
 {
 	IndexType iT;
 	if (IIH.size())

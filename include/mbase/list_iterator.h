@@ -133,23 +133,23 @@ public:
 
     /* ===== OBSERVATION METHODS BEGIN ===== */
     MBASE_INLINE pointer _get_node() const noexcept;
-    MBASE_ND("internal data that is access through the iterator should be used") MBASE_INLINE DataT* get() const noexcept;
-    MBASE_ND("internal data that is access through the iterator should be used") MBASE_INLINE DataT& operator*() const noexcept;
+    MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE DataT* get() const noexcept;
+    MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE DataT& operator*() const noexcept;
     MBASE_INLINE DataT* operator->() const noexcept;
     /* ===== OBSERVATION METHODS END ===== */
 
     /* ===== OPERATOR STATE-MODIFIER METHODS BEGIN ===== */
-    MBASE_ND("ignoring iterator index") MBASE_INLINE forward_list_iterator operator+(difference_type in_rhs) noexcept;
+    MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE forward_list_iterator operator+(difference_type in_rhs) noexcept;
     MBASE_INLINE forward_list_iterator& operator+=(difference_type in_rhs) noexcept;
     MBASE_INLINE forward_list_iterator& operator++() noexcept;
     MBASE_INLINE forward_list_iterator operator++(int) noexcept;
     /* ===== OPERATOR STATE-MODIFIER METHODS END ===== */
 
     /* ===== NON-MODIFIER METHODS BEGIN ===== */
-    MBASE_ND("ignoring equality comparison") MBASE_INLINE bool operator==(const forward_list_iterator& in_rhs) const noexcept;
-    MBASE_ND("ignoring equality comparison") MBASE_INLINE bool operator!=(const forward_list_iterator& in_rhs) const noexcept;
-    MBASE_ND("ignoring equality comparison") MBASE_INLINE bool operator==(const const_forward_list_iterator<T, DataT>& in_rhs) const noexcept;
-    MBASE_ND("ignoring equality comparison") MBASE_INLINE bool operator!=(const const_forward_list_iterator<T, DataT>& in_rhs) const noexcept;
+    MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE bool operator==(const forward_list_iterator& in_rhs) const noexcept;
+    MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE bool operator!=(const forward_list_iterator& in_rhs) const noexcept;
+    MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE bool operator==(const const_forward_list_iterator<T, DataT>& in_rhs) const noexcept;
+    MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE bool operator!=(const const_forward_list_iterator<T, DataT>& in_rhs) const noexcept;
     /* ===== NON-MODIFIER METHODS END ===== */
 
 protected:
@@ -176,21 +176,21 @@ public:
 
     /* ===== OBSERVATION METHODS BEGIN ===== */
     MBASE_INLINE const_pointer _get_node() const noexcept;
-    MBASE_ND("internal data that is access through the iterator should be used") MBASE_INLINE const DataT* get() const noexcept;
-    MBASE_ND("internal data that is access through the iterator should be used") MBASE_INLINE const DataT& operator*() const noexcept;
+    MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE const DataT* get() const noexcept;
+    MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE const DataT& operator*() const noexcept;
     MBASE_INLINE const DataT* operator->() const noexcept;
     /* ===== OBSERVATION METHODS END ===== */
 
     /* ===== STATE-MODIFIER METHODS BEGIN ===== */
-    MBASE_ND("ignoring iterator index") MBASE_INLINE const_forward_list_iterator operator+(difference_type in_rhs) noexcept;
+    MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE const_forward_list_iterator operator+(difference_type in_rhs) noexcept;
     MBASE_INLINE const_forward_list_iterator& operator+=(difference_type in_rhs) noexcept;
     MBASE_INLINE const_forward_list_iterator& operator++() noexcept;
     MBASE_INLINE const_forward_list_iterator operator++(int) noexcept;
     /* ===== STATE-MODIFIER METHODS END ===== */
 
     /* ===== NON-MODIFIER METHODS BEGIN ===== */
-    MBASE_ND("ignoring equality comparison") MBASE_INLINE bool operator==(const const_forward_list_iterator& in_rhs) const noexcept;
-    MBASE_ND("ignoring equality comparison") MBASE_INLINE bool operator!=(const const_forward_list_iterator& in_rhs) const noexcept;
+    MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE bool operator==(const const_forward_list_iterator& in_rhs) const noexcept;
+    MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE bool operator!=(const const_forward_list_iterator& in_rhs) const noexcept;
     /* ===== NON-MODIFIER METHODS END ===== */
 
 protected:
@@ -217,22 +217,22 @@ public:
     /* ===== OBSERVATION METHODS BEGIN ===== */
     MBASE_INLINE pointer _get_node() const noexcept;
     MBASE_INLINE DataT* get() const noexcept;
-    MBASE_ND("internal data that is access through the iterator should be used") MBASE_INLINE DataT& operator*() const noexcept;
-    MBASE_ND("internal data that is access through the iterator should be used") MBASE_INLINE DataT* operator->() const noexcept;
+    MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE DataT& operator*() const noexcept;
+    MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE DataT* operator->() const noexcept;
     /* ===== OBSERVATION METHODS END ===== */
 
     /* ===== STATE-MODIFIER METHODS BEGIN ===== */
-    MBASE_ND("ignoring iterator index") MBASE_INLINE backward_list_iterator operator+(difference_type in_rhs) noexcept;
+    MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE backward_list_iterator operator+(difference_type in_rhs) noexcept;
     MBASE_INLINE backward_list_iterator& operator+=(difference_type in_rhs) noexcept;
     MBASE_INLINE backward_list_iterator& operator++() noexcept;
     MBASE_INLINE backward_list_iterator operator++(int) noexcept;
     /* ===== STATE-MODIFIER METHODS END ===== */
 
     /* ===== NON-MODIFIER METHODS BEGIN ===== */
-    MBASE_ND("ignoring equality comparison") MBASE_INLINE bool operator==(const backward_list_iterator& in_rhs) const noexcept;
-    MBASE_ND("ignoring equality comparison") MBASE_INLINE bool operator!=(const backward_list_iterator& in_rhs) const noexcept;
-    MBASE_ND("ignoring equality comparison") MBASE_INLINE bool operator==(const const_backward_list_iterator<T, DataT>& in_rhs) const noexcept;
-    MBASE_ND("ignoring equality comparison") MBASE_INLINE bool operator!=(const const_backward_list_iterator<T, DataT>& in_rhs) const noexcept;
+    MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE bool operator==(const backward_list_iterator& in_rhs) const noexcept;
+    MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE bool operator!=(const backward_list_iterator& in_rhs) const noexcept;
+    MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE bool operator==(const const_backward_list_iterator<T, DataT>& in_rhs) const noexcept;
+    MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE bool operator!=(const const_backward_list_iterator<T, DataT>& in_rhs) const noexcept;
     /* ===== NON-MODIFIER METHODS END ===== */
 
 protected:
@@ -259,21 +259,21 @@ public:
 
     /* ===== OBSERVATION METHODS BEGIN ===== */
     MBASE_INLINE const_pointer _get_node() const noexcept;
-    MBASE_ND("internal data that is access through the iterator should be used") MBASE_INLINE const DataT* get() const noexcept;
-    MBASE_ND("internal data that is access through the iterator should be used") MBASE_INLINE const DataT& operator*() const noexcept;
+    MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE const DataT* get() const noexcept;
+    MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE const DataT& operator*() const noexcept;
     MBASE_INLINE const DataT* operator->() const noexcept;
     /* ===== OBSERVATION METHODS END ===== */
 
     /* ===== STATE-MODIFIER METHODS BEGIN ===== */
-    MBASE_ND("ignoring iterator index") MBASE_INLINE const_backward_list_iterator operator+(difference_type in_rhs) noexcept;
+    MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE const_backward_list_iterator operator+(difference_type in_rhs) noexcept;
     MBASE_INLINE const_backward_list_iterator& operator+=(difference_type in_rhs) noexcept;
     MBASE_INLINE const_backward_list_iterator& operator++() noexcept;
     MBASE_INLINE const_backward_list_iterator operator++(int) noexcept;
     /* ===== STATE-MODIFIER METHODS END ===== */
 
     /* ===== NON-MODIFIER METHODS BEGIN ===== */
-    MBASE_ND("ignoring equality comparison") MBASE_INLINE bool operator==(const const_backward_list_iterator& in_rhs) const noexcept;
-    MBASE_ND("ignoring equality comparison") MBASE_INLINE bool operator!=(const const_backward_list_iterator& in_rhs) const noexcept;
+    MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE bool operator==(const const_backward_list_iterator& in_rhs) const noexcept;
+    MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE bool operator!=(const const_backward_list_iterator& in_rhs) const noexcept;
     /* ===== NON-MODIFIER METHODS END ===== */
 
 protected:
@@ -497,27 +497,32 @@ MBASE_INLINE forward_list_iterator<T, DataT>::forward_list_iterator(const forwar
 }
 
 template<typename T, typename DataT>
-MBASE_INLINE typename forward_list_iterator<T, DataT>::pointer forward_list_iterator<T, DataT>::_get_node() const noexcept {
+MBASE_INLINE typename forward_list_iterator<T, DataT>::pointer forward_list_iterator<T, DataT>::_get_node() const noexcept 
+{
     return _ptr;
 }
 
 template<typename T, typename DataT>
-MBASE_ND("internal data that is access through the iterator should be used") MBASE_INLINE DataT* forward_list_iterator<T, DataT>::get() const noexcept {
+MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE DataT* forward_list_iterator<T, DataT>::get() const noexcept 
+{
     return &_ptr->data;
 }
 
 template<typename T, typename DataT>
-MBASE_ND("internal data that is access through the iterator should be used") MBASE_INLINE DataT& forward_list_iterator<T, DataT>::operator*() const noexcept {
+MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE DataT& forward_list_iterator<T, DataT>::operator*() const noexcept 
+{
     return _ptr->data;
 }
 
 template<typename T, typename DataT>
-MBASE_INLINE DataT* forward_list_iterator<T, DataT>::operator->() const noexcept {
+MBASE_INLINE DataT* forward_list_iterator<T, DataT>::operator->() const noexcept 
+{
     return this->get();
 }
 
 template<typename T, typename DataT>
-MBASE_ND("ignoring iterator index") MBASE_INLINE forward_list_iterator<T, DataT> forward_list_iterator<T, DataT>::operator+(difference_type in_rhs) noexcept {
+MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE forward_list_iterator<T, DataT> forward_list_iterator<T, DataT>::operator+(difference_type in_rhs) noexcept 
+{
 
     forward_list_iterator fli(*this);
     fli += in_rhs;
@@ -525,7 +530,8 @@ MBASE_ND("ignoring iterator index") MBASE_INLINE forward_list_iterator<T, DataT>
 }
 
 template<typename T, typename DataT>
-MBASE_INLINE forward_list_iterator<T, DataT>& forward_list_iterator<T, DataT>::operator+=(difference_type in_rhs) noexcept {
+MBASE_INLINE forward_list_iterator<T, DataT>& forward_list_iterator<T, DataT>::operator+=(difference_type in_rhs) noexcept 
+{
     for (size_type i = 0; i < in_rhs; i++)
     {
         _ptr = _ptr->next;
@@ -534,7 +540,8 @@ MBASE_INLINE forward_list_iterator<T, DataT>& forward_list_iterator<T, DataT>::o
 }
 
 template<typename T, typename DataT>
-MBASE_INLINE forward_list_iterator<T, DataT>& forward_list_iterator<T, DataT>::operator++() noexcept {
+MBASE_INLINE forward_list_iterator<T, DataT>& forward_list_iterator<T, DataT>::operator++() noexcept 
+{
     if (!_ptr)
     {
         return *this;
@@ -545,7 +552,8 @@ MBASE_INLINE forward_list_iterator<T, DataT>& forward_list_iterator<T, DataT>::o
 }
 
 template<typename T, typename DataT>
-MBASE_INLINE forward_list_iterator<T, DataT> forward_list_iterator<T, DataT>::operator++(int) noexcept {
+MBASE_INLINE forward_list_iterator<T, DataT> forward_list_iterator<T, DataT>::operator++(int) noexcept 
+{
     if (!_ptr)
     {
         return *this;
@@ -556,22 +564,26 @@ MBASE_INLINE forward_list_iterator<T, DataT> forward_list_iterator<T, DataT>::op
 }
 
 template<typename T, typename DataT>
-MBASE_ND("ignoring equality comparison") MBASE_INLINE bool forward_list_iterator<T, DataT>::operator==(const forward_list_iterator& in_rhs) const noexcept {
+MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE bool forward_list_iterator<T, DataT>::operator==(const forward_list_iterator& in_rhs) const noexcept 
+{
     return _ptr == in_rhs._get_node();
 }
 
 template<typename T, typename DataT>
-MBASE_ND("ignoring equality comparison") MBASE_INLINE bool forward_list_iterator<T, DataT>::operator!=(const forward_list_iterator& in_rhs) const noexcept {
+MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE bool forward_list_iterator<T, DataT>::operator!=(const forward_list_iterator& in_rhs) const noexcept 
+{
     return _ptr != in_rhs._get_node();
 }
 
 template<typename T, typename DataT>
-MBASE_ND("ignoring equality comparison") MBASE_INLINE bool forward_list_iterator<T, DataT>::operator==(const const_forward_list_iterator<T, DataT>& in_rhs) const noexcept {
+MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE bool forward_list_iterator<T, DataT>::operator==(const const_forward_list_iterator<T, DataT>& in_rhs) const noexcept 
+{
     return _ptr == in_rhs._get_node();
 }
 
 template<typename T, typename DataT>
-MBASE_ND("ignoring equality comparison") MBASE_INLINE bool forward_list_iterator<T, DataT>::operator!=(const const_forward_list_iterator<T, DataT>& in_rhs) const noexcept {
+MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE bool forward_list_iterator<T, DataT>::operator!=(const const_forward_list_iterator<T, DataT>& in_rhs) const noexcept 
+{
     return _ptr != in_rhs._get_node();
 }
 
@@ -597,34 +609,40 @@ const_forward_list_iterator<T, DataT>::const_forward_list_iterator(const forward
 }
 
 template<typename T, typename DataT>
-MBASE_ND("internal data that is access through the iterator should be used") MBASE_INLINE typename const_forward_list_iterator<T, DataT>::const_pointer const_forward_list_iterator<T, DataT>::_get_node() const noexcept {
+MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE typename const_forward_list_iterator<T, DataT>::const_pointer const_forward_list_iterator<T, DataT>::_get_node() const noexcept 
+{
     return _ptr;
 }
 
 template<typename T, typename DataT>
-MBASE_ND("internal data that is access through the iterator should be used") MBASE_INLINE const DataT* const_forward_list_iterator<T, DataT>::get() const noexcept {
+MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE const DataT* const_forward_list_iterator<T, DataT>::get() const noexcept 
+{
     return &_ptr->data;
 }
 
 template<typename T, typename DataT>
-MBASE_ND("internal data that is access through the iterator should be used") MBASE_INLINE const DataT& const_forward_list_iterator<T, DataT>::operator*() const noexcept {
+MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE const DataT& const_forward_list_iterator<T, DataT>::operator*() const noexcept 
+{
     return _ptr->data;
 }
 
 template<typename T, typename DataT>
-MBASE_INLINE const DataT* const_forward_list_iterator<T, DataT>::operator->() const noexcept {
+MBASE_INLINE const DataT* const_forward_list_iterator<T, DataT>::operator->() const noexcept 
+{
     return this->get();
 }
 
 template<typename T, typename DataT>
-MBASE_ND("ignoring iterator index") MBASE_INLINE const_forward_list_iterator<T, DataT> const_forward_list_iterator<T, DataT>::operator+(difference_type in_rhs) noexcept {
+MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE const_forward_list_iterator<T, DataT> const_forward_list_iterator<T, DataT>::operator+(difference_type in_rhs) noexcept 
+{
     const_forward_list_iterator cfli(*this);
     cfli += in_rhs;
     return cfli;
 }
 
 template<typename T, typename DataT>
-MBASE_INLINE const_forward_list_iterator<T, DataT>& const_forward_list_iterator<T, DataT>::operator+=(difference_type in_rhs) noexcept {
+MBASE_INLINE const_forward_list_iterator<T, DataT>& const_forward_list_iterator<T, DataT>::operator+=(difference_type in_rhs) noexcept
+{
     for (size_type i = 0; i < in_rhs; i++)
     {
         _ptr = _ptr->next;
@@ -633,7 +651,8 @@ MBASE_INLINE const_forward_list_iterator<T, DataT>& const_forward_list_iterator<
 }
 
 template<typename T, typename DataT>
-MBASE_INLINE const_forward_list_iterator<T, DataT>& const_forward_list_iterator<T, DataT>::operator++() noexcept {
+MBASE_INLINE const_forward_list_iterator<T, DataT>& const_forward_list_iterator<T, DataT>::operator++() noexcept
+{
     if (!_ptr)
     {
         return *this;
@@ -644,7 +663,8 @@ MBASE_INLINE const_forward_list_iterator<T, DataT>& const_forward_list_iterator<
 }
 
 template<typename T, typename DataT>
-MBASE_INLINE const_forward_list_iterator<T, DataT> const_forward_list_iterator<T, DataT>::operator++(int) noexcept {
+MBASE_INLINE const_forward_list_iterator<T, DataT> const_forward_list_iterator<T, DataT>::operator++(int) noexcept 
+{
     if (!_ptr)
     {
         return *this;
@@ -656,12 +676,14 @@ MBASE_INLINE const_forward_list_iterator<T, DataT> const_forward_list_iterator<T
 }
 
 template<typename T, typename DataT>
-MBASE_ND("ignoring equality comparison") MBASE_INLINE bool const_forward_list_iterator<T, DataT>::operator==(const const_forward_list_iterator& in_rhs) const noexcept {
+MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE bool const_forward_list_iterator<T, DataT>::operator==(const const_forward_list_iterator& in_rhs) const noexcept 
+{
     return _ptr == in_rhs._get_node();
 }
 
 template<typename T, typename DataT>
-MBASE_ND("ignoring equality comparison") MBASE_INLINE bool const_forward_list_iterator<T, DataT>::operator!=(const const_forward_list_iterator& in_rhs) const noexcept {
+MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE bool const_forward_list_iterator<T, DataT>::operator!=(const const_forward_list_iterator& in_rhs) const noexcept
+{
     return _ptr != in_rhs._get_node();
 }
 
@@ -680,34 +702,40 @@ template<typename T, typename DataT>
 backward_list_iterator<T, DataT>::backward_list_iterator(const backward_list_iterator& in_rhs) noexcept : _ptr(in_rhs._ptr) {}
 
 template<typename T, typename DataT>
-MBASE_INLINE typename backward_list_iterator<T, DataT>::pointer backward_list_iterator<T, DataT>::_get_node() const noexcept {
+MBASE_INLINE typename backward_list_iterator<T, DataT>::pointer backward_list_iterator<T, DataT>::_get_node() const noexcept 
+{
     return _ptr;
 }
 
 template<typename T, typename DataT>
-MBASE_INLINE DataT* backward_list_iterator<T, DataT>::get() const noexcept {
+MBASE_INLINE DataT* backward_list_iterator<T, DataT>::get() const noexcept 
+{
     return &_ptr->data;
 }
 
 template<typename T, typename DataT>
-MBASE_ND("internal data that is access through the iterator should be used") MBASE_INLINE DataT& backward_list_iterator<T, DataT>::operator*() const noexcept {
+MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE DataT& backward_list_iterator<T, DataT>::operator*() const noexcept 
+{
     return _ptr->data;
 }
 
 template<typename T, typename DataT>
-MBASE_ND("internal data that is access through the iterator should be used") MBASE_INLINE DataT* backward_list_iterator<T, DataT>::operator->() const noexcept {
+MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE DataT* backward_list_iterator<T, DataT>::operator->() const noexcept
+{
     return this->get();
 }
 
 template<typename T, typename DataT>
-MBASE_ND("ignoring iterator index") MBASE_INLINE backward_list_iterator<T, DataT> backward_list_iterator<T, DataT>::operator+(difference_type in_rhs) noexcept {
+MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE backward_list_iterator<T, DataT> backward_list_iterator<T, DataT>::operator+(difference_type in_rhs) noexcept 
+{
     backward_list_iterator bli(*this);
     bli += in_rhs;
     return bli;
 }
 
 template<typename T, typename DataT>
-MBASE_INLINE backward_list_iterator<T, DataT>& backward_list_iterator<T, DataT>::operator+=(difference_type in_rhs) noexcept {
+MBASE_INLINE backward_list_iterator<T, DataT>& backward_list_iterator<T, DataT>::operator+=(difference_type in_rhs) noexcept 
+{
     for (size_type i = 0; i < in_rhs; i++)
     {
         _ptr = _ptr->prev;
@@ -716,7 +744,8 @@ MBASE_INLINE backward_list_iterator<T, DataT>& backward_list_iterator<T, DataT>:
 }
 
 template<typename T, typename DataT>
-MBASE_INLINE backward_list_iterator<T, DataT>& backward_list_iterator<T, DataT>::operator++() noexcept {
+MBASE_INLINE backward_list_iterator<T, DataT>& backward_list_iterator<T, DataT>::operator++() noexcept 
+{
     if (!_ptr)
     {
         return *this;
@@ -727,7 +756,8 @@ MBASE_INLINE backward_list_iterator<T, DataT>& backward_list_iterator<T, DataT>:
 }
 
 template<typename T, typename DataT>
-MBASE_INLINE backward_list_iterator<T, DataT> backward_list_iterator<T, DataT>::operator++(int) noexcept {
+MBASE_INLINE backward_list_iterator<T, DataT> backward_list_iterator<T, DataT>::operator++(int) noexcept 
+{
     if (!_ptr)
     {
         return *this;
@@ -738,22 +768,26 @@ MBASE_INLINE backward_list_iterator<T, DataT> backward_list_iterator<T, DataT>::
 }
 
 template<typename T, typename DataT>
-MBASE_ND("ignoring equality comparison") MBASE_INLINE bool backward_list_iterator<T, DataT>::operator==(const backward_list_iterator& in_rhs) const noexcept {
+MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE bool backward_list_iterator<T, DataT>::operator==(const backward_list_iterator& in_rhs) const noexcept 
+{
     return _ptr == in_rhs._ptr;
 }
 
 template<typename T, typename DataT>
-MBASE_ND("ignoring equality comparison") MBASE_INLINE bool backward_list_iterator<T, DataT>::operator!=(const backward_list_iterator& in_rhs) const noexcept {
+MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE bool backward_list_iterator<T, DataT>::operator!=(const backward_list_iterator& in_rhs) const noexcept 
+{
     return _ptr != in_rhs._ptr;
 }
 
 template<typename T, typename DataT>
-MBASE_ND("ignoring equality comparison") MBASE_INLINE bool backward_list_iterator<T, DataT>::operator==(const const_backward_list_iterator<T, DataT>& in_rhs) const noexcept {
+MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE bool backward_list_iterator<T, DataT>::operator==(const const_backward_list_iterator<T, DataT>& in_rhs) const noexcept 
+{
     return _ptr == in_rhs._get_node();
 }
 
 template<typename T, typename DataT>
-MBASE_ND("ignoring equality comparison") MBASE_INLINE bool backward_list_iterator<T, DataT>::operator!=(const const_backward_list_iterator<T, DataT>& in_rhs) const noexcept {
+MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE bool backward_list_iterator<T, DataT>::operator!=(const const_backward_list_iterator<T, DataT>& in_rhs) const noexcept 
+{
     return _ptr != in_rhs._get_node();
 }
 
@@ -779,34 +813,40 @@ const_backward_list_iterator<T, DataT>::const_backward_list_iterator(const backw
 }
 
 template<typename T, typename DataT>
-MBASE_ND("internal data that is access through the iterator should be used") MBASE_INLINE typename const_backward_list_iterator<T, DataT>::const_pointer const_backward_list_iterator<T, DataT>::_get_node() const noexcept {
+MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE typename const_backward_list_iterator<T, DataT>::const_pointer const_backward_list_iterator<T, DataT>::_get_node() const noexcept 
+{
     return _ptr;
 }
 
 template<typename T, typename DataT>
-MBASE_ND("internal data that is access through the iterator should be used") MBASE_INLINE const DataT* const_backward_list_iterator<T, DataT>::get() const noexcept {
+MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE const DataT* const_backward_list_iterator<T, DataT>::get() const noexcept
+{
     return &_ptr->data;
 }
 
 template<typename T, typename DataT>
-MBASE_ND("internal data that is access through the iterator should be used") MBASE_INLINE const DataT& const_backward_list_iterator<T, DataT>::operator*() const noexcept {
+MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE const DataT& const_backward_list_iterator<T, DataT>::operator*() const noexcept 
+{
     return _ptr->data;
 }
 
 template<typename T, typename DataT>
-MBASE_INLINE const DataT* const_backward_list_iterator<T, DataT>::operator->() const noexcept {
+MBASE_INLINE const DataT* const_backward_list_iterator<T, DataT>::operator->() const noexcept
+{
     return this->get();
 }
 
 template<typename T, typename DataT>
-MBASE_ND("ignoring iterator index") MBASE_INLINE const_backward_list_iterator<T, DataT> const_backward_list_iterator<T, DataT>::operator+(difference_type in_rhs) noexcept {
+MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE const_backward_list_iterator<T, DataT> const_backward_list_iterator<T, DataT>::operator+(difference_type in_rhs) noexcept
+{
     const_backward_list_iterator cbli(*this);
     cbli += in_rhs;
     return cbli;
 }
 
 template<typename T, typename DataT>
-MBASE_INLINE const_backward_list_iterator<T, DataT>& const_backward_list_iterator<T, DataT>::operator+=(difference_type in_rhs) noexcept {
+MBASE_INLINE const_backward_list_iterator<T, DataT>& const_backward_list_iterator<T, DataT>::operator+=(difference_type in_rhs) noexcept
+{
     for (size_type i = 0; i < in_rhs; i++)
     {
         _ptr = _ptr->prev;
@@ -815,7 +855,8 @@ MBASE_INLINE const_backward_list_iterator<T, DataT>& const_backward_list_iterato
 }
 
 template<typename T, typename DataT>
-MBASE_INLINE const_backward_list_iterator<T, DataT>& const_backward_list_iterator<T, DataT>::operator++() noexcept {
+MBASE_INLINE const_backward_list_iterator<T, DataT>& const_backward_list_iterator<T, DataT>::operator++() noexcept
+{
     if (!_ptr)
     {
         return *this;
@@ -826,7 +867,8 @@ MBASE_INLINE const_backward_list_iterator<T, DataT>& const_backward_list_iterato
 }
 
 template<typename T, typename DataT>
-MBASE_INLINE const_backward_list_iterator<T, DataT> const_backward_list_iterator<T, DataT>::operator++(int) noexcept {
+MBASE_INLINE const_backward_list_iterator<T, DataT> const_backward_list_iterator<T, DataT>::operator++(int) noexcept
+{
     if (!_ptr)
     {
         return *this;
@@ -837,12 +879,14 @@ MBASE_INLINE const_backward_list_iterator<T, DataT> const_backward_list_iterator
 }
 
 template<typename T, typename DataT>
-MBASE_ND("ignoring equality comparison") MBASE_INLINE bool const_backward_list_iterator<T, DataT>::operator==(const const_backward_list_iterator& in_rhs) const noexcept {
+MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE bool const_backward_list_iterator<T, DataT>::operator==(const const_backward_list_iterator& in_rhs) const noexcept
+{
     return _ptr == in_rhs._get_node();
 }
 
 template<typename T, typename DataT>
-MBASE_ND("ignoring equality comparison") MBASE_INLINE bool const_backward_list_iterator<T, DataT>::operator!=(const const_backward_list_iterator& in_rhs) const noexcept {
+MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE bool const_backward_list_iterator<T, DataT>::operator!=(const const_backward_list_iterator& in_rhs) const noexcept
+{
     return _ptr != in_rhs._get_node();
 }
 
@@ -863,14 +907,16 @@ bi_list_iterator<Type, DataT>::bi_list_iterator(const bi_list_iterator& in_rhs) 
 }
 
 template<typename Type, typename DataT>
-MBASE_INLINE bi_list_iterator<Type, DataT> bi_list_iterator<Type, DataT>::operator-(difference_type in_rhs) noexcept {
+MBASE_INLINE bi_list_iterator<Type, DataT> bi_list_iterator<Type, DataT>::operator-(difference_type in_rhs) noexcept
+{
     bi_list_iterator bli(*this);
     bli -= in_rhs;
     return bli;
 }
 
 template<typename Type, typename DataT>
-MBASE_INLINE bi_list_iterator<Type, DataT>& bi_list_iterator<Type, DataT>::operator-=(difference_type in_rhs) noexcept {
+MBASE_INLINE bi_list_iterator<Type, DataT>& bi_list_iterator<Type, DataT>::operator-=(difference_type in_rhs) noexcept
+{
     for (size_type i = 0; i < in_rhs; i++)
     {
         this->_ptr = this->_ptr->prev;
@@ -879,13 +925,15 @@ MBASE_INLINE bi_list_iterator<Type, DataT>& bi_list_iterator<Type, DataT>::opera
 }
 
 template<typename Type, typename DataT>
-MBASE_INLINE bi_list_iterator<Type, DataT>& bi_list_iterator<Type, DataT>::operator--() noexcept {
+MBASE_INLINE bi_list_iterator<Type, DataT>& bi_list_iterator<Type, DataT>::operator--() noexcept 
+{
     this->_ptr = this->_ptr->prev;
     return *this;
 }
 
 template<typename Type, typename DataT>
-MBASE_INLINE bi_list_iterator<Type, DataT>& bi_list_iterator<Type, DataT>::operator--(int) noexcept {
+MBASE_INLINE bi_list_iterator<Type, DataT>& bi_list_iterator<Type, DataT>::operator--(int) noexcept 
+{
     bi_list_iterator bi(*this);
     this->_ptr = this->_ptr->prev;
     return bi;
@@ -913,14 +961,16 @@ const_bi_list_iterator<Type, DataT>::const_bi_list_iterator(const bi_list_iterat
 }
 
 template<typename Type, typename DataT>
-MBASE_INLINE const_bi_list_iterator<Type, DataT> const_bi_list_iterator<Type, DataT>::operator-(difference_type in_rhs) noexcept {
+MBASE_INLINE const_bi_list_iterator<Type, DataT> const_bi_list_iterator<Type, DataT>::operator-(difference_type in_rhs) noexcept 
+{
     const_bi_list_iterator bli(*this);
     bli -= in_rhs;
     return bli;
 }
 
 template<typename Type, typename DataT>
-MBASE_INLINE const_bi_list_iterator<Type, DataT>& const_bi_list_iterator<Type, DataT>::operator-=(difference_type in_rhs) noexcept {
+MBASE_INLINE const_bi_list_iterator<Type, DataT>& const_bi_list_iterator<Type, DataT>::operator-=(difference_type in_rhs) noexcept
+{
     for (size_type i = 0; i < in_rhs; i++)
     {
         this->_ptr = this->_ptr->prev;
@@ -929,13 +979,15 @@ MBASE_INLINE const_bi_list_iterator<Type, DataT>& const_bi_list_iterator<Type, D
 }
 
 template<typename Type, typename DataT>
-MBASE_INLINE const_bi_list_iterator<Type, DataT>& const_bi_list_iterator<Type, DataT>::operator--() noexcept {
+MBASE_INLINE const_bi_list_iterator<Type, DataT>& const_bi_list_iterator<Type, DataT>::operator--() noexcept
+{
     this->_ptr = this->_ptr->prev;
     return *this;
 }
 
 template<typename Type, typename DataT>
-MBASE_INLINE const_bi_list_iterator<Type, DataT>& const_bi_list_iterator<Type, DataT>::operator--(int) noexcept {
+MBASE_INLINE const_bi_list_iterator<Type, DataT>& const_bi_list_iterator<Type, DataT>::operator--(int) noexcept
+{
     this->_ptr = this->_ptr->prev;
     return *this;
 }
@@ -957,14 +1009,16 @@ reverse_bi_list_iterator<Type, DataT>::reverse_bi_list_iterator(const reverse_bi
 }
 
 template<typename Type, typename DataT>
-MBASE_INLINE reverse_bi_list_iterator<Type, DataT> reverse_bi_list_iterator<Type, DataT>::operator-(difference_type in_rhs) noexcept {
+MBASE_INLINE reverse_bi_list_iterator<Type, DataT> reverse_bi_list_iterator<Type, DataT>::operator-(difference_type in_rhs) noexcept
+{
     reverse_bi_list_iterator bli(*this);
     bli -= in_rhs;
     return bli;
 }
 
 template<typename Type, typename DataT>
-MBASE_INLINE reverse_bi_list_iterator<Type, DataT>& reverse_bi_list_iterator<Type, DataT>::operator-=(difference_type in_rhs) noexcept {
+MBASE_INLINE reverse_bi_list_iterator<Type, DataT>& reverse_bi_list_iterator<Type, DataT>::operator-=(difference_type in_rhs) noexcept
+{
     for (size_type i = 0; i < in_rhs; i++)
     {
         this->_ptr = this->_ptr->next;
@@ -973,13 +1027,15 @@ MBASE_INLINE reverse_bi_list_iterator<Type, DataT>& reverse_bi_list_iterator<Typ
 }
 
 template<typename Type, typename DataT>
-MBASE_INLINE reverse_bi_list_iterator<Type, DataT>& reverse_bi_list_iterator<Type, DataT>::operator--() noexcept {
+MBASE_INLINE reverse_bi_list_iterator<Type, DataT>& reverse_bi_list_iterator<Type, DataT>::operator--() noexcept
+{
     this->_ptr = this->_ptr->next;
     return *this;
 }
 
 template<typename Type, typename DataT>
-MBASE_INLINE reverse_bi_list_iterator<Type, DataT>& reverse_bi_list_iterator<Type, DataT>::operator--(int) noexcept {
+MBASE_INLINE reverse_bi_list_iterator<Type, DataT>& reverse_bi_list_iterator<Type, DataT>::operator--(int) noexcept
+{
     this->_ptr = this->_ptr->next;
     return *this;
 }
@@ -1006,14 +1062,16 @@ const_reverse_bi_list_iterator<Type, DataT>::const_reverse_bi_list_iterator(cons
 }
 
 template<typename Type, typename DataT>
-MBASE_INLINE const_reverse_bi_list_iterator<Type, DataT> const_reverse_bi_list_iterator<Type, DataT>::operator-(difference_type in_rhs) noexcept {
+MBASE_INLINE const_reverse_bi_list_iterator<Type, DataT> const_reverse_bi_list_iterator<Type, DataT>::operator-(difference_type in_rhs) noexcept
+{
     const_reverse_bi_list_iterator bli(*this);
     bli -= in_rhs;
     return bli;
 }
 
 template<typename Type, typename DataT>
-MBASE_INLINE const_reverse_bi_list_iterator<Type, DataT>& const_reverse_bi_list_iterator<Type, DataT>::operator-=(difference_type in_rhs) noexcept {
+MBASE_INLINE const_reverse_bi_list_iterator<Type, DataT>& const_reverse_bi_list_iterator<Type, DataT>::operator-=(difference_type in_rhs) noexcept
+{
     for (size_type i = 0; i < in_rhs; i++)
     {
         this->_ptr = this->_ptr->next;
@@ -1022,18 +1080,21 @@ MBASE_INLINE const_reverse_bi_list_iterator<Type, DataT>& const_reverse_bi_list_
 }
 
 template<typename Type, typename DataT>
-MBASE_INLINE typename const_reverse_bi_list_iterator<Type, DataT>::const_pointer const_reverse_bi_list_iterator<Type, DataT>::get() const noexcept {
+MBASE_INLINE typename const_reverse_bi_list_iterator<Type, DataT>::const_pointer const_reverse_bi_list_iterator<Type, DataT>::get() const noexcept
+{
     return this->_ptr;
 }
 
 template<typename Type, typename DataT>
-MBASE_INLINE const_reverse_bi_list_iterator<Type, DataT>& const_reverse_bi_list_iterator<Type, DataT>::operator--() noexcept {
+MBASE_INLINE const_reverse_bi_list_iterator<Type, DataT>& const_reverse_bi_list_iterator<Type, DataT>::operator--() noexcept
+{
     this->_ptr = this->_ptr->next;
     return *this;
 }
 
 template<typename Type, typename DataT>
-MBASE_INLINE const_reverse_bi_list_iterator<Type, DataT>& const_reverse_bi_list_iterator<Type, DataT>::operator--(int) noexcept {
+MBASE_INLINE const_reverse_bi_list_iterator<Type, DataT>& const_reverse_bi_list_iterator<Type, DataT>::operator--(int) noexcept 
+{
     this->_ptr = this->_ptr->next;
     return *this;
 }

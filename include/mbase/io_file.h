@@ -54,9 +54,9 @@ public:
 	io_file(const mbase::string& in_filename, access_mode in_accmode = access_mode::RW_ACCESS, disposition in_disp = disposition::OVERWRITE) noexcept;
 	~io_file() noexcept;
 
-	MBASE_ND("is file open unused") MBASE_INLINE bool is_file_open() const noexcept;
-	MBASE_ND("file name unused") MBASE_INLINE mbase::string get_file_name() const noexcept;
-	MBASE_ND("file size unused") MBASE_INLINE size_type get_file_size() const noexcept;
+	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE bool is_file_open() const noexcept;
+	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE mbase::string get_file_name() const noexcept;
+	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE size_type get_file_size() const noexcept;
 
 	MBASE_INLINE PTRGENERIC open_file(const mbase::string& in_filename, access_mode in_accmode = access_mode::RW_ACCESS, disposition in_disp = disposition::OVERWRITE) noexcept;
 	MBASE_INLINE GENERIC close_file() noexcept;
@@ -92,7 +92,8 @@ io_file::io_file() noexcept
 {
 }
 
-io_file::io_file(const mbase::string& in_filename, access_mode in_accmode, disposition in_disp) noexcept {
+io_file::io_file(const mbase::string& in_filename, access_mode in_accmode, disposition in_disp) noexcept 
+{
 	DWORD fileAttrs = FILE_ATTRIBUTE_NORMAL;
 	
 	PTRGENERIC rawHandle = CreateFileA(in_filename.c_str(), (DWORD)in_accmode, FILE_SHARE_READ, nullptr, (DWORD)in_disp, fileAttrs, nullptr);
@@ -114,21 +115,25 @@ io_file::~io_file() noexcept {
 	close_file();
 }
 
-MBASE_ND("is file open unused") MBASE_INLINE bool io_file::is_file_open() const noexcept {
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE bool io_file::is_file_open() const noexcept 
+{
 	return isFileOpen;
 }
 
-MBASE_ND("file name unused") MBASE_INLINE mbase::string io_file::get_file_name() const noexcept {
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE mbase::string io_file::get_file_name() const noexcept 
+{
 	return fileName;
 }
 
-MBASE_ND("file size unused") MBASE_INLINE typename io_file::size_type io_file::get_file_size() const noexcept {
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE typename io_file::size_type io_file::get_file_size() const noexcept 
+{
 	LARGE_INTEGER lInt;
 	GetFileSizeEx(rawContext.raw_handle, &lInt);
 	return lInt.QuadPart;
 }
 
-MBASE_INLINE PTRGENERIC io_file::open_file(const mbase::string& in_filename, access_mode in_accmode, disposition in_disp) noexcept {
+MBASE_INLINE PTRGENERIC io_file::open_file(const mbase::string& in_filename, access_mode in_accmode, disposition in_disp) noexcept
+{
 	close_file();
 	DWORD fileAttrs = FILE_ATTRIBUTE_NORMAL;
 
@@ -149,7 +154,8 @@ MBASE_INLINE PTRGENERIC io_file::open_file(const mbase::string& in_filename, acc
 	return rawContext.raw_handle;
 }
 
-MBASE_INLINE GENERIC io_file::close_file() noexcept {
+MBASE_INLINE GENERIC io_file::close_file() noexcept 
+{
 	if (rawContext.raw_handle)
 	{
 		CloseHandle(rawContext.raw_handle);

@@ -55,7 +55,6 @@ much easier to maintain and track. To use stream association, refer to the Strea
 
 */
 
-
 class io_base {
 public:
 	using size_type = SIZE_T;
@@ -71,10 +70,10 @@ public:
 	/* ===== BUILDER METHODS END ===== */
 
 	/* ===== OBSERVATION METHODS BEGIN ===== */
-	MBASE_ND("io context unused") io_context& get_raw_context() noexcept { return rawContext; }
-	MBASE_ND("io last error unused") U32 get_last_error() const noexcept { return lastError; }
-	MBASE_ND("input stream unused") char_stream* get_is() noexcept { return istream; }
-	MBASE_ND("output stream unused") char_stream* get_os() noexcept { return ostream; }
+	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) io_context& get_raw_context() noexcept { return rawContext; }
+	MBASE_ND(MBASE_OBS_IGNORE) U32 get_last_error() const noexcept { return lastError; }
+	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) char_stream* get_is() noexcept { return istream; }
+	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) char_stream* get_os() noexcept { return ostream; }
 	/* ===== OBSERVATION METHODS END ===== */
 
 	/* ===== STATE-MODIFIER METHODS BEGIN ===== */
@@ -103,17 +102,20 @@ public:
 	/* ===== STATE-MODIFIER METHODS END ===== */
 
 protected:
-	GENERIC _set_raw_context(PTRGENERIC raw_handle) noexcept {
+	GENERIC _set_raw_context(PTRGENERIC raw_handle) noexcept 
+	{
 		rawContext.raw_handle = raw_handle;
 		rawContext.context_body = nullptr;
 	}
 
-	GENERIC _set_raw_context(PTRGENERIC raw_handle, PTRGENERIC context_body) noexcept {
+	GENERIC _set_raw_context(PTRGENERIC raw_handle, PTRGENERIC context_body) noexcept 
+	{
 		rawContext.raw_handle = raw_handle;
 		rawContext.context_body = context_body;
 	}
 
-	GENERIC _set_last_error(U32 in_errcode) noexcept {
+	GENERIC _set_last_error(U32 in_errcode) noexcept 
+	{
 		lastError = in_errcode;
 	}
 
