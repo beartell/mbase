@@ -23,7 +23,6 @@ public:
     using move_reference = T&&;
     using size_type = SIZE_T;
     using difference_type = PTRDIFF;
-
     using iterator = sequence_iterator<T>;
     using const_iterator = const_sequence_iterator<T>;
     using reverse_iterator = reverse_sequence_iterator<T>;
@@ -57,11 +56,11 @@ public:
         return strlen(in_target);
     }
 
-    MBASE_ND(MBASE_RESULT_IGNORE) static MBASE_INLINE_EXPR I32 compare(const_pointer in_lhs, const_pointer in_rhs, size_type in_length) noexcept {
+    MBASE_ND(MBASE_RESULT_IGNORE) static MBASE_INLINE_EXPR I32 compare_bytes(const_pointer in_lhs, const_pointer in_rhs, size_type in_length) noexcept {
         return memcmp(in_lhs, in_rhs, sizeof(value_type) * in_length);
     }
 
-    MBASE_ND(MBASE_RESULT_IGNORE) static MBASE_INLINE_EXPR I32 compare(const_pointer in_lhs, const_pointer in_rhs) noexcept {
+    MBASE_ND(MBASE_RESULT_IGNORE) static MBASE_INLINE_EXPR I32 compare_bytes(const_pointer in_lhs, const_pointer in_rhs) noexcept {
         return strcmp(in_lhs, in_rhs);
     }
 

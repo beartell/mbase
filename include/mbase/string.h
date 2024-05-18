@@ -79,101 +79,98 @@ public:
     MBASE_INLINE character_sequence& operator=(std::nullptr_t) = delete;
 
     // observation functions
-    MBASE_ND("raw string data being ignored") MBASE_INLINE_EXPR pointer data() const noexcept;
-    MBASE_ND("raw string being ignored") MBASE_INLINE_EXPR const_pointer c_str() const noexcept;
-    MBASE_ND("first character being ignored") MBASE_INLINE_EXPR reference front() noexcept;
-    MBASE_ND("last character being ignored") MBASE_INLINE_EXPR reference back() noexcept;
+    MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR pointer data() const noexcept;
+    MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR const_pointer c_str() const noexcept;
+    MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR reference front() noexcept;
+    MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR reference back() noexcept;
 
-    MBASE_ND("character unused") MBASE_INLINE_EXPR reference at(size_type in_pos);
-    MBASE_ND("character unused") MBASE_INLINE_EXPR const_reference at(size_type in_pos) const;
+    MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR reference at(size_type in_pos);
+    MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR const_reference at(size_type in_pos) const;
     
-    MBASE_ND("character unused") MBASE_INLINE_EXPR reference operator[](size_type in_pos);
-    MBASE_ND("character unused") MBASE_INLINE_EXPR const_reference operator[](size_type in_pos) const;
+    MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR reference operator[](size_type in_pos);
+    MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR const_reference operator[](size_type in_pos) const;
 
-    MBASE_ND("iterator being ignored") MBASE_INLINE iterator begin() noexcept;
-    MBASE_ND("iterator being ignored") MBASE_INLINE iterator end() noexcept;
-    MBASE_ND("const iterator being ignored") MBASE_INLINE const_iterator cbegin() const noexcept;
-    MBASE_ND("const iterator being ignored") MBASE_INLINE const_iterator cend() const noexcept;
-    MBASE_ND("reverse iterator being ignored") MBASE_INLINE reverse_iterator rbegin() noexcept;
-    MBASE_ND("const reverse iterator being ignored") MBASE_INLINE const_reverse_iterator crbegin() const noexcept;
-    MBASE_ND("reverse iterator being ignored") MBASE_INLINE reverse_iterator rend() noexcept;
-    MBASE_ND("const reverse iterator being ignored") MBASE_INLINE const_reverse_iterator crend() const noexcept;
+    MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE iterator begin() noexcept;
+    MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE iterator end() noexcept;
+    MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE const_iterator cbegin() const noexcept;
+    MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE const_iterator cend() const noexcept;
+    MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE reverse_iterator rbegin() noexcept;
+    MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE const_reverse_iterator crbegin() const noexcept;
+    MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE reverse_iterator rend() noexcept;
+    MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE const_reverse_iterator crend() const noexcept;
 
-    MBASE_ND("ignoring the allocator") MBASE_INLINE_EXPR Allocator get_allocator() const noexcept;
-    MBASE_ND("founded string not being used") MBASE_INLINE size_type find(const_pointer in_src, size_type in_pos = 0) const noexcept; // 3
-    MBASE_ND("founded string not being used") MBASE_INLINE size_type find(const character_sequence& in_src, size_type in_pos = 0) const noexcept; // 1
-    MBASE_ND("founded string not being used") MBASE_INLINE size_type find(value_type in_char, size_type in_pos = 0) const noexcept; // 4
-    MBASE_ND("founded string not being used") MBASE_INLINE size_type find(const_pointer in_src, size_type in_pos, size_type in_count) const noexcept; // 2
-    MBASE_ND("founded string not being used") MBASE_INLINE size_type rfind(const character_sequence& in_src, size_type in_pos = npos) const noexcept;
-    MBASE_ND("founded string not being used") MBASE_INLINE size_type rfind(const_pointer in_str, size_type in_pos, size_type in_count) const noexcept;
-    MBASE_ND("founded string not being used") MBASE_INLINE size_type rfind(const_pointer in_str, size_type in_pos) const noexcept;
-    MBASE_ND("founded string not being used") MBASE_INLINE size_type rfind(value_type in_char, size_type in_pos = npos) const noexcept;
-    MBASE_ND("founded string not being used") MBASE_INLINE size_type find_first_of(const character_sequence& in_src, size_type in_pos = 0) const noexcept;
-    MBASE_ND("founded string not being used") MBASE_INLINE size_type find_first_of(const_pointer in_str, size_type in_pos, size_type in_count) const;
-    MBASE_ND("founded string not being used") MBASE_INLINE size_type find_first_of(const_pointer in_str, size_type in_pos = 0) const;
-    MBASE_ND("founded string not being used") MBASE_INLINE size_type find_first_of(value_type in_char, size_type in_pos = 0) const noexcept;
-    MBASE_ND("founded string not being used") MBASE_INLINE size_type find_first_not_of(const character_sequence& in_src, size_type in_pos = 0) const noexcept;
-    MBASE_ND("founded string not being used") MBASE_INLINE size_type find_first_not_of(const_pointer in_str, size_type in_pos, size_type in_count) const;
-    MBASE_ND("founded string not being used") MBASE_INLINE size_type find_first_not_of(const_pointer in_str, size_type in_pos = 0) const;
-    MBASE_ND("founded string not being used") MBASE_INLINE size_type find_first_not_of(value_type in_char, size_type in_pos = 0) const noexcept;
-    MBASE_ND("founded string not being used") MBASE_INLINE size_type find_last_of(const character_sequence& in_src, size_type in_pos = 0) const noexcept;
-    MBASE_ND("founded string not being used") MBASE_INLINE size_type find_last_of(const_pointer in_str, size_type in_pos, size_type in_count) const;
-    MBASE_ND("founded string not being used") MBASE_INLINE size_type find_last_of(const_pointer in_str, size_type in_pos = 0) const;
-    MBASE_ND("founded string not being used") MBASE_INLINE size_type find_last_of(value_type in_char, size_type in_pos = 0) const noexcept;
-    MBASE_ND("founded string not being used") MBASE_INLINE size_type find_last_not_of(const character_sequence& in_src, size_type in_pos = 0) const noexcept;
-    MBASE_ND("founded string not being used") MBASE_INLINE size_type find_last_not_of(const_pointer in_str, size_type in_pos, size_type in_count) const;
-    MBASE_ND("founded string not being used") MBASE_INLINE size_type find_last_not_of(const_pointer in_str, size_type in_pos = 0) const;
-    MBASE_ND("founded string not being used") MBASE_INLINE size_type find_last_not_of(value_type in_char, size_type in_pos = 0) const noexcept;
-    MBASE_ND("founded string not being used") MBASE_INLINE character_sequence substr(size_type in_pos = 0, size_type in_count = npos) const;
-    MBASE_ND("founded string not being used") MBASE_INLINE character_sequence subarray(size_type in_pos = 0, size_type in_count = npos) const;
-    MBASE_ND("string observation ignored") MBASE_INLINE bool starts_with(value_type in_char) const noexcept;
-    MBASE_ND("string observation ignored") MBASE_INLINE bool starts_with(MSTRING in_str) const;
-    MBASE_ND("string observation ignored") MBASE_INLINE bool ends_with(value_type in_char) const noexcept;
-    MBASE_ND("string observation ignored") MBASE_INLINE bool ends_with(MSTRING in_str) const;
-    MBASE_ND("string observation ignored") MBASE_INLINE bool contains(value_type in_char) const noexcept;
-    MBASE_ND("string observation ignored") MBASE_INLINE bool contains(MSTRING in_str) const;
-    MBASE_ND("string observation ignored") MBASE_INLINE I32 compare(const character_sequence& in_src) const noexcept;
-    MBASE_ND("string observation ignored") MBASE_INLINE I32 compare(size_type in_pos1, size_type in_pos2, const character_sequence& in_src) const;
-    MBASE_ND("string observation ignored") MBASE_INLINE I32 compare(size_type in_pos1, size_type in_count1, const character_sequence& in_src, size_type in_pos2, size_type in_count2 = npos) const;
-    MBASE_ND("string observation ignored") MBASE_INLINE I32 compare(const_pointer in_str) const;
-    MBASE_ND("string observation ignored") MBASE_INLINE I32 compare(size_type in_pos1, size_type in_count1, const_pointer in_str) const;
-    MBASE_ND("string observation ignored") MBASE_INLINE I32 compare(size_type in_pos1, size_type in_count1, const_pointer in_src, size_type in_count2) const;
-    MBASE_ND("string observation ignored") MBASE_INLINE_EXPR size_type size() const noexcept;
-    MBASE_ND("string observation ignored") MBASE_INLINE_EXPR size_type length() const noexcept;
-    MBASE_ND("string observation ignored") MBASE_INLINE_EXPR size_type max_size() const noexcept;
-    MBASE_ND("string observation ignored") MBASE_INLINE_EXPR size_type capacity() const noexcept;
-    MBASE_ND("string observation ignored") MBASE_INLINE_EXPR bool empty() const noexcept;
+    MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR Allocator get_allocator() const noexcept;
+    MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE size_type find(const_pointer in_src, size_type in_pos = 0) const noexcept; // 3
+    MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE size_type find(const character_sequence& in_src, size_type in_pos = 0) const noexcept; // 1
+    MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE size_type find(value_type in_char, size_type in_pos = 0) const noexcept; // 4
+    MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE size_type find(const_pointer in_src, size_type in_pos, size_type in_count) const noexcept; // 2
+    MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE size_type rfind(const character_sequence& in_src, size_type in_pos = npos) const noexcept;
+    MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE size_type rfind(const_pointer in_str, size_type in_pos, size_type in_count) const noexcept;
+    MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE size_type rfind(const_pointer in_str, size_type in_pos) const noexcept;
+    MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE size_type rfind(value_type in_char, size_type in_pos = npos) const noexcept;
+    MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE size_type find_first_of(const character_sequence& in_src, size_type in_pos = 0) const noexcept;
+    MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE size_type find_first_of(const_pointer in_str, size_type in_pos, size_type in_count) const;
+    MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE size_type find_first_of(const_pointer in_str, size_type in_pos = 0) const;
+    MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE size_type find_first_of(value_type in_char, size_type in_pos = 0) const noexcept;
+    MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE size_type find_first_not_of(const character_sequence& in_src, size_type in_pos = 0) const noexcept;
+    MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE size_type find_first_not_of(const_pointer in_str, size_type in_pos, size_type in_count) const;
+    MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE size_type find_first_not_of(const_pointer in_str, size_type in_pos = 0) const;
+    MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE size_type find_first_not_of(value_type in_char, size_type in_pos = 0) const noexcept;
+    MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE size_type find_last_of(const character_sequence& in_src, size_type in_pos = 0) const noexcept;
+    MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE size_type find_last_of(const_pointer in_str, size_type in_pos, size_type in_count) const;
+    MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE size_type find_last_of(const_pointer in_str, size_type in_pos = 0) const;
+    MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE size_type find_last_of(value_type in_char, size_type in_pos = 0) const noexcept;
+    MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE size_type find_last_not_of(const character_sequence& in_src, size_type in_pos = 0) const noexcept;
+    MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE size_type find_last_not_of(const_pointer in_str, size_type in_pos, size_type in_count) const;
+    MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE size_type find_last_not_of(const_pointer in_str, size_type in_pos = 0) const;
+    MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE size_type find_last_not_of(value_type in_char, size_type in_pos = 0) const noexcept;
+    MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE character_sequence substr(size_type in_pos = 0, size_type in_count = npos) const;
+    MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE character_sequence subarray(size_type in_pos = 0, size_type in_count = npos) const;
+    MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE bool starts_with(value_type in_char) const noexcept;
+    MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE bool starts_with(MSTRING in_str) const;
+    MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE bool ends_with(value_type in_char) const noexcept;
+    MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE bool ends_with(MSTRING in_str) const;
+    MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE bool contains(value_type in_char) const noexcept;
+    MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE bool contains(MSTRING in_str) const;
+    MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE I32 compare(const character_sequence& in_src) const noexcept;
+    MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE I32 compare(size_type in_pos1, size_type in_count1, const character_sequence& in_src) const;
+    MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE I32 compare(size_type in_pos1, size_type in_count1, const character_sequence& in_src, size_type in_pos2, size_type in_count2 = npos) const;
+    MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR size_type size() const noexcept;
+    MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR size_type length() const noexcept;
+    MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR size_type max_size() const noexcept;
+    MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR size_type capacity() const noexcept;
+    MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR bool empty() const noexcept;
     // if there is a space character in range, the returned value will be false
-    MBASE_ND("string observation ignored") MBASE_INLINE bool is_alnum(const_iterator in_begin, const_iterator in_end) const noexcept;
-    MBASE_ND("string observation ignored") MBASE_INLINE bool is_alnum(size_type in_from, size_type in_to) const noexcept;
-    MBASE_ND("string observation ignored") MBASE_INLINE bool is_alnum() const noexcept;
+    MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE bool is_alnum(const_iterator in_begin, const_iterator in_end) const noexcept;
+    MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE bool is_alnum(size_type in_from, size_type in_to) const noexcept;
+    MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE bool is_alnum() const noexcept;
     // if there is a space character in range, the returned value will be false
-    MBASE_ND("string observation ignored") MBASE_INLINE bool is_alpha(const_iterator in_begin, const_iterator in_end) const noexcept;
-    MBASE_ND("string observation ignored") MBASE_INLINE bool is_alpha(size_type in_from, size_type in_to) const noexcept;
-    MBASE_ND("string observation ignored") MBASE_INLINE bool is_alpha() const noexcept;
+    MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE bool is_alpha(const_iterator in_begin, const_iterator in_end) const noexcept;
+    MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE bool is_alpha(size_type in_from, size_type in_to) const noexcept;
+    MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE bool is_alpha() const noexcept;
     // if there is a space character in range, the returned value will be false
-    MBASE_ND("string observation ignored") MBASE_INLINE bool is_lower(const_iterator in_begin, const_iterator in_end) const noexcept;
-    MBASE_ND("string observation ignored") MBASE_INLINE bool is_lower(size_type in_from, size_type in_to) const noexcept;
-    MBASE_ND("string observation ignored") MBASE_INLINE bool is_lower() const noexcept;
+    MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE bool is_lower(const_iterator in_begin, const_iterator in_end) const noexcept;
+    MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE bool is_lower(size_type in_from, size_type in_to) const noexcept;
+    MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE bool is_lower() const noexcept;
     // if there is a space character in range, the returned value will be false
-    MBASE_ND("string observation ignored") MBASE_INLINE bool is_upper(const_iterator in_begin, const_iterator in_end) const noexcept;
-    MBASE_ND("string observation ignored") MBASE_INLINE bool is_upper(size_type in_from, size_type in_to) const noexcept;
-    MBASE_ND("string observation ignored") MBASE_INLINE bool is_upper() const noexcept;
-    MBASE_ND("string observation ignored") MBASE_INLINE bool is_blank(const_iterator in_begin, const_iterator in_end) const noexcept;
-    MBASE_ND("string observation ignored") MBASE_INLINE bool is_blank(size_type in_from, size_type in_to) const noexcept;
-    MBASE_ND("string observation ignored") MBASE_INLINE bool is_blank() const noexcept;
+    MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE bool is_upper(const_iterator in_begin, const_iterator in_end) const noexcept;
+    MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE bool is_upper(size_type in_from, size_type in_to) const noexcept;
+    MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE bool is_upper() const noexcept;
+    MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE bool is_blank(const_iterator in_begin, const_iterator in_end) const noexcept;
+    MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE bool is_blank(size_type in_from, size_type in_to) const noexcept;
+    MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE bool is_blank() const noexcept;
     // if there is a space character in range, the returned value will be false
-    MBASE_ND("string observation ignored") MBASE_INLINE bool is_control(const_iterator in_begin, const_iterator in_end) const noexcept;
-    MBASE_ND("string observation ignored") MBASE_INLINE bool is_control(size_type in_from, size_type in_to) const noexcept;
-    MBASE_ND("string observation ignored") MBASE_INLINE bool is_control() const noexcept;
+    MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE bool is_control(const_iterator in_begin, const_iterator in_end) const noexcept;
+    MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE bool is_control(size_type in_from, size_type in_to) const noexcept;
+    MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE bool is_control() const noexcept;
     // characters such as: 0x20(' '), 0x0c('\f'), 0x0a('\n'), 0x0d('\r'), 0x09('\t'), 0x0b('\v')
-    MBASE_ND("string observation ignored") MBASE_INLINE bool is_space(const_iterator in_begin, const_iterator in_end) const noexcept;
-    MBASE_ND("string observation ignored") MBASE_INLINE bool is_space(size_type in_from, size_type in_to) const noexcept;
-    MBASE_ND("string observation ignored") MBASE_INLINE bool is_space() const noexcept;
+    MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE bool is_space(const_iterator in_begin, const_iterator in_end) const noexcept;
+    MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE bool is_space(size_type in_from, size_type in_to) const noexcept;
+    MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE bool is_space() const noexcept;
     // characters such as: !"#$%&'()*+,-./:;<=>?@[\]^_`{|}~
-    MBASE_ND("string observation ignored") MBASE_INLINE bool is_punctuation(const_iterator in_begin, const_iterator in_end) const noexcept;
-    MBASE_ND("string observation ignored") MBASE_INLINE bool is_punctuation(size_type in_from, size_type in_to) const noexcept;
-    MBASE_ND("string observation ignored") MBASE_INLINE bool is_punctuation() const noexcept;
+    MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE bool is_punctuation(const_iterator in_begin, const_iterator in_end) const noexcept;
+    MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE bool is_punctuation(size_type in_from, size_type in_to) const noexcept;
+    MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE bool is_punctuation() const noexcept;
 
     bool operator==(const character_sequence& in_rhs) noexcept;
     bool operator!=(const character_sequence& in_rhs) noexcept;
@@ -247,10 +244,10 @@ public:
     MBASE_INLINE_EXPR iterator insert(const_iterator in_pos, std::initializer_list<value_type> in_chars);
     MBASE_INLINE GENERIC pop_back() noexcept;
     MBASE_INLINE GENERIC push_back(const value_type& in_character) noexcept;
-    MBASE_ND("converted string not being used.") MBASE_INLINE I32 to_i32() const noexcept;
-    MBASE_ND("converted string not being used.") MBASE_INLINE I64 to_i64() const noexcept;
-    MBASE_ND("converted string not being used.") MBASE_INLINE F32 to_f32() const noexcept;
-    MBASE_ND("converted string not being used.") MBASE_INLINE F64 to_f64() const noexcept;
+    MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE I32 to_i32() const noexcept;
+    MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE I64 to_i64() const noexcept;
+    MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE F32 to_f32() const noexcept;
+    MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE F64 to_f64() const noexcept;
     MBASE_INLINE GENERIC to_lower(iterator in_from, iterator in_to) noexcept;
     MBASE_INLINE GENERIC to_lower(reverse_iterator in_from, reverse_iterator in_to) noexcept;
     MBASE_INLINE GENERIC to_lower(size_t in_from, size_t in_to) noexcept;
@@ -295,26 +292,26 @@ public:
     MBASE_INLINE GENERIC serialize(safe_buffer& out_buffer);
     MBASE_INLINE static character_sequence deserialize(IBYTEBUFFER in_buffer, SIZE_T in_length) noexcept;
     
-    MBASE_ND("converted string not being used.") I32 to_i32() noexcept { return atoi(this->c_str()); }
-    MBASE_ND("converted string not being used.") I32 to_i64() noexcept { return _atoi64(this->c_str()); }
-    MBASE_ND("converted string not being used.") F32 to_f32() noexcept { return strtof(this->c_str(), nullptr); }
-    MBASE_ND("converted string not being used.") F64 to_f64() noexcept { return atof(this->c_str()); }
-    MBASE_ND("converted string not being used.") static I32 to_i32(const character_sequence& in_string) noexcept { return atoi(in_string.c_str()); }
-    MBASE_ND("converted string not being used.") static I32 to_i64(const character_sequence& in_string) noexcept { return _atoi64(in_string.c_str()); }
-    MBASE_ND("converted string not being used.") static F32 to_f32(const character_sequence& in_string) noexcept { return strtof(in_string.c_str(), nullptr); }
-    MBASE_ND("converted string not being used.") static F64 to_f64(const character_sequence& in_string) noexcept { return atof(in_string.c_str()); }
+    MBASE_ND(MBASE_RESULT_IGNORE) I32 to_i32() noexcept { return atoi(this->c_str()); }
+    MBASE_ND(MBASE_RESULT_IGNORE) I32 to_i64() noexcept { return _atoi64(this->c_str()); }
+    MBASE_ND(MBASE_RESULT_IGNORE) F32 to_f32() noexcept { return strtof(this->c_str(), nullptr); }
+    MBASE_ND(MBASE_RESULT_IGNORE) F64 to_f64() noexcept { return atof(this->c_str()); }
+    MBASE_ND(MBASE_RESULT_IGNORE) static I32 to_i32(const character_sequence& in_string) noexcept { return atoi(in_string.c_str()); }
+    MBASE_ND(MBASE_RESULT_IGNORE) static I32 to_i64(const character_sequence& in_string) noexcept { return _atoi64(in_string.c_str()); }
+    MBASE_ND(MBASE_RESULT_IGNORE) static F32 to_f32(const character_sequence& in_string) noexcept { return strtof(in_string.c_str(), nullptr); }
+    MBASE_ND(MBASE_RESULT_IGNORE) static F64 to_f64(const character_sequence& in_string) noexcept { return atof(in_string.c_str()); }
 
-    MBASE_ND("string observation ignored") static MBASE_INLINE bool is_alnum(const value_type& in_char) noexcept { return isalnum(in_char); }
-    MBASE_ND("string observation ignored") static MBASE_INLINE bool is_alpha(const value_type& in_char) noexcept { return isalpha(in_char); }
-    MBASE_ND("string observation ignored") static MBASE_INLINE bool is_lower(const value_type& in_char) noexcept { return islower(in_char); }
-    MBASE_ND("string observation ignored") static MBASE_INLINE bool is_upper(const value_type& in_char) noexcept { return isupper(in_char); }
-    MBASE_ND("string observation ignored") static MBASE_INLINE bool is_blank(const value_type& in_char) noexcept { return isblank(in_char); }
-    MBASE_ND("string observation ignored") static MBASE_INLINE bool is_control(const value_type& in_char) noexcept { return iscntrl(in_char); }
-    MBASE_ND("string observation ignored") static MBASE_INLINE bool is_space(const value_type& in_char) noexcept { return isspace(in_char); }
-    MBASE_ND("string observation ignored") static MBASE_INLINE bool is_punctuation(const value_type& in_char) noexcept { return ispunct(in_char); }
+    MBASE_ND(MBASE_OBS_IGNORE) static MBASE_INLINE bool is_alnum(const value_type& in_char) noexcept { return isalnum(in_char); }
+    MBASE_ND(MBASE_OBS_IGNORE) static MBASE_INLINE bool is_alpha(const value_type& in_char) noexcept { return isalpha(in_char); }
+    MBASE_ND(MBASE_OBS_IGNORE) static MBASE_INLINE bool is_lower(const value_type& in_char) noexcept { return islower(in_char); }
+    MBASE_ND(MBASE_OBS_IGNORE) static MBASE_INLINE bool is_upper(const value_type& in_char) noexcept { return isupper(in_char); }
+    MBASE_ND(MBASE_OBS_IGNORE) static MBASE_INLINE bool is_blank(const value_type& in_char) noexcept { return isblank(in_char); }
+    MBASE_ND(MBASE_OBS_IGNORE) static MBASE_INLINE bool is_control(const value_type& in_char) noexcept { return iscntrl(in_char); }
+    MBASE_ND(MBASE_OBS_IGNORE) static MBASE_INLINE bool is_space(const value_type& in_char) noexcept { return isspace(in_char); }
+    MBASE_ND(MBASE_OBS_IGNORE) static MBASE_INLINE bool is_punctuation(const value_type& in_char) noexcept { return ispunct(in_char); }
 
     template<typename ... Params>
-    MBASE_ND("formatted string not being used") static character_sequence from_format(const_pointer in_format, Params ... in_params) noexcept {
+    MBASE_ND(MBASE_RESULT_IGNORE) static character_sequence from_format(const_pointer in_format, Params ... in_params) noexcept {
         size_type stringLength = _scprintf(in_format, std::forward<Params>(in_params)...); // FIND THE FKIN SIZE
         character_sequence newSequence;
         if (!stringLength)
@@ -754,38 +751,38 @@ MBASE_INLINE character_sequence<SeqType, SeqBase, Allocator>& character_sequence
 
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_ND("raw string data being ignored") MBASE_INLINE_EXPR typename character_sequence<SeqType, SeqBase, Allocator>::pointer character_sequence<SeqType, SeqBase, Allocator>::data() const noexcept 
+MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR typename character_sequence<SeqType, SeqBase, Allocator>::pointer character_sequence<SeqType, SeqBase, Allocator>::data() const noexcept 
 {
     return raw_data;
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_ND("raw string being ignored") MBASE_INLINE_EXPR typename character_sequence<SeqType, SeqBase, Allocator>::const_pointer character_sequence<SeqType, SeqBase, Allocator>::c_str() const noexcept 
+MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR typename character_sequence<SeqType, SeqBase, Allocator>::const_pointer character_sequence<SeqType, SeqBase, Allocator>::c_str() const noexcept 
 {
     return raw_data;
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_ND("first character being ignored") MBASE_INLINE_EXPR typename character_sequence<SeqType, SeqBase, Allocator>::reference character_sequence<SeqType, SeqBase, Allocator>::front() noexcept 
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR typename character_sequence<SeqType, SeqBase, Allocator>::reference character_sequence<SeqType, SeqBase, Allocator>::front() noexcept 
 {
     return raw_data[0];
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_ND("last character being ignored") MBASE_INLINE_EXPR typename character_sequence<SeqType, SeqBase, Allocator>::reference character_sequence<SeqType, SeqBase, Allocator>::back() noexcept 
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR typename character_sequence<SeqType, SeqBase, Allocator>::reference character_sequence<SeqType, SeqBase, Allocator>::back() noexcept 
 {
     return raw_data[mSize - 1];
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_ND("character unused") MBASE_INLINE_EXPR typename character_sequence<SeqType, SeqBase, Allocator>::reference character_sequence<SeqType, SeqBase, Allocator>::at(size_type in_pos) 
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR typename character_sequence<SeqType, SeqBase, Allocator>::reference character_sequence<SeqType, SeqBase, Allocator>::at(size_type in_pos) 
 {
     // EXCEPTION WILL BE IMPLEMENTED HERE
     return raw_data[in_pos];
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_ND("character unused") MBASE_INLINE_EXPR typename character_sequence<SeqType, SeqBase, Allocator>::const_reference character_sequence<SeqType, SeqBase, Allocator>::at(size_type in_pos) const 
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR typename character_sequence<SeqType, SeqBase, Allocator>::const_reference character_sequence<SeqType, SeqBase, Allocator>::at(size_type in_pos) const 
 {
     // EXCEPTION WILL BE IMPLEMENTED HERE
     return raw_data[in_pos];
@@ -793,74 +790,74 @@ MBASE_ND("character unused") MBASE_INLINE_EXPR typename character_sequence<SeqTy
 
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_ND("character unused") MBASE_INLINE_EXPR typename character_sequence<SeqType, SeqBase, Allocator>::reference character_sequence<SeqType, SeqBase, Allocator>::operator[](size_type in_pos) 
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR typename character_sequence<SeqType, SeqBase, Allocator>::reference character_sequence<SeqType, SeqBase, Allocator>::operator[](size_type in_pos) 
 {
     return raw_data[in_pos];
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_ND("character unused") MBASE_INLINE_EXPR typename character_sequence<SeqType, SeqBase, Allocator>::const_reference character_sequence<SeqType, SeqBase, Allocator>::operator[](size_type in_pos) const 
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR typename character_sequence<SeqType, SeqBase, Allocator>::const_reference character_sequence<SeqType, SeqBase, Allocator>::operator[](size_type in_pos) const 
 {
     return raw_data[in_pos];
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_ND("iterator being ignored") MBASE_INLINE typename character_sequence<SeqType, SeqBase, Allocator>::iterator character_sequence<SeqType, SeqBase, Allocator>::begin() noexcept 
+MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE typename character_sequence<SeqType, SeqBase, Allocator>::iterator character_sequence<SeqType, SeqBase, Allocator>::begin() noexcept 
 {
     return iterator(raw_data);
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_ND("iterator being ignored") MBASE_INLINE typename character_sequence<SeqType, SeqBase, Allocator>::iterator character_sequence<SeqType, SeqBase, Allocator>::end() noexcept 
+MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE typename character_sequence<SeqType, SeqBase, Allocator>::iterator character_sequence<SeqType, SeqBase, Allocator>::end() noexcept 
 {
     return iterator(raw_data + mSize);
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_ND("const iterator being ignored") MBASE_INLINE typename character_sequence<SeqType, SeqBase, Allocator>::const_iterator character_sequence<SeqType, SeqBase, Allocator>::cbegin() const noexcept 
+MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE typename character_sequence<SeqType, SeqBase, Allocator>::const_iterator character_sequence<SeqType, SeqBase, Allocator>::cbegin() const noexcept 
 {
     return const_iterator(raw_data);
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_ND("const iterator being ignored") MBASE_INLINE typename character_sequence<SeqType, SeqBase, Allocator>::const_iterator character_sequence<SeqType, SeqBase, Allocator>::cend() const noexcept 
+MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE typename character_sequence<SeqType, SeqBase, Allocator>::const_iterator character_sequence<SeqType, SeqBase, Allocator>::cend() const noexcept 
 {
     return const_iterator(raw_data + mSize);
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_ND("reverse iterator being ignored") MBASE_INLINE typename character_sequence<SeqType, SeqBase, Allocator>::reverse_iterator character_sequence<SeqType, SeqBase, Allocator>::rbegin() noexcept 
+MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE typename character_sequence<SeqType, SeqBase, Allocator>::reverse_iterator character_sequence<SeqType, SeqBase, Allocator>::rbegin() noexcept 
 {
     return reverse_iterator(raw_data + (mSize - 1));
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_ND("const reverse iterator being ignored") MBASE_INLINE typename character_sequence<SeqType, SeqBase, Allocator>::const_reverse_iterator character_sequence<SeqType, SeqBase, Allocator>::crbegin() const noexcept 
+MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE typename character_sequence<SeqType, SeqBase, Allocator>::const_reverse_iterator character_sequence<SeqType, SeqBase, Allocator>::crbegin() const noexcept 
 {
     return const_reverse_iterator(raw_data + (mSize - 1));
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_ND("reverse iterator being ignored") MBASE_INLINE typename character_sequence<SeqType, SeqBase, Allocator>::reverse_iterator character_sequence<SeqType, SeqBase, Allocator>::rend() noexcept 
+MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE typename character_sequence<SeqType, SeqBase, Allocator>::reverse_iterator character_sequence<SeqType, SeqBase, Allocator>::rend() noexcept 
 {
     return reverse_iterator(raw_data - 1);
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_ND("const reverse iterator being ignored") MBASE_INLINE typename character_sequence<SeqType, SeqBase, Allocator>::const_reverse_iterator character_sequence<SeqType, SeqBase, Allocator>::crend() const noexcept 
+MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE typename character_sequence<SeqType, SeqBase, Allocator>::const_reverse_iterator character_sequence<SeqType, SeqBase, Allocator>::crend() const noexcept 
 {
     return const_reverse_iterator(raw_data - 1);
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_ND("ignoring the allocator") MBASE_INLINE_EXPR Allocator character_sequence<SeqType, SeqBase, Allocator>::get_allocator() const noexcept 
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR Allocator character_sequence<SeqType, SeqBase, Allocator>::get_allocator() const noexcept 
 {
     return externalAllocator;
 }
 
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_ND("founded string not being used") MBASE_INLINE typename character_sequence<SeqType, SeqBase, Allocator>::size_type character_sequence<SeqType, SeqBase, Allocator>::find(const_pointer in_src, size_type in_pos) const noexcept 
+MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE typename character_sequence<SeqType, SeqBase, Allocator>::size_type character_sequence<SeqType, SeqBase, Allocator>::find(const_pointer in_src, size_type in_pos) const noexcept 
 {
     const_iterator itBegin = cbegin() + in_pos;
     const_pointer tmpResult = strstr(itBegin.get(), in_src);
@@ -873,13 +870,13 @@ MBASE_ND("founded string not being used") MBASE_INLINE typename character_sequen
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_ND("founded string not being used") MBASE_INLINE typename character_sequence<SeqType, SeqBase, Allocator>::size_type character_sequence<SeqType, SeqBase, Allocator>::find(const character_sequence& in_src, size_type in_pos) const noexcept 
+MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE typename character_sequence<SeqType, SeqBase, Allocator>::size_type character_sequence<SeqType, SeqBase, Allocator>::find(const character_sequence& in_src, size_type in_pos) const noexcept 
 {
     return find(in_src.c_str(), in_pos);
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_ND("founded string not being used") MBASE_INLINE typename character_sequence<SeqType, SeqBase, Allocator>::size_type character_sequence<SeqType, SeqBase, Allocator>::find(value_type in_char, size_type in_pos) const noexcept 
+MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE typename character_sequence<SeqType, SeqBase, Allocator>::size_type character_sequence<SeqType, SeqBase, Allocator>::find(value_type in_char, size_type in_pos) const noexcept 
 {
     const_iterator itBegin = cbegin() + in_pos;
     const_pointer tmpResult = strchr(itBegin.get(), in_char);
@@ -892,7 +889,7 @@ MBASE_ND("founded string not being used") MBASE_INLINE typename character_sequen
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_ND("founded string not being used") MBASE_INLINE typename character_sequence<SeqType, SeqBase, Allocator>::size_type character_sequence<SeqType, SeqBase, Allocator>::find(const_pointer in_src, size_type in_pos, size_type in_count) const noexcept
+MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE typename character_sequence<SeqType, SeqBase, Allocator>::size_type character_sequence<SeqType, SeqBase, Allocator>::find(const_pointer in_src, size_type in_pos, size_type in_count) const noexcept
 {
     character_sequence cs(in_src);
     character_sequence newStr = std::move(cs.substr(0, in_count));
@@ -901,7 +898,7 @@ MBASE_ND("founded string not being used") MBASE_INLINE typename character_sequen
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_ND("founded string not being used") MBASE_INLINE character_sequence<SeqType, SeqBase, Allocator> character_sequence<SeqType, SeqBase, Allocator>::substr(size_type in_pos, size_type in_count) const 
+MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE character_sequence<SeqType, SeqBase, Allocator> character_sequence<SeqType, SeqBase, Allocator>::substr(size_type in_pos, size_type in_count) const 
 {
     const_iterator inIt = cbegin() + in_pos;
     if(inIt >= cend())
@@ -927,13 +924,13 @@ MBASE_ND("founded string not being used") MBASE_INLINE character_sequence<SeqTyp
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_ND("founded string not being used") MBASE_INLINE character_sequence<SeqType, SeqBase, Allocator> character_sequence<SeqType, SeqBase, Allocator>::subarray(size_type in_pos, size_type in_count) const
+MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE character_sequence<SeqType, SeqBase, Allocator> character_sequence<SeqType, SeqBase, Allocator>::subarray(size_type in_pos, size_type in_count) const
 {
     return std::move(substr(in_pos, in_count));
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_ND("string observation ignored") MBASE_INLINE bool character_sequence<SeqType, SeqBase, Allocator>::starts_with(value_type in_char) const noexcept {
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE bool character_sequence<SeqType, SeqBase, Allocator>::starts_with(value_type in_char) const noexcept {
     if (front() == in_char)
     {
         return true;
@@ -943,7 +940,7 @@ MBASE_ND("string observation ignored") MBASE_INLINE bool character_sequence<SeqT
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_ND("string observation ignored") MBASE_INLINE bool character_sequence<SeqType, SeqBase, Allocator>::starts_with(MSTRING in_str) const
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE bool character_sequence<SeqType, SeqBase, Allocator>::starts_with(MSTRING in_str) const
 {
     size_type stringSize = this->length_bytes(in_str);
     if (stringSize > mSize)
@@ -955,7 +952,7 @@ MBASE_ND("string observation ignored") MBASE_INLINE bool character_sequence<SeqT
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_ND("string observation ignored") MBASE_INLINE bool character_sequence<SeqType, SeqBase, Allocator>::ends_with(value_type in_char) const noexcept
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE bool character_sequence<SeqType, SeqBase, Allocator>::ends_with(value_type in_char) const noexcept
 {
     if (back() == in_char)
     {
@@ -965,7 +962,7 @@ MBASE_ND("string observation ignored") MBASE_INLINE bool character_sequence<SeqT
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_ND("string observation ignored") MBASE_INLINE bool character_sequence<SeqType, SeqBase, Allocator>::ends_with(MSTRING in_str) const
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE bool character_sequence<SeqType, SeqBase, Allocator>::ends_with(MSTRING in_str) const
 {
     // MAY NOT WORK FOR NOW
     size_type stringSize = this->length_bytes(in_str);
@@ -978,7 +975,7 @@ MBASE_ND("string observation ignored") MBASE_INLINE bool character_sequence<SeqT
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_ND("string observation ignored") MBASE_INLINE bool character_sequence<SeqType, SeqBase, Allocator>::contains(value_type in_char) const noexcept
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE bool character_sequence<SeqType, SeqBase, Allocator>::contains(value_type in_char) const noexcept
 {
     if (this->find(in_char) != npos)
     {
@@ -988,7 +985,7 @@ MBASE_ND("string observation ignored") MBASE_INLINE bool character_sequence<SeqT
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_ND("string observation ignored") MBASE_INLINE bool character_sequence<SeqType, SeqBase, Allocator>::contains(MSTRING in_str) const
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE bool character_sequence<SeqType, SeqBase, Allocator>::contains(MSTRING in_str) const
 {
     if (this->find(in_str) != npos)
     {
@@ -998,37 +995,79 @@ MBASE_ND("string observation ignored") MBASE_INLINE bool character_sequence<SeqT
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_ND("string observation ignored") MBASE_INLINE_EXPR typename character_sequence<SeqType, SeqBase, Allocator>::size_type character_sequence<SeqType, SeqBase, Allocator>::size() const noexcept 
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE I32 character_sequence<SeqType, SeqBase, Allocator>::compare(const character_sequence& in_src) const noexcept
+{
+    return this->compare_bytes(raw_data, in_src.raw_data);
+}
+
+template<typename SeqType, typename SeqBase, typename Allocator>
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE I32 character_sequence<SeqType, SeqBase, Allocator>::compare(size_type in_pos1, size_type in_count1, const character_sequence& in_src) const
+{
+    size_type toPosition = in_pos1 + in_count1;
+    if(in_count1 > size() - in_pos1)
+    {
+        toPosition = size();
+    }
+
+    character_sequence cs(std::move(substr(in_pos1, in_count1)));
+
+    return this->compare_bytes(cs.raw_data, in_src.raw_data);
+}
+
+template<typename SeqType, typename SeqBase, typename Allocator>
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE I32 character_sequence<SeqType, SeqBase, Allocator>::compare(size_type in_pos1, size_type in_count1, const character_sequence& in_src, size_type in_pos2, size_type in_count2) const
+{
+    size_type toPosition = in_pos1 + in_count1;
+    if (in_count1 > size() - in_pos1)
+    {
+        toPosition = size();
+    }
+
+    character_sequence cs(std::move(substr(in_pos1, toPosition)));
+
+    toPosition = in_pos2 + in_count2;
+    if (in_count2 > in_src.size() - in_pos2)
+    {
+        toPosition = in_src.size();
+    }
+
+    character_sequence cs2(std::move(substr(in_pos1, toPosition)));
+
+    return this->compare_bytes(cs.raw_data, cs2.raw_data);
+}
+
+template<typename SeqType, typename SeqBase, typename Allocator>
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR typename character_sequence<SeqType, SeqBase, Allocator>::size_type character_sequence<SeqType, SeqBase, Allocator>::size() const noexcept 
 {
     return mSize;
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_ND("string observation ignored") MBASE_INLINE_EXPR typename character_sequence<SeqType, SeqBase, Allocator>::size_type character_sequence<SeqType, SeqBase, Allocator>::length() const noexcept 
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR typename character_sequence<SeqType, SeqBase, Allocator>::size_type character_sequence<SeqType, SeqBase, Allocator>::length() const noexcept 
 {
     return mSize;
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_ND("string observation ignored") MBASE_INLINE_EXPR typename character_sequence<SeqType, SeqBase, Allocator>::size_type character_sequence<SeqType, SeqBase, Allocator>::max_size() const noexcept 
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR typename character_sequence<SeqType, SeqBase, Allocator>::size_type character_sequence<SeqType, SeqBase, Allocator>::max_size() const noexcept 
 {
     size_type result = (std::numeric_limits<difference_type>::max)();
     return result;
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_ND("string observation ignored") MBASE_INLINE_EXPR typename character_sequence<SeqType, SeqBase, Allocator>::size_type character_sequence<SeqType, SeqBase, Allocator>::capacity() const noexcept 
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR typename character_sequence<SeqType, SeqBase, Allocator>::size_type character_sequence<SeqType, SeqBase, Allocator>::capacity() const noexcept 
 {
     return mCapacity;
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_ND("string observation ignored") MBASE_INLINE_EXPR bool character_sequence<SeqType, SeqBase, Allocator>::empty() const noexcept {
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR bool character_sequence<SeqType, SeqBase, Allocator>::empty() const noexcept {
     return mSize == 0;
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_ND("string observation ignored") MBASE_INLINE bool character_sequence<SeqType, SeqBase, Allocator>::is_alnum(const_iterator in_begin, const_iterator in_end) const noexcept 
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE bool character_sequence<SeqType, SeqBase, Allocator>::is_alnum(const_iterator in_begin, const_iterator in_end) const noexcept 
 {
     if (!size())
     {
@@ -1049,19 +1088,19 @@ MBASE_ND("string observation ignored") MBASE_INLINE bool character_sequence<SeqT
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_ND("string observation ignored") MBASE_INLINE bool character_sequence<SeqType, SeqBase, Allocator>::is_alnum(size_type in_from, size_type in_to) const noexcept 
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE bool character_sequence<SeqType, SeqBase, Allocator>::is_alnum(size_type in_from, size_type in_to) const noexcept 
 {
     return is_alnum(cbegin() + in_from, cbegin() + in_to);
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_ND("string observation ignored") MBASE_INLINE bool character_sequence<SeqType, SeqBase, Allocator>::is_alnum() const noexcept 
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE bool character_sequence<SeqType, SeqBase, Allocator>::is_alnum() const noexcept 
 {
     return is_alnum(cbegin(), cend());
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_ND("string observation ignored") MBASE_INLINE bool character_sequence<SeqType, SeqBase, Allocator>::is_alpha(const_iterator in_begin, const_iterator in_end) const noexcept 
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE bool character_sequence<SeqType, SeqBase, Allocator>::is_alpha(const_iterator in_begin, const_iterator in_end) const noexcept 
 {
     if (!size())
     {
@@ -1082,19 +1121,19 @@ MBASE_ND("string observation ignored") MBASE_INLINE bool character_sequence<SeqT
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_ND("string observation ignored") MBASE_INLINE bool character_sequence<SeqType, SeqBase, Allocator>::is_alpha(size_type in_from, size_type in_to) const noexcept 
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE bool character_sequence<SeqType, SeqBase, Allocator>::is_alpha(size_type in_from, size_type in_to) const noexcept 
 {
     return is_alpha(cbegin() + in_from, cbegin() + in_to);
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_ND("string observation ignored") MBASE_INLINE bool character_sequence<SeqType, SeqBase, Allocator>::is_alpha() const noexcept 
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE bool character_sequence<SeqType, SeqBase, Allocator>::is_alpha() const noexcept 
 {
     return is_alpha(cbegin(), cend());
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_ND("string observation ignored") MBASE_INLINE bool character_sequence<SeqType, SeqBase, Allocator>::is_lower(const_iterator in_begin, const_iterator in_end) const noexcept 
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE bool character_sequence<SeqType, SeqBase, Allocator>::is_lower(const_iterator in_begin, const_iterator in_end) const noexcept 
 {
     if (!size())
     {
@@ -1115,19 +1154,19 @@ MBASE_ND("string observation ignored") MBASE_INLINE bool character_sequence<SeqT
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_ND("string observation ignored") MBASE_INLINE bool character_sequence<SeqType, SeqBase, Allocator>::is_lower(size_type in_from, size_type in_to) const noexcept 
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE bool character_sequence<SeqType, SeqBase, Allocator>::is_lower(size_type in_from, size_type in_to) const noexcept 
 {
     return is_lower(cbegin() + in_from, cbegin() + in_to);
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_ND("string observation ignored") MBASE_INLINE bool character_sequence<SeqType, SeqBase, Allocator>::is_lower() const noexcept 
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE bool character_sequence<SeqType, SeqBase, Allocator>::is_lower() const noexcept 
 {
     return is_lower(cbegin(), cend());
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_ND("string observation ignored") MBASE_INLINE bool character_sequence<SeqType, SeqBase, Allocator>::is_upper(const_iterator in_begin, const_iterator in_end) const noexcept 
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE bool character_sequence<SeqType, SeqBase, Allocator>::is_upper(const_iterator in_begin, const_iterator in_end) const noexcept 
 {
     if (!size())
     {
@@ -1148,19 +1187,19 @@ MBASE_ND("string observation ignored") MBASE_INLINE bool character_sequence<SeqT
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_ND("string observation ignored") MBASE_INLINE bool character_sequence<SeqType, SeqBase, Allocator>::is_upper(size_type in_from, size_type in_to) const noexcept 
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE bool character_sequence<SeqType, SeqBase, Allocator>::is_upper(size_type in_from, size_type in_to) const noexcept 
 {
     return is_upper(cbegin() + in_from, cbegin() + in_to);
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_ND("string observation ignored") MBASE_INLINE bool character_sequence<SeqType, SeqBase, Allocator>::is_upper() const noexcept 
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE bool character_sequence<SeqType, SeqBase, Allocator>::is_upper() const noexcept 
 {
     return is_upper(cbegin(), cend());
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_ND("string observation ignored") MBASE_INLINE bool character_sequence<SeqType, SeqBase, Allocator>::is_blank(const_iterator in_begin, const_iterator in_end) const noexcept 
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE bool character_sequence<SeqType, SeqBase, Allocator>::is_blank(const_iterator in_begin, const_iterator in_end) const noexcept 
 {
     if (!size())
     {
@@ -1181,19 +1220,19 @@ MBASE_ND("string observation ignored") MBASE_INLINE bool character_sequence<SeqT
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_ND("string observation ignored") MBASE_INLINE bool character_sequence<SeqType, SeqBase, Allocator>::is_blank(size_type in_from, size_type in_to) const noexcept 
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE bool character_sequence<SeqType, SeqBase, Allocator>::is_blank(size_type in_from, size_type in_to) const noexcept 
 {
     return is_blank(cbegin() + in_from, cbegin() + in_to);
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_ND("string observation ignored") MBASE_INLINE bool character_sequence<SeqType, SeqBase, Allocator>::is_blank() const noexcept 
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE bool character_sequence<SeqType, SeqBase, Allocator>::is_blank() const noexcept 
 {
     return is_blank(cbegin(), cend());
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_ND("string observation ignored") MBASE_INLINE bool character_sequence<SeqType, SeqBase, Allocator>::is_control(const_iterator in_begin, const_iterator in_end) const noexcept 
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE bool character_sequence<SeqType, SeqBase, Allocator>::is_control(const_iterator in_begin, const_iterator in_end) const noexcept 
 {
     if (!size())
     {
@@ -1214,19 +1253,19 @@ MBASE_ND("string observation ignored") MBASE_INLINE bool character_sequence<SeqT
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_ND("string observation ignored") MBASE_INLINE bool character_sequence<SeqType, SeqBase, Allocator>::is_control(size_type in_from, size_type in_to) const noexcept 
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE bool character_sequence<SeqType, SeqBase, Allocator>::is_control(size_type in_from, size_type in_to) const noexcept 
 {
     return is_control(cbegin() + in_from, cbegin() + in_to);
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_ND("string observation ignored") MBASE_INLINE bool character_sequence<SeqType, SeqBase, Allocator>::is_control() const noexcept 
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE bool character_sequence<SeqType, SeqBase, Allocator>::is_control() const noexcept 
 {
     return is_control(cbegin(), cend());
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_ND("string observation ignored") MBASE_INLINE bool character_sequence<SeqType, SeqBase, Allocator>::is_space(const_iterator in_begin, const_iterator in_end) const noexcept 
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE bool character_sequence<SeqType, SeqBase, Allocator>::is_space(const_iterator in_begin, const_iterator in_end) const noexcept 
 {
     if (!size())
     {
@@ -1247,19 +1286,19 @@ MBASE_ND("string observation ignored") MBASE_INLINE bool character_sequence<SeqT
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_ND("string observation ignored") MBASE_INLINE bool character_sequence<SeqType, SeqBase, Allocator>::is_space(size_type in_from, size_type in_to) const noexcept 
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE bool character_sequence<SeqType, SeqBase, Allocator>::is_space(size_type in_from, size_type in_to) const noexcept 
 {
     return is_space(cbegin() + in_from, cbegin() + in_to);
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_ND("string observation ignored") MBASE_INLINE bool character_sequence<SeqType, SeqBase, Allocator>::is_space() const noexcept 
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE bool character_sequence<SeqType, SeqBase, Allocator>::is_space() const noexcept 
 {
     return is_space(cbegin(), cend());
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_ND("string observation ignored") MBASE_INLINE bool character_sequence<SeqType, SeqBase, Allocator>::is_punctuation(const_iterator in_begin, const_iterator in_end) const noexcept 
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE bool character_sequence<SeqType, SeqBase, Allocator>::is_punctuation(const_iterator in_begin, const_iterator in_end) const noexcept 
 {
     if (!size())
     {
@@ -1280,13 +1319,13 @@ MBASE_ND("string observation ignored") MBASE_INLINE bool character_sequence<SeqT
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_ND("string observation ignored") MBASE_INLINE bool character_sequence<SeqType, SeqBase, Allocator>::is_punctuation(size_type in_from, size_type in_to) const noexcept 
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE bool character_sequence<SeqType, SeqBase, Allocator>::is_punctuation(size_type in_from, size_type in_to) const noexcept 
 {
     return is_punctuation(cbegin() + in_from, cbegin() + in_to);
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_ND("string observation ignored") MBASE_INLINE bool character_sequence<SeqType, SeqBase, Allocator>::is_punctuation() const noexcept 
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE bool character_sequence<SeqType, SeqBase, Allocator>::is_punctuation() const noexcept 
 {
     return is_punctuation(cbegin(), cend());
 }
@@ -1677,25 +1716,25 @@ MBASE_INLINE GENERIC character_sequence<SeqType, SeqBase, Allocator>::push_back(
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_ND("converted string not being used.") MBASE_INLINE I32 character_sequence<SeqType, SeqBase, Allocator>::to_i32() const noexcept 
+MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE I32 character_sequence<SeqType, SeqBase, Allocator>::to_i32() const noexcept 
 {
     return atoi(raw_data);
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_ND("converted string not being used.") MBASE_INLINE I64 character_sequence<SeqType, SeqBase, Allocator>::to_i64() const noexcept 
+MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE I64 character_sequence<SeqType, SeqBase, Allocator>::to_i64() const noexcept 
 {
     return _atoi64(raw_data);
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_ND("converted string not being used.") MBASE_INLINE F32 character_sequence<SeqType, SeqBase, Allocator>::to_f32() const noexcept 
+MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE F32 character_sequence<SeqType, SeqBase, Allocator>::to_f32() const noexcept 
 {
     return strtof(raw_data, nullptr);
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_ND("converted string not being used.") MBASE_INLINE F64 character_sequence<SeqType, SeqBase, Allocator>::to_f64() const noexcept 
+MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE F64 character_sequence<SeqType, SeqBase, Allocator>::to_f64() const noexcept 
 {
     return atof(raw_data);
 }
@@ -1999,6 +2038,13 @@ template<typename SeqType, typename SeqBase, typename Allocator>
 character_sequence<SeqType, SeqBase, Allocator>& character_sequence<SeqType, SeqBase, Allocator>::operator+=(const value_type& in_character) noexcept 
 {
     push_back(in_character);
+    return *this;
+}
+
+template<typename SeqType, typename SeqBase, typename Allocator>
+character_sequence<SeqType, SeqBase, Allocator>& character_sequence<SeqType, SeqBase, Allocator>::operator+=(std::initializer_list<value_type> in_chars) 
+{
+    append(std::move(in_chars));
     return *this;
 }
 
