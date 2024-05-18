@@ -46,12 +46,12 @@ public:
 	using pointer = T*;
 	using const_pointer = const T*;
 	using allocator_type = Allocator;
-
 	using iterator = sequence_iterator<T>;
 	using const_iterator = const_sequence_iterator<T>;
 	using reverse_iterator = reverse_sequence_iterator<T>;
 	using const_reverse_iterator = const_reverse_sequence_iterator<T>;
 
+	/* ===== BUILDER METHODS BEGIN ===== */
 	MBASE_INLINE_EXPR MBASE_EXPLICIT vector() noexcept; // Signature = C1F1B1-EXP-NSTD-MANIP
 	MBASE_INLINE_EXPR MBASE_EXPLICIT vector(const Allocator& in_alloc) noexcept;
 	MBASE_INLINE_EXPR vector(size_type in_size, const T& in_value, const Allocator& in_alloc = Allocator());
@@ -70,24 +70,15 @@ public:
 	MBASE_INLINE_EXPR vector(vector&& in_rhs) noexcept;
 	MBASE_INLINE_EXPR vector(vector&& in_rhs, const Allocator& in_alloc) noexcept;
 	MBASE_INLINE_EXPR ~vector() noexcept;
+	/* ===== BUILDER METHODS END ===== */
 
+	/* ===== OPERATOR BUILDER METHODS BEGIN ===== */
 	MBASE_INLINE_EXPR vector& operator=(const vector& in_rhs) noexcept;
 	MBASE_INLINE_EXPR vector& operator=(vector&& in_rhs) noexcept;
 	MBASE_INLINE_EXPR vector& operator=(std::initializer_list<value_type> in_list) noexcept;
+	/* ===== OPERATOR BUILDER METHODS END ===== */
 
-	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR reference back() noexcept;
-	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR reference front() noexcept;
-	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR const_reference back() const noexcept;
-	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR const_reference front() const noexcept;
-	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR pointer data() noexcept;
-	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR const_pointer data() const noexcept;
-
-	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR reference at(size_type in_pos) noexcept;
-	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR const_reference at(size_type in_pos) const noexcept;
-
-	MBASE_ND(MBASE_OBS_IGNORE) reference operator[](difference_type in_index) noexcept;
-	MBASE_ND(MBASE_OBS_IGNORE) const_reference operator[](difference_type in_index) const noexcept;
-
+	/* ===== ITERATOR METHODS BEGIN ===== */
 	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR iterator begin() const noexcept;
 	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR iterator end() const noexcept;
 	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR const_iterator cbegin() const noexcept;
@@ -96,13 +87,27 @@ public:
 	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR reverse_iterator rend() const noexcept;
 	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR const_reverse_iterator crbegin() const noexcept;
 	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR const_reverse_iterator crend() const noexcept;
+	/* ===== ITERATOR METHODS END ===== */
 
-	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR size_type max_size() const noexcept; // SELF-NOTE: REFER TO CPPREFERENCE FOR IMPLEMENTATION DETAIL
+	/* ===== OBSERVATION METHODS BEGIN ===== */
+	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR size_type max_size() const noexcept;
 	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR size_type size() const noexcept;
 	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR size_type capacity() const noexcept;
 	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR bool empty() const noexcept;
 	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR allocator_type get_allocator() const noexcept;
+	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR reference back() noexcept;
+	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR reference front() noexcept;
+	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR const_reference back() const noexcept;
+	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR const_reference front() const noexcept;
+	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR pointer data() noexcept;
+	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR const_pointer data() const noexcept;
+	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR reference at(size_type in_pos) noexcept;
+	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR const_reference at(size_type in_pos) const noexcept;
+	MBASE_ND(MBASE_OBS_IGNORE) reference operator[](difference_type in_index) noexcept;
+	MBASE_ND(MBASE_OBS_IGNORE) const_reference operator[](difference_type in_index) const noexcept;
+	/* ===== OBSERVATION METHODS END ===== */
 
+	/* ===== STATE-MODIFIER METHODS BEGIN ===== */
 	template<typename InputIt>
 	MBASE_INLINE_EXPR GENERIC assign(InputIt in_begin, InputIt in_end) {
 		clear();
@@ -184,11 +189,20 @@ public:
 		push_back(std::move(value_type(std::forward<Args>(in_args)...)));
 		return *(end() - 1);
 	}
+	/* ===== STATE-MODIFIER METHODS END ===== */
+
+	/* ===== NON-MODIFIER METHODS BEGIN ===== */
 	MBASE_INLINE_EXPR GENERIC serialize(safe_buffer& out_buffer) noexcept;
+	/* ===== NON-MODIFIER METHODS END ===== */
+
+	/* ===== NON-MEMBER FUNCTIONS BEGIN ===== */
 	MBASE_INLINE_EXPR static mbase::vector<T, Allocator> deserialize(IBYTEBUFFER in_src, SIZE_T in_length) noexcept;
+	/* ===== NON-MEMBER FUNCTIONS END ===== */
 
 private:
+	/* ===== STATE-MODIFIER METHODS BEGIN ===== */
 	MBASE_INLINE_EXPR GENERIC deep_clear() noexcept;
+	/* ===== STATE-MODIFIER METHODS END ===== */
 
 	Allocator externalAllocator;
 	pointer raw_data;
@@ -393,66 +407,6 @@ MBASE_INLINE_EXPR vector<T, Allocator>& vector<T, Allocator>::operator=(std::ini
 }
 
 template<typename T, typename Allocator>
-MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR typename vector<T, Allocator>::reference vector<T, Allocator>::back() noexcept
-{
-	return raw_data[mSize - 1];
-}
-
-template<typename T, typename Allocator>
-MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR typename vector<T, Allocator>::reference vector<T, Allocator>::front() noexcept
-{
-	return raw_data[0];
-}
-
-template<typename T, typename Allocator>
-MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR typename vector<T, Allocator>::const_reference vector<T, Allocator>::back() const noexcept
-{
-	return raw_data[mSize - 1];
-}
-
-template<typename T, typename Allocator>
-MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR typename vector<T, Allocator>::const_reference vector<T, Allocator>::front() const noexcept 
-{
-	return raw_data[0];
-}
-
-template<typename T, typename Allocator>
-MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR typename vector<T, Allocator>::pointer vector<T, Allocator>::data() noexcept
-{
-	return raw_data;
-}
-
-template<typename T, typename Allocator>
-MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR typename vector<T, Allocator>::const_pointer vector<T, Allocator>::data() const noexcept
-{
-	return raw_data;
-}
-
-template<typename T, typename Allocator>
-MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR typename vector<T, Allocator>::reference vector<T, Allocator>::at(size_type in_pos) noexcept
-{
-	return raw_data[in_pos];
-}
-
-template<typename T, typename Allocator>
-MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR typename vector<T, Allocator>::const_reference vector<T, Allocator>::at(size_type in_pos) const noexcept
-{
-	return raw_data[in_pos];
-}
-
-template<typename T, typename Allocator>
-MBASE_ND(MBASE_OBS_IGNORE) typename vector<T, Allocator>::reference vector<T, Allocator>::operator[](difference_type in_index) noexcept
-{
-	return raw_data[in_index];
-}
-
-template<typename T, typename Allocator>
-MBASE_ND(MBASE_OBS_IGNORE) typename vector<T, Allocator>::const_reference vector<T, Allocator>::operator[](difference_type in_index) const noexcept
-{
-	return raw_data[in_index];
-}
-
-template<typename T, typename Allocator>
 MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR typename vector<T, Allocator>::iterator vector<T, Allocator>::begin() const noexcept 
 {
 	return iterator(raw_data);
@@ -529,6 +483,66 @@ template<typename T, typename Allocator>
 MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR typename vector<T, Allocator>::allocator_type vector<T, Allocator>::get_allocator() const noexcept 
 {
 	return externalAllocator;
+}
+
+template<typename T, typename Allocator>
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR typename vector<T, Allocator>::reference vector<T, Allocator>::back() noexcept
+{
+	return raw_data[mSize - 1];
+}
+
+template<typename T, typename Allocator>
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR typename vector<T, Allocator>::reference vector<T, Allocator>::front() noexcept
+{
+	return raw_data[0];
+}
+
+template<typename T, typename Allocator>
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR typename vector<T, Allocator>::const_reference vector<T, Allocator>::back() const noexcept
+{
+	return raw_data[mSize - 1];
+}
+
+template<typename T, typename Allocator>
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR typename vector<T, Allocator>::const_reference vector<T, Allocator>::front() const noexcept
+{
+	return raw_data[0];
+}
+
+template<typename T, typename Allocator>
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR typename vector<T, Allocator>::pointer vector<T, Allocator>::data() noexcept
+{
+	return raw_data;
+}
+
+template<typename T, typename Allocator>
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR typename vector<T, Allocator>::const_pointer vector<T, Allocator>::data() const noexcept
+{
+	return raw_data;
+}
+
+template<typename T, typename Allocator>
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR typename vector<T, Allocator>::reference vector<T, Allocator>::at(size_type in_pos) noexcept
+{
+	return raw_data[in_pos];
+}
+
+template<typename T, typename Allocator>
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR typename vector<T, Allocator>::const_reference vector<T, Allocator>::at(size_type in_pos) const noexcept
+{
+	return raw_data[in_pos];
+}
+
+template<typename T, typename Allocator>
+MBASE_ND(MBASE_OBS_IGNORE) typename vector<T, Allocator>::reference vector<T, Allocator>::operator[](difference_type in_index) noexcept
+{
+	return raw_data[in_index];
+}
+
+template<typename T, typename Allocator>
+MBASE_ND(MBASE_OBS_IGNORE) typename vector<T, Allocator>::const_reference vector<T, Allocator>::operator[](difference_type in_index) const noexcept
+{
+	return raw_data[in_index];
 }
 
 template<typename T, typename Allocator>

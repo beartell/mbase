@@ -27,14 +27,21 @@ Description:
 
 
 struct safe_buffer {
+	/* ===== BUILDER METHODS BEGIN ===== */
 	safe_buffer() noexcept;
 	safe_buffer(IBYTEBUFFER in_src, SIZE_T in_length) noexcept;
 	safe_buffer(safe_buffer&& in_rhs) noexcept;
 	~safe_buffer() noexcept;
+	/* ===== BUILDER METHODS END ===== */
 
+	/* ===== OPERATOR BUILDER METHODS BEGIN ===== */
 	safe_buffer& operator=(safe_buffer&& in_rhs) noexcept;
+	/* ===== OPERATOR BUILDER METHODS END ===== */
+
+	/* ===== STATE-MODIFIER METHODS BEGIN ===== */
 	GENERIC clear() noexcept;
 	GENERIC swap(safe_buffer& sfb) noexcept;
+	/* ===== STATE-MODIFIER METHODS END ===== */
 
 	SIZE_T bfLength;
 	IBYTEBUFFER bfSource;

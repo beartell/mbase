@@ -34,9 +34,8 @@ public:
 	using const_iterator = typename const_bst_iterator<_node_type, value_type>;
 	using reverse_iterator = typename reverse_bst_iterator<_node_type, value_type>;
 	using const_reverse_iterator = typename const_reverse_bst_iterator<_node_type, value_type>;
-	//using node_type = typename exposed_set_node<Key, Allocator>;
-	//using insert_return_type = I32;
 
+	/* ===== BUILDER METHODS BEGIN ===== */
 	MBASE_INLINE set();
 	MBASE_INLINE MBASE_EXPLICIT set(const Compare& in_comp, const Allocator& in_alloc = Allocator());
 	MBASE_INLINE set(const set& in_rhs);
@@ -51,42 +50,50 @@ public:
 			insert(*in_begin);
 		}
 	}
-	~set();
+	MBASE_INLINE ~set();
+	/* ===== BUILDER METHODS END ===== */
 
+	/* ===== OPERATOR BUILDER METHODS BEGIN ===== */
 	MBASE_INLINE set& operator=(const set& in_rhs);
 	MBASE_INLINE set& operator=(set&& in_rhs) noexcept;
 	MBASE_INLINE set& operator=(std::initializer_list<value_type> in_list);
+	/* ===== OPERATOR BUILDER METHODS END ===== */
 
-	MBASE_INLINE iterator begin() noexcept;
-	MBASE_INLINE const_iterator begin() const noexcept;
-	MBASE_INLINE const_iterator cbegin() const noexcept;
-	MBASE_INLINE iterator end() noexcept;
-	MBASE_INLINE const_iterator end() const noexcept;
-	MBASE_INLINE const_iterator cend() const noexcept;
-	MBASE_INLINE reverse_iterator rbegin() noexcept;
-	MBASE_INLINE const_reverse_iterator rbegin() const noexcept;
-	MBASE_INLINE const_reverse_iterator crbegin() const noexcept;
-	MBASE_INLINE reverse_iterator rend() noexcept;
-	MBASE_INLINE const_reverse_iterator rend() const noexcept;
-	MBASE_INLINE const_reverse_iterator crend() const noexcept;
+	/* ===== ITERATOR METHODS BEGIN ===== */
+	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE iterator begin() noexcept;
+	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE const_iterator begin() const noexcept;
+	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE const_iterator cbegin() const noexcept;
+	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE iterator end() noexcept;
+	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE const_iterator end() const noexcept;
+	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE const_iterator cend() const noexcept;
+	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE reverse_iterator rbegin() noexcept;
+	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE const_reverse_iterator rbegin() const noexcept;
+	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE const_reverse_iterator crbegin() const noexcept;
+	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE reverse_iterator rend() noexcept;
+	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE const_reverse_iterator rend() const noexcept;
+	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE const_reverse_iterator crend() const noexcept;
+	/* ===== ITERATOR METHODS END ===== */
 
-	MBASE_INLINE allocator_type get_allocator() const noexcept;
-	MBASE_INLINE key_compare key_comp() const;
-	MBASE_INLINE value_compare value_comp() const;
-	MBASE_INLINE bool empty() const noexcept;
-	MBASE_INLINE size_type size() const noexcept;
-	MBASE_INLINE size_type max_size() const noexcept;
-	MBASE_INLINE size_type count(const Key& in_key) const;
-	MBASE_INLINE iterator find(const Key& in_key);
-	MBASE_INLINE const_iterator find(const Key& in_key) const;
-	MBASE_INLINE bool contains(const Key& in_key) const;
-	MBASE_INLINE std::pair<iterator, iterator> equal_range(const Key& in_key);
-	MBASE_INLINE std::pair<const_iterator, const_iterator> equal_range(const Key& in_key) const;
-	MBASE_INLINE iterator lower_bound(const Key& in_key);
-	MBASE_INLINE const_iterator lower_bound(const Key& in_key) const;
-	MBASE_INLINE iterator upper_bound(const Key& in_key);
-	MBASE_INLINE const_iterator upper_bound(const Key& in_key) const;
-	
+	/* ===== OBSERVATION METHODS BEGIN ===== */
+	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE allocator_type get_allocator() const noexcept;
+	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE key_compare key_comp() const;
+	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE value_compare value_comp() const;
+	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE bool empty() const noexcept;
+	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE size_type size() const noexcept;
+	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE size_type max_size() const noexcept;
+	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE size_type count(const Key& in_key) const;
+	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE iterator find(const Key& in_key);
+	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE const_iterator find(const Key& in_key) const;
+	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE bool contains(const Key& in_key) const;
+	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE std::pair<iterator, iterator> equal_range(const Key& in_key);
+	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE std::pair<const_iterator, const_iterator> equal_range(const Key& in_key) const;
+	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE iterator lower_bound(const Key& in_key);
+	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE const_iterator lower_bound(const Key& in_key) const;
+	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE iterator upper_bound(const Key& in_key);
+	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE const_iterator upper_bound(const Key& in_key) const;
+	/* ===== OBSERVATION METHODS END ===== */
+
+	/* ===== STATE-MODIFIER METHODS BEGIN ===== */
 	MBASE_INLINE std::pair<iterator, bool> insert(const value_type& in_value);
 	MBASE_INLINE std::pair<iterator, bool> insert(value_type&& in_value);
 	MBASE_INLINE iterator insert(const_iterator in_pos, const value_type& in_value);
@@ -99,7 +106,6 @@ public:
 			insert(*in_begin);
 		}
 	}
-	//insert_return_type insert(node_type&& in_node);
 	template<typename ... Args>
 	MBASE_INLINE std::pair<iterator, bool> emplace(Args&& ... in_args) {
 		return insert(std::move(std::forward<Args>(in_args)...));
@@ -108,7 +114,6 @@ public:
 	MBASE_INLINE std::pair<iterator, bool> emplace_hint(const_iterator in_hint, Args&& ... in_args) {
 		return insert(in_hint, std::move(std::forward<Args>(in_args)...));
 	}
-
 	MBASE_INLINE iterator erase(const_iterator in_pos);
 	MBASE_INLINE iterator erase(iterator in_pos);
 	MBASE_INLINE iterator erase(iterator in_first, iterator in_last);
@@ -124,9 +129,15 @@ public:
 		}
 		in_src.clear();
 	}
+	/* ===== STATE-MODIFIER METHODS END ===== */
 
+	/* ===== NON-MODIFIER METHODS BEGIN ===== */
 	MBASE_INLINE GENERIC serialize(safe_buffer& out_buffer) noexcept;
+	/* ===== NON-MODIFIER METHODS END ===== */
+
+	/* ===== NON-MEMBER FUNCTIONS BEGIN ===== */
 	MBASE_INLINE static mbase::set<Key, Compare, Allocator> deserialize(IBYTEBUFFER in_src, SIZE_T in_length) noexcept;
+	/* ===== NON-MEMBER FUNCTIONS END ===== */
 
 private:
 	_node_type* rootNode;
@@ -222,110 +233,110 @@ MBASE_INLINE set<Key, Compare, Allocator>& set<Key, Compare, Allocator>::operato
 }
 
 template<typename Key, typename Compare, typename Allocator>
-MBASE_INLINE typename set<Key, Compare, Allocator>::iterator set<Key, Compare, Allocator>::begin() noexcept {
+MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE typename set<Key, Compare, Allocator>::iterator set<Key, Compare, Allocator>::begin() noexcept {
 	return iterator(rootNode);
 }
 
 template<typename Key, typename Compare, typename Allocator>
-MBASE_INLINE typename set<Key, Compare, Allocator>::const_iterator set<Key, Compare, Allocator>::begin() const noexcept {
+MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE typename set<Key, Compare, Allocator>::const_iterator set<Key, Compare, Allocator>::begin() const noexcept {
 	return const_iterator(rootNode);
 }
 
 template<typename Key, typename Compare, typename Allocator>
-MBASE_INLINE typename set<Key, Compare, Allocator>::const_iterator set<Key, Compare, Allocator>::cbegin() const noexcept {
+MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE typename set<Key, Compare, Allocator>::const_iterator set<Key, Compare, Allocator>::cbegin() const noexcept {
 	return const_iterator(rootNode);
 }
 
 template<typename Key, typename Compare, typename Allocator>
-MBASE_INLINE typename set<Key, Compare, Allocator>::iterator set<Key, Compare, Allocator>::end() noexcept {
+MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE typename set<Key, Compare, Allocator>::iterator set<Key, Compare, Allocator>::end() noexcept {
 	return iterator(nullptr);
 }
 
 template<typename Key, typename Compare, typename Allocator>
-MBASE_INLINE typename set<Key, Compare, Allocator>::const_iterator set<Key, Compare, Allocator>::end() const noexcept {
+MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE typename set<Key, Compare, Allocator>::const_iterator set<Key, Compare, Allocator>::end() const noexcept {
 	return const_iterator(nullptr);
 }
 
 template<typename Key, typename Compare, typename Allocator>
-MBASE_INLINE typename set<Key, Compare, Allocator>::const_iterator set<Key, Compare, Allocator>::cend() const noexcept {
+MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE typename set<Key, Compare, Allocator>::const_iterator set<Key, Compare, Allocator>::cend() const noexcept {
 	return const_iterator(nullptr);
 }
 
 template<typename Key, typename Compare, typename Allocator>
-MBASE_INLINE typename set<Key, Compare, Allocator>::reverse_iterator set<Key, Compare, Allocator>::rbegin() noexcept {
+MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE typename set<Key, Compare, Allocator>::reverse_iterator set<Key, Compare, Allocator>::rbegin() noexcept {
 	return reverse_iterator(rootNode);
 }
 
 template<typename Key, typename Compare, typename Allocator>
-MBASE_INLINE typename set<Key, Compare, Allocator>::const_reverse_iterator set<Key, Compare, Allocator>::rbegin() const noexcept {
+MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE typename set<Key, Compare, Allocator>::const_reverse_iterator set<Key, Compare, Allocator>::rbegin() const noexcept {
 	return const_reverse_iterator(rootNode);
 }
 
 template<typename Key, typename Compare, typename Allocator>
-MBASE_INLINE typename set<Key, Compare, Allocator>::const_reverse_iterator set<Key, Compare, Allocator>::crbegin() const noexcept {
+MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE typename set<Key, Compare, Allocator>::const_reverse_iterator set<Key, Compare, Allocator>::crbegin() const noexcept {
 	return const_reverse_iterator(rootNode);
 }
 
 template<typename Key, typename Compare, typename Allocator>
-MBASE_INLINE typename set<Key, Compare, Allocator>::reverse_iterator set<Key, Compare, Allocator>::rend() noexcept {
+MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE typename set<Key, Compare, Allocator>::reverse_iterator set<Key, Compare, Allocator>::rend() noexcept {
 	return reverse_iterator(nullptr);
 }
 
 template<typename Key, typename Compare, typename Allocator>
-MBASE_INLINE typename set<Key, Compare, Allocator>::const_reverse_iterator set<Key, Compare, Allocator>::rend() const noexcept {
+MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE typename set<Key, Compare, Allocator>::const_reverse_iterator set<Key, Compare, Allocator>::rend() const noexcept {
 	return const_reverse_iterator(nullptr);
 }
 
 template<typename Key, typename Compare, typename Allocator>
-MBASE_INLINE typename set<Key, Compare, Allocator>::const_reverse_iterator set<Key, Compare, Allocator>::crend() const noexcept {
+MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE typename set<Key, Compare, Allocator>::const_reverse_iterator set<Key, Compare, Allocator>::crend() const noexcept {
 	return const_reverse_iterator(nullptr);
 }
 
 template<typename Key, typename Compare, typename Allocator>
-MBASE_INLINE typename set<Key, Compare, Allocator>::allocator_type set<Key, Compare, Allocator>::get_allocator() const noexcept {
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE typename set<Key, Compare, Allocator>::allocator_type set<Key, Compare, Allocator>::get_allocator() const noexcept {
 	return allocator_type();
 }
 
 template<typename Key, typename Compare, typename Allocator>
-MBASE_INLINE typename set<Key, Compare, Allocator>::key_compare set<Key, Compare, Allocator>::key_comp() const
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE typename set<Key, Compare, Allocator>::key_compare set<Key, Compare, Allocator>::key_comp() const
 {
 	key_compare kc;
 	return kc;
 }
 
 template<typename Key, typename Compare, typename Allocator>
-MBASE_INLINE typename set<Key, Compare, Allocator>::value_compare set<Key, Compare, Allocator>::value_comp() const
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE typename set<Key, Compare, Allocator>::value_compare set<Key, Compare, Allocator>::value_comp() const
 {
 	value_compare vc;
 	return vc;
 }
 
 template<typename Key, typename Compare, typename Allocator>
-MBASE_INLINE bool set<Key, Compare, Allocator>::empty() const noexcept
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE bool set<Key, Compare, Allocator>::empty() const noexcept
 {
 	return mSize == 0;
 }
 
 template<typename Key, typename Compare, typename Allocator>
-MBASE_INLINE typename set<Key, Compare, Allocator>::size_type set<Key, Compare, Allocator>::size() const noexcept
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE typename set<Key, Compare, Allocator>::size_type set<Key, Compare, Allocator>::size() const noexcept
 {
 	return mSize;
 }
 
 template<typename Key, typename Compare, typename Allocator>
-MBASE_INLINE typename set<Key, Compare, Allocator>::size_type set<Key, Compare, Allocator>::max_size() const noexcept
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE typename set<Key, Compare, Allocator>::size_type set<Key, Compare, Allocator>::max_size() const noexcept
 {
 	size_type result = (std::numeric_limits<difference_type>::max)();
 	return result;
 }
 
 template<typename Key, typename Compare, typename Allocator>
-MBASE_INLINE typename set<Key, Compare, Allocator>::size_type set<Key, Compare, Allocator>::count(const Key& in_key) const {
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE typename set<Key, Compare, Allocator>::size_type set<Key, Compare, Allocator>::count(const Key& in_key) const {
 	return static_cast<size_type>(this->contains(in_key));
 }
 
 template<typename Key, typename Compare, typename Allocator>
-MBASE_INLINE typename set<Key, Compare, Allocator>::iterator set<Key, Compare, Allocator>::find(const Key& in_key) {
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE typename set<Key, Compare, Allocator>::iterator set<Key, Compare, Allocator>::find(const Key& in_key) {
 	iterator itBegin(rootNode);
 
 	for (itBegin; itBegin != end(); itBegin++)
@@ -340,7 +351,7 @@ MBASE_INLINE typename set<Key, Compare, Allocator>::iterator set<Key, Compare, A
 }
 
 template<typename Key, typename Compare, typename Allocator>
-MBASE_INLINE typename set<Key, Compare, Allocator>::const_iterator set<Key, Compare, Allocator>::find(const Key& in_key) const {
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE typename set<Key, Compare, Allocator>::const_iterator set<Key, Compare, Allocator>::find(const Key& in_key) const {
 	const_iterator itBegin = const_iterator(rootNode);
 	for (itBegin; itBegin != cend(); itBegin++)
 	{
@@ -353,7 +364,7 @@ MBASE_INLINE typename set<Key, Compare, Allocator>::const_iterator set<Key, Comp
 }
 
 template<typename Key, typename Compare, typename Allocator>
-MBASE_INLINE bool set<Key, Compare, Allocator>::contains(const Key& in_key) const {
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE bool set<Key, Compare, Allocator>::contains(const Key& in_key) const {
 	if (this->find(in_key) != cend())
 	{
 		return true;
@@ -362,17 +373,17 @@ MBASE_INLINE bool set<Key, Compare, Allocator>::contains(const Key& in_key) cons
 }
 
 template<typename Key, typename Compare, typename Allocator>
-MBASE_INLINE std::pair<typename set<Key, Compare, Allocator>::iterator, typename set<Key, Compare, Allocator>::iterator> set<Key, Compare, Allocator>::equal_range(const Key& in_key) {
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE std::pair<typename set<Key, Compare, Allocator>::iterator, typename set<Key, Compare, Allocator>::iterator> set<Key, Compare, Allocator>::equal_range(const Key& in_key) {
 	return std::make_pair(this->lower_bound(in_key), this->upper_bound(in_key));
 }
 
 template<typename Key, typename Compare, typename Allocator>
-MBASE_INLINE std::pair<typename set<Key, Compare, Allocator>::const_iterator, typename set<Key, Compare, Allocator>::const_iterator> set<Key, Compare, Allocator>::equal_range(const Key& in_key) const {
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE std::pair<typename set<Key, Compare, Allocator>::const_iterator, typename set<Key, Compare, Allocator>::const_iterator> set<Key, Compare, Allocator>::equal_range(const Key& in_key) const {
 	return std::make_pair(this->lower_bound(in_key), this->upper_bound(in_key));
 }
 
 template<typename Key, typename Compare, typename Allocator>
-MBASE_INLINE typename set<Key, Compare, Allocator>::iterator set<Key, Compare, Allocator>::lower_bound(const Key& in_key) {
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE typename set<Key, Compare, Allocator>::iterator set<Key, Compare, Allocator>::lower_bound(const Key& in_key) {
 	iterator itBegin = begin();
 	for (itBegin; itBegin != end(); itBegin++)
 	{
@@ -386,7 +397,7 @@ MBASE_INLINE typename set<Key, Compare, Allocator>::iterator set<Key, Compare, A
 }
 
 template<typename Key, typename Compare, typename Allocator>
-MBASE_INLINE typename set<Key, Compare, Allocator>::const_iterator set<Key, Compare, Allocator>::lower_bound(const Key& in_key) const {
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE typename set<Key, Compare, Allocator>::const_iterator set<Key, Compare, Allocator>::lower_bound(const Key& in_key) const {
 	const_iterator itBegin = begin();
 	for (itBegin; itBegin != end(); itBegin++)
 	{
@@ -400,7 +411,7 @@ MBASE_INLINE typename set<Key, Compare, Allocator>::const_iterator set<Key, Comp
 }
 
 template<typename Key, typename Compare, typename Allocator>
-MBASE_INLINE typename set<Key, Compare, Allocator>::iterator set<Key, Compare, Allocator>::upper_bound(const Key& in_key) {
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE typename set<Key, Compare, Allocator>::iterator set<Key, Compare, Allocator>::upper_bound(const Key& in_key) {
 	iterator itBegin = begin();
 	for (itBegin; itBegin != end(); itBegin++)
 	{
@@ -414,7 +425,7 @@ MBASE_INLINE typename set<Key, Compare, Allocator>::iterator set<Key, Compare, A
 }
 
 template<typename Key, typename Compare, typename Allocator>
-MBASE_INLINE typename set<Key, Compare, Allocator>::const_iterator set<Key, Compare, Allocator>::upper_bound(const Key& in_key) const {
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE typename set<Key, Compare, Allocator>::const_iterator set<Key, Compare, Allocator>::upper_bound(const Key& in_key) const {
 	const_iterator itBegin = begin();
 	for (itBegin; itBegin != end(); itBegin++)
 	{

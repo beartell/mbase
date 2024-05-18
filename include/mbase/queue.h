@@ -52,20 +52,20 @@ public:
 
 	/* ===== OBSERVATION METHODS BEGIN ===== */
 	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR const_reference front() const noexcept;
-	MBASE_INLINE_EXPR bool empty() const noexcept;
+	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR bool empty() const noexcept;
 	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR size_type size() const noexcept;
-	SourceContainer& getHandler();
+	MBASE_ND(MBASE_OBS_IGNORE) SourceContainer& getHandler();
 	/* ===== OBSERVATION METHODS END ===== */
 
 	/* ===== STATE-MODIFIER METHODS BEGIN ===== */
 	MBASE_INLINE_EXPR GENERIC push(const T& in_data) noexcept;
 	MBASE_INLINE_EXPR GENERIC push(T&& in_data) noexcept;
 	MBASE_INLINE_EXPR GENERIC pop() noexcept;
+	MBASE_INLINE GENERIC deserialize(IBYTEBUFFER in_buffer, SIZE_T in_length) noexcept;
 	/* ===== STATE-MODIFIER METHODS END ===== */
 
 	/* ===== NON-MODIFIER METHODS BEGIN ===== */
 	MBASE_INLINE GENERIC serialize(safe_buffer& out_buffer) noexcept;
-	MBASE_INLINE GENERIC deserialize(IBYTEBUFFER in_buffer, SIZE_T in_length) noexcept; // GET BACK HERE
 	/* ===== NON-MODIFIER METHODS END ===== */
 
 private:
@@ -101,25 +101,25 @@ MBASE_INLINE queue<T, SourceContainer>& queue<T, SourceContainer>::operator=(que
 }
 
 template<typename T, typename SourceContainer>
-MBASE_ND("returned element being ignored") MBASE_INLINE_EXPR typename queue<T, SourceContainer>::const_reference queue<T, SourceContainer>::front() const noexcept 
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR typename queue<T, SourceContainer>::const_reference queue<T, SourceContainer>::front() const noexcept
 {
 	return _Sc.front();
 }
 
 template<typename T, typename SourceContainer>
-MBASE_INLINE_EXPR bool queue<T, SourceContainer>::empty() const noexcept 
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR bool queue<T, SourceContainer>::empty() const noexcept
 {
 	return _Sc.empty();
 }
 
 template<typename T, typename SourceContainer>
-MBASE_ND("container observation ignored") MBASE_INLINE_EXPR typename queue<T, SourceContainer>::size_type queue<T, SourceContainer>::size() const noexcept
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR typename queue<T, SourceContainer>::size_type queue<T, SourceContainer>::size() const noexcept
 {
 	return _Sc.size();
 }
 
 template<typename T, typename SourceContainer>
-SourceContainer& queue<T, SourceContainer>::getHandler() 
+MBASE_ND(MBASE_OBS_IGNORE) SourceContainer& queue<T, SourceContainer>::getHandler()
 {
 	return _Sc;
 }
@@ -143,15 +143,15 @@ MBASE_INLINE_EXPR GENERIC queue<T, SourceContainer>::pop() noexcept
 }
 
 template<typename T, typename SourceContainer>
-MBASE_INLINE GENERIC queue<T, SourceContainer>::serialize(safe_buffer& out_buffer) noexcept
+MBASE_INLINE GENERIC queue<T, SourceContainer>::deserialize(IBYTEBUFFER in_buffer, SIZE_T in_length) noexcept
 {
-	_Sc.serialize(out_buffer);
+	_Sc = _Sc.deserialize(in_buffer, in_length);
 }
 
 template<typename T, typename SourceContainer>
-MBASE_INLINE GENERIC queue<T, SourceContainer>::deserialize(IBYTEBUFFER in_buffer, SIZE_T in_length) noexcept 
+MBASE_INLINE GENERIC queue<T, SourceContainer>::serialize(safe_buffer& out_buffer) noexcept
 {
-	_Sc = _Sc.deserialize(in_buffer, in_length);
+	_Sc.serialize(out_buffer);
 }
 
 MBASE_STD_END

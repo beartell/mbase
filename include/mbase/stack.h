@@ -18,59 +18,116 @@ public:
 	using pointer = T*;
 	using const_pointer = const T*;
 
-	stack() noexcept {}
+	/* ===== BUILDER METHODS BEGIN ===== */
+	MBASE_INLINE stack() noexcept;
+	MBASE_INLINE stack(const stack& in_rhs) noexcept;
+	MBASE_INLINE stack(stack&& in_rhs) noexcept;
+	/* ===== BUILDER METHODS END ===== */
 
-	stack(const stack& in_rhs) noexcept {
-		_Sc = in_rhs._Sc;
-	}
+	/* ===== OPERATOR BUILDER METHODS BEGIN ===== */
+	MBASE_INLINE stack& operator=(const stack& in_rhs) noexcept;
+	MBASE_INLINE stack& operator=(stack&& in_rhs) noexcept;
+	/* ===== OPERATOR BUILDER METHODS END ===== */
 
-	stack(stack&& in_rhs) noexcept {
-		_Sc = std::move(in_rhs._Sc);
-	}
+	/* ===== OBSERVATION METHODS BEGIN ===== */
+	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR reference top() noexcept;
+	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR const_reference top() const noexcept;
+	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR bool empty() const noexcept;
+	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR size_type size() const noexcept;
+	MBASE_ND(MBASE_OBS_IGNORE) SourceContainer& getHandler();
+	/* ===== OBSERVATION METHODS END ===== */
 
-	MBASE_ND("returned element being ignored") MBASE_INLINE_EXPR reference top() noexcept {
-		return _Sc.back();
-	}
+	/* ===== STATE-MODIFIER METHODS BEGIN ===== */
+	MBASE_INLINE_EXPR GENERIC push(const T& in_data) noexcept;
+	MBASE_INLINE_EXPR GENERIC push(T&& in_data) noexcept;
+	MBASE_INLINE_EXPR GENERIC pop() noexcept;
+	MBASE_INLINE GENERIC deserialize(IBYTEBUFFER in_buffer, SIZE_T in_length) noexcept;
+	/* ===== STATE-MODIFIER METHODS END ===== */
 
-	MBASE_ND("returned element being ignored") MBASE_INLINE_EXPR const_reference top() const noexcept {
-		return _Sc.back();
-	}
-
-	MBASE_INLINE_EXPR bool empty() const noexcept {
-		return _Sc.empty();
-	}
-
-	MBASE_ND("container observation ignored") MBASE_INLINE_EXPR size_type size() const noexcept {
-		return _Sc.size();
-	}
-
-	MBASE_INLINE_EXPR GENERIC push(const T& in_data) noexcept {
-		_Sc.push_back(in_data);
-	}
-
-	MBASE_INLINE_EXPR GENERIC push(T&& in_data) noexcept {
-		_Sc.push_back(std::move(in_data));
-	}
-
-	MBASE_INLINE_EXPR GENERIC pop() noexcept {
-		_Sc.pop_back();
-	}
-
-	MBASE_INLINE GENERIC serialize(safe_buffer& out_buffer) noexcept {
-		_Sc.serialize(out_buffer);
-	}
-
-	MBASE_INLINE GENERIC deserialize(IBYTEBUFFER in_buffer, SIZE_T in_length) noexcept {
-		_Sc.deserialize(in_buffer, in_length);
-	}
-
-	SourceContainer& getHandler() {
-		return _Sc;
-	}
+	/* ===== NON-MEMBER FUNCTIONS BEGIN ===== */
+	MBASE_INLINE GENERIC serialize(safe_buffer& out_buffer) noexcept;
+	/* ===== NON-MEMBER FUNCTIONS END ===== */
 
 private:
 	SourceContainer _Sc;
 };
+
+template<typename T, typename SourceContainer>
+MBASE_INLINE stack<T, SourceContainer>::stack() noexcept {}
+
+template<typename T, typename SourceContainer>
+MBASE_INLINE stack<T, SourceContainer>::stack(const stack& in_rhs) noexcept {
+	_Sc = in_rhs._Sc;
+}
+
+template<typename T, typename SourceContainer>
+MBASE_INLINE stack<T, SourceContainer>::stack(stack&& in_rhs) noexcept {
+	_Sc = std::move(in_rhs._Sc);
+}
+
+template<typename T, typename SourceContainer>
+MBASE_INLINE stack<T, SourceContainer>& stack<T, SourceContainer>::operator=(const stack& in_rhs) noexcept
+{
+	_Sc = in_rhs._Sc;
+	return *this;
+}
+
+template<typename T, typename SourceContainer>
+MBASE_INLINE stack<T, SourceContainer>& stack<T, SourceContainer>::operator=(stack&& in_rhs) noexcept
+{
+	_Sc = std::move(in_rhs._Sc);
+	return *this;
+}
+
+template<typename T, typename SourceContainer>
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR typename stack<T, SourceContainer>::reference stack<T, SourceContainer>::top() noexcept {
+	return _Sc.back();
+}
+
+template<typename T, typename SourceContainer>
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR typename stack<T, SourceContainer>::const_reference stack<T, SourceContainer>::top() const noexcept {
+	return _Sc.back();
+}
+
+template<typename T, typename SourceContainer>
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR bool stack<T, SourceContainer>::empty() const noexcept {
+	return _Sc.empty();
+}
+
+template<typename T, typename SourceContainer>
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR typename stack<T, SourceContainer>::size_type stack<T, SourceContainer>::size() const noexcept {
+	return _Sc.size();
+}
+
+template<typename T, typename SourceContainer>
+MBASE_ND(MBASE_OBS_IGNORE) SourceContainer& stack<T, SourceContainer>::getHandler() {
+	return _Sc;
+}
+
+template<typename T, typename SourceContainer>
+MBASE_INLINE_EXPR GENERIC stack<T, SourceContainer>::push(const T& in_data) noexcept {
+	_Sc.push_back(in_data);
+}
+
+template<typename T, typename SourceContainer>
+MBASE_INLINE_EXPR GENERIC stack<T, SourceContainer>::push(T&& in_data) noexcept {
+	_Sc.push_back(std::move(in_data));
+}
+
+template<typename T, typename SourceContainer>
+MBASE_INLINE_EXPR GENERIC stack<T, SourceContainer>::pop() noexcept {
+	_Sc.pop_back();
+}
+
+template<typename T, typename SourceContainer>
+MBASE_INLINE GENERIC stack<T, SourceContainer>::serialize(safe_buffer& out_buffer) noexcept {
+	_Sc.serialize(out_buffer);
+}
+
+template<typename T, typename SourceContainer>
+MBASE_INLINE GENERIC stack<T, SourceContainer>::deserialize(IBYTEBUFFER in_buffer, SIZE_T in_length) noexcept {
+	_Sc = _Sc.deserialize(in_buffer, in_length);
+}
 
 MBASE_STD_END
 
