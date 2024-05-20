@@ -2,8 +2,8 @@
 #define MBASE_STRING_H
 
 #include <mbase/vector.h>
-#include <mbase/type_sequence.h>
-#include <mbase/safe_buffer.h>
+#include <mbase/type_sequence.h> // mbase::type_sequence
+#include <mbase/safe_buffer.h> // mbase::safe_buffer
 
 MBASE_STD_BEGIN
 

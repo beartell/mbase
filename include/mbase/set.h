@@ -2,12 +2,12 @@
 #define MBASE_SET_H
 
 #include <mbase/common.h>
-#include <mbase/allocator.h>
-#include <mbase/node_type.h>
-#include <mbase/binary_iterator.h>
-#include <mbase/container_serializer_helper.h>
-#include <mbase/safe_buffer.h>
-#include <functional>
+#include <mbase/allocator.h> // mbase::allocator
+#include <mbase/node_type.h> // mbase::avl_node
+#include <mbase/binary_iterator.h> // mbase::bst_iterator, mbase::const_bst_iterator, mbase::reverse_bst_iterator, mbase::const_reverse_bst_iterator
+#include <mbase/container_serializer_helper.h> // mbase::serialize_helper
+#include <mbase/safe_buffer.h> // mbase::safe_buffer
+#include <functional> // std::less
 
 MBASE_STD_BEGIN
 

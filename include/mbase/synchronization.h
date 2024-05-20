@@ -2,7 +2,7 @@
 #define MBASE_SYNCHRONIZATION_H
 
 #include <mbase/common.h>
-#include <Windows.h>
+#include <Windows.h> // CreateMutexA, CloseHandle, WaitForSingleObject, ReleaseMutex
 
 MBASE_STD_BEGIN
 

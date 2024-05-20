@@ -2,7 +2,7 @@
 #define MBASE_STACK_H
 
 #include <mbase/common.h>
-#include <mbase/vector.h>
+#include <mbase/vector.h> // mbase::vector
 
 MBASE_STD_BEGIN
 

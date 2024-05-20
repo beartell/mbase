@@ -2,7 +2,7 @@
 #define MBASE_CHARSTREAM_H
 
 #include <mbase/common.h>
-#include <mbase/string.h>
+#include <mbase/string.h> // mbase::string
 
 MBASE_STD_BEGIN
 

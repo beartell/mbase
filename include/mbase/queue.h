@@ -2,7 +2,7 @@
 #define MBASE_QUEUE_H
 
 #include <mbase/common.h>
-#include <mbase/list.h>
+#include <mbase/list.h> // mbase::list
 
 MBASE_STD_BEGIN
 

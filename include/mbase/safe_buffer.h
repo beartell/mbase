@@ -2,7 +2,6 @@
 #define MBASE_SAFE_BUFFER_H
 
 #include <mbase/common.h>
-#include <mbase/type_sequence.h>
 
 MBASE_STD_BEGIN
 

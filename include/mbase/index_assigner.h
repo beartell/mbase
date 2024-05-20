@@ -2,9 +2,9 @@
 #define MBASE_INDEX_ASSIGNER_H
 
 #include <mbase/common.h>
-#include <mbase/vector.h>
-#include <mbase/safe_buffer.h>
-#include <mbase/stack.h>
+#include <mbase/vector.h> // mbase::vector
+#include <mbase/safe_buffer.h> // mbase::safe_buffer
+#include <mbase/stack.h> // mbase::stack
 
 MBASE_STD_BEGIN
 

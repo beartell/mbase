@@ -2,9 +2,24 @@
 #define MBASE_FILESYSTEM_H
 
 #include <mbase/common.h>
-#include <mbase/string.h>
-#include <mbase/vector.h>
+#include <mbase/string.h> // mbase::string
+#include <mbase/vector.h> // mbase::vector
+
 #include <Windows.h>
+/*
+ERROR_ALREADY_EXISTS,
+ERROR_PATH_NOT_FOUND,
+ERROR_ACCESS_DENIED,
+CreateDirectoryA, 
+FindFirstFileA, 
+FindNextFileA, 
+FindClose, 
+CopyFileA, 
+DeleteFileA, 
+GetTempPathA, 
+GetCurrentDirectoryA, 
+GetTempFileNameA
+*/
 
 MBASE_STD_BEGIN
 
@@ -27,7 +42,19 @@ MBASE_INLINE FS_ERROR delete_file(const mbase::string_view& in_path) noexcept;
 MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE mbase::string get_temp_path() noexcept;
 MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE mbase::string get_current_path() noexcept;
 MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE mbase::string get_temp_file(const mbase::string_view& in_prefix) noexcept;
-MBASE_INLINE GENERIC get_directory(const mbase::string_view& in_path, mbase::vector<FS_FILE_INFORMATION>& out_files) noexcept;
+template<typename ContainerType = mbase::vector<FS_FILE_INFORMATION>>
+MBASE_INLINE GENERIC get_directory(const mbase::string_view& in_path, ContainerType& out_files) noexcept
+{
+	WIN32_FIND_DATAA findData;
+	HANDLE findHandle = FindFirstFileA(in_path.c_str(), &findData);
+	do {
+		FS_FILE_INFORMATION ffi;
+		ffi.fileName = findData.cFileName;
+		ffi.fileSize = findData.nFileSizeHigh | findData.nFileSizeLow;
+		out_files.push_back(ffi);
+	} while (FindNextFileA(findHandle, &findData));
+	FindClose(findHandle);
+}
 
 /* IMPLEMENTATIONS */
 
@@ -80,19 +107,6 @@ MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE mbase::string get_temp_file(const mba
 	IBYTE pathString[MAX_PATH + 1] = { 0 };
 	GetTempFileNameA(".", in_prefix.c_str(), 0, pathString);
 	return mbase::string(pathString);
-}
-
-MBASE_INLINE GENERIC get_directory(const mbase::string_view& in_path, mbase::vector<FS_FILE_INFORMATION>& out_files) noexcept 
-{
-	WIN32_FIND_DATAA findData;
-	HANDLE findHandle = FindFirstFileA(in_path.c_str(), &findData);
-	do {
-		FS_FILE_INFORMATION ffi;
-		ffi.fileName = findData.cFileName;
-		ffi.fileSize = findData.nFileSizeHigh | findData.nFileSizeLow;
-		out_files.push_back(ffi);
-	} while (FindNextFileA(findHandle, &findData));
-	FindClose(findHandle);
 }
 
 

@@ -2,10 +2,10 @@
 #define MBASE_IOBASE_H
 
 #include <mbase/common.h>
-#include <mbase/char_stream.h>
-#include <mbase/string.h>
-#include <mbase/safe_buffer.h>
-#include <Windows.h>
+#include <mbase/char_stream.h> // mbase::char_stream
+#include <mbase/string.h> // mbase::string
+#include <mbase/safe_buffer.h> // mbase::safe_buffer
+#include <Windows.h> // FILE_BEGIN, FILE_CURRENT, FILE_END, SetFilePointer
 
 MBASE_STD_BEGIN
 
@@ -66,12 +66,13 @@ public:
 	};
 	
 	/* ===== BUILDER METHODS BEGIN ===== */
-	io_base() : istream(nullptr), ostream(nullptr) {}
+	io_base() : istream(nullptr), ostream(nullptr), operateReady(false) {}
 	/* ===== BUILDER METHODS END ===== */
 
 	/* ===== OBSERVATION METHODS BEGIN ===== */
 	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) io_context& get_raw_context() noexcept { return rawContext; }
 	MBASE_ND(MBASE_OBS_IGNORE) U32 get_last_error() const noexcept { return lastError; }
+	MBASE_ND(MBASE_OBS_IGNORE) bool is_operate_ready() const noexcept { return operateReady; }
 	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) char_stream* get_is() noexcept { return istream; }
 	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) char_stream* get_os() noexcept { return ostream; }
 	/* ===== OBSERVATION METHODS END ===== */
@@ -123,6 +124,7 @@ protected:
 	char_stream* istream;
 	char_stream* ostream;
 	U32 lastError;
+	bool operateReady;
 };
 
 MBASE_STD_END

@@ -2,7 +2,7 @@
 #define MBASE_NODE_TYPE_H
 
 #include <mbase/common.h>
-#include <algorithm>
+#include <algorithm> // std::max
 
 MBASE_STD_BEGIN
 

@@ -4,8 +4,7 @@
 #include <mbase/io_base.h> // mbase::io_base
 #include <mbase/string.h> // mbase::string
 #include <mbase/behaviors.h> // mbase::non_copymovable
-#include <mbase/char_stream.h>
-#include <mbase/rng.h>
+#include <mbase/char_stream.h> // mbase::char_stream
 #include <Windows.h> // CreateFileA, SetFilePointer, WriteFile, ReadFile, CreateIoCompletionPort
 
 MBASE_STD_BEGIN

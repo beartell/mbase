@@ -22,13 +22,18 @@ class thread {
 public:
 	using raw_handle = HANDLE;
 
+	/* ===== BUILDER METHODS BEGIN ===== */
 	MBASE_INLINE thread(Func&& in_fptr, Args&&... in_args) noexcept;
 	MBASE_INLINE thread(thread&& in_rhs) noexcept;
 	MBASE_INLINE ~thread() noexcept;
+	/* ===== BUILDER METHODS END ===== */
 
+	/* ===== OBSERVATION METHODS BEGIN ===== */
 	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE I32 get_id() noexcept;
 	MBASE_ND(MBASE_OBS_IGNORE) static I32 get_current_thread_id() noexcept;
+	/* ===== OBSERVATION METHODS END ===== */
 
+	/* ===== STATE-MODIFIER METHODS BEGIN ===== */
 	MBASE_INLINE thread_error run() noexcept;
 	MBASE_INLINE thread_error run(Func&& in_fptr, Args&&... in_args) noexcept;
 	MBASE_INLINE thread_error run_with_args(Args&... in_args) noexcept;
@@ -36,6 +41,7 @@ public:
 	MBASE_INLINE thread_error halt() noexcept;
 	MBASE_INLINE thread_error resume() noexcept;
 	MBASE_INLINE thread_error exit(I32 in_exit_code) noexcept;
+	/* ===== STATE-MODIFIER METHODS END ===== */
 
 private:
 	struct thread_param {

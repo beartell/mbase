@@ -2,8 +2,8 @@
 #define MBASE_MAP_H
 
 #include <mbase/common.h>
-#include <mbase/allocator.h>
-#include <functional>
+#include <mbase/allocator.h> // mbase::allocator
+#include <functional> // std::less
 
 MBASE_STD_BEGIN
 

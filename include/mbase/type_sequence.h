@@ -2,8 +2,8 @@
 #define MBASE_TYPE_SEQUENCE_H
 
 #include <mbase/common.h>
-#include <mbase/sequence_iterator.h>
-#include <mbase/allocator.h>
+#include <mbase/sequence_iterator.h> // mbase::sequence_iterator, mbase::const_sequence_iterator, mbase::reverse_iterator, mbase::const_reverse_sequence_iterator
+#include <mbase/allocator.h> // mbase::allocator
 
 MBASE_STD_BEGIN
 

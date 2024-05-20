@@ -2,13 +2,13 @@
 #define MBASE_LIST_H
 
 #include <mbase/common.h>
-#include <mbase/allocator.h>
-#include <mbase/list_iterator.h>
-#include <mbase/safe_buffer.h>
-#include <mbase/node_type.h>
-#include <iterator>
-#include <initializer_list>
-#include <type_traits>
+#include <mbase/allocator.h> // mbase::allocator
+#include <mbase/list_iterator.h> // mbase::bi_list_iterator, mbase::const_bi_list_iterator, mbase::reverse_bi_list_iterator, mbase::const_reverse_bi_list_iterator
+#include <mbase/safe_buffer.h> // mbase::safe_buffer
+#include <mbase/node_type.h> // mbase::list_node
+#include <initializer_list> // std::initializer_list
+#include <iterator> // std::iterator_traits
+#include <type_traits> // std::is_constructible
 
 MBASE_STD_BEGIN
 

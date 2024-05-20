@@ -2,8 +2,8 @@
 #define MBASE_IOTCPCLIENT_H
 
 #include <mbase/io_base.h>
-#include <mbase/wsa_init.h>
-#include <mbase/behaviors.h>
+#include <mbase/wsa_init.h> // static wsa socket initializiation through mbase::wsa_initializer
+#include <mbase/behaviors.h> // mbase::non_copymovable
 
 MBASE_STD_BEGIN
 
@@ -78,7 +78,10 @@ io_tcp_client::io_tcp_client() noexcept : rawHandle(INVALID_SOCKET)
 
 io_tcp_client::io_tcp_client(const mbase::string& in_name, const mbase::string& in_port) noexcept 
 {
-	connect_target(in_name, in_port);
+	if(!connect_target(in_name, in_port))
+	{
+		operateReady = true;
+	}
 }
 
 io_tcp_client::~io_tcp_client() noexcept {
@@ -153,6 +156,7 @@ I32 io_tcp_client::connect_target(const mbase::string& in_name, const mbase::str
 
 I32 io_tcp_client::disconnect() noexcept
 {
+	operateReady = false;
 	I32 dcResult = closesocket(rawHandle);
 	if (dcResult == SOCKET_ERROR)
 	{

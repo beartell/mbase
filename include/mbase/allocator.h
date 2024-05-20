@@ -2,7 +2,7 @@
 #define MBASE_ALLOCATOR_H
 
 #include <mbase/common.h>
-#include <type_traits>
+#include <utility> // std::forward
 MBASE_STD_BEGIN
 
 /* 

@@ -2,7 +2,7 @@
 #define MBASE_STD_CSH_H
 
 #include <mbase/common.h>
-#include <mbase/safe_buffer.h>
+#include <mbase/safe_buffer.h> // mbase::safe_buffer
 
 MBASE_STD_BEGIN
 
