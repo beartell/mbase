@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MBASE Library</title>
+    <link rel="stylesheet" type="text/css" href="general.css">
+</head>
+<body>
+    <div id="flexContainer">
+        <div id="textSection">
+            <h2 id="c0">1. About MBASE Library</h2>
+            <p>
+                MBASE, which stands for “my base” is a header only async io, event handling, timer, and serializable containers library. As the name suggests, it is a base tools library for either complex or basic applications. It's exposed container interface is mostly compatible with the standard container interface (in terms of types and methods) so that most functions in the standard algorithms library will work with the MBASE containers. Along with standard container compatibility, containers may and will have additional methods that can be leveraged by the users of the library.</p>
+            <p>
+                Library is divided into two parts as follows:
+                <ul>
+                    <li>Framework</li>
+                    <li>Standard</li>
+                </ul>
+            </p>
+            <p>
+                The framework part provides objects to the complex tasks such as, timer loop management, thread pool management, async io etc.
+            </p>
+            <p>
+                The standard part provides the basic structures for developing the application. It provides objects such as string, vector, list, set, thread, filesystem library etc. 
+            </p>
+            <p>
+                <u>Throughout the lifetime of the development, the library will constantly be extended in the future so that it will provide a rich and useful interface for basic functionalities in the future. </u>
+            </p>
+            <h2 id="c1">2. Library Documentation</h2>
+            <p>
+                Here is a list of documents that show what the library is:
+                <ul>
+                    <li><a href="framework_start.html">MBASE Framework Getting Started</a></li>
+                    <li><a href="standard_start.html">MBASE Standard Getting Started</a></li>
+                    <li><a href="conventions.html">MBASE Conventions and Semantics (For Contribution)</a></li>
+                </ul>
+            </p>
+            <p>
+                As if it seems unnecessary to reinvent the wheel again by implementing the vector, list, string, etc. Or some might ask, why not just write a serialization interface over standard library, or just simply write a generic templated functions that extends the functionality of the containers. Although the individual is right about his/her thoughts about this, the rationale is slightly different in its tenets inside, and I surely will explain it to my fellow computer enthusiasts.
+            </p>
+            <p>
+                The standard library and the C++ language features are maintained and determined by a determined and well-educated committee that makes decisions and improvements over, complicated and solid processes. Since the language C++ is a giant in itself and it is a tough job to maintain and improve as a whole. Since there is a lot of paperwork and bureaucracy involved (for good reasons), it becomes very difficult to extend the basic library with basic features. For this reason, in 2024 standard string does not even have a split or to lower methods and sequential containers like vector, still can’t be serialized to binary easily, developers still have some problems with the thing called reflection. It’s not because it is impossible to provide an easy interface for these features neither is it unnecessary, it is because it’s too difficult to make something a language feature and as I have said, it is for a good reason. Because the standard library is used by many users, and it must be solid and error-free. And also, it may be arrogant to say this but most of the standard library implementations especially MSVC (sorry Microsoft), are so cryptic that it is almost impossible to understand and read the code. 
+            </p>
+            <p>
+                For this reason, the purpose of the MBASE library is to provide a mostly standard compatible interface to the user while allowing the contributors to extend the functionality of the existing objects, containers and such and implement new ones without the problem of going to third-party libraries to extend the functionality of standard library.  
+            </p>
+            <p>
+                <u>A quick disclaimer that the MBASE library is not a wrapper functionality over standard library but instead it is an alternative set of functionalities to some of the containers in the standard library. It should be noted that the purpose is not to replace the standard library (which is an unnecessary and impossible task) but to allow users to use well-known structures such as vector, set, string etc. with extra features and standard-like interface.</u>
+            </p>
+            <p>
+                Blessings to everyone who is in this page. Here is your blessing every second.
+            </p>
+            <pre style="font-family:monospace;color: rgb(68, 68, 68); background-color: rgb(243, 243, 243); font-weight: 400; "><ol style="padding-left: 3em;"><li><span style="color: rgb(31, 113, 153); font-weight: 400;">#<span style="color: rgb(31, 113, 153); font-weight: 700;">include</span> <span style="color: rgb(136, 0, 0); font-weight: 400;">&lt;iostream&gt;</span></span></li><li><span style="color: rgb(31, 113, 153); font-weight: 400;">#<span style="color: rgb(31, 113, 153); font-weight: 700;">include</span> <span style="color: rgb(136, 0, 0); font-weight: 400;">&lt;mbase/app/timer_loop.h&gt;</span></span></li><li><span style="color: rgb(31, 113, 153); font-weight: 400;">#<span style="color: rgb(31, 113, 153); font-weight: 700;">include</span> <span style="color: rgb(136, 0, 0); font-weight: 400;">&lt;mbase/app/timers.h&gt;</span></span></li><li></li><li><span style="color: rgb(68, 68, 68); font-weight: 700;">class</span> <span style="color: rgb(136, 0, 0); font-weight: 700;">sample_timer</span> : <span style="color: rgb(68, 68, 68); font-weight: 700;">public</span> mbase::time_interval {</li><li><span style="color: rgb(68, 68, 68); font-weight: 700;">public</span>:</li><li>    <span style="color: rgb(68, 68, 68); font-weight: 400;"><span style="color: rgb(136, 0, 0); font-weight: 400;">void</span> <span style="color: rgb(136, 0, 0); font-weight: 700;">on_call</span><span style="color: rgb(68, 68, 68); font-weight: 400;">(user_data in_data)</span> <span style="color: rgb(68, 68, 68); font-weight: 700;">override</span> </span>{</li><li>        std::cout &lt;&lt; <span style="color: rgb(136, 0, 0); font-weight: 400;">"Blessed!"</span> &lt;&lt; std::endl;</li><li>    }</li><li></li><li>    <span style="color: rgb(68, 68, 68); font-weight: 400;"><span style="color: rgb(136, 0, 0); font-weight: 400;">void</span> <span style="color: rgb(136, 0, 0); font-weight: 700;">on_unregister</span><span style="color: rgb(68, 68, 68); font-weight: 400;">()</span> <span style="color: rgb(68, 68, 68); font-weight: 700;">override</span> </span>{</li><li>        std::cout &lt;&lt; <span style="color: rgb(136, 0, 0); font-weight: 400;">"Enough blessings..."</span> &lt;&lt; std::endl;</li><li>    }</li><li>};</li><li></li><li><span style="color: rgb(68, 68, 68); font-weight: 400;"><span style="color: rgb(136, 0, 0); font-weight: 400;">int</span> <span style="color: rgb(136, 0, 0); font-weight: 700;">main</span><span style="color: rgb(68, 68, 68); font-weight: 400;">()</span></span></li><li>{</li><li>    </li><li>    mbase::timer_loop tl;</li><li>    sample_timer myTimer;</li><li></li><li>    myTimer.<span style="color: rgb(57, 115, 0); font-weight: 400;">SetTargetTime</span>(<span style="color: rgb(136, 0, 0); font-weight: 400;">1000</span>);</li><li>    myTimer.<span style="color: rgb(57, 115, 0); font-weight: 400;">SetTickLimit</span>(<span style="color: rgb(136, 0, 0); font-weight: 400;">5</span>);</li><li>     </li><li>    tl.<span style="color: rgb(57, 115, 0); font-weight: 400;">RegisterTimer</span>(myTimer);</li><li>    tl.<span style="color: rgb(57, 115, 0); font-weight: 400;">RunTimerLoop</span>();</li><li></li><li>    <span style="color: rgb(57, 115, 0); font-weight: 400;">getchar</span>();</li><li>    <span style="color: rgb(68, 68, 68); font-weight: 700;">return</span> <span style="color: rgb(136, 0, 0); font-weight: 400;">0</span>;</li><li>}</li></ol></pre>
+        </div>
+        <div id="pageNavigation">
+            <h2>Page Navigation</h2>
+            
+        </div>
+    </div>
+    
+</body>
+<script src="navig_generator.js"></script>
+</html>

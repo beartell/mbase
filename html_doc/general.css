@@ -1,0 +1,37 @@
+#flexContainer {
+    display: grid;
+    grid-template-columns: 4fr 1fr;
+    grid-gap: 5px;
+    margin-top: 0;
+}
+#textSection {
+    /* box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19); */
+    padding: 1%;
+}
+#pageNavigation {
+    border: 1px solid rgba(0, 0, 0, .4); 
+    border-radius: 5px; 
+    padding-left: 4%;
+    padding-bottom: 4%;
+    padding-top: 2%;
+    align-self: start;
+    position: sticky;
+    top: 1rem;
+    
+}
+
+a:link {
+    color: red;
+    text-decoration: none;
+}
+
+a:hover {
+    color: blue;
+    text-decoration: underline;
+}
+
+
+a:visited {
+    color: purple;
+    text-decoration: none;
+}
