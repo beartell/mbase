@@ -35,7 +35,7 @@ public:
 
 	~timer_loop() {}
 
-	flags RegisterTimer(timer_base& in_timer) noexcept {
+	flags register_timer(timer_base& in_timer) noexcept {
 		if (in_timer.mIsRegistered)
 		{
 			return flags::TIMER_ERR_ALREADY_REGISTERED;
@@ -49,7 +49,7 @@ public:
 		in_timer.handlerId = ++timerIdCounter;
 		flags terr = flags::TIMER_SUCCESS;
 
-		if(in_timer.GetTargetTime() <= 0)
+		if(in_timer.get_target_time() <= 0)
 		{
 			terr = flags::TIMER_WARN_TIMER_WILL_EXECUTE_IMM;
 		}
@@ -63,7 +63,7 @@ public:
 		return terr;
 	}
 
-	flags RegisterTimer(timer_base& in_timer, PTRGENERIC in_usr_data) noexcept {
+	flags register_timer(timer_base& in_timer, PTRGENERIC in_usr_data) noexcept {
 		if (in_timer.mIsRegistered)
 		{
 			return flags::TIMER_ERR_ALREADY_REGISTERED;
@@ -77,7 +77,7 @@ public:
 		in_timer.handlerId = ++timerIdCounter; // Timer ids will start from 1
 		flags terr = flags::TIMER_SUCCESS;
 
-		if (in_timer.GetTargetTime() <= 0)
+		if (in_timer.get_target_time() <= 0)
 		{
 			// WARN THE USER THAT THE TIMER WILL BE EXECUTED IMMEDIATELY
 			terr = flags::TIMER_WARN_TIMER_WILL_EXECUTE_IMM;
@@ -93,7 +93,7 @@ public:
 		return terr;
 	}
 
-	flags UnregisterTimer(timer_base& in_timer) noexcept {
+	flags unregister_timer(timer_base& in_timer) noexcept {
 		if (!in_timer.mIsRegistered)
 		{
 			return flags::TIMER_SUCCESS;
@@ -116,19 +116,19 @@ public:
 		return flags::TIMER_SUCCESS;
 	}
 
-	MBASE_ND("timer loop observation being ignored") U32 GetDeltaSeconds() const noexcept {
+	MBASE_ND("timer loop observation being ignored") U32 get_delta_seconds() const noexcept {
 		return deltaTime;
 	}
 
-	MBASE_ND("timer loop observation being ignored") mbase::tpool* GetThreadPool() noexcept {
+	MBASE_ND("timer loop observation being ignored") mbase::tpool* get_thread_pool() noexcept {
 		return &threadPool;
 	}
 
-	MBASE_ND("timer loop observation being ignored") mbase::list<timer_base*>* GetTimerList() noexcept {
+	MBASE_ND("timer loop observation being ignored") mbase::list<timer_base*>* get_timer_list() noexcept {
 		return &registeredTimers;
 	}
 
-	GENERIC RunTimerLoop() noexcept {
+	GENERIC run_timer_loop() noexcept {
 		if(isRunning)
 		{
 			return;
@@ -156,13 +156,13 @@ public:
 				++It;
 				if (tmpTimerBase->mCurrentTime >= tmpTimerBase->mTargetTime)
 				{
-					if(tmpTimerBase->GetExecutionPolicy() == mbase::timer_base::flags::TIMER_POLICY_ASYNC)
+					if(tmpTimerBase->get_execution_policy() == mbase::timer_base::flags::TIMER_POLICY_ASYNC)
 					{
-						threadPool.ExecuteJob(tmpTimerBase);
+						threadPool.execute_job(tmpTimerBase);
 					}
 					else
 					{
-						tmpTimerBase->on_call(tmpTimerBase->GetUserData());
+						tmpTimerBase->on_call(tmpTimerBase->get_user_data());
 					}
 
 					if (!tmpTimerBase->mIsRegistered)
@@ -171,7 +171,7 @@ public:
 						continue;
 					}
 
-					if (tmpTimerBase->GetTimerType() == mbase::timer_base::flags::TIMER_TYPE_TIMEOUT)
+					if (tmpTimerBase->get_timer_type() == mbase::timer_base::flags::TIMER_TYPE_TIMEOUT)
 					{
 						tmpTimerBase->mIsRegistered = false;
 						tmpTimerBase->loopId = -1;
@@ -182,7 +182,7 @@ public:
 					else
 					{
 						time_interval* ti = static_cast<time_interval*>(tmpTimerBase);
-						ti->ResetTime();
+						ti->reset_time();
 						ti->tickCount++;
 						if(ti->tickLimit != 0)
 						{
@@ -190,7 +190,6 @@ public:
 							{
 								ti->mIsRegistered = false;
 								ti->loopId = -1;
-								//ti->suppliedData = nullptr;
 								ti->on_unregister();
 								It = registeredTimers.erase(ti->teSelf);
 							}
@@ -201,38 +200,15 @@ public:
 		}
 	}
 
-	// RETURNS ELAPSED TIME
-	GENERIC ManualRunTimers(PTRF64 in_ms) noexcept {
-		mbase::list<timer_base*>::iterator It = registeredTimers.begin();
-		while (It != registeredTimers.end())
-		{
-			timer_base* tmpTimerBase = *It;
-			tmpTimerBase->mCurrentTime += *in_ms * 1000;
-			if (tmpTimerBase->mCurrentTime >= tmpTimerBase->mTargetTime)
-			{
-				tmpTimerBase->on_call(tmpTimerBase->GetUserData());
-				if (tmpTimerBase->GetTimerType() == mbase::timer_base::flags::TIMER_TYPE_TIMEOUT)
-				{
-					It = registeredTimers.erase(It);
-				}
-				else
-				{
-					tmpTimerBase->ResetTime();
-				}
-			}
-			It++;
-		}
-	}
-
-	MBASE_ND("timer loop observation being ignored") U32 GetActiveTimerCount() const noexcept {
+	MBASE_ND("timer loop observation being ignored") U32 get_active_timer_count() const noexcept {
 		return registeredTimers.size();
 	}
 
-	GENERIC SetTimerLimit(U32 in_limit) noexcept {
+	GENERIC set_timer_limit(U32 in_limit) noexcept {
 		timerLimit = in_limit;
 	}
 
-	GENERIC Halt() noexcept {
+	GENERIC halt() noexcept {
 		isRunning = false;
 	}
 

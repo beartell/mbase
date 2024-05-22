@@ -16,14 +16,14 @@ MBASE_BEGIN
 class tpool : public non_copymovable {
 public:
 	struct thread_pool_routine_args {
-		static I32 _PoolRoutine(thread_pool_routine_args* in_args) {
+		static I32 _pool_routine(thread_pool_routine_args* in_args) {
 			while (in_args->selfClass->isRunning)
 			{
 				if (in_args->tHandler)
 				{
-					in_args->tHandler->on_call(in_args->tHandler->GetUserData());
+					in_args->tHandler->on_call(in_args->tHandler->get_user_data());
 					in_args->tHandler = nullptr;
-					in_args->selfClass->_UpdateIndex(in_args->tIndex);
+					in_args->selfClass->_update_index(in_args->tIndex);
 				}
 
 				in_args->selfThread.halt();
@@ -31,11 +31,11 @@ public:
 			return 0;
 		}
 
-		thread_pool_routine_args() : selfClass(nullptr), tHandler(nullptr), selfThread(_PoolRoutine, nullptr), tIndex(0) {}
+		thread_pool_routine_args() : selfClass(nullptr), tHandler(nullptr), selfThread(_pool_routine, nullptr), tIndex(0) {}
 		tpool* selfClass;
 		I32 tIndex;
 		handler_base* tHandler;
-		mbase::thread<decltype(_PoolRoutine), thread_pool_routine_args*> selfThread;
+		mbase::thread<decltype(_pool_routine), thread_pool_routine_args*> selfThread;
 	};
 
 	tpool() noexcept : isRunning(true){
@@ -86,7 +86,7 @@ public:
 		delete[]threadPool;
 	}
 
-	GENERIC ExecuteJob(handler_base* in_handler) {
+	GENERIC execute_job(handler_base* in_handler) {
 		MBASE_NULL_CHECK_RETURN(in_handler);
 
 		mtx.acquire();
@@ -101,22 +101,22 @@ public:
 		++activeThreadCounter;
 
 		threadPool[freeIndex].tHandler = in_handler;
-		threadPool[freeIndex].tHandler->_SetThreadIndex(freeIndex);
+		threadPool[freeIndex].tHandler->_set_thread_index(freeIndex);
 		threadPool[freeIndex].selfThread.resume();
 		mtx.release();
 	}
 
-	MBASE_ND("thread pool observation being ignored") U32 GetThreadCount() const noexcept {
+	MBASE_ND("thread pool observation being ignored") U32 get_thread_count() const noexcept {
 		return threadCount;
 	}
 
-	MBASE_ND("thread pool routine info being ignored") thread_pool_routine_args* GetRoutineInfo(I32 in_index) noexcept {
+	MBASE_ND("thread pool routine info being ignored") thread_pool_routine_args* get_routine_info(I32 in_index) noexcept {
 		return threadPool + in_index;
 	}
 
 	// INTERNAL CALL
 	// MUST NOT BE CALLED MANUALLY BY USER
-	GENERIC _UpdateIndex(I32 in_index) noexcept {
+	GENERIC _update_index(I32 in_index) noexcept {
 		mtx.acquire();
 
 		freeThreadIndex.push(in_index);

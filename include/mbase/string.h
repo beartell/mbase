@@ -435,6 +435,7 @@ private:
     MBASE_INLINE GENERIC _resize(size_type in_size, value_type in_char) noexcept;
     MBASE_INLINE size_type _calculate_capacity(size_type in_size) noexcept;
     MBASE_INLINE GENERIC _build_string(size_type in_capacity) noexcept;
+    MBASE_INLINE GENERIC _clear_self() noexcept;
     /* ===== STATE-MODIFIER METHODS END ===== */
 
     allocator_type externalAllocator;
@@ -446,7 +447,7 @@ private:
 template<typename SeqType, typename SeqBase, typename Allocator>
 MBASE_INLINE_EXPR character_sequence<SeqType, SeqBase, Allocator>::character_sequence() noexcept : raw_data(nullptr), mSize(0), mCapacity(8), externalAllocator(Allocator()) 
 {
-    raw_data = externalAllocator.allocate(mCapacity, true);
+    _build_string(mCapacity);
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
@@ -459,7 +460,7 @@ MBASE_INLINE_EXPR character_sequence<SeqType, SeqBase, Allocator>::character_seq
 template<typename SeqType, typename SeqBase, typename Allocator>
 MBASE_INLINE_EXPR character_sequence<SeqType, SeqBase, Allocator>::character_sequence(const Allocator& in_alloc) noexcept : raw_data(nullptr), mSize(0), mCapacity(8), externalAllocator(in_alloc) 
 {
-    raw_data = externalAllocator.allocate(mCapacity, true);
+    _build_string(mCapacity);
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
@@ -526,7 +527,7 @@ MBASE_INLINE_EXPR character_sequence<SeqType, SeqBase, Allocator>::character_seq
     }
     else {
         _build_string(in_rhs.mCapacity);
-        for (I32 i = 0; i < in_count; i++)
+        for (difference_type i = 0; i < in_count; i++)
         {
             if(itr_pos == itr_end)
             {
@@ -552,7 +553,7 @@ MBASE_INLINE_EXPR character_sequence<SeqType, SeqBase, Allocator>::character_seq
     }
     else {
         _build_string(cs.mCapacity);
-        for (I32 i = 0; i < in_count; i++)
+        for (difference_type i = 0; i < in_count; i++)
         {
             if (itr_pos == itr_end)
             {
@@ -583,7 +584,7 @@ MBASE_INLINE_EXPR character_sequence<SeqType, SeqBase, Allocator>::character_seq
 template<typename SeqType, typename SeqBase, typename Allocator>
 MBASE_INLINE_EXPR character_sequence<SeqType, SeqBase, Allocator>::character_sequence(const character_sequence& in_rhs) noexcept : raw_data(nullptr), mSize(in_rhs.mSize), mCapacity(in_rhs.mCapacity), externalAllocator(Allocator()) 
 {
-    raw_data = externalAllocator.allocate(mCapacity, true);
+    _build_string(mCapacity);
     this->copy_bytes(raw_data, in_rhs.raw_data, mSize); // no need the include null-terminator since we zero the memory
 }
 
@@ -598,7 +599,7 @@ MBASE_INLINE_EXPR character_sequence<SeqType, SeqBase, Allocator>::character_seq
 template<typename SeqType, typename SeqBase, typename Allocator>
 MBASE_INLINE_EXPR character_sequence<SeqType, SeqBase, Allocator>::character_sequence(const character_sequence& in_rhs, const Allocator& in_alloc) : raw_data(nullptr), mSize(in_rhs.mSize), mCapacity(in_rhs.mCapacity), externalAllocator(in_alloc) 
 {
-    raw_data = externalAllocator.allocate(mCapacity, true);
+    _build_string(mCapacity);
     this->copy_bytes(raw_data, in_rhs.raw_data, mSize); // no need the include null-terminator since we zero the memory
 }
 
@@ -627,19 +628,18 @@ MBASE_INLINE_EXPR character_sequence<SeqType, SeqBase, Allocator>::~character_se
     if(raw_data)
     {
         externalAllocator.deallocate(raw_data, 0);
-    }   
+        raw_data = nullptr;
+        mSize = 0;
+        mCapacity = 0;
+    }
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
 MBASE_INLINE character_sequence<SeqType, SeqBase, Allocator>& character_sequence<SeqType, SeqBase, Allocator>::operator=(const character_sequence& in_rhs) noexcept 
 {
-    if (raw_data)
-    {
-        externalAllocator.deallocate(raw_data, 0);
-    }
-
+    _clear_self();
     mSize = in_rhs.mSize;
-    _build_string(in_rhs.mCapacity);
+    _build_string(this->_calculate_capacity(mSize));
     this->copy_bytes(raw_data, in_rhs.raw_data, mSize);
     return *this;
 }
@@ -647,11 +647,7 @@ MBASE_INLINE character_sequence<SeqType, SeqBase, Allocator>& character_sequence
 template<typename SeqType, typename SeqBase, typename Allocator>
 MBASE_INLINE character_sequence<SeqType, SeqBase, Allocator>& character_sequence<SeqType, SeqBase, Allocator>::operator=(character_sequence&& in_rhs) noexcept 
 {
-    if (raw_data)
-    {
-        externalAllocator.deallocate(raw_data, 0);
-    }
-
+    _clear_self();
     mSize = in_rhs.mSize;
     mCapacity = in_rhs.mCapacity;
     raw_data = in_rhs.raw_data;
@@ -665,15 +661,10 @@ MBASE_INLINE character_sequence<SeqType, SeqBase, Allocator>& character_sequence
 template<typename SeqType, typename SeqBase, typename Allocator>
 MBASE_INLINE character_sequence<SeqType, SeqBase, Allocator>& character_sequence<SeqType, SeqBase, Allocator>::operator=(const_pointer in_rhs) noexcept 
 {
-    if (raw_data)
-    {
-        externalAllocator.deallocate(raw_data, 0);
-    }
-
+    _clear_self();
     size_type st_length = this->length_bytes(in_rhs);
     mCapacity = this->_calculate_capacity(st_length);
-
-    raw_data = externalAllocator.allocate(mCapacity, true);
+    _build_string(mCapacity);
     this->copy_bytes(raw_data, in_rhs, st_length);
     return *this;
 }
@@ -681,7 +672,8 @@ MBASE_INLINE character_sequence<SeqType, SeqBase, Allocator>& character_sequence
 template<typename SeqType, typename SeqBase, typename Allocator>
 MBASE_INLINE character_sequence<SeqType, SeqBase, Allocator>& character_sequence<SeqType, SeqBase, Allocator>::operator=(value_type in_rhs) noexcept 
 {
-    assign(1, in_rhs);
+    clear();
+    push_back(in_rhs);
     return *this;
 }
 
@@ -1312,7 +1304,7 @@ template<typename SeqType, typename SeqBase, typename Allocator>
 MBASE_INLINE_EXPR character_sequence<SeqType, SeqBase, Allocator>& character_sequence<SeqType, SeqBase, Allocator>::assign(size_type in_count, value_type in_ch) 
 {
     character_sequence freshString(in_count, in_ch);
-    *this = freshString;
+    *this = std::move(freshString);
     return *this;
 }
 
@@ -1335,7 +1327,7 @@ MBASE_INLINE_EXPR character_sequence<SeqType, SeqBase, Allocator>& character_seq
     else
     {
         character_sequence cs;
-        for (I32 i = 0; i < in_count; i++)
+        for (difference_type i = 0; i < in_count; i++)
         {
             cs.push_back(*iPos);
             iPos++;
@@ -1896,36 +1888,6 @@ MBASE_INLINE_EXPR typename character_sequence<SeqType, SeqBase, Allocator>::iter
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_INLINE_EXPR character_sequence<SeqType, SeqBase, Allocator>& character_sequence<SeqType, SeqBase, Allocator>::replace(size_type in_pos, size_type in_count, const character_sequence& in_str)
-{
-    return *this;
-}
-
-template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_INLINE_EXPR character_sequence<SeqType, SeqBase, Allocator>& character_sequence<SeqType, SeqBase, Allocator>::replace(iterator in_begin, iterator in_end, const character_sequence& in_str)
-{
-    return *this;
-}
-
-template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_INLINE_EXPR character_sequence<SeqType, SeqBase, Allocator>& character_sequence<SeqType, SeqBase, Allocator>::replace(size_type in_pos, size_type in_count, const character_sequence& in_str, size_type in_pos2, size_type in_count2)
-{
-    return *this;
-}
-
-template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_INLINE_EXPR character_sequence<SeqType, SeqBase, Allocator>& character_sequence<SeqType, SeqBase, Allocator>::replace(size_type in_pos, size_type in_count, size_type in_count2, value_type in_char)
-{
-    return *this;
-}
-
-template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_INLINE_EXPR character_sequence<SeqType, SeqBase, Allocator>& character_sequence<SeqType, SeqBase, Allocator>::replace(const_iterator in_begin, const_iterator in_end, size_type in_count2, value_type in_char)
-{
-    return *this;
-}
-
-template<typename SeqType, typename SeqBase, typename Allocator>
 character_sequence<SeqType, SeqBase, Allocator>& character_sequence<SeqType, SeqBase, Allocator>::operator+=(const character_sequence& in_rhs) noexcept 
 {
     if (!in_rhs.mSize)
@@ -2055,6 +2017,7 @@ MBASE_INLINE GENERIC character_sequence<SeqType, SeqBase, Allocator>::_resize(si
         {
             push_back(in_char);
         }
+        return;
     }
     _resize(in_size);
 }
@@ -2078,6 +2041,18 @@ MBASE_INLINE GENERIC character_sequence<SeqType, SeqBase, Allocator>::_build_str
 {
     mCapacity = in_capacity;
     raw_data = externalAllocator.allocate(mCapacity, true);
+}
+
+template<typename SeqType, typename SeqBase, typename Allocator>
+MBASE_INLINE GENERIC character_sequence<SeqType, SeqBase, Allocator>::_clear_self() noexcept
+{
+    if(raw_data)
+    {
+        externalAllocator.deallocate(raw_data, 0);
+        raw_data = nullptr;
+        mSize = 0;
+        mCapacity = 0;
+    }
 }
 
 using string = character_sequence<IBYTE>;

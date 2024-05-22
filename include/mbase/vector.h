@@ -11,6 +11,17 @@
 
 #include <initializer_list> // For std::initializer_list
 
+/*
+			_
+		   | |                     _     _
+  _ __ ___ | |__   __ _ ___  ___ _| |_ _| |_
+ | '_ ` _ \| '_ \ / _` / __|/ _ \_   _|_   _|
+ | | | | | | |_) | (_| \__ \  __/ |_|   |_|
+ |_| |_| |_|_.__/ \__,_|___/\___|
+
+*/
+
+
 MBASE_STD_BEGIN
 
 /* --- OBJECT BEHAVIOURS --- */

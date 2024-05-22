@@ -6,6 +6,7 @@
 #include <mbase/list_iterator.h> // mbase::bi_list_iterator, mbase::const_bi_list_iterator, mbase::reverse_bi_list_iterator, mbase::const_reverse_bi_list_iterator
 #include <mbase/safe_buffer.h> // mbase::safe_buffer
 #include <mbase/node_type.h> // mbase::list_node
+#include <mbase/vector.h> // mbase::vector
 #include <initializer_list> // std::initializer_list
 #include <iterator> // std::iterator_traits
 #include <type_traits> // std::is_constructible

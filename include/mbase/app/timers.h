@@ -33,45 +33,45 @@ public:
 		suppliedData = in_data;
 	}
 
-	MBASE_ND("timer observation ignored") I32 GetLoopId() const noexcept {
+	MBASE_ND("timer observation ignored") I32 get_loop_id() const noexcept {
 		return loopId;
 	}
 
-	MBASE_ND("timer observation ignored") I32 GetTargetTime() const noexcept {
+	MBASE_ND("timer observation ignored") I32 get_target_time() const noexcept {
 		return mTargetTime;
 	}
 
-	MBASE_ND("timer observation ignored") I32 GetCurrTime() const noexcept {
+	MBASE_ND("timer observation ignored") I32 get_current_time() const noexcept {
 		return mCurrentTime;
 	}
 
-	MBASE_ND("timer observation ignored") I32 GetRemainingTime() noexcept {
+	MBASE_ND("timer observation ignored") I32 get_remaining_time() const noexcept {
 		return mTargetTime - mCurrentTime;
 	}
 
-	MBASE_ND("timer observation ignored") flags GetTimerType() const noexcept {
+	MBASE_ND("timer observation ignored") flags get_timer_type() const noexcept {
 		return tt;
 	}
 
-	MBASE_ND("timer observation ignored") flags GetExecutionPolicy() const noexcept {
+	MBASE_ND("timer observation ignored") flags get_execution_policy() const noexcept {
 		return mPolicy;
 	}
 
-	MBASE_ND("timer observation ignored") bool IsRegistered() const noexcept {
+	MBASE_ND("timer observation ignored") bool is_registered() const noexcept {
 		return mIsRegistered;
 	}
 
-	GENERIC SetTargetTime(U32 in_time_inms, flags in_policy = flags::TIMER_POLICY_IMMEDIATE) noexcept {
+	GENERIC set_target_time(U32 in_time_inms, flags in_policy = flags::TIMER_POLICY_IMMEDIATE) noexcept {
 		mCurrentTime = 0;
 		mTargetTime = in_time_inms;
 		mPolicy = in_policy;
 	}
 
-	GENERIC SetExecutionPolicy(flags in_policy) noexcept {
+	GENERIC set_execution_policy(flags in_policy) noexcept {
 		mPolicy = in_policy;
 	}
 
-	GENERIC ResetTime() noexcept {
+	GENERIC reset_time() noexcept {
 		mCurrentTime = 0;
 	}
 
@@ -110,17 +110,17 @@ public:
 		tt = flags::TIMER_TYPE_INTERVAL;
 	}
 
-	GENERIC SetTickLimit(U32 in_tick_limit)
+	GENERIC set_tick_limit(U32 in_tick_limit) noexcept
 	{
 		tickLimit = in_tick_limit;
 	}
 
-	GENERIC ResetTickCounter() 
+	GENERIC reset_tick_counter() noexcept
 	{
 		tickCount = 0;
 	}
 
-	U32 GetTickCount()
+	U32 get_tick_count() const noexcept
 	{
 		return tickCount;
 	}

@@ -16,11 +16,11 @@ public:
 	};
 
 	event_handler() : handler_base(), eventType(flags::EVENT_ON) {};
-	std::string GetEventName() {
+	std::string get_event_name() {
 		return eventName;
 	}
 
-	flags GetEventType() {
+	flags get_event_type() {
 		return eventType;
 	}
 

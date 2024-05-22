@@ -60,7 +60,7 @@ public:
 		srcBuffer = nullptr;
 	}
 
-	flags ConstructContext(io_base& in_base, flags in_io_direction = flags::ASYNC_CTX_DIRECTION_INPUT) {
+	flags construct_context(io_base& in_base, flags in_io_direction = flags::ASYNC_CTX_DIRECTION_INPUT) {
 		if (isActive)
 		{
 			return flags::ASYNC_CTX_ERR_CONTEXT_ACTIVE;
@@ -87,51 +87,51 @@ public:
 		return flags::ASYNC_CTX_SUCCESS;
 	}
 
-	MBASE_ND("io context observation ignored") size_type GetTotalTransferredBytes() const noexcept {
+	MBASE_ND("io context observation ignored") size_type get_total_transferred_bytes() const noexcept {
 		return bytesTransferred;
 	}
 
-	MBASE_ND("io context observation ignored") size_type GetBytesOnEachIteration() const noexcept {
+	MBASE_ND("io context observation ignored") size_type get_bytes_on_each_iteration() const noexcept {
 		return bytesOnEachIteration;
 	}
 
-	MBASE_ND("io context observation ignored") size_type GetRequestedByteCount() const noexcept {
+	MBASE_ND("io context observation ignored") size_type get_requested_bytes_count() const noexcept {
 		return targetBytes;
 	}
 
-	MBASE_ND("io context observation ignored") difference_type GetRemainingBytes() const noexcept {
+	MBASE_ND("io context observation ignored") difference_type get_remaining_bytes() const noexcept {
 		return targetBytes - bytesTransferred;
 	}
 
-	MBASE_ND("io context observation ignored") U32 GetCalculatedHopCount() const noexcept {
+	MBASE_ND("io context observation ignored") U32 get_calculated_hop_count() const noexcept {
 		return calculatedHop;
 	}
 
-	MBASE_ND("io context observation ignored") U32 GetHopCounter() const noexcept {
+	MBASE_ND("io context observation ignored") U32 get_hop_counter() const noexcept {
 		return hopCounter;
 	}
 
-	MBASE_ND("io context observation ignored") flags GetIoDirection() const noexcept {
+	MBASE_ND("io context observation ignored") flags get_io_direction() const noexcept {
 		return ioDirection;
 	}
 
-	MBASE_ND("io handle unused") io_base* GetIoHandle() noexcept {
+	MBASE_ND("io handle unused") io_base* get_io_handle() noexcept {
 		return ioHandle;
 	}
 
-	MBASE_ND("character stream unused") char_stream* GetCharacterStream() noexcept {
+	MBASE_ND("character stream unused") char_stream* get_character_stream() noexcept {
 		return srcBuffer;
 	}
 
-	MBASE_ND("ignoring status") flags GetIoStatus() {
+	MBASE_ND("ignoring status") flags get_io_status() {
 		return ais;
 	}
 
-	MBASE_ND("io context observation ignored") bool IsActive() const noexcept {
+	MBASE_ND("io context observation ignored") bool is_active() const noexcept {
 		return isActive;
 	}
 
-	GENERIC FlushContext() noexcept {
+	GENERIC flush_context() noexcept {
 		srcBuffer->set_cursor_front();
 		ioHandle->set_file_pointer(0, mbase::io_base::move_method::MV_BEGIN);
 		hopCounter = 0;
@@ -139,7 +139,7 @@ public:
 		ais = flags::ASYNC_CTX_STAT_FLUSHED;
 	}
 
-	flags HaltContext() noexcept {
+	flags halt_context() noexcept {
 		if(!isActive)
 		{
 			return flags::ASYNC_CTX_ERR_ALREADY_HALTED;
@@ -151,7 +151,7 @@ public:
 		return flags::ASYNC_CTX_SUCCESS;
 	}
 
-	flags ResumeContext() noexcept {
+	flags resume_context() noexcept {
 		if (isActive)
 		{
 			return flags::ASYNC_CTX_ERR_CONTEXT_ACTIVE;

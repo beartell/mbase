@@ -37,7 +37,7 @@ public:
 		srand(time(0));
 	}
 
-	MBASE_INLINE flags DispatchEvent(const std::string& in_event, user_data in_data) {
+	MBASE_INLINE flags dispatch_event(const std::string& in_event, user_data in_data) {
 		auto foundElement = eventMap.find(in_event);
 		if (foundElement != eventMap.end())
 		{
@@ -64,7 +64,7 @@ public:
 		return flags::EVENT_MNG_ERR_NOT_FOUND;
 	}
 
-	MBASE_INLINE flags AddEventListener(const std::string& in_event, event_handler& in_handler) {
+	MBASE_INLINE flags add_event_listener(const std::string& in_event, event_handler& in_handler) {
 		if(in_handler.managerId != -1)
 		{
 			return flags::EVENT_MNG_ERR_BELONGS_TO_FOREIGN_MANAGER;
@@ -104,7 +104,7 @@ public:
 		return flags::EVENT_MNG_SUCCESS;
 	}
 
-	MBASE_INLINE flags RemoveListener(event_handler& in_handler)
+	MBASE_INLINE flags remove_listener(event_handler& in_handler)
 	{
 		if(in_handler.managerId != this->managerId)
 		{
@@ -127,7 +127,7 @@ public:
 		return flags::EVENT_MNG_SUCCESS;
 	}
 
-	MBASE_INLINE flags RemoveAllListeners(const std::string& in_event)
+	MBASE_INLINE flags remove_all_listeners(const std::string& in_event)
 	{
 		auto foundElement = eventMap.find(in_event);
 		if(foundElement != eventMap.end())
@@ -142,7 +142,7 @@ public:
 		return flags::EVENT_MNG_ERR_NOT_FOUND;
 	}
 
-	MBASE_INLINE I32 GetManagerId() {
+	MBASE_INLINE I32 get_manager_id() {
 		return managerId;
 	}
 private:
