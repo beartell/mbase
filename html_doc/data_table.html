@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MBASE Data Table</title>
+    <link rel="stylesheet" type="text/css" href="general.css">
+</head>
+<style>
+    table {
+        border: 1px solid black;
+        border-collapse: collapse;
+    }
+    td, th{
+        border: 1px solid black;
+        padding: 8px;
+    }
+</style>
+<body>
+    <div id="flexContainer">
+        <div id="textSection">
+            <table>
+                <tr>
+                    <th>Data Type</th>
+                    <th>Alias</th>
+                    <th>Size</th>
+                </tr>
+                <tr>
+                    <td>char</td>
+                    <td>I8</td>
+                    <td>8 bits</td>
+                </tr>
+                <tr>
+                    <td>int16_t</td>
+                    <td>I16</td>
+                    <td>16 bits</td>
+                </tr>
+                <tr>
+                    <td>int32_t</td>
+                    <td>I32</td>
+                    <td>32 bits</td>
+                </tr>
+                <tr>
+                    <td>int64_t</td>
+                    <td>I64</td>
+                    <td>64 bits</td>
+                </tr>
+                <tr>
+                    <td>char</td>
+                    <td>C8</td>
+                    <td>8 bits</td>
+                </tr>
+                <tr>
+                    <td>char_16t</td>
+                    <td>C16</td>
+                    <td>16 bits</td>
+                </tr>
+                <tr>
+                    <td>char_32t</td>
+                    <td>C32</td>
+                    <td>32 bits</td>
+                </tr>
+                <tr>
+                    <td>wchar_t</td>
+                    <td>WIDE</td>
+                    <td>16 bits</td>
+                </tr>
+                <tr>
+                    <td>uint8_t</td>
+                    <td>U8</td>
+                    <td>8 bits</td>
+                </tr>
+                <tr>
+                    <td>uint16_t</td>
+                    <td>U16</td>
+                    <td>16 bits</td>
+                </tr>
+                <tr>
+                    <td>uint32_t</td>
+                    <td>U32</td>
+                    <td>32 bits</td>
+                </tr>
+                <tr>
+                    <td>uint64_t</td>
+                    <td>U64</td>
+                    <td>64 bits</td>
+                </tr>
+                <tr>
+                    <td>float</td>
+                    <td>F32</td>
+                    <td>32 bits</td>
+                </tr>
+                <tr>
+                    <td>double</td>
+                    <td>F64</td>
+                    <td>64 bits</td>
+                </tr>
+                <tr>
+                    <td>U64</td>
+                    <td>SIZE_T</td>
+                    <td>64 bits</td>
+                </tr>
+                <tr>
+                    <td>I64</td>
+                    <td>PTRDIFF</td>
+                    <td>64 bits</td>
+                </tr>
+                <tr>
+                    <td>I8*</td>
+                    <td>PTR8</td>
+                    <td>64 bits</td>
+                </tr>
+                <tr>
+                    <td>I16*</td>
+                    <td>PTR16</td>
+                    <td>64 bits</td>
+                </tr>
+                <tr>
+                    <td>I32*</td>
+                    <td>PTR32</td>
+                    <td>64 bits</td>
+                </tr>
+                <tr>
+                    <td>I64*</td>
+                    <td>PTR64</td>
+                    <td>64 bits</td>
+                </tr>
+                <tr>
+                    <td>I8*</td>
+                    <td>PTRC8</td>
+                    <td>64 bits</td>
+                </tr>
+                <tr>
+                    <td>I16*</td>
+                    <td>PTRC16</td>
+                    <td>64 bits</td>
+                </tr>
+                <tr>
+                    <td>I32*</td>
+                    <td>PTRC32</td>
+                    <td>64 bits</td>
+                </tr>
+                <tr>
+                    <td>U8*</td>
+                    <td>PTRU8</td>
+                    <td>64 bits</td>
+                </tr>
+                <tr>
+                    <td>F32*</td>
+                    <td>PTRF32</td>
+                    <td>64 bits</td>
+                </tr>
+                <tr>
+                    <td>F64*</td>
+                    <td>PTRF64</td>
+                    <td>64 bits</td>
+                </tr>
+                <tr>
+                    <td>I8</td>
+                    <td>IBYTE</td>
+                    <td>8 bits</td>
+                </tr>
+                <tr>
+                    <td>U8</td>
+                    <td>UBYTE</td>
+                    <td>8 bits</td>
+                </tr>
+                <tr>
+                    <td>PTR8</td>
+                    <td>IBYTEPTR</td>
+                    <td>64 bits</td>
+                </tr>
+                <tr>
+                    <td>PTRU8</td>
+                    <td>UBYTEPTR</td>
+                    <td>64 bits</td>
+                </tr>
+                <tr>
+                    <td>IBYTEPTR</td>
+                    <td>IBYTEBUFFER</td>
+                    <td>64 bits</td>
+                </tr>
+                <tr>
+                    <td>UBYTEPTR</td>
+                    <td>UBYTEBUFFER</td>
+                    <td>64 bits</td>
+                </tr>
+                <tr>
+                    <td>const I8*</td>
+                    <td>MSTRING</td>
+                    <td>64 bits</td>
+                </tr>
+                <tr>
+                    <td>const C16*</td>
+                    <td>MSTRING16</td>
+                    <td>64 bits</td>
+                </tr>
+                <tr>
+                    <td>const C32*</td>
+                    <td>MSTRING32</td>
+                    <td>64 bits</td>
+                </tr>
+                <tr>
+                    <td>const WIDE*</td>
+                    <td>MWSTRING</td>
+                    <td>64 bits</td>
+                </tr>
+                <tr>
+                    <td>void</td>
+                    <td>GENERIC</td>
+                    <td>64 bits</td>
+                </tr>
+                <tr>
+                    <td>GENERIC*</td>
+                    <td>PTRGENERIC</td>
+                    <td>64 bits</td>
+                </tr>
+                <tr>
+                    <td>const PTRGENERIC</td>
+                    <td>CPTRGENERIC</td>
+                    <td>64 bits</td>
+                </tr>
+                <tr>
+                    <td>PTRGENERIC</td>
+                    <td>VBUFF</td>
+                    <td>64 bits</td>
+                </tr>
+                <tr>
+                    <td>PTRGENERIC*</td>
+                    <td>PTRVBUFF</td>
+                    <td>64 bits</td>
+                </tr>
+            </table>
+        </div>
+        <div id="pageNavigation">
+            <h2>Page Navigation</h2>
+        </div>
+    </div>
+</body>
+<script src="navig_generator.js"></script>
+</html>

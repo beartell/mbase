@@ -1,4 +1,4 @@
-let navigator = document.getElementById("pageNavigation");
+    let nvg= document.getElementById("pageNavigation");
     let firstList = document.createElement("ul");
     let sectionArray = [];
     function findAllSections(startString, associatedList) 
@@ -33,4 +33,10 @@ let navigator = document.getElementById("pageNavigation");
     }
 
     findAllSections("", firstList);
-    navigator.appendChild(firstList);
+    if(sectionArray.length)
+    {
+        nvg.appendChild(firstList);
+        nvg.style.visibility = "visible";
+        
+    }
+

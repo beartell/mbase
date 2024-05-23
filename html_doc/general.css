@@ -17,7 +17,12 @@
     align-self: start;
     position: sticky;
     top: 1rem;
+    visibility: hidden;
     
+}
+
+.stgroup {
+    margin-bottom: 2em;
 }
 
 a:link {

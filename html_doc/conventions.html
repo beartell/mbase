@@ -6,9 +6,385 @@
     <title>MBASE Conventions and Semantics</title>
     <link rel="stylesheet" type="text/css" href="general.css">
 </head>
+<style>
+    table {
+        border: 1px solid black;
+        border-collapse: collapse;
+    }
+    td, th{
+        border: 1px solid black;
+        padding: 8px;
+    }
+</style>
 <body>
     <div id="flexContainer">
         <div id="textSection">
+            <h2 id="c0">1. Introduction</h2>
+            <p>MBASE library's source code is written with some conventions in mind. The conventions defined for the development of the library do not cover a huge amount of content, but it is generally beneficial for writing a structural, beautiful, and semantically consistent code. If something is unspecified in the convention, then the developer is free to do it his/her own way.</p>
+            <h2 id="c1">2. Types of Conventions</h2>
+            <p>There are four categories of conventions that are listed below:</p>
+            <ul>
+                <li><a href="#c2">3. Common Data Types and Macros</a></li>
+                <li><a href="#c3">4. Structural Conventions</a></li>
+                <li><a href="#c4">5. Semantic Conventions</a></li>
+                <li><a href="#c5">6. File Structure and Comments</a></li>
+            </ul>
+            <div>
+                <h2 id="c2">3. Common Data Types and Macros</h2>
+                <p>
+                    The common data types to use throughout the development, will reside inside the "common.h" file. Along with data types, it also contains the necessary macros for structuring the code. <u>Those data types must be used throughout the development.</u>
+                </p>
+                <h3 id="c2c0">3.1 Data Types Table</h3>
+                <p><b>Standard(0): </b>When using data types, the custom type aliases must be used.</p>
+                <p><b>Rationale: </b>Type of the data indicates where it will be used and how it will be used. Writing a <b>GENERIC</b> instead of <b>void</b> makes more sense as what the type does. Also by writing <b>I32</b> instead of <b>int32_t</b>saves us a tiny amount of keyboard work.</p>
+                <a href="data_table.html">Here is an isolated table link</a>
+                <p>Here is a table of data types (x64 assumed): </p>
+                <table>
+                    <tr>
+                        <th>Data Type</th>
+                        <th>Alias</th>
+                        <th>Size</th>
+                    </tr>
+                    <tr>
+                        <td>char</td>
+                        <td>I8</td>
+                        <td>8 bits</td>
+                    </tr>
+                    <tr>
+                        <td>int16_t</td>
+                        <td>I16</td>
+                        <td>16 bits</td>
+                    </tr>
+                    <tr>
+                        <td>int32_t</td>
+                        <td>I32</td>
+                        <td>32 bits</td>
+                    </tr>
+                    <tr>
+                        <td>int64_t</td>
+                        <td>I64</td>
+                        <td>64 bits</td>
+                    </tr>
+                    <tr>
+                        <td>char</td>
+                        <td>C8</td>
+                        <td>8 bits</td>
+                    </tr>
+                    <tr>
+                        <td>char_16t</td>
+                        <td>C16</td>
+                        <td>16 bits</td>
+                    </tr>
+                    <tr>
+                        <td>char_32t</td>
+                        <td>C32</td>
+                        <td>32 bits</td>
+                    </tr>
+                    <tr>
+                        <td>wchar_t</td>
+                        <td>WIDE</td>
+                        <td>16 bits</td>
+                    </tr>
+                    <tr>
+                        <td>uint8_t</td>
+                        <td>U8</td>
+                        <td>8 bits</td>
+                    </tr>
+                    <tr>
+                        <td>uint16_t</td>
+                        <td>U16</td>
+                        <td>16 bits</td>
+                    </tr>
+                    <tr>
+                        <td>uint32_t</td>
+                        <td>U32</td>
+                        <td>32 bits</td>
+                    </tr>
+                    <tr>
+                        <td>uint64_t</td>
+                        <td>U64</td>
+                        <td>64 bits</td>
+                    </tr>
+                    <tr>
+                        <td>float</td>
+                        <td>F32</td>
+                        <td>32 bits</td>
+                    </tr>
+                    <tr>
+                        <td>double</td>
+                        <td>F64</td>
+                        <td>64 bits</td>
+                    </tr>
+                    <tr>
+                        <td>U64</td>
+                        <td>SIZE_T</td>
+                        <td>64 bits</td>
+                    </tr>
+                    <tr>
+                        <td>I64</td>
+                        <td>PTRDIFF</td>
+                        <td>64 bits</td>
+                    </tr>
+                    <tr>
+                        <td>I8*</td>
+                        <td>PTR8</td>
+                        <td>64 bits</td>
+                    </tr>
+                    <tr>
+                        <td>I16*</td>
+                        <td>PTR16</td>
+                        <td>64 bits</td>
+                    </tr>
+                    <tr>
+                        <td>I32*</td>
+                        <td>PTR32</td>
+                        <td>64 bits</td>
+                    </tr>
+                    <tr>
+                        <td>I64*</td>
+                        <td>PTR64</td>
+                        <td>64 bits</td>
+                    </tr>
+                    <tr>
+                        <td>I8*</td>
+                        <td>PTRC8</td>
+                        <td>64 bits</td>
+                    </tr>
+                    <tr>
+                        <td>I16*</td>
+                        <td>PTRC16</td>
+                        <td>64 bits</td>
+                    </tr>
+                    <tr>
+                        <td>I32*</td>
+                        <td>PTRC32</td>
+                        <td>64 bits</td>
+                    </tr>
+                    <tr>
+                        <td>U8*</td>
+                        <td>PTRU8</td>
+                        <td>64 bits</td>
+                    </tr>
+                    <tr>
+                        <td>F32*</td>
+                        <td>PTRF32</td>
+                        <td>64 bits</td>
+                    </tr>
+                    <tr>
+                        <td>F64*</td>
+                        <td>PTRF64</td>
+                        <td>64 bits</td>
+                    </tr>
+                    <tr>
+                        <td>I8</td>
+                        <td>IBYTE</td>
+                        <td>8 bits</td>
+                    </tr>
+                    <tr>
+                        <td>U8</td>
+                        <td>UBYTE</td>
+                        <td>8 bits</td>
+                    </tr>
+                    <tr>
+                        <td>PTR8</td>
+                        <td>IBYTEPTR</td>
+                        <td>64 bits</td>
+                    </tr>
+                    <tr>
+                        <td>PTRU8</td>
+                        <td>UBYTEPTR</td>
+                        <td>64 bits</td>
+                    </tr>
+                    <tr>
+                        <td>IBYTEPTR</td>
+                        <td>IBYTEBUFFER</td>
+                        <td>64 bits</td>
+                    </tr>
+                    <tr>
+                        <td>UBYTEPTR</td>
+                        <td>UBYTEBUFFER</td>
+                        <td>64 bits</td>
+                    </tr>
+                    <tr>
+                        <td>const I8*</td>
+                        <td>MSTRING</td>
+                        <td>64 bits</td>
+                    </tr>
+                    <tr>
+                        <td>const C16*</td>
+                        <td>MSTRING16</td>
+                        <td>64 bits</td>
+                    </tr>
+                    <tr>
+                        <td>const C32*</td>
+                        <td>MSTRING32</td>
+                        <td>64 bits</td>
+                    </tr>
+                    <tr>
+                        <td>const WIDE*</td>
+                        <td>MWSTRING</td>
+                        <td>64 bits</td>
+                    </tr>
+                    <tr>
+                        <td>void</td>
+                        <td>GENERIC</td>
+                        <td>64 bits</td>
+                    </tr>
+                    <tr>
+                        <td>GENERIC*</td>
+                        <td>PTRGENERIC</td>
+                        <td>64 bits</td>
+                    </tr>
+                    <tr>
+                        <td>const PTRGENERIC</td>
+                        <td>CPTRGENERIC</td>
+                        <td>64 bits</td>
+                    </tr>
+                    <tr>
+                        <td>PTRGENERIC</td>
+                        <td>VBUFF</td>
+                        <td>64 bits</td>
+                    </tr>
+                    <tr>
+                        <td>PTRGENERIC*</td>
+                        <td>PTRVBUFF</td>
+                        <td>64 bits</td>
+                    </tr>
+                </table>
+                <p>As the table shows, some data types are mere duplicates with different aliases. The reason for that is, it is possible to use different semantics when it comes to writing a solution for specific kind of problem. For example, the developer may use PTRC8 when processing characters in a readable string or process binary data using IBYTEBUFFER/IBYTEPTR etc.</p>
+                <h3>Correct Usage: </h3>
+                <pre style="font-family:monospace;color: rgb(68, 68, 68); background-color: rgb(243, 243, 243); font-weight: 400; "><ol style="padding-left: 3em;"><li><span style="color: rgb(68, 68, 68); font-weight: 400;">I32 <span style="color: rgb(136, 0, 0); font-weight: 700;">add_us</span><span style="color: rgb(68, 68, 68); font-weight: 400;">(I32 in_num1, I32 in_num2)</span> </span></li><li>{</li><li>    <span style="color: rgb(68, 68, 68); font-weight: 700;">return</span> in_num1 + in_num2;</li><li>}</li><li></li><li><span style="color: rgb(68, 68, 68); font-weight: 400;">GENERIC <span style="color: rgb(136, 0, 0); font-weight: 700;">print_float</span><span style="color: rgb(68, 68, 68); font-weight: 400;">(F64 in_number)</span></span></li><li>{</li><li>    std::cout &lt;&lt; in_number &lt;&lt; std::endl;</li><li>}</li></ol></pre>
+                <h3>Incorrect Usage: </h3>
+                <pre style="font-family:monospace;color: rgb(68, 68, 68); background-color: rgb(243, 243, 243); font-weight: 400; "><ol style="padding-left: 3em;"><li><span style="color: rgb(68, 68, 68); font-weight: 400;"><span style="color: rgb(136, 0, 0); font-weight: 400;">int</span> <span style="color: rgb(136, 0, 0); font-weight: 700;">add_us</span><span style="color: rgb(68, 68, 68); font-weight: 400;">(<span style="color: rgb(136, 0, 0); font-weight: 400;">int</span> in_num1, <span style="color: rgb(136, 0, 0); font-weight: 400;">int</span> in_num2)</span> </span></li><li>{</li><li>    <span style="color: rgb(68, 68, 68); font-weight: 700;">return</span> in_num1 + in_num2;</li><li>}</li><li></li><li><span style="color: rgb(68, 68, 68); font-weight: 400;"><span style="color: rgb(136, 0, 0); font-weight: 400;">void</span> <span style="color: rgb(136, 0, 0); font-weight: 700;">print_float</span><span style="color: rgb(68, 68, 68); font-weight: 400;">(<span style="color: rgb(136, 0, 0); font-weight: 400;">double</span> in_number)</span></span></li><li>{</li><li>    std::cout &lt;&lt; in_number &lt;&lt; std::endl;</li><li>}</li></ol></pre>
+            </div>
+            <div>
+                <h3 id="c2c1">3.2 Macros</h3>
+                <p>
+                    There are some macros that are essential for library to work and semantic integrity. I am aware that the use of macros is discouraged in C++ programming. However, they are useful at times if they managed carefully.
+                <p><b>Standard(0): </b>Use of macro functions should be avoided unless it is compeletly necessary.</p>
+                <p><b>Rationale: </b>Function macros are very difficult to debug and they pollute the local scope's namespace. The general use of macros should be a name,string substitution for repetitive statements or expressions.The general use of macros in MBASE looks like this:
+                </p></p>
+                <pre style="font-family:monospace;color: rgb(68, 68, 68); background-color: rgb(243, 243, 243); font-weight: 400; "><ol style="padding-left: 3em;"><li><span style="color: rgb(31, 113, 153); font-weight: 400;">#<span style="color: rgb(31, 113, 153); font-weight: 700;">define</span> MBASE_STD_EXPLICIT explicit</span></li><li><span style="color: rgb(31, 113, 153); font-weight: 400;">#<span style="color: rgb(31, 113, 153); font-weight: 700;">define</span> MBASE_EXPLICIT explicit</span></li><li></li><li><span style="color: rgb(31, 113, 153); font-weight: 400;">#<span style="color: rgb(31, 113, 153); font-weight: 700;">define</span> MBASE_STD_NAME <span style="color: rgb(136, 0, 0); font-weight: 400;">"MBASESTD"</span></span></li><li><span style="color: rgb(31, 113, 153); font-weight: 400;">#<span style="color: rgb(31, 113, 153); font-weight: 700;">define</span> MBASE_STD_VERSION <span style="color: rgb(136, 0, 0); font-weight: 400;">"1.0.0"</span></span></li><li><span style="color: rgb(31, 113, 153); font-weight: 400;">#<span style="color: rgb(31, 113, 153); font-weight: 700;">define</span> MBASE_STD_VERSION_N 100</span></li><li></li><li><span style="color: rgb(31, 113, 153); font-weight: 400;">#<span style="color: rgb(31, 113, 153); font-weight: 700;">define</span> MBASE_STD_BEGIN namespace mbase{</span></li><li><span style="color: rgb(31, 113, 153); font-weight: 400;">#<span style="color: rgb(31, 113, 153); font-weight: 700;">define</span> MBASE_STD_END }</span></li></ol></pre>
+                <p>
+                    For this reason, they should generally be expanded as one-liners and descriptive replacements for basic expressions. 
+                </p>
+                <p><b>Standard(0): </b>All macros must start with prefix MBASE_.</p>
+                <p><b>Rationale: </b>So that we won't pollute the global macro space and maintain consistency.</p>
+            </div>
+            <div>
+                <h2 id="c3">4. Structural Conventions</h2>
+                <p>Structural conventions are conventions that define the structure of the program through following categories:</p>
+                <ul>
+                    <li><a href="#c3c0">Source code Ordering</a></li>
+                    <li><a href="#c3c1">Class Content Ordering</a></li>
+                    <li><a href="#c3c2">Coding style.</a></li>
+                </ul>
+                <div>
+                    <h3 id="c3c0">4.1 Source code ordering</h3>
+                    <div>
+                        <h3 id="c3c0c0">4.1.1 Code Setup</h3>
+                        <div class="stgroup">
+                            <p><b>Standard(0): </b>Every header file must have the traditional include guards not the "pragma once"</p>
+                            <p><b>Rationale: </b>pragma once is not a standard</p>
+                        </div>
+                        <div class="stgroup">
+                            <p><b>Standard(0): </b>Every header file must include "common.h"</p>
+                            <p><b>Rationale: </b>It contains the common types and macros.</p>    
+                        </div>
+                        <div class="stgroup">
+                            <p><b>Standard(0): </b>The code must reside inside the namespace "mbase". This must be achieved through placing macros <b>MBASE_STD_BEGIN</b> and <b>MBASE_STD_END.</b></p>
+                            <p><b>Rationale: </b>To not pollute the namespace of the user who use the library.</p>    
+                        </div>
+                        <h3>Example</h3>
+                        <p>Here is how an empty header file looks like: </p>
+                        <pre style="font-family:monospace;color: rgb(68, 68, 68); background-color: rgb(243, 243, 243); font-weight: 400; "><ol style="padding-left: 3em;"><li><span style="color: rgb(31, 113, 153); font-weight: 400;">#<span style="color: rgb(31, 113, 153); font-weight: 700;">ifndef</span> MBASE_SAMPLE_HEADER_H</span></li><li><span style="color: rgb(31, 113, 153); font-weight: 400;">#<span style="color: rgb(31, 113, 153); font-weight: 700;">define</span> MBASE_SAMPLE_HEADER_H</span></li><li></li><li><span style="color: rgb(31, 113, 153); font-weight: 400;">#<span style="color: rgb(31, 113, 153); font-weight: 700;">include</span> <span style="color: rgb(136, 0, 0); font-weight: 400;">&lt;mbase/common.h&gt;</span></span></li><li></li><li>MBASE_STD_BEGIN</li><li></li><li><span style="color: rgb(105, 112, 112); font-weight: 400;">// code here...</span></li><li></li><li>MBASE_STD_END</li><li></li><li><span style="color: rgb(31, 113, 153); font-weight: 400;">#<span style="color: rgb(31, 113, 153); font-weight: 700;">endif</span> <span style="color: rgb(105, 112, 112); font-weight: 400;">// MBASE_SAMPLE_HEADER_H</span></span></li></ol></pre>
+                    </div>
+                    
+                    <div>
+                        <h3 id="c3c0c1">4.1.2 Implementation Order</h3>
+                        <p>In the source file, the implementation order goes as follows:</p>
+                        <ul>
+                            <li>Include directives.</li>
+                            <li>Macros.</li>
+                            <li>Template meta-programming structs.</li>
+                            <li>Class declarations.</li>
+                            <li>Struct declarations</li>
+                            <li>Function declarations.</li>
+                            <li>Global variables.</li>
+                            <li>Class definitions.</li>
+                            <li>Struct definitions</li>
+                            <li>Function definitions.</li>
+                        </ul>
+                        <p>Since the enumeration type is missing here, it can be placed anywhere on the code. As shown in the list above, the standard goes as follows:</p>
+                        <p><b>Standard(0): </b>Implementation order must be preserved in every source file.</p>
+                        <p><b>Rationale: </b>Integrity.</p>
+                    </div>
+                    <div>
+                        <h3 id="c3c0c2">4.1.3 Class Content Ordering</h3>
+                        <p>Disclaimer: <u>The specification that have been made on this section, also applies to structs. Further description of behaviors is explained on page <a href="">More on Class Structuring.</a></u></p>
+                        <p>Firstly, Classes are basically state storage mechanisms. Its state can be copied, moved, i.e. modified etc. Classes name or the operations it does, tell something about its behavior. For example, if the class does not contain any data and just merely provides some virtual or normal methods, its behaviors can be: Stateless, Abstract Interfaceable, Callable etc. Thus, all classes have some behaviors.</p>
+                        <p>Secondly, since classes operate on a state that is holding (or operates on a data that is holding), it exposes an interface (some can all API), to either manipulate, observe, create etc. data. And it achieves those behaviors via its methods. So, for this reason, we will define the behaviors of a class, and method and data ordering.</p>
+                        <h3>Class behaviors</h3>
+                        <p>The list of behaviors a class can have is as follows:</p>
+                        <ul>
+                            <li>Default Construbtible</li>
+                            <li>Move Constructible</li>
+                            <li>Copy Constructible</li>
+                            <li>Destructible</li>
+                            <li>Equality Comparable</li>
+                            <li>Swappable</li>
+                            <li>Allocate Aware</li>
+                            <li>Iterable</li>
+                            <li>Callable</li>
+                            <li>Copy Assignable</li>
+                            <li>Move Assignable</li>
+                            <li>Arithmetic Operable</li>
+                            <li>Equality Comparable</li>
+                            <li>Sign Comparable</li>
+                            <li>Templated</li>
+                            <li>Serializable</li>
+                            <li>Abstract Interfaceable</li>
+                            <li>Full Abstract</li>
+                            <li>Stateless</li>
+                            <li>Type Aware</li>
+                            <li>Debuggable</li>
+                        </ul>
+                        <h3>Method Ordering</h3>
+                        <p>Here is the order of method groups:</p>
+                        <ul>
+                            <li>Builder Methods</li>
+                            <li>Operator Builder Methods</li>
+                            <li>Iterator Methods</li>
+                            <li>Observation Methods</li>
+                            <li>State Modifier Methods</li>
+                            <li>Operator State Modifier Methods</li>
+                            <li>Non-modifier Methods</li>
+                            <li>Operator Non-modifier Methods</li>
+                            <li>Non-member Functions</li>
+                            <li>Operator Non-member Functions</li>
+                        </ul>
+                        <p>So, from now on, we can derive standards such as:</p>
+                        <div class="stgroup">
+                            <p><b>Standard(0): </b>A class must have at least one behavior which is defined in behavior table.</p>
+                            <p><b>Rationale: </b>At least one behavior fit for every scenario.</p>
+                        </div>
+                        <div class="stgroup">
+                            <p><b>Standard(0): </b>Class methods must be grouped in the correct order as the order defined in method groups table.</p>
+                            <p><b>Rationale: </b>Readibility.</p>    
+                        </div>
+                        <div class="stgroup">
+                            <p><b>Standard(0): </b>Unless the method is; <b>templated,</b> <b>non-member(static or friend),</b> <b>operator non-member,</b> the definition must be outside the class.</p>
+                            <p><b>Rationale: </b>Readiblity.</p>
+                        </div>
+                        <h3>Real Example</h3>
+                        <p>Here is a tiny snippet from mbase::list</p>
+                        <pre style="font-family:monospace;color: rgb(68, 68, 68); background-color: rgb(243, 243, 243); font-weight: 400; "><ol style="padding-left: 3em;"><li>        ...</li><li>	<span style="color: rgb(105, 112, 112); font-weight: 400;">/* ===== BUILDER METHODS BEGIN ===== */</span></li><li>	<span style="color: rgb(68, 68, 68); font-weight: 400;">MBASE_INLINE <span style="color: rgb(136, 0, 0); font-weight: 700;">list</span><span style="color: rgb(68, 68, 68); font-weight: 400;">()</span> <span style="color: rgb(68, 68, 68); font-weight: 700;">noexcept</span></span>;</li><li>	<span style="color: rgb(68, 68, 68); font-weight: 400;">MBASE_INLINE MBASE_EXPLICIT <span style="color: rgb(136, 0, 0); font-weight: 700;">list</span><span style="color: rgb(68, 68, 68); font-weight: 400;">(<span style="color: rgb(136, 0, 0); font-weight: 400;">const</span> Allocator&amp; in_alloc)</span></span>;</li><li>	<span style="color: rgb(57, 115, 0); font-weight: 400;">list</span>(size_type in_count, <span style="color: rgb(136, 0, 0); font-weight: 400;">const</span> T&amp; in_value, <span style="color: rgb(136, 0, 0); font-weight: 400;">const</span> Allocator&amp; in_alloc = <span style="color: rgb(57, 115, 0); font-weight: 400;">Allocator</span>());</li><li>	<span style="color: rgb(68, 68, 68); font-weight: 400;">MBASE_INLINE <span style="color: rgb(136, 0, 0); font-weight: 700;">list</span><span style="color: rgb(68, 68, 68); font-weight: 400;">(size_type in_count, <span style="color: rgb(136, 0, 0); font-weight: 400;">const</span> Allocator&amp; in_alloc = Allocator())</span></span>;</li><li>	<span style="color: rgb(68, 68, 68); font-weight: 700;">template</span>&lt;<span style="color: rgb(68, 68, 68); font-weight: 700;">typename</span> InputIt, <span style="color: rgb(68, 68, 68); font-weight: 700;">typename</span> = std::<span style="color: rgb(136, 0, 0); font-weight: 400;">enable_if_t</span>&lt;std::is_constructible_v&lt;T, <span style="color: rgb(68, 68, 68); font-weight: 700;">typename</span> std::iterator_traits&lt;InputIt&gt;::value_type&gt;&gt;&gt;</li><li>	<span style="color: rgb(57, 115, 0); font-weight: 400;">list</span>(InputIt in_begin, InputIt in_end, <span style="color: rgb(136, 0, 0); font-weight: 400;">const</span> Allocator&amp; in_alloc = <span style="color: rgb(57, 115, 0); font-weight: 400;">Allocator</span>()) {</li><li>		mSize = <span style="color: rgb(136, 0, 0); font-weight: 400;">0</span>;</li><li>		<span style="color: rgb(68, 68, 68); font-weight: 700;">if</span>(in_begin == in_end)</li><li>		{</li><li>			firstNode = <span style="color: rgb(102, 153, 85); font-weight: 400;">nullptr</span>;</li><li>			lastNode = <span style="color: rgb(102, 153, 85); font-weight: 400;">nullptr</span>;</li><li>			<span style="color: rgb(68, 68, 68); font-weight: 700;">return</span>;</li><li>		}</li><li>		mSize = <span style="color: rgb(136, 0, 0); font-weight: 400;">1</span>;</li><li></li><li>		firstNode = <span style="color: rgb(68, 68, 68); font-weight: 700;">new</span> <span style="color: rgb(57, 115, 0); font-weight: 400;">node_type</span>(*(in_begin++), in_alloc); <span style="color: rgb(105, 112, 112); font-weight: 400;">// DO IT WITH CUSTOM ALLOCATOR ON RELEASE</span></li><li>		lastNode = firstNode;</li><li>		<span style="color: rgb(68, 68, 68); font-weight: 700;">for</span> (in_begin; in_begin != in_end; in_begin++) {</li><li>			<span style="color: rgb(57, 115, 0); font-weight: 400;">push_back</span>(*in_begin);</li><li>		}</li><li>	}</li><li>	<span style="color: rgb(57, 115, 0); font-weight: 400;">list</span>(<span style="color: rgb(136, 0, 0); font-weight: 400;">const</span> list&amp; in_rhs);</li><li>	<span style="color: rgb(57, 115, 0); font-weight: 400;">list</span>(<span style="color: rgb(136, 0, 0); font-weight: 400;">const</span> list&amp; in_rhs, <span style="color: rgb(136, 0, 0); font-weight: 400;">const</span> Allocator&amp; in_alloc);</li><li>	<span style="color: rgb(57, 115, 0); font-weight: 400;">list</span>(list&amp;&amp; in_rhs);</li><li>	<span style="color: rgb(57, 115, 0); font-weight: 400;">list</span>(list&amp;&amp; in_rhs, <span style="color: rgb(136, 0, 0); font-weight: 400;">const</span> Allocator&amp; in_alloc);</li><li>	<span style="color: rgb(68, 68, 68); font-weight: 400;">MBASE_INLINE <span style="color: rgb(136, 0, 0); font-weight: 700;">list</span><span style="color: rgb(68, 68, 68); font-weight: 400;">(std::initializer_list&lt;value_type&gt; in_list)</span> <span style="color: rgb(68, 68, 68); font-weight: 700;">noexcept</span></span>;</li><li>	MBASE_INLINE ~<span style="color: rgb(57, 115, 0); font-weight: 400;">list</span>() <span style="color: rgb(68, 68, 68); font-weight: 700;">noexcept</span>;</li><li>	<span style="color: rgb(105, 112, 112); font-weight: 400;">/* ===== BUILDER METHODS END ===== */</span></li><li></li><li>	<span style="color: rgb(105, 112, 112); font-weight: 400;">/* ===== OPERATOR BUILDER METHODS BEGIN ===== */</span></li><li>	list&amp; <span style="color: rgb(68, 68, 68); font-weight: 700;">operator</span>=(<span style="color: rgb(136, 0, 0); font-weight: 400;">const</span> list&amp; in_rhs);</li><li>	list&amp; <span style="color: rgb(68, 68, 68); font-weight: 700;">operator</span>=(list&amp;&amp; in_rhs) <span style="color: rgb(68, 68, 68); font-weight: 700;">noexcept</span>;</li><li>	list&amp; <span style="color: rgb(68, 68, 68); font-weight: 700;">operator</span>=(std::initializer_list&lt;value_type&gt; in_vals);</li><li>	<span style="color: rgb(105, 112, 112); font-weight: 400;">/* ===== OPERATOR BUILDER METHODS END ===== */</span></li><li></li><li>	<span style="color: rgb(105, 112, 112); font-weight: 400;">/* ===== ITERATOR METHODS BEGIN ===== */</span></li><li>	<span style="color: rgb(57, 115, 0); font-weight: 400;">MBASE_ND</span>(MBASE_IGNORE_NONTRIVIAL) <span style="color: rgb(68, 68, 68); font-weight: 400;">MBASE_INLINE_EXPR iterator <span style="color: rgb(136, 0, 0); font-weight: 700;">begin</span><span style="color: rgb(68, 68, 68); font-weight: 400;">()</span> <span style="color: rgb(68, 68, 68); font-weight: 700;">noexcept</span></span>;</li><li>	<span style="color: rgb(57, 115, 0); font-weight: 400;">MBASE_ND</span>(MBASE_IGNORE_NONTRIVIAL) <span style="color: rgb(68, 68, 68); font-weight: 400;">MBASE_INLINE_EXPR iterator <span style="color: rgb(136, 0, 0); font-weight: 700;">end</span><span style="color: rgb(68, 68, 68); font-weight: 400;">()</span> <span style="color: rgb(68, 68, 68); font-weight: 700;">noexcept</span></span>;</li><li>	<span style="color: rgb(57, 115, 0); font-weight: 400;">MBASE_ND</span>(MBASE_IGNORE_NONTRIVIAL) <span style="color: rgb(68, 68, 68); font-weight: 400;">MBASE_INLINE_EXPR const_iterator <span style="color: rgb(136, 0, 0); font-weight: 700;">cbegin</span><span style="color: rgb(68, 68, 68); font-weight: 400;">()</span> <span style="color: rgb(136, 0, 0); font-weight: 400;">const</span> <span style="color: rgb(68, 68, 68); font-weight: 700;">noexcept</span></span>;</li><li>	<span style="color: rgb(57, 115, 0); font-weight: 400;">MBASE_ND</span>(MBASE_IGNORE_NONTRIVIAL) <span style="color: rgb(68, 68, 68); font-weight: 400;">MBASE_INLINE_EXPR const_iterator <span style="color: rgb(136, 0, 0); font-weight: 700;">cend</span><span style="color: rgb(68, 68, 68); font-weight: 400;">()</span> <span style="color: rgb(136, 0, 0); font-weight: 400;">const</span> <span style="color: rgb(68, 68, 68); font-weight: 700;">noexcept</span></span>;</li><li>	<span style="color: rgb(57, 115, 0); font-weight: 400;">MBASE_ND</span>(MBASE_IGNORE_NONTRIVIAL) <span style="color: rgb(68, 68, 68); font-weight: 400;">MBASE_INLINE reverse_iterator <span style="color: rgb(136, 0, 0); font-weight: 700;">rbegin</span><span style="color: rgb(68, 68, 68); font-weight: 400;">()</span> <span style="color: rgb(136, 0, 0); font-weight: 400;">const</span> <span style="color: rgb(68, 68, 68); font-weight: 700;">noexcept</span></span>;</li><li>	<span style="color: rgb(57, 115, 0); font-weight: 400;">MBASE_ND</span>(MBASE_IGNORE_NONTRIVIAL) <span style="color: rgb(68, 68, 68); font-weight: 400;">MBASE_INLINE_EXPR reverse_iterator <span style="color: rgb(136, 0, 0); font-weight: 700;">rend</span><span style="color: rgb(68, 68, 68); font-weight: 400;">()</span> <span style="color: rgb(136, 0, 0); font-weight: 400;">const</span> <span style="color: rgb(68, 68, 68); font-weight: 700;">noexcept</span></span>;</li><li>	<span style="color: rgb(57, 115, 0); font-weight: 400;">MBASE_ND</span>(MBASE_IGNORE_NONTRIVIAL) <span style="color: rgb(68, 68, 68); font-weight: 400;">MBASE_INLINE const_reverse_iterator <span style="color: rgb(136, 0, 0); font-weight: 700;">crbegin</span><span style="color: rgb(68, 68, 68); font-weight: 400;">()</span> <span style="color: rgb(136, 0, 0); font-weight: 400;">const</span> <span style="color: rgb(68, 68, 68); font-weight: 700;">noexcept</span></span>;</li><li>	<span style="color: rgb(57, 115, 0); font-weight: 400;">MBASE_ND</span>(MBASE_IGNORE_NONTRIVIAL) <span style="color: rgb(68, 68, 68); font-weight: 400;">MBASE_INLINE_EXPR const_reverse_iterator <span style="color: rgb(136, 0, 0); font-weight: 700;">crend</span><span style="color: rgb(68, 68, 68); font-weight: 400;">()</span> <span style="color: rgb(136, 0, 0); font-weight: 400;">const</span> <span style="color: rgb(68, 68, 68); font-weight: 700;">noexcept</span></span>;</li><li>	<span style="color: rgb(105, 112, 112); font-weight: 400;">/* ===== ITERATOR METHODS END ===== */</span></li><li></li><li>	<span style="color: rgb(105, 112, 112); font-weight: 400;">/* ===== OBSERVATION METHODS BEGIN ===== */</span></li><li>	<span style="color: rgb(57, 115, 0); font-weight: 400;">MBASE_ND</span>(MBASE_OBS_IGNORE) <span style="color: rgb(68, 68, 68); font-weight: 400;">MBASE_INLINE_EXPR reference <span style="color: rgb(136, 0, 0); font-weight: 700;">front</span><span style="color: rgb(68, 68, 68); font-weight: 400;">()</span> <span style="color: rgb(68, 68, 68); font-weight: 700;">noexcept</span></span>;</li><li>	<span style="color: rgb(57, 115, 0); font-weight: 400;">MBASE_ND</span>(MBASE_OBS_IGNORE) <span style="color: rgb(68, 68, 68); font-weight: 400;">MBASE_INLINE_EXPR const_reference <span style="color: rgb(136, 0, 0); font-weight: 700;">front</span><span style="color: rgb(68, 68, 68); font-weight: 400;">()</span> <span style="color: rgb(136, 0, 0); font-weight: 400;">const</span> <span style="color: rgb(68, 68, 68); font-weight: 700;">noexcept</span></span>;</li><li>	<span style="color: rgb(57, 115, 0); font-weight: 400;">MBASE_ND</span>(MBASE_OBS_IGNORE) <span style="color: rgb(68, 68, 68); font-weight: 400;">MBASE_INLINE_EXPR reference <span style="color: rgb(136, 0, 0); font-weight: 700;">back</span><span style="color: rgb(68, 68, 68); font-weight: 400;">()</span> <span style="color: rgb(68, 68, 68); font-weight: 700;">noexcept</span></span>;</li><li>	<span style="color: rgb(57, 115, 0); font-weight: 400;">MBASE_ND</span>(MBASE_OBS_IGNORE) <span style="color: rgb(68, 68, 68); font-weight: 400;">MBASE_INLINE_EXPR const_reference <span style="color: rgb(136, 0, 0); font-weight: 700;">back</span><span style="color: rgb(68, 68, 68); font-weight: 400;">()</span> <span style="color: rgb(136, 0, 0); font-weight: 400;">const</span> <span style="color: rgb(68, 68, 68); font-weight: 700;">noexcept</span></span>;</li><li>	<span style="color: rgb(57, 115, 0); font-weight: 400;">MBASE_ND</span>(MBASE_OBS_IGNORE) <span style="color: rgb(68, 68, 68); font-weight: 400;">MBASE_INLINE_EXPR <span style="color: rgb(136, 0, 0); font-weight: 400;">bool</span> <span style="color: rgb(136, 0, 0); font-weight: 700;">empty</span><span style="color: rgb(68, 68, 68); font-weight: 400;">()</span> <span style="color: rgb(136, 0, 0); font-weight: 400;">const</span> <span style="color: rgb(68, 68, 68); font-weight: 700;">noexcept</span></span>;</li><li>	<span style="color: rgb(57, 115, 0); font-weight: 400;">MBASE_ND</span>(MBASE_OBS_IGNORE) <span style="color: rgb(68, 68, 68); font-weight: 400;">MBASE_INLINE_EXPR size_type <span style="color: rgb(136, 0, 0); font-weight: 700;">size</span><span style="color: rgb(68, 68, 68); font-weight: 400;">()</span> <span style="color: rgb(136, 0, 0); font-weight: 400;">const</span> <span style="color: rgb(68, 68, 68); font-weight: 700;">noexcept</span></span>;</li><li>	<span style="color: rgb(57, 115, 0); font-weight: 400;">MBASE_ND</span>(MBASE_OBS_IGNORE) <span style="color: rgb(68, 68, 68); font-weight: 400;">MBASE_INLINE size_type <span style="color: rgb(136, 0, 0); font-weight: 700;">max_size</span><span style="color: rgb(68, 68, 68); font-weight: 400;">()</span> <span style="color: rgb(136, 0, 0); font-weight: 400;">const</span> <span style="color: rgb(68, 68, 68); font-weight: 700;">noexcept</span></span>;</li><li>	<span style="color: rgb(57, 115, 0); font-weight: 400;">MBASE_ND</span>(MBASE_OBS_IGNORE) <span style="color: rgb(68, 68, 68); font-weight: 400;">MBASE_INLINE_EXPR Allocator <span style="color: rgb(136, 0, 0); font-weight: 700;">get_allocator</span><span style="color: rgb(68, 68, 68); font-weight: 400;">()</span> <span style="color: rgb(136, 0, 0); font-weight: 400;">const</span> <span style="color: rgb(68, 68, 68); font-weight: 700;">noexcept</span></span>;</li><li>	<span style="color: rgb(105, 112, 112); font-weight: 400;">/* ===== OBSERVATION METHODS END ===== */</span></li><li>        ...</li></ol></pre>
+                    </div>
+                </div>
+            </div>
+            <div>
+                <h2 id="c4">5. Semantic Conventions</h2>
+            </div>
         </div>
         <div id="pageNavigation">
             <h2>Page Navigation</h2>
