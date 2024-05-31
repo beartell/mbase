@@ -87,7 +87,6 @@ public:
 		in_timer.suppliedData = in_usr_data;
 		in_timer.loopId = timerLoopId;
 		in_timer.on_register();
-		//registeredTimers.push_back(&in_timer);
 		in_timer.teSelf = registeredTimers.insert(registeredTimers.cend(), &in_timer); // WE WILL FIX IT LATER
 
 		return terr;
@@ -140,7 +139,6 @@ public:
 
 		U64 currentTime = queryTime.QuadPart;
 		U64 prevTime = currentTime;
-
 		while (isRunning)
 		{	
 			QueryPerformanceCounter(&queryTime);

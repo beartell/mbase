@@ -11,6 +11,8 @@
 
 MBASE_STD_BEGIN
 
+#define MBASE_SERIALIZED_SET_BLOCK_LENGTH 4
+
 template<
 	typename Key, 
 	typename Compare = std::less<Key>, 
@@ -75,6 +77,7 @@ public:
 	/* ===== ITERATOR METHODS END ===== */
 
 	/* ===== OBSERVATION METHODS BEGIN ===== */
+	MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE size_type get_serialized_size() const noexcept;
 	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE allocator_type get_allocator() const noexcept;
 	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE key_compare key_comp() const;
 	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE value_compare value_comp() const;
@@ -132,11 +135,11 @@ public:
 	/* ===== STATE-MODIFIER METHODS END ===== */
 
 	/* ===== NON-MODIFIER METHODS BEGIN ===== */
-	MBASE_INLINE GENERIC serialize(safe_buffer& out_buffer) noexcept;
+	MBASE_INLINE GENERIC serialize(char_stream& out_buffer) noexcept;
 	/* ===== NON-MODIFIER METHODS END ===== */
 
 	/* ===== NON-MEMBER FUNCTIONS BEGIN ===== */
-	MBASE_INLINE static mbase::set<Key, Compare, Allocator> deserialize(IBYTEBUFFER in_src, SIZE_T in_length) noexcept;
+	MBASE_INLINE static mbase::set<Key, Compare, Allocator> deserialize(IBYTEBUFFER in_src, SIZE_T in_length);
 	/* ===== NON-MEMBER FUNCTIONS END ===== */
 
 private:
@@ -290,6 +293,19 @@ MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE typename set<Key, Compare, Alloca
 template<typename Key, typename Compare, typename Allocator>
 MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE typename set<Key, Compare, Allocator>::const_reverse_iterator set<Key, Compare, Allocator>::crend() const noexcept {
 	return const_reverse_iterator(nullptr);
+}
+
+template<typename Key, typename Compare, typename Allocator>
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE typename set<Key, Compare, Allocator>::size_type set<Key, Compare, Allocator>::get_serialized_size() const noexcept
+{
+	serialize_helper<value_type> sh;
+	size_type totalSize = 0;
+	for (iterator It = begin(); It != end(); It++)
+	{
+		sh.value = It.get();
+		totalSize += sh.get_serialized_size() + MBASE_SERIALIZED_SET_BLOCK_LENGTH; // 4 is block length indicator
+	}
+	return totalSize;
 }
 
 template<typename Key, typename Compare, typename Allocator>
@@ -557,72 +573,54 @@ MBASE_INLINE GENERIC set<Key, Compare, Allocator>::swap(set& in_rhs) noexcept
 }
 
 template<typename Key, typename Compare, typename Allocator>
-MBASE_INLINE GENERIC set<Key, Compare, Allocator>::serialize(safe_buffer& out_buffer) noexcept {
+MBASE_INLINE GENERIC set<Key, Compare, Allocator>::serialize(char_stream& out_buffer) noexcept 
+{
 	if (mSize)
 	{
-		mbase::vector<safe_buffer> totalBuffer;
+		size_type serializedSize = get_serialized_size();
+		if (out_buffer.buffer_length() < serializedSize)
+		{
+			// BUFFER LENGTH IS NOT ENOUGH TO HOLD SERIALIZED DATA
+			return;
+		}
 
-		serialize_helper<Key> sl;
-		safe_buffer tmpSafeBuffer;
-		size_type totalLength = 0;
+		serialize_helper<value_type> serHelper;
 
 		for (iterator It = begin(); It != end(); It++)
 		{
-			sl.value = &It.get()->data;
-			sl.serialize(tmpSafeBuffer);
-			if (tmpSafeBuffer.bfLength)
-			{
-				totalLength += tmpSafeBuffer.bfLength;
-				totalBuffer.push_back(std::move(tmpSafeBuffer));
-			}
+			serHelper.value = It.get();
+
+			I32 blockLength = serHelper.get_serialized_size();
+			out_buffer.put_datan(reinterpret_cast<IBYTEBUFFER>(&blockLength), sizeof(I32));
+			serHelper.serialize(out_buffer);
 		}
 
-		if (totalBuffer.size())
-		{
-			SIZE_T totalBufferLength = totalLength + (totalBuffer.size() * sizeof(U32)) + sizeof(U32);
-
-			mbase::vector<safe_buffer>::iterator It = totalBuffer.begin();
-			MB_SET_SAFE_BUFFER(out_buffer, totalBufferLength);
-
-			IBYTEBUFFER _bfSource = out_buffer.bfSource;
-			PTRU32 elemCount = reinterpret_cast<PTRU32>(_bfSource);
-			*elemCount = totalBuffer.size();
-
-			_bfSource += sizeof(U32);
-
-			size_type totalIterator = 0;
-			for (It; It != totalBuffer.end(); It++)
-			{
-				elemCount = reinterpret_cast<PTRU32>(_bfSource);
-				*elemCount = It->bfLength;
-				_bfSource += sizeof(U32);
-				for (I32 i = 0; i < It->bfLength; i++)
-				{
-					_bfSource[i] = It->bfSource[i];
-				}
-
-				_bfSource += It->bfLength;
-			}
-		}
+		out_buffer.set_cursor_front();
 	}
 }
 
 template<typename Key, typename Compare, typename Allocator>
-MBASE_INLINE mbase::set<Key, Compare, Allocator> set<Key, Compare, Allocator>::deserialize(IBYTEBUFFER in_src, SIZE_T in_length) noexcept {
+MBASE_INLINE mbase::set<Key, Compare, Allocator> set<Key, Compare, Allocator>::deserialize(IBYTEBUFFER in_src, SIZE_T in_length)
+{
 	mbase::set<Key, Compare, Allocator> deserializedContainer;
 	if (in_length)
 	{
-		PTRU32 elemCount = reinterpret_cast<PTRU32>(in_src);
-		serialize_helper<value_type> sl;
+		serialize_helper<value_type> serHelper;
+		char_stream inBuffer(in_src, in_length);
 
-		IBYTEBUFFER tmpSrc = in_src + sizeof(U32);
+		inBuffer.set_cursor_end();
+		inBuffer.advance();
 
-		for (I32 i = 0; i < *elemCount; i++)
+		IBYTEBUFFER eofBuffer = inBuffer.get_bufferc();
+		inBuffer.set_cursor_front();
+
+		while (inBuffer.get_bufferc() < eofBuffer)
 		{
-			PTRU32 elemLength = reinterpret_cast<PTRU32>(tmpSrc);
-			tmpSrc += sizeof(U32);
-			deserializedContainer.insert(sl.deserialize(tmpSrc, *elemLength));
-			tmpSrc += *elemLength;
+			I32 blockLength = *inBuffer.get_bufferc();
+			inBuffer.advance(sizeof(I32));
+			IBYTEBUFFER blockData = inBuffer.get_bufferc();
+			deserializedContainer.insert(std::move(serHelper.deserialize(blockData, blockLength)));
+			inBuffer.advance(blockLength);
 		}
 	}
 

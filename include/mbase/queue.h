@@ -51,6 +51,7 @@ public:
 	/* ===== OPERATOR BUILDER METHODS END ===== */
 
 	/* ===== OBSERVATION METHODS BEGIN ===== */
+	MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE_EXPR size_type get_serialized_size() const noexcept;
 	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR const_reference front() const noexcept;
 	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR bool empty() const noexcept;
 	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR size_type size() const noexcept;
@@ -61,11 +62,11 @@ public:
 	MBASE_INLINE_EXPR GENERIC push(const T& in_data) noexcept;
 	MBASE_INLINE_EXPR GENERIC push(T&& in_data) noexcept;
 	MBASE_INLINE_EXPR GENERIC pop() noexcept;
-	MBASE_INLINE GENERIC deserialize(IBYTEBUFFER in_buffer, SIZE_T in_length) noexcept;
+	MBASE_INLINE GENERIC deserialize(IBYTEBUFFER in_buffer, SIZE_T in_length);
 	/* ===== STATE-MODIFIER METHODS END ===== */
 
 	/* ===== NON-MODIFIER METHODS BEGIN ===== */
-	MBASE_INLINE GENERIC serialize(safe_buffer& out_buffer) noexcept;
+	MBASE_INLINE GENERIC serialize(char_stream& out_buffer) noexcept;
 	/* ===== NON-MODIFIER METHODS END ===== */
 
 private:
@@ -98,6 +99,12 @@ template<typename T, typename SourceContainer>
 MBASE_INLINE queue<T, SourceContainer>& queue<T, SourceContainer>::operator=(queue&& in_rhs) noexcept 
 {
 	_Sc = std::move(in_rhs._Sc);
+}
+
+template<typename T, typename SourceContainer>
+MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE_EXPR typename queue<T, SourceContainer>::size_type queue<T, SourceContainer>::get_serialized_size() const noexcept
+{
+	return _Sc.get_serialized_size();
 }
 
 template<typename T, typename SourceContainer>
@@ -143,13 +150,13 @@ MBASE_INLINE_EXPR GENERIC queue<T, SourceContainer>::pop() noexcept
 }
 
 template<typename T, typename SourceContainer>
-MBASE_INLINE GENERIC queue<T, SourceContainer>::deserialize(IBYTEBUFFER in_buffer, SIZE_T in_length) noexcept
+MBASE_INLINE GENERIC queue<T, SourceContainer>::deserialize(IBYTEBUFFER in_buffer, SIZE_T in_length)
 {
 	_Sc = _Sc.deserialize(in_buffer, in_length);
 }
 
 template<typename T, typename SourceContainer>
-MBASE_INLINE GENERIC queue<T, SourceContainer>::serialize(safe_buffer& out_buffer) noexcept
+MBASE_INLINE GENERIC queue<T, SourceContainer>::serialize(char_stream& out_buffer) noexcept
 {
 	_Sc.serialize(out_buffer);
 }

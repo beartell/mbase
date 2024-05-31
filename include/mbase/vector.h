@@ -5,7 +5,7 @@
 
 #include <mbase/common.h> // For data types and macros
 #include <mbase/allocator.h> // For allocation routines
-#include <mbase/safe_buffer.h> // For safe_buffer
+#include <mbase/char_stream.h> // For 
 #include <mbase/container_serializer_helper.h> // For serialize_helper
 #include <mbase/sequence_iterator.h>
 
@@ -21,8 +21,9 @@
 
 */
 
-
 MBASE_STD_BEGIN
+
+#define MBASE_SERIALIZED_VECTOR_BLOCK_LENGTH 4
 
 /* --- OBJECT BEHAVIOURS --- */
 
@@ -102,6 +103,7 @@ public:
 	/* ===== ITERATOR METHODS END ===== */
 
 	/* ===== OBSERVATION METHODS BEGIN ===== */
+	MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE_EXPR size_type get_serialized_size() const noexcept;
 	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR size_type max_size() const noexcept;
 	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR size_type size() const noexcept;
 	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR size_type capacity() const noexcept;
@@ -204,11 +206,12 @@ public:
 	/* ===== STATE-MODIFIER METHODS END ===== */
 
 	/* ===== NON-MODIFIER METHODS BEGIN ===== */
-	MBASE_INLINE_EXPR GENERIC serialize(safe_buffer& out_buffer) noexcept;
+	MBASE_INLINE_EXPR GENERIC serialize(char_stream& out_buffer) noexcept;
+	MBASE_INLINE_EXPR GENERIC serialize(IBYTEBUFFER in_src, SIZE_T in_length) noexcept;
 	/* ===== NON-MODIFIER METHODS END ===== */
 
 	/* ===== NON-MEMBER FUNCTIONS BEGIN ===== */
-	MBASE_INLINE_EXPR static mbase::vector<T, Allocator> deserialize(IBYTEBUFFER in_src, SIZE_T in_length) noexcept;
+	MBASE_INLINE_EXPR static mbase::vector<T, Allocator> deserialize(IBYTEBUFFER in_src, SIZE_T in_length);
 	/* ===== NON-MEMBER FUNCTIONS END ===== */
 
 private:
@@ -471,6 +474,20 @@ template<typename T, typename Allocator>
 MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR typename vector<T, Allocator>::const_reverse_iterator vector<T, Allocator>::crend() const noexcept
 {
 	return const_reverse_iterator(raw_data - 1);
+}
+
+template<typename T, typename Allocator>
+MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE_EXPR typename vector<T, Allocator>::size_type vector<T, Allocator>::get_serialized_size() const noexcept
+{
+	serialize_helper<value_type> sh;
+	size_type totalSize = 0;
+	for(iterator It = begin(); It != end(); It++)
+	{
+		sh.value = It.get();
+		totalSize += sh.get_serialized_size() + MBASE_SERIALIZED_VECTOR_BLOCK_LENGTH; // 4 is block length indicator
+	}
+
+	return totalSize;
 }
 
 template<typename T, typename Allocator>
@@ -762,7 +779,6 @@ MBASE_INLINE_EXPR typename vector<T, Allocator>::iterator vector<T, Allocator>::
 	return begin();
 }
 
-
 template<typename T, typename Allocator>
 MBASE_INLINE_EXPR typename vector<T, Allocator>::iterator vector<T, Allocator>::insert(const_iterator in_pos, const T& in_val) noexcept 
 {
@@ -870,75 +886,61 @@ MBASE_INLINE_EXPR GENERIC vector<T, Allocator>::pop_back() noexcept
 }
 
 template<typename T, typename Allocator>
-MBASE_INLINE_EXPR GENERIC vector<T, Allocator>::serialize(safe_buffer& out_buffer) noexcept
+MBASE_INLINE_EXPR GENERIC vector<T, Allocator>::serialize(char_stream& out_buffer) noexcept
 {
 	if (mSize)
 	{
-		mbase::vector<safe_buffer> totalBuffer;
-
-		serialize_helper<value_type> sl;
-
-		safe_buffer tmpSafeBuffer;
-		size_type totalLength = 0;
-
-		for (iterator It = begin(); It != end(); It++)
+		size_type serializedSize = get_serialized_size();
+		if(out_buffer.buffer_length() < serializedSize)
 		{
-			sl.value = It.get();
-			sl.serialize(tmpSafeBuffer);
-			if (tmpSafeBuffer.bfLength)
-			{
-				totalLength += tmpSafeBuffer.bfLength;
-				totalBuffer.push_back(std::move(tmpSafeBuffer));
-			}
+			// BUFFER LENGTH IS NOT ENOUGH TO HOLD SERIALIZED DATA
+			return;
 		}
 
-		if (totalBuffer.size())
+		serialize_helper<value_type> serHelper;
+
+		for(iterator It = begin(); It != end(); It++)
 		{
-			SIZE_T totalBufferLength = totalLength + (totalBuffer.size() * sizeof(U32)) + sizeof(U32);
+			serHelper.value = It.get();
 
-			mbase::vector<safe_buffer>::iterator It = totalBuffer.begin();
-			MB_SET_SAFE_BUFFER(out_buffer, totalBufferLength);
-
-			IBYTEBUFFER _bfSource = out_buffer.bfSource;
-			PTRU32 elemCount = reinterpret_cast<PTRU32>(_bfSource);
-			*elemCount = totalBuffer.size();
-
-			_bfSource += sizeof(U32);
-
-			size_type totalIterator = 0;
-			for (It; It != totalBuffer.end(); It++)
-			{
-				elemCount = reinterpret_cast<PTRU32>(_bfSource);
-				*elemCount = It->bfLength;
-				_bfSource += sizeof(U32);
-				for (I32 i = 0; i < It->bfLength; i++)
-				{
-					_bfSource[i] = It->bfSource[i];
-				}
-
-				_bfSource += It->bfLength;
-			}
+			I32 blockLength = serHelper.get_serialized_size();
+			out_buffer.put_datan(reinterpret_cast<IBYTEBUFFER>(&blockLength), sizeof(I32));
+			serHelper.serialize(out_buffer);
 		}
+
+		out_buffer.set_cursor_front();
 	}
 }
 
 template<typename T, typename Allocator>
-MBASE_INLINE_EXPR mbase::vector<T, Allocator> mbase::vector<T, Allocator>::deserialize(IBYTEBUFFER in_src, SIZE_T in_length) noexcept 
+MBASE_INLINE_EXPR GENERIC vector<T, Allocator>::serialize(IBYTEBUFFER in_src, SIZE_T in_length) noexcept
+{
+	char_stream cs(in_src, in_length);
+	serialize(cs);
+}
+
+template<typename T, typename Allocator>
+MBASE_INLINE_EXPR mbase::vector<T, Allocator> mbase::vector<T, Allocator>::deserialize(IBYTEBUFFER in_src, SIZE_T in_length)
 {
 	mbase::vector<T, Allocator> deserializedVec;
 	if (in_length)
 	{
-		PTRU32 elemCount = reinterpret_cast<PTRU32>(in_src);
-		serialize_helper<value_type> sl;
+		serialize_helper<value_type> serHelper;
+		char_stream inBuffer(in_src, in_length);
 
-		IBYTEBUFFER tmpSrc = in_src + sizeof(U32);
+		inBuffer.set_cursor_end();
+		inBuffer.advance();
 
-		for (I32 i = 0; i < *elemCount; i++)
+		IBYTEBUFFER eofBuffer = inBuffer.get_bufferc();
+		inBuffer.set_cursor_front();
+		
+		while(inBuffer.get_bufferc() < eofBuffer)
 		{
-			PTRU32 elemLength = reinterpret_cast<PTRU32>(tmpSrc);
-			tmpSrc += sizeof(U32);
-			deserializedVec.push_back(sl.deserialize(tmpSrc, *elemLength));
-			tmpSrc += *elemLength;
+			I32 blockLength = *inBuffer.get_bufferc();
+			inBuffer.advance(sizeof(I32));
+			IBYTEBUFFER blockData = inBuffer.get_bufferc();
+			deserializedVec.push_back(std::move(serHelper.deserialize(blockData, blockLength)));
+			inBuffer.advance(blockLength);
 		}
 	}
 

@@ -30,6 +30,7 @@ public:
 	/* ===== OPERATOR BUILDER METHODS END ===== */
 
 	/* ===== OBSERVATION METHODS BEGIN ===== */
+	MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE_EXPR size_type get_serialized_size() const noexcept;
 	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR reference top() noexcept;
 	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR const_reference top() const noexcept;
 	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR bool empty() const noexcept;
@@ -77,6 +78,12 @@ MBASE_INLINE stack<T, SourceContainer>& stack<T, SourceContainer>::operator=(sta
 {
 	_Sc = std::move(in_rhs._Sc);
 	return *this;
+}
+
+template<typename T, typename SourceContainer>
+MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE_EXPR typename stack<T, SourceContainer>::size_type stack<T, SourceContainer>::get_serialized_size() const noexcept
+{
+	return _Sc.get_serialized_size();
 }
 
 template<typename T, typename SourceContainer>

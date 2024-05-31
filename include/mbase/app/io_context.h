@@ -2,6 +2,7 @@
 #define MBASE_IO_CONTEXT_H
 
 #include <mbase/common.h>
+#include <mbase/behaviors.h>
 #include <mbase/io_base.h>
 #include <mbase/char_stream.h>
 
@@ -14,29 +15,31 @@ public:
 
 	enum class flags : U32 {
 		ASYNC_CTX_SUCCESS = 0,
-		ASYNC_CTX_ERR_CONTEXT_ACTIVE = 1,
-		ASYNC_CTX_ERR_ALREADY_HALTED = 2,
-		ASYNC_CTX_STAT_UNREGISTERED = 3,
-		ASYNC_CTX_STAT_IDLE = 4,
-		ASYNC_CTX_STAT_ABANDONED = 5,
-		ASYNC_CTX_STAT_FAILED = 6,
-		ASYNC_CTX_STAT_FLUSHED = 7,
-		ASYNC_CTX_STAT_OPERATING = 8,
-		ASYNC_CTX_STAT_FINISHED = 9,
-		ASYNC_CTX_DIRECTION_INPUT = 10,
-		ASYNC_CTX_DIRECTION_OUTPUT = 11
+		ASYNC_CTX_ERR_CONTEXT_ACTIVE = MBASE_ASYNC_CTX_FLAGS_MIN,
+		ASYNC_CTX_ERR_ALREADY_HALTED = MBASE_ASYNC_CTX_FLAGS_CONTROL_START,
+		ASYNC_CTX_STAT_UNREGISTERED,
+		ASYNC_CTX_STAT_IDLE,
+		ASYNC_CTX_STAT_ABANDONED,
+		ASYNC_CTX_STAT_FAILED,
+		ASYNC_CTX_STAT_FLUSHED,
+		ASYNC_CTX_STAT_OPERATING,
+		ASYNC_CTX_STAT_FINISHED,
+		ASYNC_CTX_DIRECTION_INPUT,
+		ASYNC_CTX_DIRECTION_OUTPUT,
+		ASYNC_CTX_ERR_UNKNOWN = MBASE_ASYNC_CTX_FLAGS_MAX
 	};
 
 	async_io_context(io_base& in_base, flags in_io_direction = flags::ASYNC_CTX_DIRECTION_INPUT) noexcept :
+		totalBytesTransferred(0),
 		bytesTransferred(0),
 		targetBytes(0),
 		bytesOnEachIteration(0),
 		lastFraction(0),
 		calculatedHop(0),
 		hopCounter(0),
-		isActive(true),
+		isActive(false),
 		ioDirection(in_io_direction),
-		isBufferInternal(true)
+		isBufferInternal(false)
 	{
 		ioHandle = &in_base;
 		if(in_io_direction == flags::ASYNC_CTX_DIRECTION_OUTPUT)
@@ -52,7 +55,6 @@ public:
 	~async_io_context() noexcept {
 		if(!isBufferInternal)
 		{
-			//deep_char_stream* dcsTemp = static_cast<deep_char_stream*>(srcBuffer);
 			delete srcBuffer;
 		}
 		
@@ -61,19 +63,20 @@ public:
 	}
 
 	flags construct_context(io_base& in_base, flags in_io_direction = flags::ASYNC_CTX_DIRECTION_INPUT) {
-		if (isActive)
+		if (is_registered())
 		{
 			return flags::ASYNC_CTX_ERR_CONTEXT_ACTIVE;
 		}
 
-		ioHandle = &in_base;
-		if (!isBufferInternal)
+		if(srcBuffer)
 		{
-			//deep_char_stream* dcsTemp = static_cast<deep_char_stream*>(srcBuffer);
-			delete srcBuffer;
+			if(!isBufferInternal)
+			{
+				delete srcBuffer;
+			}
 		}
 
-		srcBuffer = nullptr;
+		ioHandle = &in_base;
 
 		if (in_io_direction == flags::ASYNC_CTX_DIRECTION_OUTPUT)
 		{
@@ -87,8 +90,12 @@ public:
 		return flags::ASYNC_CTX_SUCCESS;
 	}
 
-	MBASE_ND("io context observation ignored") size_type get_total_transferred_bytes() const noexcept {
+	MBASE_ND("io context observation ignored") size_type get_bytes_transferred() const noexcept {
 		return bytesTransferred;
+	}
+
+	MBASE_ND("io context observation ignored") size_type get_total_transferred_bytes() const noexcept {
+		return totalBytesTransferred;
 	}
 
 	MBASE_ND("io context observation ignored") size_type get_bytes_on_each_iteration() const noexcept {
@@ -131,6 +138,10 @@ public:
 		return isActive;
 	}
 
+	MBASE_ND("io context observation ignored") bool is_registered() const noexcept {
+		return (ais == flags::ASYNC_CTX_STAT_IDLE || ais == async_io_context::flags::ASYNC_CTX_STAT_OPERATING);
+	}
+
 	GENERIC flush_context() noexcept {
 		srcBuffer->set_cursor_front();
 		ioHandle->set_file_pointer(0, mbase::io_base::move_method::MV_BEGIN);
@@ -166,6 +177,18 @@ public:
 	friend class async_io_manager;
 
 private:
+	GENERIC _setup_context(size_type in_bytes_to_write, size_type in_bytes_on_each) noexcept {
+		ais = flags::ASYNC_CTX_STAT_IDLE;
+		targetBytes = in_bytes_to_write;
+		bytesOnEachIteration = in_bytes_on_each;
+		calculatedHop = targetBytes / bytesOnEachIteration;
+		lastFraction = targetBytes % bytesOnEachIteration;
+		bytesTransferred = 0;
+		hopCounter = 0;
+		srcBuffer->set_cursor_front();
+	}
+
+	size_type totalBytesTransferred;
 	size_type bytesTransferred;
 	size_type targetBytes;
 	size_type bytesOnEachIteration;

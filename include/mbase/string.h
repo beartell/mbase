@@ -138,6 +138,7 @@ public:
     MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE I32 compare(const character_sequence& in_src) const noexcept;
     MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE I32 compare(size_type in_pos1, size_type in_count1, const character_sequence& in_src) const;
     MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE I32 compare(size_type in_pos1, size_type in_count1, const character_sequence& in_src, size_type in_pos2, size_type in_count2 = npos) const;
+    MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE size_type get_serialized_size() const noexcept;
     MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR size_type size() const noexcept;
     MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR size_type length() const noexcept;
     MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR size_type max_size() const noexcept;
@@ -286,7 +287,7 @@ public:
     character_sequence& operator+=(std::initializer_list<value_type> in_chars);
     /* ===== OPERATOR STATE-MODIFIER METHODS END ===== */
 
-    MBASE_INLINE static character_sequence deserialize(IBYTEBUFFER in_buffer, SIZE_T in_length) noexcept;
+    MBASE_INLINE static character_sequence deserialize(IBYTEBUFFER in_buffer, SIZE_T in_length);
     
     /* ===== NON-MODIFIER METHODS BEGIN ===== */
     template<typename SourceContainer = mbase::vector<character_sequence>>
@@ -303,7 +304,7 @@ public:
     MBASE_ND(MBASE_RESULT_IGNORE) I32 to_i64() noexcept { return _atoi64(this->c_str()); }
     MBASE_ND(MBASE_RESULT_IGNORE) F32 to_f32() noexcept { return strtof(this->c_str(), nullptr); }
     MBASE_ND(MBASE_RESULT_IGNORE) F64 to_f64() noexcept { return atof(this->c_str()); }
-    MBASE_INLINE GENERIC serialize(safe_buffer& out_buffer);
+    MBASE_INLINE GENERIC serialize(char_stream& out_buffer);
     /* ===== NON-MODIFIER METHODS END ===== */
 
     /* ===== NON-MEMBER FUNCTIONS BEGIN ===== */
@@ -968,6 +969,12 @@ MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE I32 character_sequence<SeqType, SeqBase,
     character_sequence cs2(std::move(substr(in_pos1, toPosition)));
 
     return this->compare_bytes(cs.raw_data, cs2.raw_data);
+}
+
+template<typename SeqType, typename SeqBase, typename Allocator>
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR typename character_sequence<SeqType, SeqBase, Allocator>::size_type character_sequence<SeqType, SeqBase, Allocator>::get_serialized_size() const noexcept
+{
+    return mSize;
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
@@ -1953,17 +1960,16 @@ character_sequence<SeqType, SeqBase, Allocator>& character_sequence<SeqType, Seq
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_INLINE GENERIC character_sequence<SeqType, SeqBase, Allocator>::serialize(safe_buffer& out_buffer) 
+MBASE_INLINE GENERIC character_sequence<SeqType, SeqBase, Allocator>::serialize(char_stream& out_buffer)
 {
     if (mSize)
     {
-        MB_SET_SAFE_BUFFER(out_buffer, mSize);
-        this->copy_bytes(out_buffer.bfSource, raw_data, mSize); // DO NOT INCLUDE NULL TERMINATOR
+        out_buffer.put_datan(raw_data, get_serialized_size());
     }
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_INLINE character_sequence<SeqType, SeqBase, Allocator> character_sequence<SeqType, SeqBase, Allocator>::deserialize(IBYTEBUFFER in_buffer, SIZE_T in_length) noexcept 
+MBASE_INLINE character_sequence<SeqType, SeqBase, Allocator> character_sequence<SeqType, SeqBase, Allocator>::deserialize(IBYTEBUFFER in_buffer, SIZE_T in_length) 
 {
     return character_sequence(in_buffer, in_length);
 }

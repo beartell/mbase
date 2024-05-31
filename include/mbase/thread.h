@@ -3,6 +3,7 @@
 
 #include <mbase/common.h>
 #include <mbase/behaviors.h>
+#include <tuple>
 #include <Windows.h>
 
 MBASE_STD_BEGIN

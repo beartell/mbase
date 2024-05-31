@@ -4,7 +4,7 @@
 #include <mbase/common.h>
 #include <mbase/allocator.h> // mbase::allocator
 #include <mbase/list_iterator.h> // mbase::bi_list_iterator, mbase::const_bi_list_iterator, mbase::reverse_bi_list_iterator, mbase::const_reverse_bi_list_iterator
-#include <mbase/safe_buffer.h> // mbase::safe_buffer
+#include <mbase/char_stream.h> // mbase::char_stream
 #include <mbase/node_type.h> // mbase::list_node
 #include <mbase/vector.h> // mbase::vector
 #include <initializer_list> // std::initializer_list
@@ -12,6 +12,8 @@
 #include <type_traits> // std::is_constructible
 
 MBASE_STD_BEGIN
+
+#define MBASE_SERIALIZED_LIST_BLOCK_LENGTH 4
 
 /*
 
@@ -39,21 +41,6 @@ Behaviour List:
 - Serializable
 
 Description:
-list is a generic sequential container that can hold any stateful data. 
-Here, list is implemented as a doubly-linked list and its subject to the time complexity of
-the list as we see in common data structures. The time complexities of corresponding operations
-are listed below:
-
-=== Access: O(N) ===
-=== Search: O(N) ===
-=== Insert: O(1) ===
-=== Delete: O(1) ===
-
-For it's internal allocation/deallocation of data, list uses the supplied generic Allocator interface.
-For Allocator to be used by the container, the provided Allocator interface must be compatible with the named requirement "Allocator" that is 
-defined in the standard specification.
-
-// SELF-NOTE: TELL USERS ABOUT HOW THE LIST IS COMPATIBLE WITH STD //
 
 */
 
@@ -100,7 +87,7 @@ public:
 			return;
 		}
 		mSize = 1;
-		firstNode = new node_type(*(in_begin++), in_alloc);
+		firstNode = new node_type(*(in_begin++), in_alloc); // DO IT WITH CUSTOM ALLOCATOR ON RELEASE
 		lastNode = firstNode;
 		for (in_begin; in_begin != in_end; in_begin++) {
 			push_back(*in_begin);
@@ -132,6 +119,7 @@ public:
 	/* ===== ITERATOR METHODS END ===== */
 
 	/* ===== OBSERVATION METHODS BEGIN ===== */
+	MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE_EXPR size_type get_serialized_size() const noexcept;
 	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR reference front() noexcept;
 	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR const_reference front() const noexcept;
 	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR reference back() noexcept;
@@ -229,11 +217,11 @@ public:
 	/* ===== STATE-MODIFIER METHODS BEGIN ===== */
 
 	/* ===== NON-MODIFIER METHODS BEGIN ===== */
-	MBASE_INLINE GENERIC serialize(safe_buffer& out_buffer) noexcept;
+	MBASE_INLINE GENERIC serialize(char_stream& out_buffer) noexcept;
 	/* ===== NON-MODIFIER METHODS END ===== */
 
 	/* ===== NON-MEMBER FUNCTIONS BEGIN ===== */
-	MBASE_INLINE static mbase::list<T, Allocator> deserialize(IBYTEBUFFER in_src, SIZE_T in_length) noexcept;
+	MBASE_INLINE static mbase::list<T, Allocator> deserialize(IBYTEBUFFER in_src, SIZE_T in_length);
 	/* ===== NON-MEMBER FUNCTIONS END ===== */
 };
 
@@ -483,6 +471,19 @@ template<typename T, typename Allocator>
 MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR typename list<T, Allocator>::const_reverse_iterator list<T, Allocator>::crend() const noexcept
 {
 	return const_reverse_iterator(nullptr);
+}
+
+template<typename T, typename Allocator>
+MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE_EXPR typename list<T, Allocator>::size_type list<T, Allocator>::get_serialized_size() const noexcept
+{
+	serialize_helper<value_type> sh;
+	size_type totalSize = 0;
+	for (iterator It = begin(); It != end(); It++)
+	{
+		sh.value = It.get();
+		totalSize += sh.get_serialized_size() + MBASE_SERIALIZED_LIST_BLOCK_LENGTH; // 4 is block length indicator
+	}
+	return totalSize;
 }
 
 template<typename T, typename Allocator>
@@ -932,75 +933,54 @@ MBASE_INLINE_EXPR GENERIC list<T, Allocator>::swap(list& in_src) noexcept
 }
 
 template<typename T, typename Allocator>
-MBASE_INLINE GENERIC list<T, Allocator>::serialize(safe_buffer& out_buffer) noexcept 
+MBASE_INLINE GENERIC list<T, Allocator>::serialize(char_stream& out_buffer) noexcept 
 {
 	if (mSize)
 	{
-		mbase::vector<safe_buffer> totalBuffer;
+		size_type serializedSize = get_serialized_size();
+		if (out_buffer.buffer_length() < serializedSize)
+		{
+			// BUFFER LENGTH IS NOT ENOUGH TO HOLD SERIALIZED DATA
+			return;
+		}
 
-		serialize_helper<value_type> sl;
-
-		safe_buffer tmpSafeBuffer;
-		size_type totalLength = 0;
+		serialize_helper<value_type> serHelper;
 
 		for (iterator It = begin(); It != end(); It++)
 		{
-			sl.value = It.get();
-			sl.serialize(tmpSafeBuffer);
-			if (tmpSafeBuffer.bfLength)
-			{
-				totalLength += tmpSafeBuffer.bfLength;
-				totalBuffer.push_back(std::move(tmpSafeBuffer));
-			}
+			serHelper.value = It.get();
+
+			I32 blockLength = serHelper.get_serialized_size();
+			out_buffer.put_datan(reinterpret_cast<IBYTEBUFFER>(&blockLength), sizeof(I32));
+			serHelper.serialize(out_buffer);
 		}
 
-		if (totalBuffer.size())
-		{
-			SIZE_T totalBufferLength = totalLength + (totalBuffer.size() * sizeof(U32)) + sizeof(U32);
-
-			mbase::vector<safe_buffer>::iterator It = totalBuffer.begin();
-			MB_SET_SAFE_BUFFER(out_buffer, totalBufferLength);
-
-			IBYTEBUFFER _bfSource = out_buffer.bfSource;
-			PTRU32 elemCount = reinterpret_cast<PTRU32>(_bfSource);
-			*elemCount = totalBuffer.size();
-
-			_bfSource += sizeof(U32);
-
-			size_type totalIterator = 0;
-			for (It; It != totalBuffer.end(); It++)
-			{
-				elemCount = reinterpret_cast<PTRU32>(_bfSource);
-				*elemCount = It->bfLength;
-				_bfSource += sizeof(U32);
-				for (I32 i = 0; i < It->bfLength; i++)
-				{
-					_bfSource[i] = It->bfSource[i];
-				}
-
-				_bfSource += It->bfLength;
-			}
-		}
+		out_buffer.set_cursor_front();
 	}
 }
 
 template<typename T, typename Allocator>
-MBASE_INLINE mbase::list<T, Allocator> list<T, Allocator>::deserialize(IBYTEBUFFER in_src, SIZE_T in_length) noexcept 
+MBASE_INLINE mbase::list<T, Allocator> list<T, Allocator>::deserialize(IBYTEBUFFER in_src, SIZE_T in_length) 
 {
 	mbase::list<T, Allocator> deserializedContainer;
 	if (in_length)
 	{
-		PTRU32 elemCount = reinterpret_cast<PTRU32>(in_src);
-		serialize_helper<value_type> sl;
+		serialize_helper<value_type> serHelper;
+		char_stream inBuffer(in_src, in_length);
 
-		IBYTEBUFFER tmpSrc = in_src + sizeof(U32);
+		inBuffer.set_cursor_end();
+		inBuffer.advance();
 
-		for (I32 i = 0; i < *elemCount; i++)
+		IBYTEBUFFER eofBuffer = inBuffer.get_bufferc();
+		inBuffer.set_cursor_front();
+
+		while (inBuffer.get_bufferc() < eofBuffer)
 		{
-			PTRU32 elemLength = reinterpret_cast<PTRU32>(tmpSrc);
-			tmpSrc += sizeof(U32);
-			deserializedContainer.push_back(sl.deserialize(tmpSrc, *elemLength));
-			tmpSrc += *elemLength;
+			I32 blockLength = *inBuffer.get_bufferc();
+			inBuffer.advance(sizeof(I32));
+			IBYTEBUFFER blockData = inBuffer.get_bufferc();
+			deserializedContainer.push_back(std::move(serHelper.deserialize(blockData, blockLength)));
+			inBuffer.advance(blockLength);
 		}
 	}
 

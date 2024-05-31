@@ -1,12 +1,12 @@
-#ifndef MBASE_CRYPTO_ASYM_H
-#define MBASE_CRYPTO_ASYM_H
+#ifndef MBASE_SAMPLE_HEADER_H
+#define MBASE_SAMPLE_HEADER_H
 
 #include <mbase/common.h>
 
 MBASE_STD_BEGIN
 
-
+// code here...
 
 MBASE_STD_END
 
-#endif // MBASE_CRYPTO_ASYM_H
+#endif // MBASE_SAMPLE_HEADER_H

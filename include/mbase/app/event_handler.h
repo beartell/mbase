@@ -11,8 +11,10 @@ MBASE_BEGIN
 class event_handler : public handler_base {
 public:
 	enum class flags : U32 {
-		EVENT_ONCE = 1,
-		EVENT_ON = 2
+		EVENT_HANDLER_SUCCESS = 0,
+		EVENT_ONCE = MBASE_EVENT_HANDLER_FLAGS_CONTROL_START,
+		EVENT_ON,
+		EVENT_ERR_UNKNOWN = MBASE_EVENT_HANDLER_FLAGS_MAX
 	};
 
 	event_handler() : handler_base(), eventType(flags::EVENT_ON) {};
