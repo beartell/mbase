@@ -7,6 +7,8 @@
 
 MBASE_STD_BEGIN
 
+#define MBASE_STRING_DEFAULT_CAPACITY 8
+
 /* --- OBJECT BEHAVIOURS --- */
 
 /*
@@ -56,7 +58,7 @@ public:
     MBASE_INLINE_EXPR character_sequence(const character_sequence& in_rhs, size_type in_pos, size_type in_count, const Allocator& in_alloc = Allocator());
     MBASE_INLINE_EXPR character_sequence(character_sequence&& in_rhs, size_type in_pos, size_type in_count, const Allocator& in_alloc = Allocator());
     template<typename InputIt, typename = std::enable_if_t<std::is_constructible_v<value_type, typename std::iterator_traits<InputIt>::value_type>>>
-    MBASE_INLINE_EXPR character_sequence(InputIt in_begin, InputIt in_end, const Allocator& in_alloc = Allocator()) : raw_data(nullptr), mSize(0), mCapacity(8), externalAllocator(Allocator()) {
+    MBASE_INLINE_EXPR character_sequence(InputIt in_begin, InputIt in_end, const Allocator& in_alloc = Allocator()) : raw_data(nullptr), mSize(0), mCapacity(MBASE_STRING_DEFAULT_CAPACITY), externalAllocator(Allocator()) {
         _build_string(mCapacity);
         for(in_begin; in_begin != in_end; in_begin++)
         {
@@ -446,7 +448,7 @@ private:
 };
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_INLINE_EXPR character_sequence<SeqType, SeqBase, Allocator>::character_sequence() noexcept : raw_data(nullptr), mSize(0), mCapacity(8), externalAllocator(Allocator()) 
+MBASE_INLINE_EXPR character_sequence<SeqType, SeqBase, Allocator>::character_sequence() noexcept : raw_data(nullptr), mSize(0), mCapacity(MBASE_STRING_DEFAULT_CAPACITY), externalAllocator(Allocator()) 
 {
     _build_string(mCapacity);
 }
