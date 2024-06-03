@@ -3,6 +3,7 @@
 
 #include <mbase/io_base.h>
 #include <mbase/wsa_init.h> // static wsa socket initializiation through mbase::wsa_initializer
+#include <mbase/string.h> // mbase::string
 #include <mbase/behaviors.h> // mbase::non_copymovable
 
 MBASE_STD_BEGIN
@@ -33,7 +34,6 @@ To achieve async io behavior, refer to the section Async I/O in MBASE.
 
 */
 
-
 class io_tcp_client : public io_base, public non_copymovable {
 public:
 	io_tcp_client() noexcept;
@@ -48,14 +48,16 @@ public:
 	size_type write_data(IBYTEBUFFER in_src) override;
 	size_type write_data(IBYTEBUFFER in_src, size_type in_length) override;
 	size_type write_data(const mbase::string& in_src) override;
-	size_type write_data(const char_stream& in_src) override;
+	size_type write_data(char_stream& in_src) override;
+	size_type write_data(char_stream& in_src, size_type in_length) override { return 0; }
 	size_type read_data(IBYTEBUFFER in_src, size_type in_length) override;
-	size_type read_data(const char_stream& in_src) override;
+	size_type read_data(char_stream& in_src) override;
+	size_type read_data(char_stream& in_src, size_type in_length) override { return 0; }
 
 	template<typename SerializableObject>
 	size_type write_data(SerializableObject& in_src) {
-		safe_buffer mBuffer;
-		in_src.serialize(&mBuffer);
+		mbase::deep_char_stream dcs(in_src.get_serialized_size());
+		in_src.serialize(dcs);
 		return write_data(mBuffer.bfSource, mBuffer.bfLength);
 	}
 
@@ -67,11 +69,11 @@ public:
 	}
 
 private:
-	SOCKET rawHandle = INVALID_SOCKET;
-	sockaddr_in sckAddr = {0};
+	SOCKET mRawHandle = INVALID_SOCKET;
+	sockaddr_in mSocketAddr = {0};
 };
 
-io_tcp_client::io_tcp_client() noexcept : rawHandle(INVALID_SOCKET) 
+io_tcp_client::io_tcp_client() noexcept : mRawHandle(INVALID_SOCKET) 
 {
 
 }
@@ -80,7 +82,7 @@ io_tcp_client::io_tcp_client(const mbase::string& in_name, const mbase::string& 
 {
 	if(!connect_target(in_name, in_port))
 	{
-		operateReady = true;
+		mOperateReady = true;
 	}
 }
 
@@ -91,20 +93,20 @@ io_tcp_client::~io_tcp_client() noexcept {
 MBASE_ND(MBASE_OBS_IGNORE) mbase::string io_tcp_client::get_remote_ipv4() const noexcept
 {
 	IBYTE ipOut[INET_ADDRSTRLEN] = { 0 };
-	inet_ntop(AF_INET, &sckAddr.sin_addr, ipOut, sizeof(ipOut));
+	inet_ntop(AF_INET, &mSocketAddr.sin_addr, ipOut, sizeof(ipOut));
 	return mbase::string(ipOut);
 }
 
 MBASE_ND(MBASE_OBS_IGNORE) mbase::string io_tcp_client::get_remote_ipv6() const noexcept 
 {
 	IBYTE ipOut[INET6_ADDRSTRLEN] = { 0 };
-	inet_ntop(AF_INET6, &sckAddr.sin_addr, ipOut, sizeof(ipOut));
+	inet_ntop(AF_INET6, &mSocketAddr.sin_addr, ipOut, sizeof(ipOut));
 	return mbase::string(ipOut);
 }
 
 I32 io_tcp_client::connect_target(const mbase::string& in_name, const mbase::string& in_port) noexcept 
 {
-	rawHandle = INVALID_SOCKET;
+	mRawHandle = INVALID_SOCKET;
 
 	addrinfo* result = nullptr;
 	addrinfo hints = { 0 };
@@ -122,19 +124,19 @@ I32 io_tcp_client::connect_target(const mbase::string& in_name, const mbase::str
 
 	for (addrinfo* pt_addr = result; pt_addr != nullptr; pt_addr = pt_addr->ai_next)
 	{
-		rawHandle = socket(pt_addr->ai_family, pt_addr->ai_socktype, pt_addr->ai_protocol);
-		if (rawHandle == INVALID_SOCKET)
+		mRawHandle = socket(pt_addr->ai_family, pt_addr->ai_socktype, pt_addr->ai_protocol);
+		if (mRawHandle == INVALID_SOCKET)
 		{
 			_set_last_error(WSAGetLastError());
 			freeaddrinfo(result);
 			return 1;
 		}
 
-		addrResult = connect(rawHandle, pt_addr->ai_addr, pt_addr->ai_addrlen);
+		addrResult = connect(mRawHandle, pt_addr->ai_addr, pt_addr->ai_addrlen);
 		if (addrResult == SOCKET_ERROR)
 		{
-			closesocket(rawHandle);
-			rawHandle = INVALID_SOCKET;
+			closesocket(mRawHandle);
+			mRawHandle = INVALID_SOCKET;
 			continue;
 		}
 		break;
@@ -142,22 +144,22 @@ I32 io_tcp_client::connect_target(const mbase::string& in_name, const mbase::str
 
 	freeaddrinfo(result);
 
-	if (rawHandle == INVALID_SOCKET)
+	if (mRawHandle == INVALID_SOCKET)
 	{
 		_set_last_error(WSAGetLastError());
 		return 1;
 	}
 
-	socklen_t len = sizeof(sckAddr);
-	getpeername(rawHandle, reinterpret_cast<sockaddr*>(&sckAddr), &len);
+	socklen_t len = sizeof(mSocketAddr);
+	getpeername(mRawHandle, reinterpret_cast<sockaddr*>(&mSocketAddr), &len);
 
 	return 0;
 }
 
 I32 io_tcp_client::disconnect() noexcept
 {
-	operateReady = false;
-	I32 dcResult = closesocket(rawHandle);
+	mOperateReady = false;
+	I32 dcResult = closesocket(mRawHandle);
 	if (dcResult == SOCKET_ERROR)
 	{
 		_set_last_error(WSAGetLastError());
@@ -166,12 +168,12 @@ I32 io_tcp_client::disconnect() noexcept
 	return dcResult;
 }
 
-typename io_tcp_client::size_type io_tcp_client::write_data(IBYTEBUFFER in_src) override
+typename io_tcp_client::size_type io_tcp_client::write_data(IBYTEBUFFER in_src)
 {
 	DWORD dataWritten = 0;
 	SIZE_T dataLength = type_sequence<IBYTE>::length_bytes(in_src);
 
-	dataWritten = send(rawHandle, in_src, dataLength, 0);
+	dataWritten = send(mRawHandle, in_src, dataLength, 0);
 	if (dataWritten == SOCKET_ERROR)
 	{
 		_set_last_error(WSAGetLastError());
@@ -179,10 +181,10 @@ typename io_tcp_client::size_type io_tcp_client::write_data(IBYTEBUFFER in_src) 
 	return dataWritten;
 }
 
-typename io_tcp_client::size_type io_tcp_client::write_data(IBYTEBUFFER in_src, size_type in_length) override
+typename io_tcp_client::size_type io_tcp_client::write_data(IBYTEBUFFER in_src, size_type in_length)
 {
 	DWORD dataWritten = 0;
-	dataWritten = send(rawHandle, in_src, in_length, 0);
+	dataWritten = send(mRawHandle, in_src, in_length, 0);
 	if (dataWritten == SOCKET_ERROR)
 	{
 		_set_last_error(WSAGetLastError());
@@ -190,10 +192,10 @@ typename io_tcp_client::size_type io_tcp_client::write_data(IBYTEBUFFER in_src, 
 	return dataWritten;
 }
 
-typename io_tcp_client::size_type io_tcp_client::write_data(const mbase::string& in_src) override
+typename io_tcp_client::size_type io_tcp_client::write_data(const mbase::string& in_src)
 {
 	DWORD dataWritten = 0;
-	dataWritten = send(rawHandle, in_src.c_str(), in_src.size(), 0);
+	dataWritten = send(mRawHandle, in_src.c_str(), in_src.size(), 0);
 	if (dataWritten == SOCKET_ERROR)
 	{
 		_set_last_error(WSAGetLastError());
@@ -201,12 +203,12 @@ typename io_tcp_client::size_type io_tcp_client::write_data(const mbase::string&
 	return dataWritten;
 }
 
-typename io_tcp_client::size_type io_tcp_client::write_data(const char_stream& in_src) override
+typename io_tcp_client::size_type io_tcp_client::write_data(char_stream& in_src)
 {
 	DWORD dataWritten = 0;
 	PTRDIFF cursorPos = in_src.get_pos();
 	IBYTEBUFFER tmpBuffer = in_src.get_bufferc();
-	dataWritten = send(rawHandle, tmpBuffer, in_src.buffer_length() - cursorPos, 0);
+	dataWritten = send(mRawHandle, tmpBuffer, in_src.buffer_length() - cursorPos, 0);
 	if (dataWritten == SOCKET_ERROR)
 	{
 		_set_last_error(WSAGetLastError());
@@ -214,10 +216,10 @@ typename io_tcp_client::size_type io_tcp_client::write_data(const char_stream& i
 	return dataWritten;
 }
 
-typename io_tcp_client::size_type io_tcp_client::read_data(IBYTEBUFFER in_src, size_type in_length) override
+typename io_tcp_client::size_type io_tcp_client::read_data(IBYTEBUFFER in_src, size_type in_length)
 {
 	DWORD dataRead = 0;
-	dataRead = recv(rawHandle, in_src, in_length, 0);
+	dataRead = recv(mRawHandle, in_src, in_length, 0);
 	if (dataRead == SOCKET_ERROR)
 	{
 		_set_last_error(WSAGetLastError());
@@ -225,12 +227,12 @@ typename io_tcp_client::size_type io_tcp_client::read_data(IBYTEBUFFER in_src, s
 	return dataRead;
 }
 
-typename io_tcp_client::size_type io_tcp_client::read_data(const char_stream& in_src) override
+typename io_tcp_client::size_type io_tcp_client::read_data(char_stream& in_src)
 {
 	DWORD dataRead = 0;
 	PTRDIFF cursorPos = in_src.get_pos();
 	IBYTEBUFFER tmpBuffer = in_src.get_bufferc();
-	dataRead = recv(rawHandle, tmpBuffer, in_src.buffer_length() - cursorPos, 0);
+	dataRead = recv(mRawHandle, tmpBuffer, in_src.buffer_length() - cursorPos, 0);
 	if (dataRead == SOCKET_ERROR)
 	{
 		_set_last_error(WSAGetLastError());

@@ -46,7 +46,7 @@ public:
 	MBASE_INLINE set(set&& in_rhs, const Allocator& in_alloc);
 	MBASE_INLINE set(std::initializer_list<value_type> in_list, const Compare& in_comp = Compare(), const Allocator& in_alloc = Allocator());
 	template<typename InputIt, typename = std::enable_if_t<std::is_constructible_v<Key, typename std::iterator_traits<InputIt>::value_type>>>
-	set(InputIt in_begin, InputIt in_end, const Allocator& in_alloc = Allocator()) : rootNode(nullptr), mSize(0) {
+	set(InputIt in_begin, InputIt in_end, const Allocator& in_alloc = Allocator()) : mRootNode(nullptr), mSize(0) {
 		for (in_begin; in_begin != in_end; in_begin++)
 		{
 			insert(*in_begin);
@@ -143,23 +143,23 @@ public:
 	/* ===== NON-MEMBER FUNCTIONS END ===== */
 
 private:
-	_node_type* rootNode;
+	_node_type* mRootNode;
 	size_type mSize;
 };
 
 /* ----- SET IMPLEMENTATION ----- */
 template<typename Key, typename Compare, typename Allocator>
-MBASE_INLINE set<Key, Compare, Allocator>::set() : rootNode(nullptr), mSize(0)
+MBASE_INLINE set<Key, Compare, Allocator>::set() : mRootNode(nullptr), mSize(0)
 {
 }
 
 template<typename Key, typename Compare, typename Allocator>
-MBASE_INLINE set<Key, Compare, Allocator>::set(const Compare& in_comp, const Allocator& in_alloc) : rootNode(nullptr), mSize(0)
+MBASE_INLINE set<Key, Compare, Allocator>::set(const Compare& in_comp, const Allocator& in_alloc) : mRootNode(nullptr), mSize(0)
 {
 }
 
 template<typename Key, typename Compare, typename Allocator>
-MBASE_INLINE set<Key, Compare, Allocator>::set(const set& in_rhs) : rootNode(nullptr), mSize(0) {
+MBASE_INLINE set<Key, Compare, Allocator>::set(const set& in_rhs) : mRootNode(nullptr), mSize(0) {
 	iterator itBegin = in_rhs.begin();
 	for (itBegin; itBegin != in_rhs.end(); itBegin++)
 	{
@@ -168,7 +168,7 @@ MBASE_INLINE set<Key, Compare, Allocator>::set(const set& in_rhs) : rootNode(nul
 }
 
 template<typename Key, typename Compare, typename Allocator>
-MBASE_INLINE set<Key, Compare, Allocator>::set(const set& in_rhs, const Allocator& in_alloc) : rootNode(nullptr), mSize(0) {
+MBASE_INLINE set<Key, Compare, Allocator>::set(const set& in_rhs, const Allocator& in_alloc) : mRootNode(nullptr), mSize(0) {
 	iterator itBegin = in_rhs.begin();
 	for (itBegin; itBegin != in_rhs.end(); itBegin++)
 	{
@@ -177,25 +177,22 @@ MBASE_INLINE set<Key, Compare, Allocator>::set(const set& in_rhs, const Allocato
 }
 
 template<typename Key, typename Compare, typename Allocator>
-MBASE_INLINE set<Key, Compare, Allocator>::set(set&& in_rhs) {
-	rootNode = in_rhs.rootNode;
-	mSize = in_rhs.mSize;
-
-	in_rhs.rootNode = nullptr;
+MBASE_INLINE set<Key, Compare, Allocator>::set(set&& in_rhs) : mRootNode(in_rhs.mRootNode), mSize(in_rhs.mSize) {
+	in_rhs.mRootNode = nullptr;
 	in_rhs.mSize = 0;
 }
 
 template<typename Key, typename Compare, typename Allocator>
 MBASE_INLINE set<Key, Compare, Allocator>::set(set&& in_rhs, const Allocator& in_alloc) {
-	rootNode = in_rhs.rootNode;
+	mRootNode = in_rhs.mRootNode;
 	mSize = in_rhs.mSize;
 
-	in_rhs.rootNode = nullptr;
+	in_rhs.mRootNode = nullptr;
 	in_rhs.mSize = 0;
 }
 
 template<typename Key, typename Compare, typename Allocator>
-MBASE_INLINE set<Key, Compare, Allocator>::set(std::initializer_list<value_type> in_list, const Compare& in_comp, const Allocator& in_alloc) : rootNode(nullptr), mSize(0) {
+MBASE_INLINE set<Key, Compare, Allocator>::set(std::initializer_list<value_type> in_list, const Compare& in_comp, const Allocator& in_alloc) : mRootNode(nullptr), mSize(0) {
 	insert(in_list.begin(), in_list.end());
 }
 
@@ -237,17 +234,17 @@ MBASE_INLINE set<Key, Compare, Allocator>& set<Key, Compare, Allocator>::operato
 
 template<typename Key, typename Compare, typename Allocator>
 MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE typename set<Key, Compare, Allocator>::iterator set<Key, Compare, Allocator>::begin() noexcept {
-	return iterator(rootNode);
+	return iterator(mRootNode);
 }
 
 template<typename Key, typename Compare, typename Allocator>
 MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE typename set<Key, Compare, Allocator>::const_iterator set<Key, Compare, Allocator>::begin() const noexcept {
-	return const_iterator(rootNode);
+	return const_iterator(mRootNode);
 }
 
 template<typename Key, typename Compare, typename Allocator>
 MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE typename set<Key, Compare, Allocator>::const_iterator set<Key, Compare, Allocator>::cbegin() const noexcept {
-	return const_iterator(rootNode);
+	return const_iterator(mRootNode);
 }
 
 template<typename Key, typename Compare, typename Allocator>
@@ -267,17 +264,17 @@ MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE typename set<Key, Compare, Alloca
 
 template<typename Key, typename Compare, typename Allocator>
 MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE typename set<Key, Compare, Allocator>::reverse_iterator set<Key, Compare, Allocator>::rbegin() noexcept {
-	return reverse_iterator(rootNode);
+	return reverse_iterator(mRootNode);
 }
 
 template<typename Key, typename Compare, typename Allocator>
 MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE typename set<Key, Compare, Allocator>::const_reverse_iterator set<Key, Compare, Allocator>::rbegin() const noexcept {
-	return const_reverse_iterator(rootNode);
+	return const_reverse_iterator(mRootNode);
 }
 
 template<typename Key, typename Compare, typename Allocator>
 MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE typename set<Key, Compare, Allocator>::const_reverse_iterator set<Key, Compare, Allocator>::crbegin() const noexcept {
-	return const_reverse_iterator(rootNode);
+	return const_reverse_iterator(mRootNode);
 }
 
 template<typename Key, typename Compare, typename Allocator>
@@ -353,7 +350,7 @@ MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE typename set<Key, Compare, Allocator>::s
 
 template<typename Key, typename Compare, typename Allocator>
 MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE typename set<Key, Compare, Allocator>::iterator set<Key, Compare, Allocator>::find(const Key& in_key) {
-	iterator itBegin(rootNode);
+	iterator itBegin(mRootNode);
 
 	for (itBegin; itBegin != end(); itBegin++)
 	{
@@ -368,7 +365,7 @@ MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE typename set<Key, Compare, Allocator>::i
 
 template<typename Key, typename Compare, typename Allocator>
 MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE typename set<Key, Compare, Allocator>::const_iterator set<Key, Compare, Allocator>::find(const Key& in_key) const {
-	const_iterator itBegin = const_iterator(rootNode);
+	const_iterator itBegin = const_iterator(mRootNode);
 	for (itBegin; itBegin != cend(); itBegin++)
 	{
 		if (*itBegin == in_key)
@@ -456,7 +453,7 @@ MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE typename set<Key, Compare, Allocator>::c
 
 template<typename Key, typename Compare, typename Allocator>
 MBASE_INLINE std::pair<typename set<Key, Compare, Allocator>::iterator, bool> set<Key, Compare, Allocator>::insert(const value_type& in_value) {
-	std::pair<iterator, bool> insertResult = _node_type::insert_node<iterator>(rootNode, in_value, rootNode);
+	std::pair<iterator, bool> insertResult = _node_type::insert_node<iterator>(mRootNode, in_value, mRootNode);
 	if (insertResult.second)
 	{
 		++mSize;
@@ -467,7 +464,7 @@ MBASE_INLINE std::pair<typename set<Key, Compare, Allocator>::iterator, bool> se
 
 template<typename Key, typename Compare, typename Allocator>
 MBASE_INLINE std::pair<typename set<Key, Compare, Allocator>::iterator, bool> set<Key, Compare, Allocator>::insert(value_type&& in_value) {
-	std::pair<iterator, bool> insertResult = _node_type::insert_node<iterator>(rootNode, std::move(in_value), rootNode);
+	std::pair<iterator, bool> insertResult = _node_type::insert_node<iterator>(mRootNode, std::move(in_value), mRootNode);
 	if (insertResult.second)
 	{
 		++mSize;
@@ -509,16 +506,16 @@ MBASE_INLINE typename set<Key, Compare, Allocator>::iterator set<Key, Compare, A
 	iterator itBegin(in_pos._ptr, false);
 	++itBegin;
 	_node_type* nt = in_pos._ptr;
-	if (rootNode == nt)
+	if (mRootNode == nt)
 	{
-		rootNode->remove_node(nt, *in_pos);
-		rootNode = nt;
+		mRootNode->remove_node(nt, *in_pos);
+		mRootNode = nt;
 	}
 	else
 	{
-		rootNode->remove_node(nt, *in_pos);
+		mRootNode->remove_node(nt, *in_pos);
 	}
-	_node_type::balance(rootNode); // FOR NOW, WE ARE BALANCING THE ENTIRE TREE ON EVERY DELETION, WE WILL GO BACK 
+	_node_type::balance(mRootNode); // FOR NOW, WE ARE BALANCING THE ENTIRE TREE ON EVERY DELETION, WE WILL GO BACK 
 
 	--mSize;
 	return itBegin;
@@ -568,7 +565,7 @@ MBASE_INLINE GENERIC set<Key, Compare, Allocator>::clear() noexcept {
 template<typename Key, typename Compare, typename Allocator>
 MBASE_INLINE GENERIC set<Key, Compare, Allocator>::swap(set& in_rhs) noexcept
 {
-	std::swap(rootNode, in_rhs.rootNode);
+	std::swap(mRootNode, in_rhs.mRootNode);
 	std::swap(mSize, in_rhs.mSize);
 }
 

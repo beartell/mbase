@@ -71,8 +71,9 @@ public:
 	MBASE_INLINE_EXPR vector(size_type in_size, const T& in_value, const Allocator& in_alloc = Allocator());
 	MBASE_INLINE_EXPR MBASE_EXPLICIT vector(size_type in_size, const Allocator& in_alloc = Allocator());
 	template<typename InputIt, typename = std::enable_if_t<std::is_constructible_v<T, typename std::iterator_traits<InputIt>::value_type>>>
-	MBASE_INLINE_EXPR vector(InputIt in_first, InputIt in_end, const Allocator& in_alloc = Allocator()) : raw_data(nullptr), mSize(0), mCapacity(MBASE_VECTOR_DEFAULT_CAPACITY), externalAllocator(in_alloc) {
-		raw_data = externalAllocator.allocate(mCapacity);
+	MBASE_INLINE_EXPR vector(InputIt in_first, InputIt in_end, const Allocator& in_alloc = Allocator()) : mRawData(nullptr), mSize(0), mCapacity(MBASE_VECTOR_DEFAULT_CAPACITY), mExternalAllocator(in_alloc) 
+	{
+		mRawData = mExternalAllocator.allocate(mCapacity);
 		for (in_first; in_first != in_end; in_first++)
 		{
 			push_back(*in_first);
@@ -123,7 +124,7 @@ public:
 	/* ===== OBSERVATION METHODS END ===== */
 
 	/* ===== STATE-MODIFIER METHODS BEGIN ===== */
-	template<typename InputIt>
+	template<typename InputIt, typename = std::enable_if_t<std::is_constructible_v<T, typename std::iterator_traits<InputIt>::value_type>>>
 	MBASE_INLINE_EXPR GENERIC assign(InputIt in_begin, InputIt in_end) {
 		clear();
 		for(in_begin; in_begin != in_end; in_begin++)
@@ -188,7 +189,7 @@ public:
 				}
 
 				*this = std::move(vc);
-				return iterator(raw_data + foundIndex);
+				return iterator(mRawData + foundIndex);
 			}
 		}
 
@@ -219,7 +220,7 @@ private:
 	/* ===== STATE-MODIFIER METHODS BEGIN ===== */
 	MBASE_INLINE_EXPR GENERIC deep_clear() noexcept;
 	MBASE_INLINE_EXPR GENERIC deep_clear_and_prepare() noexcept;
-	MBASE_INLINE_EXPR GENERIC calculate_capacity(size_type in_size) noexcept {
+	MBASE_INLINE_EXPR size_type calculate_capacity(size_type in_size) noexcept {
 		// SELF-NOTE: MAY NOT BE PERFORMANT
 		// SELF-NOTE: CONSIDER THE IMPLEMENTATION AGAIN
 		size_type base_capacity = MBASE_VECTOR_DEFAULT_CAPACITY;
@@ -233,30 +234,30 @@ private:
 	}
 	MBASE_INLINE_EXPR GENERIC build_vector(size_type in_capacity) noexcept {
 		mCapacity = in_capacity;
-		raw_data = externalAllocator.allocate(mCapacity);
+		mRawData = mExternalAllocator.allocate(mCapacity);
 	}
 	/* ===== STATE-MODIFIER METHODS END ===== */
 
-	Allocator externalAllocator;
-	pointer raw_data;
+	Allocator mExternalAllocator;
+	pointer mRawData;
 	SIZE_T mSize;
 	SIZE_T mCapacity;
 };
 
 template<typename T, typename Allocator>
-MBASE_INLINE_EXPR vector<T, Allocator>::vector() noexcept : raw_data(nullptr), mSize(0), mCapacity(MBASE_VECTOR_DEFAULT_CAPACITY) 
+MBASE_INLINE_EXPR vector<T, Allocator>::vector() noexcept : mRawData(nullptr), mSize(0), mCapacity(MBASE_VECTOR_DEFAULT_CAPACITY) 
 {
 	build_vector(mCapacity);
 }
 
 template<typename T, typename Allocator>
-MBASE_INLINE_EXPR vector<T, Allocator>::vector(const Allocator& in_alloc) noexcept : raw_data(nullptr), mSize(0), mCapacity(MBASE_VECTOR_DEFAULT_CAPACITY), externalAllocator(in_alloc)
+MBASE_INLINE_EXPR vector<T, Allocator>::vector(const Allocator& in_alloc) noexcept : mRawData(nullptr), mSize(0), mCapacity(MBASE_VECTOR_DEFAULT_CAPACITY), mExternalAllocator(in_alloc)
 {
 	build_vector(mCapacity);
 }
 
 template<typename T, typename Allocator>
-MBASE_INLINE_EXPR vector<T, Allocator>::vector(size_type in_size, const T& in_value, const Allocator& in_alloc) : raw_data(nullptr), mSize(0), mCapacity(MBASE_VECTOR_DEFAULT_CAPACITY), externalAllocator(in_alloc)
+MBASE_INLINE_EXPR vector<T, Allocator>::vector(size_type in_size, const T& in_value, const Allocator& in_alloc) : mRawData(nullptr), mSize(0), mCapacity(MBASE_VECTOR_DEFAULT_CAPACITY), mExternalAllocator(in_alloc)
 {
 	if (in_size <= 0)
 	{
@@ -271,7 +272,7 @@ MBASE_INLINE_EXPR vector<T, Allocator>::vector(size_type in_size, const T& in_va
 }
 
 template<typename T, typename Allocator>
-MBASE_INLINE_EXPR vector<T, Allocator>::vector(size_type in_size, const Allocator& in_alloc) : raw_data(nullptr), mSize(0), mCapacity(MBASE_VECTOR_DEFAULT_CAPACITY), externalAllocator(in_alloc)
+MBASE_INLINE_EXPR vector<T, Allocator>::vector(size_type in_size, const Allocator& in_alloc) : mRawData(nullptr), mSize(0), mCapacity(MBASE_VECTOR_DEFAULT_CAPACITY), mExternalAllocator(in_alloc)
 {
 	if (in_size <= 0)
 	{
@@ -282,7 +283,7 @@ MBASE_INLINE_EXPR vector<T, Allocator>::vector(size_type in_size, const Allocato
 }
 
 template<typename T, typename Allocator>
-MBASE_INLINE_EXPR vector<T, Allocator>::vector(std::initializer_list<value_type> in_list, const Allocator& in_alloc) noexcept : raw_data(nullptr), mSize(0), mCapacity(MBASE_VECTOR_DEFAULT_CAPACITY), externalAllocator(in_alloc)
+MBASE_INLINE_EXPR vector<T, Allocator>::vector(std::initializer_list<value_type> in_list, const Allocator& in_alloc) noexcept : mRawData(nullptr), mSize(0), mCapacity(MBASE_VECTOR_DEFAULT_CAPACITY), mExternalAllocator(in_alloc)
 {
 	build_vector(calculate_capacity(in_list.size()));
 
@@ -295,7 +296,7 @@ MBASE_INLINE_EXPR vector<T, Allocator>::vector(std::initializer_list<value_type>
 }
 
 template<typename T, typename Allocator>
-MBASE_INLINE_EXPR vector<T, Allocator>::vector(const vector& in_rhs) noexcept : raw_data(nullptr), mSize(0), mCapacity(in_rhs.mCapacity), externalAllocator(in_rhs.externalAllocator)
+MBASE_INLINE_EXPR vector<T, Allocator>::vector(const vector& in_rhs) noexcept : mRawData(nullptr), mSize(0), mCapacity(in_rhs.mCapacity), mExternalAllocator(in_rhs.mExternalAllocator)
 {
 	if (!mCapacity)
 	{
@@ -310,7 +311,7 @@ MBASE_INLINE_EXPR vector<T, Allocator>::vector(const vector& in_rhs) noexcept : 
 }
 
 template<typename T, typename Allocator>
-MBASE_INLINE_EXPR vector<T, Allocator>::vector(const vector& in_rhs, const Allocator& in_alloc) noexcept : raw_data(nullptr), mSize(0), mCapacity(in_rhs.mCapacity), externalAllocator(in_alloc)
+MBASE_INLINE_EXPR vector<T, Allocator>::vector(const vector& in_rhs, const Allocator& in_alloc) noexcept : mRawData(nullptr), mSize(0), mCapacity(in_rhs.mCapacity), mExternalAllocator(in_alloc)
 {
 	if (!mCapacity)
 	{
@@ -325,17 +326,17 @@ MBASE_INLINE_EXPR vector<T, Allocator>::vector(const vector& in_rhs, const Alloc
 }
 
 template<typename T, typename Allocator>
-MBASE_INLINE_EXPR vector<T, Allocator>::vector(vector&& in_rhs) noexcept : raw_data(in_rhs.raw_data), mSize(in_rhs.mSize), mCapacity(in_rhs.mCapacity), externalAllocator(in_rhs.externalAllocator)
+MBASE_INLINE_EXPR vector<T, Allocator>::vector(vector&& in_rhs) noexcept : mRawData(in_rhs.mRawData), mSize(in_rhs.mSize), mCapacity(in_rhs.mCapacity), mExternalAllocator(in_rhs.mExternalAllocator)
 {
-	in_rhs.raw_data = nullptr;
+	in_rhs.mRawData = nullptr;
 	in_rhs.mSize = 0;
 	in_rhs.mCapacity = 0;
 }
 
 template<typename T, typename Allocator>
-MBASE_INLINE_EXPR vector<T, Allocator>::vector(vector&& in_rhs, const Allocator& in_alloc) noexcept : raw_data(in_rhs.raw_data), mSize(in_rhs.mSize), mCapacity(in_rhs.mCapacity), externalAllocator(in_alloc)
+MBASE_INLINE_EXPR vector<T, Allocator>::vector(vector&& in_rhs, const Allocator& in_alloc) noexcept : mRawData(in_rhs.mRawData), mSize(in_rhs.mSize), mCapacity(in_rhs.mCapacity), mExternalAllocator(in_alloc)
 {
-	in_rhs.raw_data = nullptr;
+	in_rhs.mRawData = nullptr;
 	in_rhs.mSize = 0;
 	in_rhs.mCapacity = 0;
 }
@@ -379,9 +380,9 @@ MBASE_INLINE_EXPR vector<T, Allocator>& vector<T, Allocator>::operator=(vector&&
 
 	mSize = in_rhs.mSize;
 	mCapacity = in_rhs.mCapacity;
-	raw_data = in_rhs.raw_data;
+	mRawData = in_rhs.mRawData;
 
-	in_rhs.raw_data = nullptr;
+	in_rhs.mRawData = nullptr;
 	in_rhs.mSize = 0;
 	in_rhs.mCapacity = 0;
 
@@ -408,49 +409,49 @@ MBASE_INLINE_EXPR vector<T, Allocator>& vector<T, Allocator>::operator=(std::ini
 template<typename T, typename Allocator>
 MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR typename vector<T, Allocator>::iterator vector<T, Allocator>::begin() const noexcept 
 {
-	return iterator(raw_data);
+	return iterator(mRawData);
 }
 
 template<typename T, typename Allocator>
 MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR typename vector<T, Allocator>::iterator vector<T, Allocator>::end() const noexcept 
 {
-	return iterator(raw_data + mSize);
+	return iterator(mRawData + mSize);
 }
 
 template<typename T, typename Allocator>
 MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR typename vector<T, Allocator>::const_iterator vector<T, Allocator>::cbegin() const noexcept 
 {
-	return const_iterator(raw_data);
+	return const_iterator(mRawData);
 }
 
 template<typename T, typename Allocator>
 MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR typename vector<T, Allocator>::const_iterator vector<T, Allocator>::cend() const noexcept 
 {
-	return const_iterator(raw_data + mSize);
+	return const_iterator(mRawData + mSize);
 }
 
 template<typename T, typename Allocator>
 MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR typename vector<T, Allocator>::reverse_iterator vector<T, Allocator>::rbegin() const noexcept
 {
-	return reverse_iterator(raw_data + (mSize - 1));
+	return reverse_iterator(mRawData + (mSize - 1));
 }
 
 template<typename T, typename Allocator>
 MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR typename vector<T, Allocator>::reverse_iterator vector<T, Allocator>::rend() const noexcept 
 {
-	return reverse_iterator(raw_data - 1);
+	return reverse_iterator(mRawData - 1);
 }
 
 template<typename T, typename Allocator>
 MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR typename vector<T, Allocator>::const_reverse_iterator vector<T, Allocator>::crbegin() const noexcept 
 {
-	return const_reverse_iterator(raw_data + (mSize - 1));
+	return const_reverse_iterator(mRawData + (mSize - 1));
 }
 
 template<typename T, typename Allocator>
 MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR typename vector<T, Allocator>::const_reverse_iterator vector<T, Allocator>::crend() const noexcept
 {
-	return const_reverse_iterator(raw_data - 1);
+	return const_reverse_iterator(mRawData - 1);
 }
 
 template<typename T, typename Allocator>
@@ -495,67 +496,67 @@ MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR bool vector<T, Allocator>::empty() 
 template<typename T, typename Allocator>
 MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR typename vector<T, Allocator>::allocator_type vector<T, Allocator>::get_allocator() const noexcept 
 {
-	return externalAllocator;
+	return mExternalAllocator;
 }
 
 template<typename T, typename Allocator>
 MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR typename vector<T, Allocator>::reference vector<T, Allocator>::back() noexcept
 {
-	return raw_data[mSize - 1];
+	return mRawData[mSize - 1];
 }
 
 template<typename T, typename Allocator>
 MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR typename vector<T, Allocator>::reference vector<T, Allocator>::front() noexcept
 {
-	return raw_data[0];
+	return mRawData[0];
 }
 
 template<typename T, typename Allocator>
 MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR typename vector<T, Allocator>::const_reference vector<T, Allocator>::back() const noexcept
 {
-	return raw_data[mSize - 1];
+	return mRawData[mSize - 1];
 }
 
 template<typename T, typename Allocator>
 MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR typename vector<T, Allocator>::const_reference vector<T, Allocator>::front() const noexcept
 {
-	return raw_data[0];
+	return mRawData[0];
 }
 
 template<typename T, typename Allocator>
 MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR typename vector<T, Allocator>::pointer vector<T, Allocator>::data() noexcept
 {
-	return raw_data;
+	return mRawData;
 }
 
 template<typename T, typename Allocator>
 MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR typename vector<T, Allocator>::const_pointer vector<T, Allocator>::data() const noexcept
 {
-	return raw_data;
+	return mRawData;
 }
 
 template<typename T, typename Allocator>
 MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR typename vector<T, Allocator>::reference vector<T, Allocator>::at(size_type in_pos) noexcept
 {
-	return raw_data[in_pos];
+	return mRawData[in_pos];
 }
 
 template<typename T, typename Allocator>
 MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR typename vector<T, Allocator>::const_reference vector<T, Allocator>::at(size_type in_pos) const noexcept
 {
-	return raw_data[in_pos];
+	return mRawData[in_pos];
 }
 
 template<typename T, typename Allocator>
 MBASE_ND(MBASE_OBS_IGNORE) typename vector<T, Allocator>::reference vector<T, Allocator>::operator[](difference_type in_index) noexcept
 {
-	return raw_data[in_index];
+	return mRawData[in_index];
 }
 
 template<typename T, typename Allocator>
 MBASE_ND(MBASE_OBS_IGNORE) typename vector<T, Allocator>::const_reference vector<T, Allocator>::operator[](difference_type in_index) const noexcept
 {
-	return raw_data[in_index];
+	return mRawData[in_index];
 }
 
 template<typename T, typename Allocator>
@@ -582,7 +583,7 @@ MBASE_INLINE_EXPR GENERIC vector<T, Allocator>::assign(std::initializer_list<val
 template<typename T, typename Allocator>
 MBASE_INLINE_EXPR GENERIC vector<T, Allocator>::swap(mbase::vector<value_type, Allocator>& in_src) noexcept 
 {
-	std::swap(raw_data, in_src.raw_data);
+	std::swap(mRawData, in_src.mRawData);
 	std::swap(mCapacity, in_src.mCapacity);
 	std::swap(mSize, in_src.mSize);
 }
@@ -592,7 +593,7 @@ MBASE_INLINE_EXPR GENERIC vector<T, Allocator>::clear() noexcept
 {
 	for(size_type i = 0; i < mSize; i++)
 	{
-		raw_data[i].~value_type();
+		mRawData[i].~value_type();
 	}
 	mSize = 0;
 }
@@ -600,14 +601,14 @@ MBASE_INLINE_EXPR GENERIC vector<T, Allocator>::clear() noexcept
 template<typename T, typename Allocator>
 MBASE_INLINE_EXPR GENERIC vector<T, Allocator>::deep_clear() noexcept 
 {
-	if (raw_data)
+	if (mRawData)
 	{
 		for (difference_type i = 0; i < mSize; i++)
 		{
-			raw_data[i].~value_type();
+			mRawData[i].~value_type();
 		}
-		externalAllocator.deallocate(raw_data, 0);
-		raw_data = nullptr;
+		mExternalAllocator.deallocate(mRawData, 0);
+		mRawData = nullptr;
 	}
 	mSize = 0;
 	mCapacity = 0;
@@ -617,7 +618,7 @@ template<typename T, typename Allocator>
 MBASE_INLINE_EXPR GENERIC vector<T, Allocator>::deep_clear_and_prepare() noexcept {
 	deep_clear();
 	mCapacity = 4;
-	raw_data = externalAllocator.allocate(mCapacity);
+	mRawData = mExternalAllocator.allocate(mCapacity);
 }
 
 template<typename T, typename Allocator>
@@ -665,15 +666,15 @@ MBASE_INLINE_EXPR GENERIC vector<T, Allocator>::shrink_to_fit()
 	else
 	{
 		I32 newCapacity = ((mSize + 3) / 4) * 8;
-		pointer new_data = externalAllocator.allocate(newCapacity);
+		pointer new_data = mExternalAllocator.allocate(newCapacity);
 		
 		for(difference_type i = 0; i < mSize; i++)
 		{
-			externalAllocator.construct(new_data + i, std::move(*(raw_data + i)));
-			raw_data[i].~value_type();
+			mExternalAllocator.construct(new_data + i, std::move(*(mRawData + i)));
+			mRawData[i].~value_type();
 		}
-		externalAllocator.deallocate(raw_data, 0);
-		raw_data = new_data;
+		mExternalAllocator.deallocate(mRawData, 0);
+		mRawData = new_data;
 		
 		mCapacity = newCapacity;
 	}
@@ -687,17 +688,17 @@ MBASE_INLINE_EXPR GENERIC vector<T, Allocator>::reserve(size_type in_capacity) n
 		return;
 	}
 
-	pointer new_data = externalAllocator.allocate(in_capacity);
+	pointer new_data = mExternalAllocator.allocate(in_capacity);
 	for (difference_type i = 0; i < mSize; i++)
 	{
-		externalAllocator.construct(new_data + i, std::move(*(raw_data + i)));
-		raw_data[i].~value_type();
+		mExternalAllocator.construct(new_data + i, std::move(*(mRawData + i)));
+		mRawData[i].~value_type();
 	}
 
-	externalAllocator.deallocate(raw_data, 0);
+	mExternalAllocator.deallocate(mRawData, 0);
 
 	mCapacity = in_capacity;
-	raw_data = new_data;
+	mRawData = new_data;
 }
 
 template<typename T, typename Allocator>
@@ -815,7 +816,7 @@ MBASE_INLINE_EXPR typename vector<T, Allocator>::iterator vector<T, Allocator>::
 			}
 
 			*this = std::move(vc);
-			return iterator(raw_data + foundIndex);
+			return iterator(mRawData + foundIndex);
 		}
 	}
 
@@ -835,8 +836,8 @@ MBASE_INLINE_EXPR GENERIC vector<T, Allocator>::push_back(const T& in_val) noexc
 	{
 		reserve(2 * mCapacity + 1);
 	}
-	pointer curObj = raw_data + mSize++;
-	externalAllocator.construct(curObj, in_val);
+	pointer curObj = mRawData + mSize++;
+	mExternalAllocator.construct(curObj, in_val);
 }
 
 template<typename T, typename Allocator>
@@ -846,8 +847,8 @@ MBASE_INLINE_EXPR GENERIC vector<T, Allocator>::push_back(T&& in_val) noexcept
 	{
 		reserve(2 * mCapacity + 1);
 	}
-	pointer curObj = raw_data + mSize++;
-	externalAllocator.construct(curObj, std::move(in_val));
+	pointer curObj = mRawData + mSize++;
+	mExternalAllocator.construct(curObj, std::move(in_val));
 }
 
 template<typename T, typename Allocator>
@@ -858,7 +859,7 @@ MBASE_INLINE_EXPR GENERIC vector<T, Allocator>::pop_back() noexcept
 		return;
 	}
 
-	pointer curObj = raw_data + --mSize;
+	pointer curObj = mRawData + --mSize;
 	curObj->~value_type();
 }
 

@@ -66,15 +66,15 @@ public:
 	};
 	
 	/* ===== BUILDER METHODS BEGIN ===== */
-	io_base() : istream(nullptr), ostream(nullptr), operateReady(false) {}
+	io_base() : mIstream(nullptr), mOstream(nullptr), mOperateReady(false), mLastError(0) {}
 	/* ===== BUILDER METHODS END ===== */
 
 	/* ===== OBSERVATION METHODS BEGIN ===== */
-	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) io_context& get_raw_context() noexcept { return rawContext; }
-	MBASE_ND(MBASE_OBS_IGNORE) U32 get_last_error() const noexcept { return lastError; }
-	MBASE_ND(MBASE_OBS_IGNORE) bool is_operate_ready() const noexcept { return operateReady; }
-	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) char_stream* get_is() noexcept { return istream; }
-	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) char_stream* get_os() noexcept { return ostream; }
+	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) io_context& get_raw_context() noexcept { return mRawContext; }
+	MBASE_ND(MBASE_OBS_IGNORE) U32 get_last_error() const noexcept { return mLastError; }
+	MBASE_ND(MBASE_OBS_IGNORE) bool is_operate_ready() const noexcept { return mOperateReady; }
+	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) char_stream* get_is() noexcept { return mIstream; }
+	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) char_stream* get_os() noexcept { return mOstream; }
 	/* ===== OBSERVATION METHODS END ===== */
 
 	/* ===== STATE-MODIFIER METHODS BEGIN ===== */
@@ -86,18 +86,18 @@ public:
 	virtual size_type read_data(IBYTEBUFFER in_src, size_type in_length) = 0;
 	virtual size_type read_data(char_stream& in_src) = 0;
 	virtual size_type read_data(char_stream& in_src, size_type in_length) = 0;
-	GENERIC associate_is(char_stream& in_stream) noexcept { istream = &in_stream; }
-	GENERIC associate_os(char_stream& in_stream) noexcept { ostream = &in_stream; }
-	size_type sync_is() noexcept { return read_data(*istream); }
-	size_type sync_is(size_type in_length) noexcept { return read_data(*istream, in_length); }
-	size_type sync_os() noexcept { return write_data(*ostream); }
-	size_type sync_os(size_type in_length) noexcept { return write_data(*ostream, in_length); }
+	GENERIC associate_is(char_stream& in_stream) noexcept { mIstream = &in_stream; }
+	GENERIC associate_os(char_stream& in_stream) noexcept { mOstream = &in_stream; }
+	size_type sync_is() noexcept { return read_data(*mIstream); }
+	size_type sync_is(size_type in_length) noexcept { return read_data(*mIstream, in_length); }
+	size_type sync_os() noexcept { return write_data(*mOstream); }
+	size_type sync_os(size_type in_length) noexcept { return write_data(*mOstream, in_length); }
 	// this is valid if the subclass is io_file,
 	GENERIC set_file_pointer(size_type in_distance, move_method in_method) noexcept 
 	{ 
-		if(rawContext.raw_handle)
+		if(mRawContext.raw_handle)
 		{
-			SetFilePointer(rawContext.raw_handle, in_distance, nullptr, (DWORD)in_method);
+			SetFilePointer(mRawContext.raw_handle, in_distance, nullptr, (DWORD)in_method);
 		}
 	}
 	/* ===== STATE-MODIFIER METHODS END ===== */
@@ -105,26 +105,26 @@ public:
 protected:
 	GENERIC _set_raw_context(PTRGENERIC raw_handle) noexcept 
 	{
-		rawContext.raw_handle = raw_handle;
-		rawContext.context_body = nullptr;
+		mRawContext.raw_handle = raw_handle;
+		mRawContext.context_body = nullptr;
 	}
 
 	GENERIC _set_raw_context(PTRGENERIC raw_handle, PTRGENERIC context_body) noexcept 
 	{
-		rawContext.raw_handle = raw_handle;
-		rawContext.context_body = context_body;
+		mRawContext.raw_handle = raw_handle;
+		mRawContext.context_body = context_body;
 	}
 
 	GENERIC _set_last_error(U32 in_errcode) noexcept 
 	{
-		lastError = in_errcode;
+		mLastError = in_errcode;
 	}
 
-	io_context rawContext;
-	char_stream* istream;
-	char_stream* ostream;
-	U32 lastError;
-	bool operateReady;
+	io_context mRawContext;
+	char_stream* mIstream;
+	char_stream* mOstream;
+	U32 mLastError;
+	bool mOperateReady;
 };
 
 MBASE_STD_END

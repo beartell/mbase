@@ -40,7 +40,8 @@ public:
 	using size_type = SIZE_T;
 
 	/* ===== NON-MEMBER FUNCTIONS BEGIN ===== */
-	MBASE_ND(MBASE_ALLOCATE_WARNING) static MBASE_INLINE_EXPR T* allocate(SIZE_T in_amount) noexcept {
+	MBASE_ND(MBASE_ALLOCATE_WARNING) static MBASE_INLINE_EXPR T* allocate(SIZE_T in_amount) noexcept 
+	{
 		if (in_amount <= 0)
 		{
 			return nullptr;
@@ -48,7 +49,8 @@ public:
 		return static_cast<pointer>(::operator new(sizeof(value_type) * in_amount));
 	}
 
-	MBASE_ND(MBASE_ALLOCATE_WARNING) static MBASE_INLINE_EXPR T* allocate(SIZE_T in_amount, bool in_zero_memory) noexcept {
+	MBASE_ND(MBASE_ALLOCATE_WARNING) static MBASE_INLINE_EXPR T* allocate(SIZE_T in_amount, bool in_zero_memory) noexcept 
+	{
 		if (in_amount <= 0)
 		{
 			return nullptr;
@@ -65,11 +67,13 @@ public:
 	}
 
 	template<class... Args>
-	static MBASE_INLINE_EXPR GENERIC construct(pointer src, Args&& ... args) noexcept {
+	static MBASE_INLINE_EXPR GENERIC construct(pointer src, Args&& ... args) noexcept 
+	{
 		::new((void_pointer)src) T(std::forward<Args>(args)...);
 	}
 
-	static MBASE_INLINE_EXPR GENERIC destroy(pointer src) noexcept {
+	static MBASE_INLINE_EXPR GENERIC destroy(pointer src) noexcept 
+	{
 		if (!src)
 		{
 			return;
@@ -77,7 +81,8 @@ public:
 		delete src;
 	}
 
-	static MBASE_INLINE_EXPR GENERIC destroy_all(pointer src) noexcept {
+	static MBASE_INLINE_EXPR GENERIC destroy_all(pointer src) noexcept 
+	{
 		if(!src)
 		{
 			return;

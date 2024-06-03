@@ -105,19 +105,21 @@ public:
 	/* ===== OPERATOR STATE-MODIFIER METHODS END ===== */
 
 	/* ===== OPERATOR NON-MEMBER FUNCTIONS BEGIN ===== */
-	MBASE_ND(MBASE_RESULT_IGNORE) friend bool operator==(const char_stream& in_lhs, const char_stream& in_rhs) noexcept {
-		return type_sequence<IBYTE>::is_equal(in_lhs.srcBuffer, in_rhs.srcBuffer, in_lhs.bufferLength);
+	MBASE_ND(MBASE_RESULT_IGNORE) friend bool operator==(const char_stream& in_lhs, const char_stream& in_rhs) noexcept 
+	{
+		return type_sequence<IBYTE>::is_equal(in_lhs.mSrcBuffer, in_rhs.mSrcBuffer, in_lhs.mBufferLength);
 	}
 
-	MBASE_ND(MBASE_RESULT_IGNORE) friend bool operator!=(const char_stream& in_lhs, const char_stream& in_rhs) noexcept {
-		return !type_sequence<IBYTE>::is_equal(in_lhs.srcBuffer, in_rhs.srcBuffer, in_lhs.bufferLength);
+	MBASE_ND(MBASE_RESULT_IGNORE) friend bool operator!=(const char_stream& in_lhs, const char_stream& in_rhs) noexcept 
+	{
+		return !type_sequence<IBYTE>::is_equal(in_lhs.mSrcBuffer, in_rhs.mSrcBuffer, in_lhs.mBufferLength);
 	}
 	/* ===== OPERATOR NON-MEMBER FUNCTIONS END ===== */
 
 protected:
-	size_type bufferLength;
-	difference_type streamCursor;
-	IBYTEBUFFER srcBuffer;
+	size_type mBufferLength;
+	difference_type mStreamCursor;
+	IBYTEBUFFER mSrcBuffer;
 };
 
 /*
@@ -168,17 +170,17 @@ public:
 	/* ===== STATE-MODIFIER METHODS END ===== */
 };
 
-MBASE_INLINE char_stream::char_stream() noexcept : bufferLength(0), streamCursor(0), srcBuffer(nullptr)
+MBASE_INLINE char_stream::char_stream() noexcept : mBufferLength(0), mStreamCursor(0), mSrcBuffer(nullptr)
 {
 }
 
 MBASE_INLINE char_stream::char_stream(IBYTEBUFFER in_src) noexcept {
-	bufferLength = this->length_bytes(in_src) + 1; // CHAR STREAM WILL INCLUDE NULL TERMINATOR
-	streamCursor = 0;
-	srcBuffer = in_src;
+	mBufferLength = this->length_bytes(in_src) + 1; // CHAR STREAM WILL INCLUDE NULL TERMINATOR
+	mStreamCursor = 0;
+	mSrcBuffer = in_src;
 }
 
-MBASE_INLINE char_stream::char_stream(IBYTEBUFFER in_src, size_type in_length) noexcept : bufferLength(in_length), streamCursor(0), srcBuffer(in_src)
+MBASE_INLINE char_stream::char_stream(IBYTEBUFFER in_src, size_type in_length) noexcept : mBufferLength(in_length), mStreamCursor(0), mSrcBuffer(in_src)
 {
 }
 
@@ -189,90 +191,90 @@ MBASE_INLINE char_stream::~char_stream() noexcept
 
 MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE IBYTEBUFFER char_stream::operator*() noexcept 
 {
-	return srcBuffer + streamCursor;
+	return mSrcBuffer + mStreamCursor;
 }
 
 MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR IBYTE char_stream::front() const noexcept 
 {
-	return *srcBuffer;
+	return *mSrcBuffer;
 }
 
 MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR IBYTE char_stream::back() const noexcept 
 {
-	return *(srcBuffer + (bufferLength - 1));
+	return *(mSrcBuffer + (mBufferLength - 1));
 }
 
 MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR bool char_stream::is_cursor_end() const noexcept
 {
-	return streamCursor == bufferLength;
+	return mStreamCursor == mBufferLength;
 }
 
 MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR char_stream::size_type char_stream::buffer_length() const noexcept 
 {
-	return bufferLength;
+	return mBufferLength;
 }
 
 MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR char_stream::difference_type char_stream::get_pos() const noexcept 
 {
-	return streamCursor;
+	return mStreamCursor;
 }
 
 MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR IBYTE char_stream::getc() const noexcept 
 {
-	return *(srcBuffer + streamCursor);
+	return *(mSrcBuffer + mStreamCursor);
 }
 
 MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR IBYTEBUFFER char_stream::get_buffer() const noexcept 
 {
-	return srcBuffer;
+	return mSrcBuffer;
 }
 
 MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR IBYTEBUFFER char_stream::get_bufferc() const noexcept 
 {
-	return srcBuffer + streamCursor;
+	return mSrcBuffer + mStreamCursor;
 }
 
 MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR IBYTEBUFFER char_stream::data() const noexcept 
 {
-	return srcBuffer;
+	return mSrcBuffer;
 }
 
 MBASE_INLINE_EXPR GENERIC char_stream::advance() noexcept 
 {
-	++streamCursor;
+	++mStreamCursor;
 }
 
 MBASE_INLINE_EXPR GENERIC char_stream::advance(difference_type in_length) noexcept 
 {
-	streamCursor += in_length;
+	mStreamCursor += in_length;
 }
 
 MBASE_INLINE_EXPR GENERIC char_stream::reverse() noexcept 
 {
-	--streamCursor;
+	--mStreamCursor;
 }
 
 MBASE_INLINE_EXPR GENERIC char_stream::reverse(difference_type in_length) noexcept 
 {
-	streamCursor -= in_length;
+	mStreamCursor -= in_length;
 }
 
 MBASE_INLINE_EXPR GENERIC char_stream::putc(IBYTE in_byte) noexcept 
 {
-	*(srcBuffer + streamCursor) = in_byte;
+	*(mSrcBuffer + mStreamCursor) = in_byte;
 }
 
 MBASE_INLINE_EXPR GENERIC char_stream::putcn(IBYTE in_byte) noexcept 
 {
-	*(srcBuffer + streamCursor++) = in_byte;
+	*(mSrcBuffer + mStreamCursor++) = in_byte;
 }
 
 MBASE_INLINE_EXPR GENERIC char_stream::put_data(IBYTEBUFFER in_data, size_type in_length) noexcept 
 {
-	difference_type tempCursorPos = streamCursor;
+	difference_type tempCursorPos = mStreamCursor;
 	for (size_type i = 0; i < in_length; i++)
 	{
-		*(srcBuffer + tempCursorPos++) = *(in_data + i);
+		*(mSrcBuffer + tempCursorPos++) = *(in_data + i);
 	}
 }
 
@@ -280,7 +282,7 @@ MBASE_INLINE_EXPR GENERIC char_stream::put_datan(IBYTEBUFFER in_data, size_type 
 {
 	for (size_type i = 0; i < in_length; i++)
 	{
-		*(srcBuffer + streamCursor++) = *(in_data + i);
+		*(mSrcBuffer + mStreamCursor++) = *(in_data + i);
 	}
 }
 
@@ -288,26 +290,26 @@ MBASE_INLINE_EXPR GENERIC char_stream::set_cursor_pos(difference_type in_pos) no
 {
 	if (in_pos < 0)
 	{
-		streamCursor = 0;
+		mStreamCursor = 0;
 		return;
 	}
 
-	streamCursor = in_pos;
+	mStreamCursor = in_pos;
 }
 
 MBASE_INLINE_EXPR GENERIC char_stream::set_cursor_front() noexcept 
 {
-	streamCursor = 0;
+	mStreamCursor = 0;
 }
 
 MBASE_INLINE_EXPR GENERIC char_stream::set_cursor_end() noexcept 
 {
-	streamCursor = bufferLength - 1;
+	mStreamCursor = mBufferLength - 1;
 }
 
 MBASE_INLINE_EXPR GENERIC char_stream::zero_out_buffer() noexcept 
 {
-	difference_type oldCursorPos = streamCursor;
+	difference_type oldCursorPos = mStreamCursor;
 	set_cursor_front();
 	putcn(0);
 	set_cursor_pos(oldCursorPos);
@@ -326,61 +328,61 @@ MBASE_INLINE GENERIC char_stream::_destroy_self() noexcept
 MBASE_INLINE IBYTEBUFFER char_stream::operator+=(difference_type in_rhs) noexcept 
 {
 	advance(in_rhs);
-	return srcBuffer;
+	return mSrcBuffer;
 }
 
 MBASE_INLINE IBYTEBUFFER char_stream::operator++() noexcept 
 {
 	advance();
-	return srcBuffer;
+	return mSrcBuffer;
 }
 
 MBASE_INLINE IBYTEBUFFER char_stream::operator++(I32) noexcept 
 {
 	advance();
-	return srcBuffer;
+	return mSrcBuffer;
 }
 
 MBASE_INLINE IBYTEBUFFER char_stream::operator-=(difference_type in_rhs) noexcept 
 {
 	reverse(in_rhs);
-	return srcBuffer;
+	return mSrcBuffer;
 }
 
 MBASE_INLINE IBYTEBUFFER char_stream::operator--() noexcept 
 {
 	reverse();
-	return srcBuffer;
+	return mSrcBuffer;
 }
 
 MBASE_INLINE IBYTEBUFFER char_stream::operator--(I32) noexcept 
 {
 	reverse();
-	return srcBuffer;
+	return mSrcBuffer;
 }
 
 MBASE_INLINE deep_char_stream::deep_char_stream(IBYTEBUFFER in_src) noexcept : char_stream(in_src) 
 {
-	if (!bufferLength)
+	if (!mBufferLength)
 	{
 		return;
 	}
 
-	IBYTEBUFFER freshBuffer = static_cast<IBYTEBUFFER>(malloc(bufferLength));
-	this->copy_bytes(freshBuffer, srcBuffer, bufferLength);
-	srcBuffer = freshBuffer;
+	IBYTEBUFFER freshBuffer = static_cast<IBYTEBUFFER>(malloc(mBufferLength));
+	this->copy_bytes(freshBuffer, mSrcBuffer, mBufferLength);
+	mSrcBuffer = freshBuffer;
 }
 
 MBASE_INLINE deep_char_stream::deep_char_stream(IBYTEBUFFER in_src, size_type in_length) noexcept : char_stream(in_src, in_length) 
 {
-	if(!bufferLength)
+	if(!mBufferLength)
 	{
 		return;
 	}
 
-	IBYTEBUFFER freshBuffer = static_cast<IBYTEBUFFER>(malloc(bufferLength));
-	this->copy_bytes(freshBuffer, srcBuffer, bufferLength);
-	srcBuffer = freshBuffer;
+	IBYTEBUFFER freshBuffer = static_cast<IBYTEBUFFER>(malloc(mBufferLength));
+	this->copy_bytes(freshBuffer, mSrcBuffer, mBufferLength);
+	mSrcBuffer = freshBuffer;
 }
 
 MBASE_INLINE deep_char_stream::deep_char_stream(size_type in_length) : char_stream() 
@@ -391,31 +393,31 @@ MBASE_INLINE deep_char_stream::deep_char_stream(size_type in_length) : char_stre
 	}
 
 	IBYTEBUFFER freshBuffer = static_cast<IBYTEBUFFER>(malloc(in_length));
-	bufferLength = in_length;
-	srcBuffer = freshBuffer;
-	this->fill(srcBuffer, 0, bufferLength);
+	mBufferLength = in_length;
+	mSrcBuffer = freshBuffer;
+	this->fill(mSrcBuffer, 0, mBufferLength);
 }
 
 MBASE_INLINE deep_char_stream::deep_char_stream(const deep_char_stream& in_rhs) noexcept : char_stream() 
 {
-	bufferLength = in_rhs.bufferLength;
-	streamCursor = in_rhs.streamCursor;
-	if(!bufferLength)
+	mBufferLength = in_rhs.mBufferLength;
+	mStreamCursor = in_rhs.mStreamCursor;
+	if(!mBufferLength)
 	{
 		return;
 	}
 
-	srcBuffer = static_cast<IBYTEBUFFER>(malloc(bufferLength));
-	this->copy_bytes(srcBuffer, in_rhs.srcBuffer, in_rhs.bufferLength);
+	mSrcBuffer = static_cast<IBYTEBUFFER>(malloc(mBufferLength));
+	this->copy_bytes(mSrcBuffer, in_rhs.mSrcBuffer, in_rhs.mBufferLength);
 }
 
 MBASE_INLINE deep_char_stream::deep_char_stream(deep_char_stream&& in_rhs) noexcept 
 {
-	bufferLength = in_rhs.bufferLength;
-	srcBuffer = in_rhs.srcBuffer;
-	in_rhs.srcBuffer = nullptr;
-	in_rhs.bufferLength = 0;
-	in_rhs.streamCursor = 0;
+	mBufferLength = in_rhs.mBufferLength;
+	mSrcBuffer = in_rhs.mSrcBuffer;
+	in_rhs.mSrcBuffer = nullptr;
+	in_rhs.mBufferLength = 0;
+	in_rhs.mStreamCursor = 0;
 }
 
 MBASE_INLINE deep_char_stream::~deep_char_stream() 
@@ -425,19 +427,19 @@ MBASE_INLINE deep_char_stream::~deep_char_stream()
 
 MBASE_INLINE deep_char_stream& deep_char_stream::operator=(const deep_char_stream& in_rhs) noexcept 
 {
-	if (in_rhs.bufferLength == bufferLength)
+	if (in_rhs.mBufferLength == mBufferLength)
 	{
-		streamCursor = in_rhs.streamCursor;
-		this->fill(srcBuffer, 0, bufferLength);
-		this->copy_bytes(srcBuffer, in_rhs.srcBuffer, in_rhs.bufferLength);
+		mStreamCursor = in_rhs.mStreamCursor;
+		this->fill(mSrcBuffer, 0, mBufferLength);
+		this->copy_bytes(mSrcBuffer, in_rhs.mSrcBuffer, in_rhs.mBufferLength);
 	}
 	else {
 		_destroy_self();
-		bufferLength = in_rhs.bufferLength;
-		streamCursor = in_rhs.streamCursor;
-		srcBuffer = static_cast<IBYTEBUFFER>(malloc(bufferLength));
-		this->fill(srcBuffer, 0, bufferLength);
-		this->copy_bytes(srcBuffer, in_rhs.srcBuffer, in_rhs.bufferLength);
+		mBufferLength = in_rhs.mBufferLength;
+		mStreamCursor = in_rhs.mStreamCursor;
+		mSrcBuffer = static_cast<IBYTEBUFFER>(malloc(mBufferLength));
+		this->fill(mSrcBuffer, 0, mBufferLength);
+		this->copy_bytes(mSrcBuffer, in_rhs.mSrcBuffer, in_rhs.mBufferLength);
 	}
 
 	return *this;
@@ -446,25 +448,25 @@ MBASE_INLINE deep_char_stream& deep_char_stream::operator=(const deep_char_strea
 MBASE_INLINE deep_char_stream& deep_char_stream::operator=(deep_char_stream&& in_rhs) noexcept 
 {
 	_destroy_self();
-	bufferLength = in_rhs.bufferLength;
-	srcBuffer = in_rhs.srcBuffer;
-	in_rhs.srcBuffer = nullptr;
-	in_rhs.bufferLength = 0;
-	in_rhs.streamCursor = 0;
+	mBufferLength = in_rhs.mBufferLength;
+	mSrcBuffer = in_rhs.mSrcBuffer;
+	in_rhs.mSrcBuffer = nullptr;
+	in_rhs.mBufferLength = 0;
+	in_rhs.mStreamCursor = 0;
 	return *this;
 }
 
 MBASE_INLINE GENERIC deep_char_stream::_destroy_self() noexcept 
 {
-	if (!srcBuffer)
+	if (!mSrcBuffer)
 	{
 		return;
 	}
 
-	free(srcBuffer);
-	srcBuffer = nullptr;
-	bufferLength = 0;
-	streamCursor = 0;
+	free(mSrcBuffer);
+	mSrcBuffer = nullptr;
+	mBufferLength = 0;
+	mStreamCursor = 0;
 }
 
 MBASE_STD_END

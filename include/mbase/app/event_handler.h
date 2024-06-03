@@ -17,23 +17,23 @@ public:
 		EVENT_ERR_UNKNOWN = MBASE_EVENT_HANDLER_FLAGS_MAX
 	};
 
-	event_handler() : handler_base(), eventType(flags::EVENT_ON) {};
+	event_handler() : handler_base(), mEventType(flags::EVENT_ON), mSelfIter(nullptr), mEventName(""), mManagerId(-1) {};
 	std::string get_event_name() {
-		return eventName;
+		return mEventName;
 	}
 
 	flags get_event_type() {
-		return eventType;
+		return mEventType;
 	}
 
 	friend class event_manager;
 private:
 	using event_element = mbase::list<event_handler*>::iterator;
 	
-	event_element selfIter;
-	std::string eventName;
-	flags eventType;
-	I32 managerId = -1;
+	event_element mSelfIter;
+	std::string mEventName;
+	flags mEventType;
+	I32 mManagerId;
 };
 
 MBASE_END

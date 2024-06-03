@@ -11,7 +11,6 @@
 #include <iterator> // std::iterator_traits
 #include <type_traits> // std::is_constructible
 #include <algorithm> // std::find
-#include <set> // std::multiset
 
 MBASE_STD_BEGIN
 
@@ -50,8 +49,8 @@ template<typename T, typename Allocator = mbase::allocator<T>>
 class list {
 private:
 	using node_type = typename list_node<T>;
-	node_type* firstNode;
-	node_type* lastNode;
+	node_type* mFirstNode;
+	node_type* mLastNode;
 	SIZE_T mSize;
 	
 	/* ===== STATE-MODIFIER METHODS BEGIN ===== */
@@ -80,17 +79,17 @@ public:
 	list(size_type in_count, const T& in_value, const Allocator& in_alloc = Allocator());
 	MBASE_INLINE list(size_type in_count, const Allocator& in_alloc = Allocator());
 	template<typename InputIt, typename = std::enable_if_t<std::is_constructible_v<T, typename std::iterator_traits<InputIt>::value_type>>>
-	list(InputIt in_begin, InputIt in_end, const Allocator& in_alloc = Allocator()) : firstNode(nullptr), lastNode(nullptr), mSize(0) {
+	list(InputIt in_begin, InputIt in_end, const Allocator& in_alloc = Allocator()) : mFirstNode(nullptr), mLastNode(nullptr), mSize(0) {
 		mSize = 0;
 		if(in_begin == in_end)
 		{
-			firstNode = nullptr;
-			lastNode = nullptr;
+			mFirstNode = nullptr;
+			mLastNode = nullptr;
 			return;
 		}
 		mSize = 1;
-		firstNode = new node_type(*(in_begin++), in_alloc); // DO IT WITH CUSTOM ALLOCATOR ON RELEASE
-		lastNode = firstNode;
+		mFirstNode = new node_type(*(in_begin++), in_alloc); // DO IT WITH CUSTOM ALLOCATOR ON RELEASE
+		mLastNode = mFirstNode;
 		for (in_begin; in_begin != in_end; in_begin++) {
 			push_back(*in_begin);
 		}
@@ -159,7 +158,7 @@ public:
 	MBASE_INLINE_EXPR iterator insert(const_iterator in_pos, size_type in_count, const_reference in_object);
 	template<typename InputIt, typename = std::enable_if_t<std::is_constructible_v<T, typename std::iterator_traits<InputIt>::value_type>>>
 	MBASE_INLINE_EXPR iterator insert(const_iterator in_pos, InputIt in_begin, InputIt in_end) {
-		iterator inLast(lastNode);
+		iterator inLast(mLastNode);
 		for(in_begin; in_begin != in_end; in_begin++)
 		{
 			inLast = insert(in_pos, *in_begin);
@@ -219,7 +218,7 @@ public:
 			return;
 		}
 
-		node_type* current = firstNode;
+		node_type* current = mFirstNode;
 		node_type* temp = nullptr;
 
 		while (current != nullptr) {
@@ -230,8 +229,8 @@ public:
 		}
 
 		if (temp != nullptr) {
-			firstNode = temp->prev;
-			lastNode = temp->next;
+			mFirstNode = temp->prev;
+			mLastNode = temp->next;
 		}
 	}
 
@@ -272,30 +271,30 @@ public:
 };
 
 template<typename T, typename Allocator>
-MBASE_INLINE list<T, Allocator>::list() noexcept : firstNode(nullptr), lastNode(nullptr), mSize(0) 
+MBASE_INLINE list<T, Allocator>::list() noexcept : mFirstNode(nullptr), mLastNode(nullptr), mSize(0) 
 {
 }
 
 template<typename T, typename Allocator>
-MBASE_INLINE list<T, Allocator>::list(const Allocator& in_alloc) : firstNode(nullptr), lastNode(nullptr), mSize(0)
+MBASE_INLINE list<T, Allocator>::list(const Allocator& in_alloc) : mFirstNode(nullptr), mLastNode(nullptr), mSize(0)
 {
 }
 
 template<typename T, typename Allocator>
-list<T, Allocator>::list(size_type in_count, const T& in_value, const Allocator& in_alloc) : firstNode(nullptr), lastNode(nullptr), mSize(0)
+list<T, Allocator>::list(size_type in_count, const T& in_value, const Allocator& in_alloc) : mFirstNode(nullptr), mLastNode(nullptr), mSize(0)
 {
 	assign(in_count, in_value);
 }
 
 template<typename T, typename Allocator>
-MBASE_INLINE list<T, Allocator>::list(size_type in_count, const Allocator& in_alloc) : firstNode(nullptr), lastNode(nullptr), mSize(0)
+MBASE_INLINE list<T, Allocator>::list(size_type in_count, const Allocator& in_alloc) : mFirstNode(nullptr), mLastNode(nullptr), mSize(0)
 {
 	T defaultValue;
 	assign(in_count, std::move(defaultValue));
 }
 
 template<typename T, typename Allocator>
-list<T, Allocator>::list(const list& in_rhs) : firstNode(nullptr), lastNode(nullptr), mSize(0)
+list<T, Allocator>::list(const list& in_rhs) : mFirstNode(nullptr), mLastNode(nullptr), mSize(0)
 {
 	clear();
 	for(const_iterator cit = in_rhs.cbegin(); cit != in_rhs.cend(); cit++)
@@ -305,7 +304,7 @@ list<T, Allocator>::list(const list& in_rhs) : firstNode(nullptr), lastNode(null
 }
 
 template<typename T, typename Allocator>
-list<T, Allocator>::list(const list& in_rhs, const Allocator& in_alloc) : firstNode(nullptr), lastNode(nullptr), mSize(0)
+list<T, Allocator>::list(const list& in_rhs, const Allocator& in_alloc) : mFirstNode(nullptr), mLastNode(nullptr), mSize(0)
 {
 	clear();
 	for (const_iterator cit = in_rhs.cbegin(); cit != in_rhs.cend(); cit++)
@@ -315,23 +314,23 @@ list<T, Allocator>::list(const list& in_rhs, const Allocator& in_alloc) : firstN
 }
 
 template<typename T, typename Allocator>
-list<T, Allocator>::list(list&& in_rhs) : firstNode(in_rhs.firstNode), lastNode(in_rhs.lastNode), mSize(in_rhs.mSize) {
+list<T, Allocator>::list(list&& in_rhs) : mFirstNode(in_rhs.mFirstNode), mLastNode(in_rhs.mLastNode), mSize(in_rhs.mSize) {
 	in_rhs.mSize = 0;
-	in_rhs.firstNode = nullptr;
-	in_rhs.lastNode = nullptr;
+	in_rhs.mFirstNode = nullptr;
+	in_rhs.mLastNode = nullptr;
 }
 
 template<typename T, typename Allocator>
-list<T, Allocator>::list(list&& in_rhs, const Allocator& in_alloc) : firstNode(in_rhs.firstNode), lastNode(in_rhs.lastNode), mSize(in_rhs.mSize)
+list<T, Allocator>::list(list&& in_rhs, const Allocator& in_alloc) : mFirstNode(in_rhs.mFirstNode), mLastNode(in_rhs.mLastNode), mSize(in_rhs.mSize)
 {
 	in_rhs.mSize = 0;
-	in_rhs.firstNode = nullptr;
-	in_rhs.lastNode = nullptr;
+	in_rhs.mFirstNode = nullptr;
+	in_rhs.mLastNode = nullptr;
 }
 
 
 template<typename T, typename Allocator>
-MBASE_INLINE list<T, Allocator>::list(std::initializer_list<value_type> in_list) noexcept  : firstNode(nullptr), lastNode(nullptr), mSize(0)
+MBASE_INLINE list<T, Allocator>::list(std::initializer_list<value_type> in_list) noexcept  : mFirstNode(nullptr), mLastNode(nullptr), mSize(0)
 {
 	assign(std::move(in_list));
 }
@@ -360,12 +359,12 @@ list<T, Allocator>& list<T, Allocator>::operator=(list&& in_rhs) noexcept
 	clear();
 
 	mSize = in_rhs.mSize;
-	firstNode = in_rhs.firstNode;
-	lastNode = in_rhs.lastNode;
+	mFirstNode = in_rhs.mFirstNode;
+	mLastNode = in_rhs.mLastNode;
 
 	in_rhs.mSize = 0;
-	in_rhs.firstNode = nullptr;
-	in_rhs.lastNode = nullptr;
+	in_rhs.mFirstNode = nullptr;
+	in_rhs.mLastNode = nullptr;
 
 	return *this;
 }
@@ -381,7 +380,7 @@ list<T, Allocator>& list<T, Allocator>::operator=(std::initializer_list<value_ty
 template<typename T, typename Allocator>
 MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR typename list<T, Allocator>::iterator list<T, Allocator>::begin() noexcept 
 {
-	return iterator(firstNode);
+	return iterator(mFirstNode);
 }
 
 template<typename T, typename Allocator>
@@ -393,7 +392,7 @@ MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR typename list<T, Allocator>:
 template<typename T, typename Allocator>
 MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR typename list<T, Allocator>::const_iterator list<T, Allocator>::cbegin() const noexcept
 {
-	return const_iterator(firstNode);
+	return const_iterator(mFirstNode);
 }
 
 template<typename T, typename Allocator>
@@ -405,7 +404,7 @@ MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR typename list<T, Allocator>:
 template<typename T, typename Allocator>
 MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE typename list<T, Allocator>::reverse_iterator list<T, Allocator>::rbegin() const noexcept
 {
-	return reverse_iterator(lastNode);
+	return reverse_iterator(mLastNode);
 }
 
 template<typename T, typename Allocator>
@@ -417,7 +416,7 @@ MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR typename list<T, Allocator>:
 template<typename T, typename Allocator>
 MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE typename list<T, Allocator>::const_reverse_iterator list<T, Allocator>::crbegin() const noexcept
 {
-	return const_reverse_iterator(lastNode);
+	return const_reverse_iterator(mLastNode);
 }
 
 template<typename T, typename Allocator>
@@ -442,25 +441,25 @@ MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE_EXPR typename list<T, Allocator>::siz
 template<typename T, typename Allocator>
 MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR typename list<T, Allocator>::reference list<T, Allocator>::front() noexcept 
 {
-	return *firstNode->data;
+	return *mFirstNode->data;
 }
 
 template<typename T, typename Allocator>
 MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR typename list<T, Allocator>::const_reference list<T, Allocator>::front() const noexcept
 {
-	return *firstNode->data;
+	return *mFirstNode->data;
 }
 
 template<typename T, typename Allocator>
 MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR typename list<T, Allocator>::reference list<T, Allocator>::back() noexcept
 {
-	return *lastNode->data;
+	return *mLastNode->data;
 }
 
 template<typename T, typename Allocator>
 MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR typename list<T, Allocator>::const_reference list<T, Allocator>::back() const noexcept
 {
-	return *lastNode->data;
+	return *mLastNode->data;
 }
 
 template<typename T, typename Allocator>
@@ -521,25 +520,25 @@ MBASE_INLINE_EXPR GENERIC list<T, Allocator>::clear() noexcept
 	{
 		pop_back();
 	}
-	firstNode = nullptr;
-	lastNode = nullptr;
+	mFirstNode = nullptr;
+	mLastNode = nullptr;
 }
 
 template<typename T, typename Allocator>
 MBASE_INLINE_EXPR GENERIC list<T, Allocator>::push_back(const_reference in_data) noexcept
 {
 	node_type* newNode = new node_type(in_data);
-	newNode->prev = lastNode;
-	if (lastNode)
+	newNode->prev = mLastNode;
+	if (mLastNode)
 	{
-		lastNode->next = newNode;
+		mLastNode->next = newNode;
 	}
 	else
 	{
-		lastNode = newNode;
-		firstNode = lastNode;
+		mLastNode = newNode;
+		mFirstNode = mLastNode;
 	}
-	lastNode = newNode;
+	mLastNode = newNode;
 	++mSize;
 }
 
@@ -547,17 +546,17 @@ template<typename T, typename Allocator>
 MBASE_INLINE_EXPR GENERIC list<T, Allocator>::push_back(move_reference in_data) noexcept 
 {
 	node_type* newNode = new node_type(std::move(in_data));
-	newNode->prev = lastNode;
-	if (lastNode)
+	newNode->prev = mLastNode;
+	if (mLastNode)
 	{
-		lastNode->next = newNode;
+		mLastNode->next = newNode;
 	}
 	else
 	{
-		lastNode = newNode;
-		firstNode = lastNode;
+		mLastNode = newNode;
+		mFirstNode = mLastNode;
 	}
-	lastNode = newNode;
+	mLastNode = newNode;
 	++mSize;
 }
 
@@ -565,18 +564,18 @@ template<typename T, typename Allocator>
 MBASE_INLINE_EXPR GENERIC list<T, Allocator>::push_front(const_reference in_data) noexcept 
 {
 	node_type* newNode = new node_type(in_data);
-	newNode->next = firstNode;
-	if (firstNode)
+	newNode->next = mFirstNode;
+	if (mFirstNode)
 	{
-		firstNode->prev = newNode;
+		mFirstNode->prev = newNode;
 	}
 	else
 	{
-		firstNode = newNode;
-		lastNode = firstNode;
+		mFirstNode = newNode;
+		mLastNode = mFirstNode;
 	}
 
-	firstNode = newNode;
+	mFirstNode = newNode;
 	++mSize;
 }
 
@@ -584,18 +583,18 @@ template<typename T, typename Allocator>
 MBASE_INLINE_EXPR GENERIC list<T, Allocator>::push_front(move_reference in_data) noexcept 
 {
 	node_type* newNode = new node_type(std::move(in_data));
-	newNode->next = firstNode;
-	if (firstNode)
+	newNode->next = mFirstNode;
+	if (mFirstNode)
 	{
-		firstNode->prev = newNode;
+		mFirstNode->prev = newNode;
 	}
 	else
 	{
-		firstNode = newNode;
-		lastNode = firstNode;
+		mFirstNode = newNode;
+		mLastNode = mFirstNode;
 	}
 
-	firstNode = newNode;
+	mFirstNode = newNode;
 	++mSize;
 }
 
@@ -604,15 +603,15 @@ MBASE_INLINE_EXPR GENERIC list<T, Allocator>::pop_back() noexcept
 {
 	if (!(--mSize))
 	{
-		delete lastNode;
-		lastNode = nullptr;
-		firstNode = nullptr;
+		delete mLastNode;
+		mLastNode = nullptr;
+		mFirstNode = nullptr;
 		return;
 	}
-	node_type* newLastNode = lastNode->prev;
-	newLastNode->next = nullptr;
-	delete lastNode;
-	lastNode = newLastNode;
+	node_type* newmLastNode = mLastNode->prev;
+	newmLastNode->next = nullptr;
+	delete mLastNode;
+	mLastNode = newmLastNode;
 }
 
 template<typename T, typename Allocator>
@@ -620,16 +619,16 @@ MBASE_INLINE_EXPR GENERIC list<T, Allocator>::pop_front() noexcept
 {
 	if (!(--mSize))
 	{
-		delete firstNode;
-		lastNode = nullptr;
-		firstNode = nullptr;
+		delete mFirstNode;
+		mLastNode = nullptr;
+		mFirstNode = nullptr;
 		return;
 	}
 
-	node_type* newFirstNode = firstNode->next;
-	newFirstNode->prev = nullptr;
-	delete firstNode;
-	firstNode = newFirstNode;
+	node_type* newmFirstNode = mFirstNode->next;
+	newmFirstNode->prev = nullptr;
+	delete mFirstNode;
+	mFirstNode = newmFirstNode;
 }
 
 template<typename T, typename Allocator>
@@ -638,7 +637,7 @@ MBASE_INLINE_EXPR typename list<T, Allocator>::iterator list<T, Allocator>::inse
 	if(in_pos == cend())
 	{
 		push_back(in_object);
-		return iterator(lastNode);
+		return iterator(mLastNode);
 	}
 
 	node_type* mNode = const_cast<node_type*>(in_pos._get_node());
@@ -651,7 +650,7 @@ MBASE_INLINE_EXPR typename list<T, Allocator>::iterator list<T, Allocator>::inse
 
 	else
 	{
-		firstNode = newNode;
+		mFirstNode = newNode;
 	}
 
 	mNode->prev = newNode;
@@ -666,7 +665,7 @@ MBASE_INLINE_EXPR typename list<T, Allocator>::iterator list<T, Allocator>::inse
 	if (in_pos == cend())
 	{
 		push_back(std::move(in_object));
-		return iterator(lastNode);
+		return iterator(mLastNode);
 	}
 
 	node_type* mNode = const_cast<node_type*>(in_pos._get_node());
@@ -679,7 +678,7 @@ MBASE_INLINE_EXPR typename list<T, Allocator>::iterator list<T, Allocator>::inse
 
 	else
 	{
-		firstNode = newNode;
+		mFirstNode = newNode;
 	}
 
 	mNode->prev = newNode;
@@ -696,7 +695,7 @@ MBASE_INLINE_EXPR typename list<T, Allocator>::iterator list<T, Allocator>::inse
 		return end();
 	}
 
-	iterator activeIt(firstNode);
+	iterator activeIt(mFirstNode);
 	for (I32 i = 0; i < in_count; i++) 
 	{
 		activeIt = insert(in_pos, in_object);
@@ -728,12 +727,12 @@ MBASE_INLINE_EXPR typename list<T, Allocator>::iterator list<T, Allocator>::eras
 	node_type* mNode = in_pos._get_node();
 	node_type* returnedNode = mNode->next;
 
-	if (mNode == firstNode)
+	if (mNode == mFirstNode)
 	{
 		pop_front();
 	}
 
-	else if (mNode == lastNode)
+	else if (mNode == mLastNode)
 	{
 		returnedNode = mNode->prev;
 		pop_back();
@@ -755,12 +754,12 @@ MBASE_INLINE_EXPR typename list<T, Allocator>::iterator list<T, Allocator>::eras
 	node_type* mNode = const_cast<node_type*>(in_pos._get_node());
 	node_type* returnedNode = mNode->next;
 
-	if (mNode == firstNode)
+	if (mNode == mFirstNode)
 	{
 		pop_front();
 	}
 
-	else if (mNode == lastNode)
+	else if (mNode == mLastNode)
 	{
 		returnedNode = mNode->prev;
 		pop_back();
@@ -779,7 +778,7 @@ MBASE_INLINE_EXPR typename list<T, Allocator>::iterator list<T, Allocator>::eras
 template<typename T, typename Allocator>
 MBASE_INLINE_EXPR typename list<T, Allocator>::iterator list<T, Allocator>::erase(iterator in_begin, iterator in_end) 
 {
-	iterator removedNode(lastNode);
+	iterator removedNode(mLastNode);
 	for(in_begin; in_begin != in_end; in_begin++) {
 		in_begin = erase(in_begin);
 		removedNode = in_begin;
@@ -790,7 +789,7 @@ MBASE_INLINE_EXPR typename list<T, Allocator>::iterator list<T, Allocator>::eras
 template<typename T, typename Allocator>
 MBASE_INLINE_EXPR typename list<T, Allocator>::iterator list<T, Allocator>::erase(const_iterator in_begin, const_iterator in_end) 
 {
-	iterator removedNode(lastNode);
+	iterator removedNode(mLastNode);
 	for (in_begin; in_begin != in_end; in_begin++) {
 		in_begin = erase(in_begin);
 		removedNode = in_begin;
@@ -812,8 +811,8 @@ MBASE_INLINE_EXPR GENERIC list<T, Allocator>::splice(const_iterator in_pos, list
 	list newList(std::move(in_rhs));
 
 	in_rhs.mSize = 0;
-	in_rhs.firstNode = nullptr;
-	in_rhs.lastNode = nullptr;
+	in_rhs.mFirstNode = nullptr;
+	in_rhs.mLastNode = nullptr;
 }
 
 template<typename T, typename Allocator>
@@ -830,8 +829,8 @@ MBASE_INLINE_EXPR GENERIC list<T, Allocator>::splice(const_iterator in_pos, list
 	list newList(std::move(in_rhs));
 
 	in_rhs.mSize = 0;
-	in_rhs.firstNode = nullptr;
-	in_rhs.lastNode = nullptr;
+	in_rhs.mFirstNode = nullptr;
+	in_rhs.mLastNode = nullptr;
 }
 
 template<typename T, typename Allocator>
@@ -876,8 +875,8 @@ MBASE_INLINE GENERIC list<T, Allocator>::remove(const_reference in_value)
 template<typename T, typename Allocator>
 MBASE_INLINE_EXPR GENERIC list<T, Allocator>::swap(list& in_src) noexcept 
 {
-	std::swap(firstNode, in_src.firstNode);
-	std::swap(lastNode, in_src.lastNode);
+	std::swap(mFirstNode, in_src.mFirstNode);
+	std::swap(mLastNode, in_src.mLastNode);
 	std::swap(mSize, in_src.mSize);
 }
 
@@ -939,18 +938,18 @@ MBASE_INLINE mbase::list<T, Allocator> list<T, Allocator>::deserialize(IBYTEBUFF
 template<typename T, typename Allocator>
 MBASE_INLINE GENERIC list<T, Allocator>::push_back_node(node_type* in_node) 
 {
-	in_node->prev = lastNode;
-	if(lastNode)
+	in_node->prev = mLastNode;
+	if(mLastNode)
 	{
-		lastNode->next = in_node;
+		mLastNode->next = in_node;
 	}
 	else
 	{
-		lastNode = in_node;
-		firstNode = lastNode;
+		mLastNode = in_node;
+		mFirstNode = mLastNode;
 	}
 	in_node->next = nullptr;
-	lastNode = in_node;
+	mLastNode = in_node;
 	++mSize;
 }
 
@@ -972,7 +971,7 @@ MBASE_INLINE GENERIC list<T, Allocator>::_insert_node(const_iterator in_it, node
 
 	else
 	{
-		firstNode = in_node;
+		mFirstNode = in_node;
 	}
 
 	mNode->prev = in_node;
@@ -986,8 +985,8 @@ GENERIC list<T, Allocator>::clear_and_prepare(const T& in_value)
 	clear();
 	mSize = 1;
 
-	firstNode = new node_type(in_value);
-	lastNode = firstNode;
+	mFirstNode = new node_type(in_value);
+	mLastNode = mFirstNode;
 }
 
 template<typename T, typename Allocator>
@@ -996,8 +995,8 @@ GENERIC list<T, Allocator>::clear_and_prepare(const T& in_value, const Allocator
 	clear();
 	mSize = 1;
 
-	firstNode = new node_type(in_value);
-	lastNode = firstNode;
+	mFirstNode = new node_type(in_value);
+	mLastNode = mFirstNode;
 }
 
 MBASE_STD_END

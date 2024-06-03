@@ -13,15 +13,17 @@ MBASE_BEGIN
 
 struct event_group {
 	using size_type = SIZE_T;
+	using handler_container = mbase::list<event_handler*>;
 
 	bool isGroupBlocked = true;
 	size_type maxListeners = 1024;
-	mbase::list<event_handler*> listeners;
+	handler_container listeners;
 };
 
 class event_manager : public non_copymovable {
 public:
 	using user_data = PTRGENERIC;
+	using event_map = std::unordered_map<std::string, event_group>;
 
 	enum class flags : U32 {
 		EVENT_MNG_SUCCESS = 0,
@@ -34,13 +36,13 @@ public:
 	};
 
 	MBASE_INLINE event_manager() noexcept {
-		this->managerId = 1 + (rand() % 1000000);
+		this->mManagerId = 1 + (rand() % 1000000);
 		srand(time(0));
 	}
 
-	MBASE_INLINE flags dispatch_event(const std::string& in_event, user_data in_data) {
-		auto foundElement = eventMap.find(in_event);
-		if (foundElement != eventMap.end())
+	MBASE_INLINE flags dispatch_event(const std::string& in_event, user_data in_data) noexcept {
+		auto foundElement = mEventMap.find(in_event);
+		if (foundElement != mEventMap.end())
 		{
 			event_group& eventGroup = foundElement->second;
 			if(eventGroup.isGroupBlocked)
@@ -48,16 +50,16 @@ public:
 				return flags::EVENT_MNG_ERR_GROUP_BLOCKED;
 			}
 
-			mbase::list<event_handler*>& eventList = eventGroup.listeners;
-			mbase::list<event_handler*>::iterator It = eventList.begin();
+			event_group::handler_container& eventList = eventGroup.listeners;
+			event_group::handler_container::iterator It = eventList.begin();
 			for(It; It != eventList.end(); It++)
 			{
 				event_handler* suppliedHandler = *It;
 				suppliedHandler->on_call(in_data);
 				if(suppliedHandler->eventType == event_handler::flags::EVENT_ONCE)
 				{
-					suppliedHandler->managerId = -1;
-					It = eventList.erase(suppliedHandler->selfIter);
+					suppliedHandler->mManagerId = -1;
+					It = eventList.erase(suppliedHandler->mSelfIter);
 				}
 			}
 			return flags::EVENT_MNG_SUCCESS;
@@ -65,14 +67,14 @@ public:
 		return flags::EVENT_MNG_ERR_NOT_FOUND;
 	}
 
-	MBASE_INLINE flags add_event_listener(const std::string& in_event, event_handler& in_handler) {
-		if(in_handler.managerId != -1)
+	MBASE_INLINE flags add_event_listener(const std::string& in_event, event_handler& in_handler) noexcept {
+		if(in_handler.mManagerId != -1)
 		{
 			return flags::EVENT_MNG_ERR_BELONGS_TO_FOREIGN_MANAGER;
 		}
 
-		auto foundElement = eventMap.find(in_event);
-		if(foundElement != eventMap.end())
+		auto foundElement = mEventMap.find(in_event);
+		if(foundElement != mEventMap.end())
 		{
 			event_group& eventGroup = foundElement->second;
 			if(eventGroup.isGroupBlocked)
@@ -85,35 +87,35 @@ public:
 				return flags::EVENT_MNG_ERR_REACHED_MAX_LISTENERS;
 			}
 
-			mbase::list<event_handler*>& eventList = eventGroup.listeners;
-			in_handler.selfIter = eventList.insert(eventList.cend(), &in_handler);
+			event_group::handler_container& eventList = eventGroup.listeners;
+			in_handler.mSelfIter = eventList.insert(eventList.cend(), &in_handler);
 		}
 		else
 		{
 			event_group newGroup;
 			newGroup.isGroupBlocked = false;
-			newGroup.listeners = mbase::list<event_handler*>();
+			newGroup.listeners = event_group::handler_container();
 
-			eventMap[in_event] = newGroup;
-			mbase::list<event_handler*>& eventList = eventMap[in_event].listeners;
+			mEventMap[in_event] = newGroup;
+			event_group::handler_container& eventList = mEventMap[in_event].listeners;
 
-			in_handler.selfIter = eventList.insert(eventList.cend(), &in_handler);
+			in_handler.mSelfIter = eventList.insert(eventList.cend(), &in_handler);
 		}
 
-		in_handler.managerId = this->managerId;
+		in_handler.mManagerId = this->mManagerId;
 
 		return flags::EVENT_MNG_SUCCESS;
 	}
 
-	MBASE_INLINE flags remove_listener(event_handler& in_handler)
+	MBASE_INLINE flags remove_listener(event_handler& in_handler) noexcept
 	{
-		if(in_handler.managerId != this->managerId)
+		if(in_handler.mManagerId != this->mManagerId)
 		{
 			return flags::EVENT_MNG_ERR_BELONGS_TO_FOREIGN_MANAGER;
 		}
 
-		auto foundElement = eventMap.find(in_handler.eventName);
-		if(foundElement != eventMap.end())
+		auto foundElement = mEventMap.find(in_handler.mEventName);
+		if(foundElement != mEventMap.end())
 		{
 			event_group& eventGroup = foundElement->second;
 			if(eventGroup.isGroupBlocked)
@@ -121,34 +123,40 @@ public:
 				return flags::EVENT_MNG_ERR_GROUP_BLOCKED;
 			}
 
-			mbase::list<event_handler*>& eventList = eventGroup.listeners;
-			eventList.erase(in_handler.selfIter);
+			event_group::handler_container& eventList = eventGroup.listeners;
+			eventList.erase(in_handler.mSelfIter);
 		}
 
 		return flags::EVENT_MNG_SUCCESS;
 	}
 
-	MBASE_INLINE flags remove_all_listeners(const std::string& in_event)
+	MBASE_INLINE flags remove_all_listeners(const std::string& in_event) noexcept
 	{
-		auto foundElement = eventMap.find(in_event);
-		if(foundElement != eventMap.end())
+		auto foundElement = mEventMap.find(in_event);
+		if(foundElement != mEventMap.end())
 		{
 			event_group& eventGroup = foundElement->second;
-			mbase::list<event_handler*> eventList = eventGroup.listeners;
+			event_group::handler_container& eventList = eventGroup.listeners;
 			eventList.clear();
-			eventMap.erase(in_event);
+			mEventMap.erase(in_event);
 			return flags::EVENT_MNG_SUCCESS;
-			// no need to erase
 		}
 		return flags::EVENT_MNG_ERR_NOT_FOUND;
 	}
 
-	MBASE_INLINE I32 get_manager_id() {
-		return managerId;
+	MBASE_INLINE I32 get_manager_id() const noexcept 
+	{
+		return mManagerId;
 	}
+
+	MBASE_INLINE event_map* get_event_map() const noexcept 
+	{
+		return mEventMap;
+	}
+
 private:
-	I32 managerId = 0;
-	std::unordered_map<std::string, event_group> eventMap;
+	I32 mManagerId = 0;
+	event_map mEventMap;
 };
 
 MBASE_END

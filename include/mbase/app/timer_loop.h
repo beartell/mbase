@@ -15,6 +15,8 @@ MBASE_BEGIN
 
 class timer_loop : public non_copymovable {
 public:
+	using timer_container = mbase::list<timer_base*>;
+
 	enum class flags : U32 {
 		TIMER_SUCCESS = 0,
 		TIMER_ERR_LIMIT_REACHED = 1,
@@ -24,12 +26,12 @@ public:
 		TIMER_ERR_ALREADY_REGISTERED = 5
 	};
 
-	timer_loop() : timerLimit(MBASE_DEFAULT_TIMER_LIMIT), timerIdCounter(0), isRunning(false), timerLoopId(0) {
+	timer_loop() : mTimerLimit(MBASE_DEFAULT_TIMER_LIMIT), mTimerIdCounter(0), mIsRunning(false), mTimerLoopId(0) {
 		LARGE_INTEGER performanceFrequency = {};
 		QueryPerformanceFrequency(&performanceFrequency);
-		frequency = 1000 / (F64)performanceFrequency.QuadPart; // MS ACCURACY
-		deltaTime = frequency;
-		timerLoopId = 1 + (rand() % 1000000);
+		mFrequency = 1000 / (F64)performanceFrequency.QuadPart; // MS ACCURACY
+		mDeltaTime = mFrequency;
+		mTimerLoopId = 1 + (rand() % 1000000);
 		srand(time(0));
 	}
 
@@ -41,12 +43,12 @@ public:
 			return flags::TIMER_ERR_ALREADY_REGISTERED;
 		}
 
-		if(registeredTimers.size() > timerLimit)
+		if(mRegisteredTimers.size() > mTimerLimit)
 		{
 			return flags::TIMER_ERR_LIMIT_REACHED;
 		}
 
-		in_timer.handlerId = ++timerIdCounter;
+		in_timer.mHandlerId = ++mTimerIdCounter;
 		flags terr = flags::TIMER_SUCCESS;
 
 		if(in_timer.get_target_time() <= 0)
@@ -55,10 +57,9 @@ public:
 		}
 
 		in_timer.mIsRegistered = true;
-		in_timer.loopId = timerLoopId;
+		in_timer.mLoopId = mTimerLoopId;
 		in_timer.on_register();
-		//registeredTimers.push_back(&in_timer);
-		in_timer.teSelf = registeredTimers.insert(registeredTimers.cend(), &in_timer); // WE WILL FIX IT LATER
+		in_timer.mSelfIter = mRegisteredTimers.insert(mRegisteredTimers.cend(), &in_timer); // WE WILL FIX IT LATER
 
 		return terr;
 	}
@@ -69,12 +70,12 @@ public:
 			return flags::TIMER_ERR_ALREADY_REGISTERED;
 		}
 
-		if (registeredTimers.size() > timerLimit)
+		if (mRegisteredTimers.size() > mTimerLimit)
 		{
 			return flags::TIMER_ERR_LIMIT_REACHED;
 		}
 
-		in_timer.handlerId = ++timerIdCounter; // Timer ids will start from 1
+		in_timer.mHandlerId = ++mTimerIdCounter; // Timer ids will start from 1
 		flags terr = flags::TIMER_SUCCESS;
 
 		if (in_timer.get_target_time() <= 0)
@@ -84,10 +85,10 @@ public:
 		}
 
 		in_timer.mIsRegistered = true;
-		in_timer.suppliedData = in_usr_data;
-		in_timer.loopId = timerLoopId;
+		in_timer.mSuppliedData = in_usr_data;
+		in_timer.mLoopId = mTimerLoopId;
 		in_timer.on_register();
-		in_timer.teSelf = registeredTimers.insert(registeredTimers.cend(), &in_timer); // WE WILL FIX IT LATER
+		in_timer.mSelfIter = mRegisteredTimers.insert(mRegisteredTimers.cend(), &in_timer); // WE WILL FIX IT LATER
 
 		return terr;
 	}
@@ -98,65 +99,65 @@ public:
 			return flags::TIMER_SUCCESS;
 		}
 
-		if(in_timer.loopId != timerLoopId)
+		if(in_timer.mLoopId != mTimerLoopId)
 		{
 			return flags::TIMER_ERR_BELONGS_TO_FOREIGN_LOOP;
 		}
 
-		MBASE_NULL_CHECK_RETURN_VAL(in_timer.teSelf.get(), flags::TIMER_ERR_INVALID_DATA); // SERIOUS PROBLEM IF THIS OCCURS
-		timer_base* tb = *in_timer.teSelf;
+		MBASE_NULL_CHECK_RETURN_VAL(in_timer.mSelfIter.get(), flags::TIMER_ERR_INVALID_DATA); // SERIOUS PROBLEM IF THIS OCCURS
+		timer_base* tb = *in_timer.mSelfIter;
 		
 		tb->mIsRegistered = false;
-		tb->loopId = -1;
-		tb->suppliedData = nullptr;
+		tb->mLoopId = -1;
+		tb->mSuppliedData = nullptr;
 		tb->on_unregister();
-		registeredTimers.erase(in_timer.teSelf);
+		mRegisteredTimers.erase(in_timer.mSelfIter);
 		
 		return flags::TIMER_SUCCESS;
 	}
 
 	MBASE_ND("timer loop observation being ignored") U32 get_delta_seconds() const noexcept {
-		return deltaTime;
+		return mDeltaTime;
 	}
 
 	MBASE_ND("timer loop observation being ignored") mbase::tpool* get_thread_pool() noexcept {
-		return &threadPool;
+		return &mThreadPool;
 	}
 
 	MBASE_ND("timer loop observation being ignored") mbase::list<timer_base*>* get_timer_list() noexcept {
-		return &registeredTimers;
+		return &mRegisteredTimers;
 	}
 
 	GENERIC run_timer_loop() noexcept {
-		if(isRunning)
+		if(mIsRunning)
 		{
 			return;
 		}
-		isRunning = true;
+		mIsRunning = true;
 		
 		LARGE_INTEGER queryTime;
 		QueryPerformanceCounter(&queryTime);
 
 		U64 currentTime = queryTime.QuadPart;
 		U64 prevTime = currentTime;
-		while (isRunning)
+		while (mIsRunning)
 		{	
 			QueryPerformanceCounter(&queryTime);
 			currentTime = queryTime.QuadPart;
-			deltaTime = (currentTime - prevTime) * frequency;
+			mDeltaTime = (currentTime - prevTime) * mFrequency;
 			prevTime = currentTime;
 
-			mbase::list<timer_base*>::iterator It = registeredTimers.begin();
-			while(It != registeredTimers.end())
+			timer_container::iterator It = mRegisteredTimers.begin();
+			while(It != mRegisteredTimers.end())
 			{
 				timer_base* tmpTimerBase = *It;
-				tmpTimerBase->mCurrentTime += deltaTime;
+				tmpTimerBase->mCurrentTime += mDeltaTime;
 				++It;
 				if (tmpTimerBase->mCurrentTime >= tmpTimerBase->mTargetTime)
 				{
 					if(tmpTimerBase->get_execution_policy() == mbase::timer_base::flags::TIMER_POLICY_ASYNC)
 					{
-						threadPool.execute_job(tmpTimerBase);
+						mThreadPool.execute_job(tmpTimerBase);
 					}
 					else
 					{
@@ -172,24 +173,23 @@ public:
 					if (tmpTimerBase->get_timer_type() == mbase::timer_base::flags::TIMER_TYPE_TIMEOUT)
 					{
 						tmpTimerBase->mIsRegistered = false;
-						tmpTimerBase->loopId = -1;
-						//tmpTimerBase->suppliedData = nullptr;
+						tmpTimerBase->mLoopId = -1;
 						tmpTimerBase->on_unregister();
-						It = registeredTimers.erase(tmpTimerBase->teSelf);
+						It = mRegisteredTimers.erase(tmpTimerBase->mSelfIter);
 					}
 					else
 					{
 						time_interval* ti = static_cast<time_interval*>(tmpTimerBase);
 						ti->reset_time();
-						ti->tickCount++;
-						if(ti->tickLimit != 0)
+						ti->mTickCount++;
+						if(ti->mTickLimit != 0)
 						{
-							if(ti->tickCount >= ti->tickLimit)
+							if(ti->mTickCount >= ti->mTickLimit)
 							{
 								ti->mIsRegistered = false;
-								ti->loopId = -1;
+								ti->mLoopId = -1;
 								ti->on_unregister();
-								It = registeredTimers.erase(ti->teSelf);
+								It = mRegisteredTimers.erase(ti->mSelfIter);
 							}
 						}
 					}
@@ -199,26 +199,26 @@ public:
 	}
 
 	MBASE_ND("timer loop observation being ignored") U32 get_active_timer_count() const noexcept {
-		return registeredTimers.size();
+		return mRegisteredTimers.size();
 	}
 
 	GENERIC set_timer_limit(U32 in_limit) noexcept {
-		timerLimit = in_limit;
+		mTimerLimit = in_limit;
 	}
 
 	GENERIC halt() noexcept {
-		isRunning = false;
+		mIsRunning = false;
 	}
 
 protected:
-	F64 deltaTime;
-	F64 frequency;
-	U32 timerLimit;
-	U32 timerIdCounter;
-	I32 timerLoopId;
-	bool isRunning;
-	mbase::list<timer_base*> registeredTimers;
-	mbase::tpool threadPool;
+	F64 mDeltaTime;
+	F64 mFrequency;
+	U32 mTimerLimit;
+	U32 mTimerIdCounter;
+	I32 mTimerLoopId;
+	bool mIsRunning;
+	timer_container mRegisteredTimers;
+	mbase::tpool mThreadPool;
 };
 
 MBASE_END

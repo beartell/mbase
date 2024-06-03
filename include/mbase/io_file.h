@@ -69,43 +69,47 @@ public:
 	size_type read_data(char_stream& in_src, size_type in_length) override;
 
 	template<typename SerializableObject>
-	size_type write_data(SerializableObject& in_src) {
-		safe_buffer mBuffer;
-		in_src.serialize(mBuffer);
-		return write_data(mBuffer.bfSource, mBuffer.bfLength);
+	size_type write_data(SerializableObject& in_src) 
+	{
+		mbase::deep_char_stream dcs(in_src.get_serialized_size());
+		in_src.serialize(dcs);
+		return write_data(dcs.get_buffer(), dcs.buffer_length());
 	}
 
 	template<typename SerializableObject>
-	size_type read_data(SerializableObject& in_target, IBYTEBUFFER in_src, size_type in_length) {
+	size_type read_data(SerializableObject& in_target, IBYTEBUFFER in_src, size_type in_length) 
+	{
+		mbase::char_stream cs(in_src, in_length);
 		size_type readLength = read_data(in_src, in_length);
 		in_target = std::move(in_target.deserialize(in_src, in_length));
 		return readLength;
 	}
 
 private:
-	bool isFileOpen;
-	mbase::string fileName;
+	bool mIsFileOpen;
+	mbase::string mFileName;
 };
 
-io_file::io_file() noexcept
+io_file::io_file() noexcept : mIsFileOpen(false), mFileName()
 {
 }
 
-io_file::io_file(const mbase::string& in_filename, access_mode in_accmode, disposition in_disp) noexcept 
+io_file::io_file(const mbase::string& in_filename, access_mode in_accmode, disposition in_disp) noexcept : mIsFileOpen(false), mFileName(in_filename)
 {
 	DWORD fileAttrs = FILE_ATTRIBUTE_NORMAL;
-	
-	PTRGENERIC rawHandle = CreateFileA(in_filename.c_str(), (DWORD)in_accmode, FILE_SHARE_READ, nullptr, (DWORD)in_disp, fileAttrs, nullptr);
-	if (!rawContext.raw_handle)
+	PTRGENERIC rawHandle = CreateFileA(mFileName.c_str(), (DWORD)in_accmode, FILE_SHARE_READ, nullptr, (DWORD)in_disp, fileAttrs, nullptr);
+	if (!mRawContext.raw_handle)
 	{
 		_set_last_error(GetLastError());
 	}
 	else
 	{
+		mOperateReady = true;
+		mIsFileOpen = true;
 		_set_raw_context(rawHandle);
 		if (in_disp == disposition::APPEND)
 		{
-			SetFilePointer(rawContext.raw_handle, 0, nullptr, FILE_END);
+			SetFilePointer(mRawContext.raw_handle, 0, nullptr, FILE_END);
 		}
 	}
 }
@@ -116,18 +120,22 @@ io_file::~io_file() noexcept {
 
 MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE bool io_file::is_file_open() const noexcept 
 {
-	return isFileOpen;
+	return mIsFileOpen;
 }
 
 MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE mbase::string io_file::get_file_name() const noexcept 
 {
-	return fileName;
+	return mFileName;
 }
 
 MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE typename io_file::size_type io_file::get_file_size() const noexcept 
 {
+	if(!mIsFileOpen)
+	{
+		return 0;
+	}
 	LARGE_INTEGER lInt;
-	GetFileSizeEx(rawContext.raw_handle, &lInt);
+	GetFileSizeEx(mRawContext.raw_handle, &lInt);
 	return lInt.QuadPart;
 }
 
@@ -135,39 +143,41 @@ MBASE_INLINE PTRGENERIC io_file::open_file(const mbase::string& in_filename, acc
 {
 	close_file();
 	DWORD fileAttrs = FILE_ATTRIBUTE_NORMAL;
-
 	PTRGENERIC rawHandle = CreateFileA(in_filename.c_str(), (DWORD)in_accmode, FILE_SHARE_READ, nullptr, (DWORD)in_disp, fileAttrs, nullptr);
-	if (!rawContext.raw_handle)
+	mFileName = in_filename;
+	if (!mRawContext.raw_handle)
 	{
 		_set_last_error(GetLastError());
 	}
 	else
 	{
-		isFileOpen = true;
+		mOperateReady = true;
+		mIsFileOpen = true;
 		_set_raw_context(rawHandle);
 		if (in_disp == disposition::APPEND)
 		{
-			SetFilePointer(rawContext.raw_handle, 0, nullptr, FILE_END);
+			SetFilePointer(mRawContext.raw_handle, 0, nullptr, FILE_END);
 		}
 	}
-	return rawContext.raw_handle;
+	return mRawContext.raw_handle;
 }
 
 MBASE_INLINE GENERIC io_file::close_file() noexcept 
 {
-	if (rawContext.raw_handle)
+	if (mRawContext.raw_handle)
 	{
-		CloseHandle(rawContext.raw_handle);
+		CloseHandle(mRawContext.raw_handle);
 	}
-	isFileOpen = false;
-	rawContext.raw_handle = nullptr;
+	mIsFileOpen = false;
+	mOperateReady = false;
+	mRawContext.raw_handle = nullptr;
 }
 
 typename io_file::size_type io_file::write_data(IBYTEBUFFER in_src)
 {
 	DWORD dataWritten = 0;
 	SIZE_T dataLength = type_sequence<IBYTE>::length_bytes(in_src);
-	WriteFile(rawContext.raw_handle, in_src, dataLength, &dataWritten, nullptr);
+	WriteFile(mRawContext.raw_handle, in_src, dataLength, &dataWritten, nullptr);
 	_set_last_error(GetLastError());
 	return dataWritten;
 }
@@ -175,7 +185,7 @@ typename io_file::size_type io_file::write_data(IBYTEBUFFER in_src)
 typename io_file::size_type io_file::write_data(IBYTEBUFFER in_src, size_type in_length)
 {
 	DWORD dataWritten = 0;
-	WriteFile(rawContext.raw_handle, in_src, in_length, &dataWritten, nullptr);
+	WriteFile(mRawContext.raw_handle, in_src, in_length, &dataWritten, nullptr);
 	_set_last_error(GetLastError());
 	return dataWritten;
 }
@@ -183,7 +193,7 @@ typename io_file::size_type io_file::write_data(IBYTEBUFFER in_src, size_type in
 typename io_file::size_type io_file::write_data(const mbase::string& in_src)
 {
 	DWORD dataWritten = 0;
-	WriteFile(rawContext.raw_handle, in_src.c_str(), in_src.size(), &dataWritten, nullptr);
+	WriteFile(mRawContext.raw_handle, in_src.c_str(), in_src.size(), &dataWritten, nullptr);
 	_set_last_error(GetLastError());
 	return dataWritten;
 }
@@ -193,7 +203,7 @@ typename io_file::size_type io_file::write_data(char_stream& in_src)
 	DWORD dataWritten = 0;
 	PTRDIFF cursorPos = in_src.get_pos();
 	IBYTEBUFFER tmpBuffer = in_src.get_bufferc();
-	WriteFile(rawContext.raw_handle, tmpBuffer, in_src.buffer_length() - cursorPos, &dataWritten, nullptr);
+	WriteFile(mRawContext.raw_handle, tmpBuffer, in_src.buffer_length() - cursorPos, &dataWritten, nullptr);
 	_set_last_error(GetLastError());
 	return dataWritten;
 }
@@ -202,7 +212,7 @@ typename io_file::size_type io_file::write_data(char_stream& in_src, size_type i
 {
 	DWORD dataWritten = 0;
 	IBYTEBUFFER tmpBuffer = in_src.get_bufferc();
-	WriteFile(rawContext.raw_handle, tmpBuffer, in_length, &dataWritten, nullptr);
+	WriteFile(mRawContext.raw_handle, tmpBuffer, in_length, &dataWritten, nullptr);
 	in_src.advance(dataWritten);
 	_set_last_error(GetLastError());
 	return dataWritten;
@@ -211,7 +221,7 @@ typename io_file::size_type io_file::write_data(char_stream& in_src, size_type i
 typename io_file::size_type io_file::read_data(IBYTEBUFFER in_src, size_type in_length)
 {
 	DWORD dataRead = 0;
-	ReadFile(rawContext.raw_handle, in_src, in_length, &dataRead, nullptr);
+	ReadFile(mRawContext.raw_handle, in_src, in_length, &dataRead, nullptr);
 	_set_last_error(GetLastError());
 	return dataRead;
 }
@@ -221,7 +231,7 @@ typename io_file::size_type io_file::read_data(char_stream& in_src)
 	DWORD dataRead = 0;
 	PTRDIFF cursorPos = in_src.get_pos();
 	IBYTEBUFFER tmpBuffer = in_src.get_bufferc();
-	ReadFile(rawContext.raw_handle, tmpBuffer, in_src.buffer_length() - cursorPos, &dataRead, nullptr);
+	ReadFile(mRawContext.raw_handle, tmpBuffer, in_src.buffer_length() - cursorPos, &dataRead, nullptr);
 	_set_last_error(GetLastError());
 	return dataRead;
 }
@@ -230,7 +240,7 @@ typename io_file::size_type io_file::read_data(char_stream& in_src, size_type in
 {
 	DWORD dataRead = 0;
 	IBYTEBUFFER tmpBuffer = in_src.get_bufferc();
-	ReadFile(rawContext.raw_handle, tmpBuffer, in_length, &dataRead, nullptr);
+	ReadFile(mRawContext.raw_handle, tmpBuffer, in_length, &dataRead, nullptr);
 	in_src.advance(dataRead);
 	_set_last_error(GetLastError());
 	return dataRead;

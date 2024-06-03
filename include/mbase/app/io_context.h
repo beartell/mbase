@@ -30,36 +30,36 @@ public:
 	};
 
 	async_io_context(io_base& in_base, flags in_io_direction = flags::ASYNC_CTX_DIRECTION_INPUT) noexcept :
-		totalBytesTransferred(0),
-		bytesTransferred(0),
-		targetBytes(0),
-		bytesOnEachIteration(0),
-		lastFraction(0),
-		calculatedHop(0),
-		hopCounter(0),
-		isActive(false),
-		ioDirection(in_io_direction),
-		isBufferInternal(false)
+		mTotalBytesTransferred(0),
+		mBytesTransferred(0),
+		mTargetBytes(0),
+		mBytesOnEachIteration(0),
+		mLastFraction(0),
+		mCalculatedHop(0),
+		mHopCounter(0),
+		mIsActive(false),
+		mIoDirection(in_io_direction),
+		mIsBufferInternal(false),
+		mIoHandle(&in_base)
 	{
-		ioHandle = &in_base;
 		if(in_io_direction == flags::ASYNC_CTX_DIRECTION_OUTPUT)
 		{
-			srcBuffer = ioHandle->get_os();
+			mSrcBuffer = mIoHandle->get_os();
 		}
 		else
 		{
-			srcBuffer = ioHandle->get_is();
+			mSrcBuffer = mIoHandle->get_is();
 		}
 	}
 
 	~async_io_context() noexcept {
-		if(!isBufferInternal)
+		if(!mIsBufferInternal)
 		{
-			delete srcBuffer;
+			delete mSrcBuffer;
 		}
 		
-		ioHandle = nullptr;
-		srcBuffer = nullptr;
+		mIoHandle = nullptr;
+		mSrcBuffer = nullptr;
 	}
 
 	flags construct_context(io_base& in_base, flags in_io_direction = flags::ASYNC_CTX_DIRECTION_INPUT) {
@@ -68,109 +68,109 @@ public:
 			return flags::ASYNC_CTX_ERR_CONTEXT_ACTIVE;
 		}
 
-		if(srcBuffer)
+		if(mSrcBuffer)
 		{
-			if(!isBufferInternal)
+			if(!mIsBufferInternal)
 			{
-				delete srcBuffer;
+				delete mSrcBuffer;
 			}
 		}
 
-		ioHandle = &in_base;
+		mIoHandle = &in_base;
 
 		if (in_io_direction == flags::ASYNC_CTX_DIRECTION_OUTPUT)
 		{
-			srcBuffer = ioHandle->get_os();
+			mSrcBuffer = mIoHandle->get_os();
 		}
 		else
 		{
-			srcBuffer = ioHandle->get_is();
+			mSrcBuffer = mIoHandle->get_is();
 		}
 
 		return flags::ASYNC_CTX_SUCCESS;
 	}
 
 	MBASE_ND("io context observation ignored") size_type get_bytes_transferred() const noexcept {
-		return bytesTransferred;
+		return mBytesTransferred;
 	}
 
 	MBASE_ND("io context observation ignored") size_type get_total_transferred_bytes() const noexcept {
-		return totalBytesTransferred;
+		return mTotalBytesTransferred;
 	}
 
 	MBASE_ND("io context observation ignored") size_type get_bytes_on_each_iteration() const noexcept {
-		return bytesOnEachIteration;
+		return mBytesOnEachIteration;
 	}
 
 	MBASE_ND("io context observation ignored") size_type get_requested_bytes_count() const noexcept {
-		return targetBytes;
+		return bTargetBytes;
 	}
 
 	MBASE_ND("io context observation ignored") difference_type get_remaining_bytes() const noexcept {
-		return targetBytes - bytesTransferred;
+		return mTargetBytes - mBytesTransferred;
 	}
 
 	MBASE_ND("io context observation ignored") U32 get_calculated_hop_count() const noexcept {
-		return calculatedHop;
+		return mCalculatedHop;
 	}
 
 	MBASE_ND("io context observation ignored") U32 get_hop_counter() const noexcept {
-		return hopCounter;
+		return mHopCounter;
 	}
 
 	MBASE_ND("io context observation ignored") flags get_io_direction() const noexcept {
-		return ioDirection;
+		return mIoDirection;
 	}
 
 	MBASE_ND("io handle unused") io_base* get_io_handle() noexcept {
-		return ioHandle;
+		return mIoHandle;
 	}
 
 	MBASE_ND("character stream unused") char_stream* get_character_stream() noexcept {
-		return srcBuffer;
+		return mSrcBuffer;
 	}
 
 	MBASE_ND("ignoring status") flags get_io_status() {
-		return ais;
+		return mContextState;
 	}
 
 	MBASE_ND("io context observation ignored") bool is_active() const noexcept {
-		return isActive;
+		return mIsActive;
 	}
 
 	MBASE_ND("io context observation ignored") bool is_registered() const noexcept {
-		return (ais == flags::ASYNC_CTX_STAT_IDLE || ais == async_io_context::flags::ASYNC_CTX_STAT_OPERATING);
+		return (get_io_status() == flags::ASYNC_CTX_STAT_IDLE || get_io_status() == async_io_context::flags::ASYNC_CTX_STAT_OPERATING);
 	}
 
 	GENERIC flush_context() noexcept {
-		srcBuffer->set_cursor_front();
-		ioHandle->set_file_pointer(0, mbase::io_base::move_method::MV_BEGIN);
-		hopCounter = 0;
-		bytesTransferred = 0;
-		ais = flags::ASYNC_CTX_STAT_FLUSHED;
+		mSrcBuffer->set_cursor_front();
+		mIoHandle->set_file_pointer(0, mbase::io_base::move_method::MV_BEGIN);
+		mHopCounter = 0;
+		mBytesTransferred = 0;
+		mContextState = flags::ASYNC_CTX_STAT_FLUSHED;
 	}
 
 	flags halt_context() noexcept {
-		if(!isActive)
+		if(!mIsActive)
 		{
 			return flags::ASYNC_CTX_ERR_ALREADY_HALTED;
 		}
 
-		isActive = false;
-		srcBuffer->set_cursor_front();
-		ioHandle->set_file_pointer(0, mbase::io_base::move_method::MV_BEGIN);
+		mIsActive = false;
+		mSrcBuffer->set_cursor_front();
+		mIoHandle->set_file_pointer(0, mbase::io_base::move_method::MV_BEGIN);
 		return flags::ASYNC_CTX_SUCCESS;
 	}
 
 	flags resume_context() noexcept {
-		if (isActive)
+		if (mIsActive)
 		{
 			return flags::ASYNC_CTX_ERR_CONTEXT_ACTIVE;
 		}
 
-		isActive = true;
-		srcBuffer->advance(bytesTransferred);
-		ioHandle->set_file_pointer(bytesTransferred, mbase::io_base::move_method::MV_BEGIN);
+		mIsActive = true;
+		mSrcBuffer->advance(mBytesTransferred);
+		mIoHandle->set_file_pointer(mBytesTransferred, mbase::io_base::move_method::MV_BEGIN);
 		return flags::ASYNC_CTX_SUCCESS;
 	}
 
@@ -178,29 +178,29 @@ public:
 
 private:
 	GENERIC _setup_context(size_type in_bytes_to_write, size_type in_bytes_on_each) noexcept {
-		ais = flags::ASYNC_CTX_STAT_IDLE;
-		targetBytes = in_bytes_to_write;
-		bytesOnEachIteration = in_bytes_on_each;
-		calculatedHop = targetBytes / bytesOnEachIteration;
-		lastFraction = targetBytes % bytesOnEachIteration;
-		bytesTransferred = 0;
-		hopCounter = 0;
-		srcBuffer->set_cursor_front();
+		mContextState = flags::ASYNC_CTX_STAT_IDLE;
+		mTargetBytes = in_bytes_to_write;
+		mBytesOnEachIteration = in_bytes_on_each;
+		mCalculatedHop = mTargetBytes / mBytesOnEachIteration;
+		mLastFraction = mTargetBytes % mBytesOnEachIteration;
+		mBytesTransferred = 0;
+		mHopCounter = 0;
+		mSrcBuffer->set_cursor_front();
 	}
 
-	size_type totalBytesTransferred;
-	size_type bytesTransferred;
-	size_type targetBytes;
-	size_type bytesOnEachIteration;
-	U32 lastFraction;
-	U32 calculatedHop;
-	U32 hopCounter;
-	bool isActive;
-	bool isBufferInternal; // true if io context use char_stream of io_base
-	io_base* ioHandle;
-	char_stream* srcBuffer;
-	flags ais;
-	flags ioDirection;
+	size_type mTotalBytesTransferred;
+	size_type mBytesTransferred;
+	size_type mTargetBytes;
+	size_type mBytesOnEachIteration;
+	U32 mLastFraction;
+	U32 mCalculatedHop;
+	U32 mHopCounter;
+	bool mIsActive;
+	bool mIsBufferInternal; // true if io context use char_stream of io_base
+	io_base* mIoHandle;
+	char_stream* mSrcBuffer;
+	flags mContextState;
+	flags mIoDirection;
 };
 
 MBASE_END

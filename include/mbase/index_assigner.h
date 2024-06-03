@@ -73,35 +73,35 @@ public:
 	//MBASE_INLINE static index_assigner deserialize(IBYTEBUFFER in_buffer, SIZE_T in_length) noexcept;
 
 private:
-	_InactiveIndexContainer IIH;
+	_InactiveIndexContainer mIIH;
 	IndexType mIndex;
 	size_type mCapacity;
 };
 
 template<typename IndexType, typename InactiveIndexContainer>
-MBASE_INLINE index_assigner<IndexType, InactiveIndexContainer>::index_assigner() noexcept : IIH(), mIndex(0), mCapacity(MBASE_DEFAULT_INDEX_ASSIGNER_CAPACITY)
+MBASE_INLINE index_assigner<IndexType, InactiveIndexContainer>::index_assigner() noexcept : mIIH(), mIndex(0), mCapacity(MBASE_DEFAULT_INDEX_ASSIGNER_CAPACITY)
 {
 }
 
 template<typename IndexType, typename InactiveIndexContainer>
-MBASE_INLINE index_assigner<IndexType, InactiveIndexContainer>::index_assigner(size_type in_capacity) noexcept : IIH(), mIndex(0), mCapacity(in_capacity)
+MBASE_INLINE index_assigner<IndexType, InactiveIndexContainer>::index_assigner(size_type in_capacity) noexcept : mIIH(), mIndex(0), mCapacity(in_capacity)
 {
 }
 
 template<typename IndexType, typename InactiveIndexContainer>
-MBASE_INLINE index_assigner<IndexType, InactiveIndexContainer>::index_assigner(const index_assigner& in_rhs) noexcept : IIH(in_rhs.IIH), mIndex(in_rhs.mIndex), mCapacity(in_rhs.mCapacity)
+MBASE_INLINE index_assigner<IndexType, InactiveIndexContainer>::index_assigner(const index_assigner& in_rhs) noexcept : mIIH(in_rhs.mIIH), mIndex(in_rhs.mIndex), mCapacity(in_rhs.mCapacity)
 {
 }
 
 template<typename IndexType, typename InactiveIndexContainer>
-MBASE_INLINE index_assigner<IndexType, InactiveIndexContainer>::index_assigner(index_assigner&& in_rhs) noexcept : IIH(std::move(in_rhs.IIH)), mIndex(std::move(in_rhs.mIndex)), mCapacity(in_rhs.mCapacity)
+MBASE_INLINE index_assigner<IndexType, InactiveIndexContainer>::index_assigner(index_assigner&& in_rhs) noexcept : mIIH(std::move(in_rhs.mIIH)), mIndex(std::move(in_rhs.mIndex)), mCapacity(in_rhs.mCapacity)
 {
 }
 
 template<typename IndexType, typename InactiveIndexContainer>
 MBASE_INLINE index_assigner<IndexType, InactiveIndexContainer>& index_assigner<IndexType, InactiveIndexContainer>::operator=(const index_assigner& in_rhs) noexcept
 {
-	IIH = in_rhs.IIH;
+	mIIH = in_rhs.mIIH;
 	mIndex = in_rhs.mIndex;
 	mCapacity = in_rhs.mCapacity;
 
@@ -111,7 +111,7 @@ MBASE_INLINE index_assigner<IndexType, InactiveIndexContainer>& index_assigner<I
 template<typename IndexType, typename InactiveIndexContainer>
 MBASE_INLINE index_assigner<IndexType, InactiveIndexContainer>& index_assigner<IndexType, InactiveIndexContainer>::operator=(index_assigner&& in_rhs) noexcept
 {
-	IIH = std::move(in_rhs.IIH);
+	mIIH = std::move(in_rhs.mIIH);
 	mIndex = std::move(in_rhs.mIndex);
 	mCapacity = in_rhs.mCapacity;
 
@@ -121,7 +121,7 @@ MBASE_INLINE index_assigner<IndexType, InactiveIndexContainer>& index_assigner<I
 template<typename IndexType, typename InactiveIndexContainer>
 MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE SIZE_T index_assigner<IndexType, InactiveIndexContainer>::iic_size() const noexcept
 {
-	return IIH.size();
+	return mIIH.size();
 }
 
 template<typename IndexType, typename InactiveIndexContainer>
@@ -134,9 +134,9 @@ template<typename IndexType, typename InactiveIndexContainer>
 MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE IndexType index_assigner<IndexType, InactiveIndexContainer>::peek_index() noexcept
 {
 	IndexType iT;
-	if(IIH.size())
+	if(mIIH.size())
 	{
-		iT = IIH.top();
+		iT = mIIH.top();
 	}
 	else
 	{
@@ -150,9 +150,9 @@ template<typename IndexType, typename InactiveIndexContainer>
 MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE IndexType index_assigner<IndexType, InactiveIndexContainer>::get_index() noexcept
 {
 	IndexType iT;
-	if (IIH.size())
+	if (mIIH.size())
 	{
-		iT = std::move(IIH.top());
+		iT = std::move(mIIH.top());
 	}
 	else
 	{
@@ -165,7 +165,7 @@ MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE IndexType index_assigner<IndexType, Inac
 template<typename IndexType, typename InactiveIndexContainer>
 MBASE_INLINE GENERIC index_assigner<IndexType, InactiveIndexContainer>::release_index(const IndexType& in_index) noexcept
 {
-	IIH.push(in_index);
+	mIIH.push(in_index);
 }
 
 MBASE_STD_END

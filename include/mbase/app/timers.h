@@ -24,17 +24,17 @@ public:
 		mTargetTime(0), 
 		mPolicy(flags::TIMER_POLICY_IMMEDIATE),
 		mIsRegistered(false), 
-		loopId(-1), 
-		teSelf(nullptr)
+		mLoopId(-1), 
+		mSelfIter(nullptr)
 	{
 	}
 
-	MBASE_EXPLICIT timer_base(user_data in_data) noexcept : mCurrentTime(0), mTargetTime(0), mPolicy(flags::TIMER_POLICY_IMMEDIATE), mIsRegistered(false), loopId(-1), teSelf(nullptr) {
-		suppliedData = in_data;
+	MBASE_EXPLICIT timer_base(user_data in_data) noexcept : mCurrentTime(0), mTargetTime(0), mPolicy(flags::TIMER_POLICY_IMMEDIATE), mIsRegistered(false), mLoopId(-1), mSelfIter(nullptr) {
+		mSuppliedData = in_data;
 	}
 
 	MBASE_ND("timer observation ignored") I32 get_loop_id() const noexcept {
-		return loopId;
+		return mLoopId;
 	}
 
 	MBASE_ND("timer observation ignored") I32 get_target_time() const noexcept {
@@ -50,7 +50,7 @@ public:
 	}
 
 	MBASE_ND("timer observation ignored") flags get_timer_type() const noexcept {
-		return tt;
+		return mTimerType;
 	}
 
 	MBASE_ND("timer observation ignored") flags get_execution_policy() const noexcept {
@@ -82,20 +82,20 @@ public:
 
 protected:
 	bool mIsRegistered;
-	flags tt;
+	flags mTimerType;
 	flags mPolicy;
-	I32 loopId;
+	I32 mLoopId;
 	F64 mCurrentTime;
 	F64 mTargetTime;
 private:
 	using timer_element = mbase::list<timer_base*>::iterator;
-	timer_element teSelf;
+	timer_element mSelfIter;
 };
 
 class timeout : public timer_base {
 public:
 	timeout() noexcept : timer_base(nullptr) {
-		tt = flags::TIMER_TYPE_TIMEOUT;
+		mTimerType = flags::TIMER_TYPE_TIMEOUT;
 	}
 
 	virtual GENERIC on_call(user_data in_data) override { /* Do nothing literally */ }
@@ -106,23 +106,23 @@ public:
 
 class time_interval : public timer_base {
 public:
-	time_interval() noexcept : timer_base(nullptr), tickCount(0), tickLimit(0) {
-		tt = flags::TIMER_TYPE_INTERVAL;
+	time_interval() noexcept : timer_base(nullptr), mTickCount(0), mTickLimit(0) {
+		mTimerType = flags::TIMER_TYPE_INTERVAL;
 	}
 
 	GENERIC set_tick_limit(U32 in_tick_limit) noexcept
 	{
-		tickLimit = in_tick_limit;
+		mTickLimit = in_tick_limit;
 	}
 
 	GENERIC reset_tick_counter() noexcept
 	{
-		tickCount = 0;
+		mTickCount = 0;
 	}
 
 	U32 get_tick_count() const noexcept
 	{
-		return tickCount;
+		return mTickCount;
 	}
 
 	virtual GENERIC on_call(user_data in_data) override { /* Do nothing literally */ }
@@ -130,8 +130,8 @@ public:
 	friend class timer_loop;
 
 private:
-	U32 tickCount;
-	U32 tickLimit;
+	U32 mTickCount;
+	U32 mTickLimit;
 };
 
 MBASE_END

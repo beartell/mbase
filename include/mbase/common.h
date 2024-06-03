@@ -16,23 +16,21 @@
 
 /* LANGUAGE VERSION CONTROL */
 
-#define MBASE_CPP_VERSION 1 // --> means less than c++17
-
-#ifdef __cpp_fold_expressions
-#define MBASE_CPP_VERSION 17
-#endif 
-
-#ifdef __cpp_concepts
-#define MBASE_CPP_VERSION 20
-#endif
-
-#ifdef __cpp_multidimensional_subscript
-#define MBASE_CPP_VERSION 23
-#endif
+#ifndef __cplusplus
+#error Missing C++ compiler
+#endif // !__cplusplus
 
 #ifdef __cpp_pack_indexing
 #define MBASE_CPP_VERSION 26
-#endif
+#elif __cpp_multidimensional_subscript
+#define MBASE_CPP_VERSION 23
+#elif __cpp_concepts
+#define MBASE_CPP_VERSION 20
+#elif __cpp_fold_expressions
+#define MBASE_CPP_VERSION 17
+#else
+#error Invalid C++ version. MBASE require at least C++17.
+#endif // !__cpp_pack_indexing
 
 /* LANGUAGE VERSION CONTROL */
 

@@ -8,16 +8,16 @@
 #include <mbase/thread.h>
 #include <mbase/atomic.h>
 
-#define MBASE_TPOOL_MAX_THREADS 1024 // ARBITRARY NUMBER. FIND A WAY TO CALCULATE MAX THREAD COUNT
-#define MBASE_TPOOL_DEFAULT_THREADS 32
-
 MBASE_BEGIN
+
+static const U32 gThreadPoolMaxThreads = 1024; // ARBITRARY NUMBER. FIND A WAY TO CALCULATE MAX THREAD COUNT
+static const U32 gThreadPoolDefaultThread = 32;
 
 class tpool : public non_copymovable {
 public:
 	struct thread_pool_routine_args {
 		static I32 _pool_routine(thread_pool_routine_args* in_args) {
-			while (in_args->selfClass->isRunning)
+			while (in_args->selfClass->mIsRunning)
 			{
 				if (in_args->tHandler)
 				{
@@ -38,80 +38,80 @@ public:
 		mbase::thread<decltype(_pool_routine), thread_pool_routine_args*> selfThread;
 	};
 
-	tpool() noexcept : isRunning(true){
-		threadCount = MBASE_TPOOL_DEFAULT_THREADS;
+	tpool() noexcept : mIsRunning(true){
+		mThreadCount = gThreadPoolDefaultThread;
 
-		threadPool = new thread_pool_routine_args[threadCount];
+		mThreadPool = new thread_pool_routine_args[mThreadCount];
 
-		for (I32 i = threadCount - 1; i != -1; --i)
+		for (I32 i = mThreadCount - 1; i != -1; --i)
 		{
-			thread_pool_routine_args* tpra = threadPool + i;
+			thread_pool_routine_args* tpra = mThreadPool + i;
 			tpra->selfClass = this;
 			tpra->tIndex = i;
 			tpra->selfThread.run_with_args(tpra);
-			freeThreadIndex.push(tpra->tIndex);
+			mFreeThreadIndex.push(tpra->tIndex);
 		}
 	}
 
-	MBASE_EXPLICIT tpool(U32 in_thread_count) noexcept : isRunning(true) {
-		threadCount = in_thread_count;
-		if(!threadCount || threadCount > MBASE_TPOOL_MAX_THREADS)
+	MBASE_EXPLICIT tpool(U32 in_thread_count) noexcept : mIsRunning(true) {
+		mThreadCount = in_thread_count;
+		if(!mThreadCount || mThreadCount > gThreadPoolMaxThreads)
 		{
 			// notify the user about it
-			threadCount = MBASE_TPOOL_DEFAULT_THREADS;
+			mThreadCount = gThreadPoolDefaultThread;
 		}
 
-		threadPool = new thread_pool_routine_args[threadCount];
+		mThreadPool = new thread_pool_routine_args[mThreadCount];
 
-		for(I32 i = threadCount - 1; i != -1; --i)
+		for(I32 i = mThreadCount - 1; i != -1; --i)
 		{
-			thread_pool_routine_args* tpra = threadPool + i;
+			thread_pool_routine_args* tpra = mThreadPool + i;
 			tpra->selfClass = this;
 			tpra->tIndex = i;
 			tpra->selfThread.run_with_args(tpra);
-			freeThreadIndex.push(tpra->tIndex);
+			mFreeThreadIndex.push(tpra->tIndex);
 		}
 	}
 
 	~tpool() noexcept {
-		thread_pool_routine_args* tpra = threadPool;
-		isRunning = false;
-		for(I32 i = 0; i < threadCount; i++)
+		thread_pool_routine_args* tpra = mThreadPool;
+		mIsRunning = false;
+		for(I32 i = 0; i < mThreadCount; i++)
 		{
 			// finish all execution
 			tpra->selfThread.resume();
 			++tpra;
 		}
 
-		delete[]threadPool;
+		delete[]mThreadPool;
 	}
 
 	GENERIC execute_job(handler_base* in_handler) {
 		MBASE_NULL_CHECK_RETURN(in_handler);
 
 		mtx.acquire();
-		if(!freeThreadIndex.size())
+		if(!mFreeThreadIndex.size())
 		{
 			mtx.release();
 			return;
 		}
 
-		I32 freeIndex = freeThreadIndex.top();
-		freeThreadIndex.pop();
-		++activeThreadCounter;
+		I32 freeIndex = mFreeThreadIndex.top();
+		mFreeThreadIndex.pop();
+		++mActiveThreadCounter;
 
-		threadPool[freeIndex].tHandler = in_handler;
-		threadPool[freeIndex].tHandler->_set_thread_index(freeIndex);
-		threadPool[freeIndex].selfThread.resume();
+		mThreadPool[freeIndex].tHandler = in_handler;
+		mThreadPool[freeIndex].tHandler->_set_thread_index(freeIndex);
+		mThreadPool[freeIndex].selfThread.resume();
 		mtx.release();
 	}
 
 	MBASE_ND("thread pool observation being ignored") U32 get_thread_count() const noexcept {
-		return threadCount;
+		return mThreadCount;
 	}
 
 	MBASE_ND("thread pool routine info being ignored") thread_pool_routine_args* get_routine_info(I32 in_index) noexcept {
-		return threadPool + in_index;
+		return mThreadPool + in_index;
 	}
 
 	// INTERNAL CALL
@@ -119,20 +119,20 @@ public:
 	GENERIC _update_index(I32 in_index) noexcept {
 		mtx.acquire();
 
-		freeThreadIndex.push(in_index);
-		++activeThreadCounter;
+		mFreeThreadIndex.push(in_index);
+		++mActiveThreadCounter;
 
 		mtx.release();
 	}
 
 private:
 
-	bool isRunning;
-	U32 threadCount;
+	bool mIsRunning;
+	U32 mThreadCount;
 	mbase::mutex mtx;
-	mbase::atomic_i32 activeThreadCounter;
-	mbase::stack<I32> freeThreadIndex;
-	thread_pool_routine_args* threadPool;
+	mbase::atomic_i32 mActiveThreadCounter;
+	mbase::stack<I32> mFreeThreadIndex;
+	thread_pool_routine_args* mThreadPool;
 };
 
 MBASE_END
