@@ -646,38 +646,47 @@ MBASE_INLINE_EXPR GENERIC vector<T, Allocator>::shrink_to_fit()
 		return;
 	}
 
-	if(!mSize)
+	mbase::vector<T, Allocator> newVector(mSize);
+
+	for(iterator It = begin(); It != end(); It++)
 	{
-		deep_clear_and_prepare();
-		return;
+		newVector.push_back(std::move(*It));
 	}
 
-	I32 sizeDivident = mSize / 4;
-	I32 capacityDivident = mCapacity / 4;
-	// IT MUST BE 1 IF THE CAPACITY IS ALREADY FIT
-	// IF GREATER THAN 1, SHRINK IT
-	I32 growthFactor = capacityDivident - sizeDivident;
+	*this = std::move(newVector);
 
-	if(growthFactor == 1)
-	{
-		// DO NOTHING LITERALLY
-		return;
-	}
-	else
-	{
-		I32 newCapacity = ((mSize + 3) / 4) * 8;
-		pointer new_data = mExternalAllocator.allocate(newCapacity);
-		
-		for(difference_type i = 0; i < mSize; i++)
-		{
-			mExternalAllocator.construct(new_data + i, std::move(*(mRawData + i)));
-			mRawData[i].~value_type();
-		}
-		mExternalAllocator.deallocate(mRawData, 0);
-		mRawData = new_data;
-		
-		mCapacity = newCapacity;
-	}
+	//if(!mSize)
+	//{
+	//	deep_clear_and_prepare();
+	//	return;
+	//}
+
+	//I32 sizeDivident = mSize / 4;
+	//I32 capacityDivident = mCapacity / 4;
+	//// IT MUST BE 1 IF THE CAPACITY IS ALREADY FIT
+	//// IF GREATER THAN 1, SHRINK IT
+	//I32 growthFactor = capacityDivident - sizeDivident;
+
+	//if(growthFactor == 1)
+	//{
+	//	// DO NOTHING LITERALLY
+	//	return;
+	//}
+	//else
+	//{
+	//	I32 newCapacity = ((mSize + 3) / 4) * 8;
+	//	pointer new_data = mExternalAllocator.allocate(newCapacity);
+	//	
+	//	for(difference_type i = 0; i < mSize; i++)
+	//	{
+	//		mExternalAllocator.construct(new_data + i, std::move(*(mRawData + i)));
+	//		mRawData[i].~value_type();
+	//	}
+	//	mExternalAllocator.deallocate(mRawData, 0);
+	//	mRawData = new_data;
+	//	
+	//	mCapacity = newCapacity;
+	//}
 }
 
 template<typename T, typename Allocator>

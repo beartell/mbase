@@ -54,9 +54,7 @@ private:
 	SIZE_T mSize;
 	
 	/* ===== STATE-MODIFIER METHODS BEGIN ===== */
-	GENERIC clear_and_prepare(const T& in_value);
-	GENERIC clear_and_prepare(const T& in_value, const Allocator& in_alloc);
-	MBASE_INLINE GENERIC push_back_node(node_type* in_node);
+	MBASE_INLINE GENERIC _push_back_node(node_type* in_node);
 	/* ===== STATE-MODIFIER METHODS END ===== */
 
 public:
@@ -80,16 +78,6 @@ public:
 	MBASE_INLINE list(size_type in_count, const Allocator& in_alloc = Allocator());
 	template<typename InputIt, typename = std::enable_if_t<std::is_constructible_v<T, typename std::iterator_traits<InputIt>::value_type>>>
 	list(InputIt in_begin, InputIt in_end, const Allocator& in_alloc = Allocator()) : mFirstNode(nullptr), mLastNode(nullptr), mSize(0) {
-		mSize = 0;
-		if(in_begin == in_end)
-		{
-			mFirstNode = nullptr;
-			mLastNode = nullptr;
-			return;
-		}
-		mSize = 1;
-		mFirstNode = new node_type(*(in_begin++), in_alloc); // DO IT WITH CUSTOM ALLOCATOR ON RELEASE
-		mLastNode = mFirstNode;
 		for (in_begin; in_begin != in_end; in_begin++) {
 			push_back(*in_begin);
 		}
@@ -135,11 +123,7 @@ public:
 	MBASE_INLINE GENERIC assign(size_type in_count, const_reference in_value);
 	template<typename InputIt, typename = std::enable_if_t<std::is_constructible_v<T, typename std::iterator_traits<InputIt>::value_type>>>
 	MBASE_INLINE GENERIC assign(InputIt in_begin, InputIt in_end) {
-		if(in_begin == in_end)
-		{
-			clear();
-		}
-		clear_and_prepare(*(in_begin++));
+		clear();
 		for(in_begin; in_begin != in_end; in_begin++)
 		{
 			push_back(*in_begin);
@@ -491,7 +475,7 @@ template<typename T, typename Allocator>
 MBASE_INLINE GENERIC list<T, Allocator>::assign(size_type in_count, const_reference in_value) 
 {
 	clear();
-	for(I32 i = 0; i < in_count; i++)
+	for(size_type i = 0; i < in_count; i++)
 	{
 		push_back(in_value);
 	}
@@ -696,7 +680,7 @@ MBASE_INLINE_EXPR typename list<T, Allocator>::iterator list<T, Allocator>::inse
 	}
 
 	iterator activeIt(mFirstNode);
-	for (I32 i = 0; i < in_count; i++) 
+	for (size_type i = 0; i < in_count; i++) 
 	{
 		activeIt = insert(in_pos, in_object);
 	}
@@ -936,7 +920,7 @@ MBASE_INLINE mbase::list<T, Allocator> list<T, Allocator>::deserialize(IBYTEBUFF
 }
 
 template<typename T, typename Allocator>
-MBASE_INLINE GENERIC list<T, Allocator>::push_back_node(node_type* in_node) 
+MBASE_INLINE GENERIC list<T, Allocator>::_push_back_node(node_type* in_node) 
 {
 	in_node->prev = mLastNode;
 	if(mLastNode)
@@ -958,7 +942,7 @@ MBASE_INLINE GENERIC list<T, Allocator>::_insert_node(const_iterator in_it, node
 {
 	if(in_it == cend())
 	{
-		push_back_node(in_node);
+		_push_back_node(in_node);
 		return;
 	}
 
@@ -977,26 +961,6 @@ MBASE_INLINE GENERIC list<T, Allocator>::_insert_node(const_iterator in_it, node
 	mNode->prev = in_node;
 	in_node->next = mNode;
 	++mSize;
-}
-
-template<typename T, typename Allocator>
-GENERIC list<T, Allocator>::clear_and_prepare(const T& in_value) 
-{
-	clear();
-	mSize = 1;
-
-	mFirstNode = new node_type(in_value);
-	mLastNode = mFirstNode;
-}
-
-template<typename T, typename Allocator>
-GENERIC list<T, Allocator>::clear_and_prepare(const T& in_value, const Allocator& in_alloc) 
-{
-	clear();
-	mSize = 1;
-
-	mFirstNode = new node_type(in_value);
-	mLastNode = mFirstNode;
 }
 
 MBASE_STD_END

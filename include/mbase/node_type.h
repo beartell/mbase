@@ -78,6 +78,7 @@ struct exposed_set_node {
     MBASE_INLINE_EXPR exposed_set_node& operator=(exposed_set_node&& in_rhs)
     {
         nodeData = std::move(in_rhs.nodeData);
+        return *this;
     }
     MBASE_EXPLICIT operator bool() const noexcept
     {

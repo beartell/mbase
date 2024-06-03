@@ -58,7 +58,8 @@ public:
     MBASE_INLINE_EXPR character_sequence(const character_sequence& in_rhs, size_type in_pos, size_type in_count, const Allocator& in_alloc = Allocator());
     MBASE_INLINE_EXPR character_sequence(character_sequence&& in_rhs, size_type in_pos, size_type in_count, const Allocator& in_alloc = Allocator());
     template<typename InputIt, typename = std::enable_if_t<std::is_constructible_v<value_type, typename std::iterator_traits<InputIt>::value_type>>>
-    MBASE_INLINE_EXPR character_sequence(InputIt in_begin, InputIt in_end, const Allocator& in_alloc = Allocator()) : mRawData(nullptr), mSize(0), mCapacity(MBASE_STRING_DEFAULT_CAPACITY), mExternalAllocator(Allocator()) {
+    MBASE_INLINE_EXPR character_sequence(InputIt in_begin, InputIt in_end, const Allocator& in_alloc = Allocator()) : mRawData(nullptr), mSize(0), mCapacity(MBASE_STRING_DEFAULT_CAPACITY), mExternalAllocator(Allocator()) 
+    {
         _build_string(mCapacity);
         for(in_begin; in_begin != in_end; in_begin++)
         {
@@ -205,7 +206,8 @@ public:
     MBASE_INLINE_EXPR character_sequence& append(const_pointer in_str, size_type in_count);
     MBASE_INLINE_EXPR character_sequence& append(const_pointer in_str);
     template<typename InputIt, typename = std::enable_if_t<std::is_constructible_v<SeqType, typename std::iterator_traits<InputIt>::value_type>>>
-    MBASE_INLINE_EXPR character_sequence& append(InputIt in_begin, InputIt in_end) {
+    MBASE_INLINE_EXPR character_sequence& append(InputIt in_begin, InputIt in_end) 
+    {
         for(in_begin; in_begin != in_end; in_begin++)
         {
             push_back(*in_begin);
@@ -221,7 +223,8 @@ public:
     MBASE_INLINE_EXPR iterator insert(const_iterator in_pos, value_type in_char);
     MBASE_INLINE_EXPR iterator insert(const_iterator in_pos, size_type in_count, value_type in_char);
     template<typename InputIt, typename = std::enable_if_t<std::is_constructible_v<SeqType, typename std::iterator_traits<InputIt>::value_type>>>
-    MBASE_INLINE_EXPR iterator insert(const_iterator in_pos, InputIt in_begin, InputIt in_end) {
+    MBASE_INLINE_EXPR iterator insert(const_iterator in_pos, InputIt in_begin, InputIt in_end) 
+    {
         if (in_pos >= cend())
         {
             for(in_begin; in_begin != in_end; in_begin++)
@@ -293,7 +296,8 @@ public:
     
     /* ===== NON-MODIFIER METHODS BEGIN ===== */
     template<typename SourceContainer = mbase::vector<character_sequence>>
-    MBASE_INLINE GENERIC split(const character_sequence& in_delimiters, SourceContainer& out_strings) noexcept {
+    MBASE_INLINE GENERIC split(const character_sequence& in_delimiters, SourceContainer& out_strings) noexcept 
+    {
         const_pointer delims = in_delimiters.c_str();
         pointer stringOut = strtok(mRawData, delims);
         while (stringOut != nullptr)
@@ -323,7 +327,8 @@ public:
     MBASE_ND(MBASE_OBS_IGNORE) static MBASE_INLINE bool is_space(const value_type& in_char) noexcept { return isspace(in_char); }
     MBASE_ND(MBASE_OBS_IGNORE) static MBASE_INLINE bool is_punctuation(const value_type& in_char) noexcept { return ispunct(in_char); }
     template<typename ... Params>
-    MBASE_ND(MBASE_RESULT_IGNORE) static MBASE_INLINE character_sequence from_format(const_pointer in_format, Params ... in_params) noexcept {
+    MBASE_ND(MBASE_RESULT_IGNORE) static MBASE_INLINE character_sequence from_format(const_pointer in_format, Params ... in_params) noexcept 
+    {
         size_type stringLength = _scprintf(in_format, std::forward<Params>(in_params)...); // FIND THE FKIN SIZE
         character_sequence newSequence;
         if (!stringLength)
@@ -416,7 +421,8 @@ public:
 #if MBASE_CPP_VERSION >= 20
     MBASE_INLINE_EXPR friend bool operator<=>(const character_sequence& in_lhs, const character_sequence& in_rhs) noexcept; // IMPL
 #endif // MBASE_CPP_VERSION >= 20
-    friend std::ostream& operator<<(std::ostream& os, const character_sequence& in_rhs) noexcept {
+    friend std::ostream& operator<<(std::ostream& os, const character_sequence& in_rhs) noexcept 
+    {
         if (!in_rhs.mRawData)
         {
             // DO NOTHING IF THE DATA IS NOT PRESENT
@@ -577,9 +583,8 @@ MBASE_INLINE_EXPR character_sequence<SeqType, SeqBase, Allocator>::character_seq
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_INLINE_EXPR character_sequence<SeqType, SeqBase, Allocator>::character_sequence(const_pointer in_string, size_type in_length) noexcept : mExternalAllocator(Allocator()) 
+MBASE_INLINE_EXPR character_sequence<SeqType, SeqBase, Allocator>::character_sequence(const_pointer in_string, size_type in_length) noexcept : mSize(in_length), mExternalAllocator(Allocator())
 {
-    mSize = in_length;
     _build_string(this->_calculate_capacity(mSize));
     this->copy_bytes(mRawData, in_string, mSize); // no need the include null-terminator since we zero the memory
 }
@@ -846,7 +851,7 @@ MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE character_sequence<SeqType, SeqBase, 
     else
     {
         character_sequence cs;
-        for(difference_type i = 0; i < in_count; i++)
+        for(size_type i = 0; i < in_count; i++)
         {
             cs.push_back(*inIt);
             if(inIt == cend())
@@ -1336,7 +1341,7 @@ MBASE_INLINE_EXPR character_sequence<SeqType, SeqBase, Allocator>& character_seq
     else
     {
         character_sequence cs;
-        for (difference_type i = 0; i < in_count; i++)
+        for (size_type i = 0; i < in_count; i++)
         {
             cs.push_back(*iPos);
             iPos++;
@@ -1446,7 +1451,7 @@ MBASE_INLINE_EXPR character_sequence<SeqType, SeqBase, Allocator>& character_seq
     const_iterator inIt = cbegin() + in_index;
     if(inIt >= cend())
     {
-        for(I32 i = 0; i < in_count; i++)
+        for(size_type i = 0; i < in_count; i++)
         {
             push_back(in_ch);
         }
@@ -1454,7 +1459,7 @@ MBASE_INLINE_EXPR character_sequence<SeqType, SeqBase, Allocator>& character_seq
     else
     {
         character_sequence newString(cbegin(), inIt);
-        for(I32 i = 0; i < in_count; i++)
+        for(size_type i = 0; i < in_count; i++)
         {
             newString.push_back(in_ch);
         }
@@ -2021,7 +2026,7 @@ MBASE_INLINE GENERIC character_sequence<SeqType, SeqBase, Allocator>::_resize(si
     if (in_size > mSize)
     {
         _resize(in_size);
-        for (difference_type i = 0; i < mSize - oldSize; i++)
+        for (size_type i = 0; i < mSize - oldSize; i++)
         {
             push_back(in_char);
         }
