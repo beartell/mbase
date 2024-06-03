@@ -51,13 +51,15 @@ private:
 		std::tuple<Args...> fParams;
 	};
 
-	static DWORD THREAD_ROUTINE(LPVOID lParam) {
+	static DWORD THREAD_ROUTINE(LPVOID lParam) 
+	{
 		thread_param* targetParams = (thread_param*)lParam;
 		std::apply(targetParams->fPtr, targetParams->fParams);
 		return 0;
 	}
 
-	MBASE_INLINE thread_error _run() noexcept {
+	MBASE_INLINE thread_error _run() noexcept 
+	{
 		thread_error _te;
 		_te = join();
 		if(_te == thread_error::THREAD_INVALID_CALL)

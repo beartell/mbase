@@ -14,7 +14,7 @@
 
 MBASE_STD_BEGIN
 
-#define MBASE_SERIALIZED_LIST_BLOCK_LENGTH 4
+static const U32 gSerializedListBlockLength = 4;
 
 /*
 
@@ -77,11 +77,7 @@ public:
 	list(size_type in_count, const T& in_value, const Allocator& in_alloc = Allocator());
 	MBASE_INLINE list(size_type in_count, const Allocator& in_alloc = Allocator());
 	template<typename InputIt, typename = std::enable_if_t<std::is_constructible_v<T, typename std::iterator_traits<InputIt>::value_type>>>
-	list(InputIt in_begin, InputIt in_end, const Allocator& in_alloc = Allocator()) : mFirstNode(nullptr), mLastNode(nullptr), mSize(0) {
-		for (in_begin; in_begin != in_end; in_begin++) {
-			push_back(*in_begin);
-		}
-	}
+	MBASE_INLINE list(InputIt in_begin, InputIt in_end, const Allocator& in_alloc = Allocator());
 	list(const list& in_rhs);
 	list(const list& in_rhs, const Allocator& in_alloc);
 	list(list&& in_rhs);
@@ -122,13 +118,7 @@ public:
 	/* ===== STATE-MODIFIER METHODS BEGIN ===== */
 	MBASE_INLINE GENERIC assign(size_type in_count, const_reference in_value);
 	template<typename InputIt, typename = std::enable_if_t<std::is_constructible_v<T, typename std::iterator_traits<InputIt>::value_type>>>
-	MBASE_INLINE GENERIC assign(InputIt in_begin, InputIt in_end) {
-		clear();
-		for(in_begin; in_begin != in_end; in_begin++)
-		{
-			push_back(*in_begin);
-		}
-	}
+	MBASE_INLINE GENERIC assign(InputIt in_begin, InputIt in_end);
 	MBASE_INLINE GENERIC assign(std::initializer_list<value_type> in_vals);
 	MBASE_INLINE_EXPR GENERIC clear() noexcept;
 	MBASE_INLINE_EXPR GENERIC push_back(const_reference in_data) noexcept;
@@ -141,31 +131,17 @@ public:
 	MBASE_INLINE_EXPR iterator insert(const_iterator in_pos, move_reference in_object) noexcept;
 	MBASE_INLINE_EXPR iterator insert(const_iterator in_pos, size_type in_count, const_reference in_object);
 	template<typename InputIt, typename = std::enable_if_t<std::is_constructible_v<T, typename std::iterator_traits<InputIt>::value_type>>>
-	MBASE_INLINE_EXPR iterator insert(const_iterator in_pos, InputIt in_begin, InputIt in_end) {
-		iterator inLast(mLastNode);
-		for(in_begin; in_begin != in_end; in_begin++)
-		{
-			inLast = insert(in_pos, *in_begin);
-		}
-
-		return inLast;
-	}
+	MBASE_INLINE_EXPR iterator insert(const_iterator in_pos, InputIt in_begin, InputIt in_end);
 	MBASE_INLINE_EXPR iterator insert(difference_type in_index, const_reference in_object) noexcept;
 	MBASE_INLINE_EXPR iterator insert(difference_type in_index, move_reference in_object) noexcept;
 	MBASE_INLINE_EXPR iterator insert(const_iterator in_pos, std::initializer_list<value_type> in_vals);
 	MBASE_INLINE GENERIC _insert_node(const_iterator in_it, node_type* in_node);
 	template<typename ... Args>
-	MBASE_INLINE iterator emplace(const_iterator in_pos, Args&& ... in_args) {
-		return insert(in_pos, std::move(value_type(std::forward<Args>(in_args)...)));
-	}
+	MBASE_INLINE iterator emplace(const_iterator in_pos, Args&& ... in_args);
 	template<typename ... Args>
-	MBASE_INLINE_EXPR GENERIC emplace_front(Args&& ... in_args) {
-		push_front(std::move(value_type(std::forward<Args>(in_args)...)));
-	}
+	MBASE_INLINE_EXPR GENERIC emplace_front(Args&& ... in_args);
 	template<typename ... Args>
-	MBASE_INLINE_EXPR GENERIC emplace_back(Args&& ... in_args) {
-		push_back(std::move(value_type(std::forward<Args>(in_args)...)));
-	}
+	MBASE_INLINE_EXPR GENERIC emplace_back(Args&& ... in_args);
 	MBASE_INLINE_EXPR iterator erase(iterator in_pos) noexcept;
 	MBASE_INLINE_EXPR iterator erase(const_iterator in_pos);
 	MBASE_INLINE_EXPR iterator erase(iterator in_begin, iterator in_end); // POSSIBLE PROBLEM
@@ -184,56 +160,9 @@ public:
 	MBASE_INLINE_EXPR GENERIC splice(const_iterator in_pos, list&& in_rhs, const_iterator in_begin, const_iterator in_end);
 	MBASE_INLINE GENERIC remove(const_reference in_value);
 	template<typename UnaryPredicate>
-	MBASE_INLINE GENERIC remove_if(UnaryPredicate in_p) {
-		const_iterator in_begin = cbegin();
-		for (in_begin; in_begin != cend(); in_begin++)
-		{
-			if (in_p(*in_begin))
-			{
-				erase(in_begin);
-				return;
-			}
-		}
-	}
-
-	MBASE_INLINE GENERIC reverse() noexcept {
-		if(!mSize)
-		{
-			return;
-		}
-
-		node_type* current = mFirstNode;
-		node_type* temp = nullptr;
-
-		while (current != nullptr) {
-			temp = current->prev;
-			current->prev = current->next;
-			current->next = temp;
-			current = current->prev;
-		}
-
-		if (temp != nullptr) {
-			mFirstNode = temp->prev;
-			mLastNode = temp->next;
-		}
-	}
-
-	MBASE_INLINE GENERIC unique() noexcept {
-		if(!mSize)
-		{
-			return;
-		}
-
-		list freshList;
-		for(iterator It = begin(); It != end(); It++)
-		{
-			if(std::find(freshList.begin(), freshList.end(), *It) == freshList.end())
-			{
-				freshList.push_back(std::move(*It));
-			}
-		}
-		*this = std::move(freshList);
-	}
+	MBASE_INLINE GENERIC remove_if(UnaryPredicate in_p);
+	MBASE_INLINE GENERIC reverse() noexcept;
+	MBASE_INLINE GENERIC unique() noexcept;
 
 	//template<typename BinaryPredicate>
 	//MBASE_INLINE GENERIC unique(BinaryPredicate in_p) noexcept {
@@ -243,7 +172,7 @@ public:
 
 	//	}
 	//}
-	/* ===== STATE-MODIFIER METHODS BEGIN ===== */
+	/* ===== STATE-MODIFIER METHODS END ===== */
 
 	/* ===== NON-MODIFIER METHODS BEGIN ===== */
 	MBASE_INLINE GENERIC serialize(char_stream& out_buffer) noexcept;
@@ -275,6 +204,15 @@ MBASE_INLINE list<T, Allocator>::list(size_type in_count, const Allocator& in_al
 {
 	T defaultValue;
 	assign(in_count, std::move(defaultValue));
+}
+
+template<typename T, typename Allocator>
+template<typename InputIt, typename>
+MBASE_INLINE list<T, Allocator>::list(InputIt in_begin, InputIt in_end, const Allocator& in_alloc) : mFirstNode(nullptr), mLastNode(nullptr), mSize(0) 
+{
+	for (in_begin; in_begin != in_end; in_begin++) {
+		push_back(*in_begin);
+	}
 }
 
 template<typename T, typename Allocator>
@@ -417,7 +355,7 @@ MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE_EXPR typename list<T, Allocator>::siz
 	for (iterator It = begin(); It != end(); It++)
 	{
 		sh.value = It.get();
-		totalSize += sh.get_serialized_size() + MBASE_SERIALIZED_LIST_BLOCK_LENGTH; // 4 is block length indicator
+		totalSize += sh.get_serialized_size() + gSerializedListBlockLength; // 4 is block length indicator
 	}
 	return totalSize;
 }
@@ -478,6 +416,17 @@ MBASE_INLINE GENERIC list<T, Allocator>::assign(size_type in_count, const_refere
 	for(size_type i = 0; i < in_count; i++)
 	{
 		push_back(in_value);
+	}
+}
+
+template<typename T, typename Allocator>
+template<typename InputIt, typename>
+MBASE_INLINE GENERIC list<T, Allocator>::assign(InputIt in_begin, InputIt in_end)
+{
+	clear();
+	for (in_begin; in_begin != in_end; in_begin++)
+	{
+		push_back(*in_begin);
 	}
 }
 
@@ -672,6 +621,19 @@ MBASE_INLINE_EXPR typename list<T, Allocator>::iterator list<T, Allocator>::inse
 }
 
 template<typename T, typename Allocator>
+template<typename InputIt, typename>
+MBASE_INLINE_EXPR typename list<T, Allocator>::iterator list<T, Allocator>::insert(const_iterator in_pos, InputIt in_begin, InputIt in_end) 
+{
+	iterator inLast(mLastNode);
+	for (in_begin; in_begin != in_end; in_begin++)
+	{
+		inLast = insert(in_pos, *in_begin);
+	}
+
+	return inLast;
+}
+
+template<typename T, typename Allocator>
 MBASE_INLINE_EXPR typename list<T, Allocator>::iterator list<T, Allocator>::insert(const_iterator in_pos, size_type in_count, const_reference in_object) 
 {
 	if(!in_count)
@@ -703,6 +665,33 @@ MBASE_INLINE_EXPR typename list<T, Allocator>::iterator list<T, Allocator>::inse
 	in_pos += in_index;
 
 	return insert(in_pos, std::move(in_object));
+}
+
+template<typename T, typename Allocator>
+MBASE_INLINE_EXPR typename list<T, Allocator>::iterator list<T, Allocator>::insert(const_iterator in_pos, std::initializer_list<value_type> in_vals)
+{
+	return insert(in_pos, in_vals.begin(), in_vals.end());
+}
+
+template<typename T, typename Allocator>
+template<typename ... Args>
+MBASE_INLINE typename list<T, Allocator>::iterator list<T, Allocator>::emplace(const_iterator in_pos, Args&& ... in_args)
+{
+	return insert(in_pos, std::move(value_type(std::forward<Args>(in_args)...)));
+}
+
+template<typename T, typename Allocator>
+template<typename ... Args>
+MBASE_INLINE_EXPR GENERIC list<T, Allocator>::emplace_front(Args&& ... in_args) 
+{
+	push_front(std::move(value_type(std::forward<Args>(in_args)...)));
+}
+
+template<typename T, typename Allocator>
+template<typename ... Args>
+MBASE_INLINE_EXPR GENERIC list<T, Allocator>::emplace_back(Args&& ... in_args) 
+{
+	push_back(std::move(value_type(std::forward<Args>(in_args)...)));
 }
 
 template<typename T, typename Allocator>
@@ -854,6 +843,64 @@ MBASE_INLINE GENERIC list<T, Allocator>::remove(const_reference in_value)
 			return;
 		}
 	}
+}
+
+template<typename T, typename Allocator>
+template<typename UnaryPredicate>
+MBASE_INLINE GENERIC list<T, Allocator>::remove_if(UnaryPredicate in_p) 
+{
+	const_iterator in_begin = cbegin();
+	for (in_begin; in_begin != cend(); in_begin++)
+	{
+		if (in_p(*in_begin))
+		{
+			erase(in_begin);
+			return;
+		}
+	}
+}
+
+template<typename T, typename Allocator>
+MBASE_INLINE GENERIC list<T, Allocator>::reverse() noexcept
+{
+	if (!mSize)
+	{
+		return;
+	}
+
+	node_type* current = mFirstNode;
+	node_type* temp = nullptr;
+
+	while (current != nullptr) {
+		temp = current->prev;
+		current->prev = current->next;
+		current->next = temp;
+		current = current->prev;
+	}
+
+	if (temp != nullptr) {
+		mFirstNode = temp->prev;
+		mLastNode = temp->next;
+	}
+}
+
+template<typename T, typename Allocator>
+MBASE_INLINE GENERIC list<T, Allocator>::unique() noexcept
+{
+	if (!mSize)
+	{
+		return;
+	}
+
+	list freshList;
+	for (iterator It = begin(); It != end(); It++)
+	{
+		if (std::find(freshList.begin(), freshList.end(), *It) == freshList.end())
+		{
+			freshList.push_back(std::move(*It));
+		}
+	}
+	*this = std::move(freshList);
 }
 
 template<typename T, typename Allocator>
