@@ -68,7 +68,7 @@ public:
 	MBASE_INLINE_EXPR MBASE_EXPLICIT vector(const Allocator& in_alloc) noexcept;
 	MBASE_INLINE_EXPR vector(size_type in_size, const T& in_value, const Allocator& in_alloc = Allocator());
 	MBASE_INLINE_EXPR MBASE_EXPLICIT vector(size_type in_size, const Allocator& in_alloc = Allocator());
-	template<typename InputIt, typename = std::enable_if_t<std::is_constructible_v<T, typename std::iterator_traits<InputIt>::value_type>>>
+	template<typename InputIt, typename = std::enable_if_t<std::is_constructible_v<value_type, typename std::iterator_traits<InputIt>::value_type>>>
 	MBASE_INLINE_EXPR vector(InputIt in_begin, InputIt in_end, const Allocator& in_alloc = Allocator());
 	MBASE_INLINE_EXPR vector(std::initializer_list<value_type> in_list, const Allocator& in_alloc = Allocator()) noexcept;
 	MBASE_INLINE_EXPR vector(const vector& in_rhs) noexcept;

@@ -76,7 +76,7 @@ public:
 	MBASE_INLINE MBASE_EXPLICIT list(const Allocator& in_alloc);
 	list(size_type in_count, const T& in_value, const Allocator& in_alloc = Allocator());
 	MBASE_INLINE list(size_type in_count, const Allocator& in_alloc = Allocator());
-	template<typename InputIt, typename = std::enable_if_t<std::is_constructible_v<T, typename std::iterator_traits<InputIt>::value_type>>>
+	template<typename InputIt, typename = std::enable_if_t<std::is_constructible_v<node_type, typename std::iterator_traits<InputIt>::value_type>>>
 	MBASE_INLINE_EXPR list(InputIt in_begin, InputIt in_end, const Allocator& in_alloc = Allocator());
 	list(const list& in_rhs);
 	list(const list& in_rhs, const Allocator& in_alloc);

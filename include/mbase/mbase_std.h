@@ -24,5 +24,6 @@
 #include <mbase/thread.h>
 #include <mbase/type_sequence.h>
 #include <mbase/vector.h>
+#include <mbase/unordered_map.h>
 
 #endif // !MBASE_STD_H

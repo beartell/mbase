@@ -32,14 +32,14 @@ public:
 	using const_reference = typename const value_type&;
 	using pointer = typename allocator_type::pointer;
 	using const_pointer = typename allocator_type::const_pointer;
-	using iterator = I32;
-	using const_iterator = const I32;
-	using local_iterator = F32;
-	using const_local_iterator = F64;
-	using node_type = I64;
+	using iterator = I8;
+	using const_iterator = I16;
+	using local_iterator = I32;
+	using const_local_iterator = I64;
+	using node_type = F32;
 
 	/* ===== BUILDER METHODS BEGIN ===== */
-	MBASE_INLINE_EXPR unordered_map() noexcept;
+	MBASE_INLINE_EXPR unordered_map() noexcept {};
 	MBASE_INLINE_EXPR MBASE_EXPLICIT unordered_map(size_type in_bucket_count, const Hash& in_hash = Hash(), const key_equal& in_equal = key_equal(), const Allocator& in_alloc = Allocator()) noexcept;
 	MBASE_INLINE_EXPR unordered_map(size_type in_bucket_count, const Allocator& in_alloc) noexcept;
 	MBASE_INLINE_EXPR unordered_map(size_type in_bucket_count, const Hash& in_hash, const Allocator& in_alloc) noexcept;
@@ -52,17 +52,17 @@ public:
 	MBASE_INLINE_EXPR unordered_map(std::initializer_list<value_type> in_pairs, size_type in_bucket_count = gUmapDefaultBucketCount, const Hash& in_hash = Hash(), const key_equal& in_equal = key_equal(), const Allocator& in_alloc = Allocator()) noexcept;
 	MBASE_INLINE_EXPR unordered_map(std::initializer_list<value_type> in_pairs, size_type in_bucket_count, const Allocator& in_alloc) noexcept;
 	MBASE_INLINE_EXPR unordered_map(std::initializer_list<value_type> in_pairs, size_type in_bucket_count, const Hash& in_hash, const Allocator& in_alloc) noexcept;
-	~unordered_map();
+	~unordered_map() {}
 	/* ===== BUILDER METHODS END ===== */
 
 	/* ===== OPERATOR BUILDER METHODS BEGIN ===== */
-	MBASE_INLINE_EXPR operator=(const unordered_map& in_rhs) noexcept;
-	MBASE_INLINE_EXPR operator=(unordered_map&& in_rhs) noexcept;
-	MBASE_INLINE_EXPR operator=(std::initializer_list<value_type> in_pairs) noexcept;
+	MBASE_INLINE_EXPR unordered_map& operator=(const unordered_map& in_rhs) noexcept;
+	MBASE_INLINE_EXPR unordered_map& operator=(unordered_map&& in_rhs) noexcept;
+	MBASE_INLINE_EXPR unordered_map& operator=(std::initializer_list<value_type> in_pairs) noexcept;
 	/* ===== OPERATOR BUILDER METHODS END ===== */
 
 	/* ===== ITERATOR METHODS BEGIN ===== */
-	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR iterator begin() noexcept;
+	/*MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR iterator begin() noexcept;
 	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR iterator end() noexcept;
 	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR const_iterator begin() const noexcept;
 	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR const_iterator end() const noexcept;
@@ -73,7 +73,7 @@ public:
 	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR const_local_iterator begin() const noexcept;
 	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR const_local_iterator end() const noexcept;
 	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR const_local_iterator cbegin() const noexcept;
-	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR const_local_iterator cend() const noexcept;
+	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR const_local_iterator cend() const noexcept;*/
 	/* ===== ITERATOR METHODS END ===== */
 
 	/* ===== OBSERVATION METHODS BEGIN ===== */
@@ -105,17 +105,29 @@ public:
 	MBASE_INLINE_EXPR size_type erase(const Key& in_key);
 	MBASE_INLINE_EXPR GENERIC swap(unordered_map& in_rhs) noexcept;
 	MBASE_INLINE_EXPR std::pair<iterator, bool> insert(const value_type& in_value) noexcept;
-	std::pair<iterator, bool> insert(value_type&& in_value) noexcept;
+	MBASE_INLINE_EXPR std::pair<iterator, bool> insert(value_type&& in_value) noexcept;
 	template<typename P, typename = std::enable_if_t<std::is_constructible_v<value_type, P&&>>>
-	std::pair<iterator, bool> insert(P&& in_value) noexcept;
-	iterator insert(const_iterator in_hint, const value_type& in_value);
-	iterator insert(const_iterator in_hint, value_type&& in_value);
+	MBASE_INLINE_EXPR std::pair<iterator, bool> insert(P&& in_value) noexcept;
+	MBASE_INLINE_EXPR iterator insert(const_iterator in_hint, const value_type& in_value);
+	MBASE_INLINE_EXPR iterator insert(const_iterator in_hint, value_type&& in_value);
 	template<typename P, typename = std::enable_if_t<std::is_constructible_v<value_type, P&&>>>
-	iterator insert(const_iterator in_hint, P&& in_value);
-	/* INPUT IT WILL BE SET TOO */
-	
+	MBASE_INLINE_EXPR iterator insert(const_iterator in_hint, P&& in_value);
+	MBASE_INLINE_EXPR /* INPUT IT WILL BE SET TOO */
+	MBASE_INLINE_EXPR GENERIC insert(std::initializer_list<value_type> in_pairs);
+	template<typename ... Args>
+	MBASE_INLINE_EXPR std::pair<iterator, bool> emplace(Args&&... in_args);
+	template<typename ... Args>
+	MBASE_INLINE_EXPR iterator emplace_hint(const_iterator in_hint, Args&&... in_args);
+	template<typename ... Args>
+	MBASE_INLINE_EXPR std::pair<iterator, bool> try_emplace(const Key& in_key, Args&&... in_args);
+	template<typename ... Args>
+	MBASE_INLINE_EXPR std::pair<iterator, bool> try_emplace(Key&& in_key, Args&&... in_args);
+	template<typename ... Args>
+	MBASE_INLINE_EXPR std::pair<iterator, bool> try_emplace(const_iterator in_hint, const Key& in_key, Args&&... in_args);
+	template<typename ... Args>
+	MBASE_INLINE_EXPR std::pair<iterator, bool> try_emplace(const_iterator in_hint, Key&& in_key, Args&&... in_args);
+
 private:
-	mbase::vector<Key> mKeys;
 	mbase::vector<mbase::list<value_type>> mBucket;
 };
 
