@@ -58,7 +58,7 @@ public:
 	size_type write_data(SerializableObject& in_src) {
 		mbase::deep_char_stream dcs(in_src.get_serialized_size());
 		in_src.serialize(dcs);
-		return write_data(mBuffer.bfSource, mBuffer.bfLength);
+		return write_data(dcs.get_buffer(), dcs.buffer_length());
 	}
 
 	template<typename SerializableObject>

@@ -77,7 +77,7 @@ public:
 	list(size_type in_count, const T& in_value, const Allocator& in_alloc = Allocator());
 	MBASE_INLINE list(size_type in_count, const Allocator& in_alloc = Allocator());
 	template<typename InputIt, typename = std::enable_if_t<std::is_constructible_v<T, typename std::iterator_traits<InputIt>::value_type>>>
-	MBASE_INLINE list(InputIt in_begin, InputIt in_end, const Allocator& in_alloc = Allocator());
+	MBASE_INLINE_EXPR list(InputIt in_begin, InputIt in_end, const Allocator& in_alloc = Allocator());
 	list(const list& in_rhs);
 	list(const list& in_rhs, const Allocator& in_alloc);
 	list(list&& in_rhs);
@@ -208,7 +208,7 @@ MBASE_INLINE list<T, Allocator>::list(size_type in_count, const Allocator& in_al
 
 template<typename T, typename Allocator>
 template<typename InputIt, typename>
-MBASE_INLINE list<T, Allocator>::list(InputIt in_begin, InputIt in_end, const Allocator& in_alloc) : mFirstNode(nullptr), mLastNode(nullptr), mSize(0) 
+MBASE_INLINE_EXPR list<T, Allocator>::list(InputIt in_begin, InputIt in_end, const Allocator& in_alloc) : mFirstNode(nullptr), mLastNode(nullptr), mSize(0) 
 {
 	for (in_begin; in_begin != in_end; in_begin++) {
 		push_back(*in_begin);

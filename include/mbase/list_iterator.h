@@ -542,11 +542,6 @@ MBASE_INLINE forward_list_iterator<T, DataT>& forward_list_iterator<T, DataT>::o
 template<typename T, typename DataT>
 MBASE_INLINE forward_list_iterator<T, DataT>& forward_list_iterator<T, DataT>::operator++() noexcept 
 {
-    if (!_ptr)
-    {
-        return *this;
-    }
-
     _ptr = _ptr->next;
     return *this;
 }
@@ -649,11 +644,6 @@ MBASE_INLINE const_forward_list_iterator<T, DataT>& const_forward_list_iterator<
 template<typename T, typename DataT>
 MBASE_INLINE const_forward_list_iterator<T, DataT>& const_forward_list_iterator<T, DataT>::operator++() noexcept
 {
-    if (!_ptr)
-    {
-        return *this;
-    }
-
     _ptr = _ptr->next;
     return *this;
 }
@@ -737,11 +727,6 @@ MBASE_INLINE backward_list_iterator<T, DataT>& backward_list_iterator<T, DataT>:
 template<typename T, typename DataT>
 MBASE_INLINE backward_list_iterator<T, DataT>& backward_list_iterator<T, DataT>::operator++() noexcept 
 {
-    if (!_ptr)
-    {
-        return *this;
-    }
-
     _ptr = _ptr->prev;
     return *this;
 }
@@ -844,11 +829,6 @@ MBASE_INLINE const_backward_list_iterator<T, DataT>& const_backward_list_iterato
 template<typename T, typename DataT>
 MBASE_INLINE const_backward_list_iterator<T, DataT>& const_backward_list_iterator<T, DataT>::operator++() noexcept
 {
-    if (!_ptr)
-    {
-        return *this;
-    }
-
     _ptr = _ptr->prev;
     return *this;
 }
