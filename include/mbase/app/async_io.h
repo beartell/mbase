@@ -32,8 +32,8 @@ public:
 	/* ===== BUILDER METHODS END ===== */
 
 	/* ===== OBSERVATION METHODS BEGIN ===== */
-	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE mbase::list<async_io_context*>* get_write_context_list() noexcept;
-	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE mbase::list<async_io_context*>* get_read_context_list() noexcept;
+	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE const mbase::list<async_io_context*>& get_write_context_list() const noexcept;
+	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE const mbase::list<async_io_context*>& get_read_context_list() const noexcept;
 	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE U32 get_allowed_write_context() const noexcept;
 	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE U32 get_allowed_read_context() const noexcept;
 	/* ===== OBSERVATION METHODS END ===== */
@@ -81,14 +81,14 @@ MBASE_INLINE async_io_manager::~async_io_manager() noexcept
 	clear_read_contexts();
 }
 
-MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE mbase::list<async_io_context*>* async_io_manager::get_write_context_list() noexcept
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE const mbase::list<async_io_context*>& async_io_manager::get_write_context_list() const noexcept
 {
-	return &mWriteContextList;
+	return mWriteContextList;
 }
 
-MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE mbase::list<async_io_context*>* async_io_manager::get_read_context_list() noexcept
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE const mbase::list<async_io_context*>& async_io_manager::get_read_context_list() const noexcept
 {
-	return &mReadContextList;
+	return mReadContextList;
 }
 
 MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE U32 async_io_manager::get_allowed_write_context() const noexcept
