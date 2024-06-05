@@ -933,8 +933,6 @@ MBASE_INLINE GENERIC list<T, Allocator>::serialize(char_stream& out_buffer) noex
 			out_buffer.put_datan(reinterpret_cast<IBYTEBUFFER>(&blockLength), sizeof(I32));
 			serHelper.serialize(out_buffer);
 		}
-
-		out_buffer.set_cursor_front();
 	}
 }
 

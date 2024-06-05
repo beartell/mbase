@@ -5,7 +5,7 @@
 #include <mbase/allocator.h> // mbase::allocator
 #include <mbase/node_type.h> // mbase::avl_node
 #include <mbase/binary_iterator.h> // mbase::bst_iterator, mbase::const_bst_iterator, mbase::reverse_bst_iterator, mbase::const_reverse_bst_iterator
-#include <mbase/container_serializer_helper.h> // mbase::serialize_helper
+#include <mbase/traits.h> // mbase::serialize_helper
 #include <mbase/safe_buffer.h> // mbase::safe_buffer
 #include <functional> // std::less
 
@@ -591,8 +591,6 @@ MBASE_INLINE GENERIC set<Key, Compare, Allocator>::serialize(char_stream& out_bu
 			out_buffer.put_datan(reinterpret_cast<IBYTEBUFFER>(&blockLength), sizeof(I32));
 			serHelper.serialize(out_buffer);
 		}
-
-		out_buffer.set_cursor_front();
 	}
 }
 

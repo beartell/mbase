@@ -7,7 +7,7 @@
 #include <mbase/behaviors.h>
 #include <mbase/binary_iterator.h>
 #include <mbase/char_stream.h>
-#include <mbase/container_serializer_helper.h>
+#include <mbase/traits.h>
 #include <mbase/filesystem.h>
 #include <mbase/index_assigner.h>
 #include <mbase/io_base.h>

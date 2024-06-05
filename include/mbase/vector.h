@@ -4,7 +4,7 @@
 #include <mbase/common.h> // For data types and macros
 #include <mbase/allocator.h> // For allocation routines
 #include <mbase/char_stream.h> // For mbase::char_stream
-#include <mbase/container_serializer_helper.h> // For serialize_helper
+#include <mbase/traits.h> // For serialize_helper
 #include <mbase/sequence_iterator.h>
 
 #include <initializer_list> // For std::initializer_list
@@ -883,8 +883,6 @@ MBASE_INLINE_EXPR GENERIC vector<T, Allocator>::serialize(char_stream& out_buffe
 			out_buffer.put_datan(reinterpret_cast<IBYTEBUFFER>(&blockLength), sizeof(I32));
 			serHelper.serialize(out_buffer);
 		}
-
-		out_buffer.set_cursor_front();
 	}
 }
 

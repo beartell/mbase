@@ -39,7 +39,7 @@ public:
 	using node_type = F32;
 
 	/* ===== BUILDER METHODS BEGIN ===== */
-	MBASE_INLINE_EXPR unordered_map() noexcept {};
+	MBASE_INLINE_EXPR unordered_map() noexcept;
 	MBASE_INLINE_EXPR MBASE_EXPLICIT unordered_map(size_type in_bucket_count, const Hash& in_hash = Hash(), const key_equal& in_equal = key_equal(), const Allocator& in_alloc = Allocator()) noexcept;
 	MBASE_INLINE_EXPR unordered_map(size_type in_bucket_count, const Allocator& in_alloc) noexcept;
 	MBASE_INLINE_EXPR unordered_map(size_type in_bucket_count, const Hash& in_hash, const Allocator& in_alloc) noexcept;
@@ -52,7 +52,7 @@ public:
 	MBASE_INLINE_EXPR unordered_map(std::initializer_list<value_type> in_pairs, size_type in_bucket_count = gUmapDefaultBucketCount, const Hash& in_hash = Hash(), const key_equal& in_equal = key_equal(), const Allocator& in_alloc = Allocator()) noexcept;
 	MBASE_INLINE_EXPR unordered_map(std::initializer_list<value_type> in_pairs, size_type in_bucket_count, const Allocator& in_alloc) noexcept;
 	MBASE_INLINE_EXPR unordered_map(std::initializer_list<value_type> in_pairs, size_type in_bucket_count, const Hash& in_hash, const Allocator& in_alloc) noexcept;
-	~unordered_map() {}
+	~unordered_map();
 	/* ===== BUILDER METHODS END ===== */
 
 	/* ===== OPERATOR BUILDER METHODS BEGIN ===== */
@@ -112,7 +112,7 @@ public:
 	MBASE_INLINE_EXPR iterator insert(const_iterator in_hint, value_type&& in_value);
 	template<typename P, typename = std::enable_if_t<std::is_constructible_v<value_type, P&&>>>
 	MBASE_INLINE_EXPR iterator insert(const_iterator in_hint, P&& in_value);
-	MBASE_INLINE_EXPR /* INPUT IT WILL BE SET TOO */
+	/* INPUT IT WILL BE SET TOO */
 	MBASE_INLINE_EXPR GENERIC insert(std::initializer_list<value_type> in_pairs);
 	template<typename ... Args>
 	MBASE_INLINE_EXPR std::pair<iterator, bool> emplace(Args&&... in_args);
@@ -130,6 +130,85 @@ public:
 private:
 	mbase::vector<mbase::list<value_type>> mBucket;
 };
+
+template<typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator>
+MBASE_INLINE_EXPR unordered_map<Key, Value, Hash, KeyEqual, Allocator>::unordered_map() noexcept
+{
+
+}
+
+template<typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator>
+MBASE_INLINE_EXPR unordered_map<Key, Value, Hash, KeyEqual, Allocator>::unordered_map(size_type in_bucket_count, const Hash& in_hash, const key_equal& in_equal, const Allocator& in_alloc) noexcept
+{
+
+}
+
+template<typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator>
+MBASE_INLINE_EXPR unordered_map<Key, Value, Hash, KeyEqual, Allocator>::unordered_map(size_type in_bucket_count, const Allocator& in_alloc) noexcept
+{
+
+}
+
+template<typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator>
+MBASE_INLINE_EXPR unordered_map<Key, Value, Hash, KeyEqual, Allocator>::unordered_map(size_type in_bucket_count, const Hash& in_hash, const Allocator& in_alloc) noexcept
+{
+
+}
+
+template<typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator>
+unordered_map<Key, Value, Hash, KeyEqual, Allocator>::unordered_map(const Allocator& in_alloc) noexcept
+{
+
+}
+/* InputIt versions does not exist for now */
+template<typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator>
+MBASE_INLINE_EXPR unordered_map<Key, Value, Hash, KeyEqual, Allocator>::unordered_map(const unordered_map& in_rhs) noexcept
+{
+
+}
+
+template<typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator>
+MBASE_INLINE_EXPR unordered_map<Key, Value, Hash, KeyEqual, Allocator>::unordered_map(const unordered_map& in_rhs, const Allocator& in_alloc) noexcept
+{
+
+}
+
+template<typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator>
+MBASE_INLINE_EXPR unordered_map<Key, Value, Hash, KeyEqual, Allocator>::unordered_map(unordered_map&& in_rhs) noexcept
+{
+
+}
+
+template<typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator>
+MBASE_INLINE_EXPR unordered_map<Key, Value, Hash, KeyEqual, Allocator>::unordered_map(unordered_map&& in_rhs, const Allocator& in_alloc) noexcept
+{
+
+}
+
+template<typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator>
+MBASE_INLINE_EXPR unordered_map<Key, Value, Hash, KeyEqual, Allocator>::unordered_map(std::initializer_list<value_type> in_pairs, size_type in_bucket_count, const Hash& in_hash, const key_equal& in_equal, const Allocator& in_alloc) noexcept
+{
+
+}
+
+template<typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator>
+MBASE_INLINE_EXPR unordered_map<Key, Value, Hash, KeyEqual, Allocator>::unordered_map(std::initializer_list<value_type> in_pairs, size_type in_bucket_count, const Allocator& in_alloc) noexcept
+{
+
+}
+
+template<typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator>
+MBASE_INLINE_EXPR unordered_map<Key, Value, Hash, KeyEqual, Allocator>::unordered_map(std::initializer_list<value_type> in_pairs, size_type in_bucket_count, const Hash& in_hash, const Allocator& in_alloc) noexcept
+{
+
+}
+
+template<typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator>
+unordered_map<Key, Value, Hash, KeyEqual, Allocator>::~unordered_map()
+{
+	//clear();
+}
+
 
 MBASE_STD_END
 
