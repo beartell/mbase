@@ -274,13 +274,15 @@ struct pair {
         first = in_rhs.first;
         second = in_rhs.second;
 
-        *this;
+        return *this;
     }
 
     MBASE_INLINE_EXPR pair& operator=(pair&& in_rhs) noexcept
     {
         first = std::move(in_rhs.first);
         second = std::move(in_rhs.second);
+
+        return *this;
     }
 
     MBASE_INLINE_EXPR GENERIC swap(pair& in_rhs) noexcept {
