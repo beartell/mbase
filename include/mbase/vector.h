@@ -85,12 +85,12 @@ public:
 	/* ===== OPERATOR BUILDER METHODS END ===== */
 
 	/* ===== ITERATOR METHODS BEGIN ===== */
-	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR iterator begin() const noexcept;
-	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR iterator end() const noexcept;
+	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR iterator begin() noexcept;
+	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR iterator end() noexcept;
 	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR const_iterator cbegin() const noexcept;
 	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR const_iterator cend() const noexcept;
-	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR reverse_iterator rbegin() const noexcept;
-	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR reverse_iterator rend() const noexcept;
+	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR reverse_iterator rbegin() noexcept;
+	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR reverse_iterator rend() noexcept;
 	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR const_reverse_iterator crbegin() const noexcept;
 	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR const_reverse_iterator crend() const noexcept;
 	/* ===== ITERATOR METHODS END ===== */
@@ -353,13 +353,13 @@ MBASE_INLINE_EXPR vector<T, Allocator>& vector<T, Allocator>::operator=(std::ini
 }
 
 template<typename T, typename Allocator>
-MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR typename vector<T, Allocator>::iterator vector<T, Allocator>::begin() const noexcept 
+MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR typename vector<T, Allocator>::iterator vector<T, Allocator>::begin() noexcept 
 {
 	return iterator(mRawData);
 }
 
 template<typename T, typename Allocator>
-MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR typename vector<T, Allocator>::iterator vector<T, Allocator>::end() const noexcept 
+MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR typename vector<T, Allocator>::iterator vector<T, Allocator>::end() noexcept 
 {
 	return iterator(mRawData + mSize);
 }
@@ -377,13 +377,13 @@ MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR typename vector<T, Allocator
 }
 
 template<typename T, typename Allocator>
-MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR typename vector<T, Allocator>::reverse_iterator vector<T, Allocator>::rbegin() const noexcept
+MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR typename vector<T, Allocator>::reverse_iterator vector<T, Allocator>::rbegin() noexcept
 {
 	return reverse_iterator(mRawData + (mSize - 1));
 }
 
 template<typename T, typename Allocator>
-MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR typename vector<T, Allocator>::reverse_iterator vector<T, Allocator>::rend() const noexcept 
+MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR typename vector<T, Allocator>::reverse_iterator vector<T, Allocator>::rend() noexcept 
 {
 	return reverse_iterator(mRawData - 1);
 }
@@ -403,12 +403,10 @@ MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR typename vector<T, Allocator
 template<typename T, typename Allocator>
 MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE_EXPR typename vector<T, Allocator>::size_type vector<T, Allocator>::get_serialized_size() const noexcept
 {
-	serialize_helper<value_type> sh;
 	size_type totalSize = 0;
-	for(iterator It = begin(); It != end(); It++)
+	for(const_iterator It = cbegin(); It != cend(); It++)
 	{
-		sh.value = It.get();
-		totalSize += sh.get_serialized_size() + gSerializedVectorBlockLength; // 4 is block length indicator
+		totalSize += mbase::get_serialized_size(*It) + gSerializedVectorBlockLength; // 4 is block length indicator
 	}
 
 	return totalSize;
@@ -866,22 +864,18 @@ MBASE_INLINE_EXPR GENERIC vector<T, Allocator>::serialize(char_stream& out_buffe
 {
 	if (mSize)
 	{
-		size_type serializedSize = get_serialized_size();
+		size_type serializedSize = this->get_serialized_size();
 		if(out_buffer.buffer_length() < serializedSize)
 		{
 			// BUFFER LENGTH IS NOT ENOUGH TO HOLD SERIALIZED DATA
 			return;
 		}
 
-		serialize_helper<value_type> serHelper;
-
 		for(iterator It = begin(); It != end(); It++)
 		{
-			serHelper.value = It.get();
-
-			I32 blockLength = serHelper.get_serialized_size();
+			I32 blockLength = mbase::get_serialized_size(*It);
 			out_buffer.put_datan(reinterpret_cast<IBYTEBUFFER>(&blockLength), sizeof(I32));
-			serHelper.serialize(out_buffer);
+			mbase::serialize(*It, out_buffer);
 		}
 	}
 }
@@ -899,7 +893,6 @@ MBASE_INLINE_EXPR mbase::vector<T, Allocator> mbase::vector<T, Allocator>::deser
 	mbase::vector<T, Allocator> deserializedVec;
 	if (in_length)
 	{
-		serialize_helper<value_type> serHelper;
 		char_stream inBuffer(in_src, in_length);
 
 		inBuffer.set_cursor_end();
@@ -913,7 +906,7 @@ MBASE_INLINE_EXPR mbase::vector<T, Allocator> mbase::vector<T, Allocator>::deser
 			I32 blockLength = *inBuffer.get_bufferc();
 			inBuffer.advance(sizeof(I32));
 			IBYTEBUFFER blockData = inBuffer.get_bufferc();
-			deserializedVec.push_back(std::move(serHelper.deserialize(blockData, blockLength)));
+			deserializedVec.push_back(std::move(mbase::deserialize<value_type>(blockData, blockLength)));
 			inBuffer.advance(blockLength);
 		}
 	}

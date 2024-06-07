@@ -1958,7 +1958,7 @@ MBASE_INLINE GENERIC character_sequence<SeqType, SeqBase, Allocator>::serialize(
 {
     if (mSize)
     {
-        out_buffer.put_datan(mRawData, get_serialized_size());
+        out_buffer.put_datan(mRawData, this->get_serialized_size());
     }
 }
 

@@ -350,12 +350,10 @@ MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR typename list<T, Allocator>:
 template<typename T, typename Allocator>
 MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE_EXPR typename list<T, Allocator>::size_type list<T, Allocator>::get_serialized_size() const noexcept
 {
-	serialize_helper<value_type> sh;
 	size_type totalSize = 0;
-	for (iterator It = begin(); It != end(); It++)
+	for (const_iterator It = cbegin(); It != cend(); It++)
 	{
-		sh.value = It.get();
-		totalSize += sh.get_serialized_size() + gSerializedListBlockLength; // 4 is block length indicator
+		totalSize += mbase::get_serialized_size(*It) + gSerializedListBlockLength; // 4 is block length indicator
 	}
 	return totalSize;
 }
@@ -363,25 +361,25 @@ MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE_EXPR typename list<T, Allocator>::siz
 template<typename T, typename Allocator>
 MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR typename list<T, Allocator>::reference list<T, Allocator>::front() noexcept 
 {
-	return *mFirstNode->data;
+	return mFirstNode->data;
 }
 
 template<typename T, typename Allocator>
 MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR typename list<T, Allocator>::const_reference list<T, Allocator>::front() const noexcept
 {
-	return *mFirstNode->data;
+	return mFirstNode->data;
 }
 
 template<typename T, typename Allocator>
 MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR typename list<T, Allocator>::reference list<T, Allocator>::back() noexcept
 {
-	return *mLastNode->data;
+	return mLastNode->data;
 }
 
 template<typename T, typename Allocator>
 MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR typename list<T, Allocator>::const_reference list<T, Allocator>::back() const noexcept
 {
-	return *mLastNode->data;
+	return mLastNode->data;
 }
 
 template<typename T, typename Allocator>
@@ -916,22 +914,18 @@ MBASE_INLINE GENERIC list<T, Allocator>::serialize(char_stream& out_buffer) noex
 {
 	if (mSize)
 	{
-		size_type serializedSize = get_serialized_size();
+		size_type serializedSize = this->get_serialized_size();
 		if (out_buffer.buffer_length() < serializedSize)
 		{
 			// BUFFER LENGTH IS NOT ENOUGH TO HOLD SERIALIZED DATA
 			return;
 		}
 
-		serialize_helper<value_type> serHelper;
-
 		for (iterator It = begin(); It != end(); It++)
 		{
-			serHelper.value = It.get();
-
-			I32 blockLength = serHelper.get_serialized_size();
+			I32 blockLength = mbase::get_serialized_size(*It);
 			out_buffer.put_datan(reinterpret_cast<IBYTEBUFFER>(&blockLength), sizeof(I32));
-			serHelper.serialize(out_buffer);
+			mbase::serialize(*It, out_buffer);
 		}
 	}
 }
@@ -942,7 +936,6 @@ MBASE_INLINE mbase::list<T, Allocator> list<T, Allocator>::deserialize(IBYTEBUFF
 	mbase::list<T, Allocator> deserializedContainer;
 	if (in_length)
 	{
-		serialize_helper<value_type> serHelper;
 		char_stream inBuffer(in_src, in_length);
 
 		inBuffer.set_cursor_end();
@@ -956,7 +949,7 @@ MBASE_INLINE mbase::list<T, Allocator> list<T, Allocator>::deserialize(IBYTEBUFF
 			I32 blockLength = *inBuffer.get_bufferc();
 			inBuffer.advance(sizeof(I32));
 			IBYTEBUFFER blockData = inBuffer.get_bufferc();
-			deserializedContainer.push_back(std::move(serHelper.deserialize(blockData, blockLength)));
+			deserializedContainer.push_back(std::move(mbase::deserialize<value_type>(blockData, blockLength)));
 			inBuffer.advance(blockLength);
 		}
 	}

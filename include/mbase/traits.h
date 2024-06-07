@@ -246,6 +246,35 @@ struct serialize_helper<U64> {
     }
 };
 
+SIZE_T get_serialized_size() noexcept
+{
+    return 0;
+}
+
+template<typename FirstType, typename ... TypesRest>
+SIZE_T get_serialized_size(const FirstType& in_arg, const TypesRest&... in_rest) noexcept
+{
+    serialize_helper<FirstType> helper;
+    helper.value = const_cast<FirstType*>(&in_arg);
+    SIZE_T myResult = helper.get_serialized_size() + get_serialized_size(std::forward<TypesRest>(in_rest)...);
+    return myResult;
+}
+
+template<typename SerializedType>
+GENERIC serialize(const SerializedType& in_value, char_stream& out_buffer) noexcept 
+{
+    serialize_helper<SerializedType> helper;
+    helper.value = const_cast<SerializedType*>(&in_value);
+    helper.serialize(out_buffer);
+}
+
+template<typename SerializedType>
+SerializedType deserialize(IBYTEBUFFER in_src, SIZE_T in_length) noexcept 
+{
+    serialize_helper<SerializedType> helper;
+    return helper.deserialize(in_src, in_length);
+}
+
 static const SIZE_T gPairSerializeBlockLength = 4;
 
 template<typename T1, typename T2>
@@ -291,51 +320,47 @@ struct pair {
     }
 
     MBASE_INLINE size_type get_serialized_size() const noexcept {
-        serialize_helper<first_type> serHelperFirst;
-        serialize_helper<second_type> serHelperSecond;
-
-        serHelperFirst.value = const_cast<first_type*>(&first);
-        serHelperSecond.value = const_cast<second_type*>(&second);
-
-        return (serHelperFirst.get_serialized_size() + serHelperSecond.get_serialized_size()) + sizeof(SIZE_T) * 2;
+        return (mbase::get_serialized_size(first) + mbase::get_serialized_size(second)) + sizeof(SIZE_T) * 2;
     }
 
     MBASE_INLINE GENERIC serialize(char_stream& out_buffer) noexcept
     {
-        serialize_helper<first_type> serHelperFirst;
-        serialize_helper<second_type> serHelperSecond;
-
-        serHelperFirst.value = const_cast<first_type*>(&first);
-        serHelperSecond.value = const_cast<second_type*>(&second);
-        
-        SIZE_T blockLength = serHelperFirst.get_serialized_size();
+        SIZE_T blockLength = mbase::get_serialized_size(first);
         out_buffer.put_datan(reinterpret_cast<IBYTEBUFFER>(&blockLength), sizeof(SIZE_T));
         serHelperFirst.serialize(out_buffer);
 
-        blockLength = serHelperSecond.get_serialized_size();
+        blockLength = mbase::get_serialized_size(second);
         out_buffer.put_datan(reinterpret_cast<IBYTEBUFFER>(&blockLength), sizeof(SIZE_T));
         serHelperSecond.serialize(out_buffer);
     }
 
     MBASE_INLINE static pair deserialize(IBYTEBUFFER in_src, SIZE_T in_length) noexcept
     {
-        serialize_helper<first_type> serHelperFirst;
-        serialize_helper<second_type> serHelperSecond;
-        
         char_stream cs(in_src, in_length);
         
         SIZE_T blockLength = *cs.get_bufferc();
         cs.advance(sizeof(SIZE_T));
-        first_type ft(std::move(serHelperFirst.deserialize(cs.get_bufferc(), blockLength)));
+        first_type ft(std::move(mbase::deserialize<first_type>(cs.get_bufferc(), blockLength)));
         cs.advance(blockLength);
 
         blockLength = *cs.get_bufferc();
         cs.advance(sizeof(SIZE_T));
 
-        second_type st(std::move(serHelperSecond.deserialize(cs.get_bufferc(), blockLength)));
+        second_type st(std::move(mbase::deserialize<second_type>(cs.get_bufferc(), blockLength)));
 
         return { std::move(ft), std::move(st) };
     }
+
+    bool operator==(const pair& in_rhs) 
+    {
+        return (first == in_rhs.first ? true : false) && (second == in_rhs.second ? true : false);
+    }
+
+    bool operator!=(const pair& in_rhs)
+    {
+        return (first != in_rhs.first ? true : false) && (second != in_rhs.second ? true : false);
+    }
+
 };
 
 template<typename T1, typename T2>
