@@ -52,6 +52,7 @@ public:
 
 	/* ===== OBSERVATION METHODS BEGIN ===== */
 	MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE_EXPR size_type get_serialized_size() const noexcept;
+	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR reference front() noexcept;
 	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR const_reference front() const noexcept;
 	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR bool empty() const noexcept;
 	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR size_type size() const noexcept;
@@ -105,6 +106,12 @@ template<typename T, typename SourceContainer>
 MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE_EXPR typename queue<T, SourceContainer>::size_type queue<T, SourceContainer>::get_serialized_size() const noexcept
 {
 	return _Sc.get_serialized_size();
+}
+
+template<typename T, typename SourceContainer>
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR typename queue<T, SourceContainer>::reference queue<T, SourceContainer>::front() noexcept
+{
+	return _Sc.front();
 }
 
 template<typename T, typename SourceContainer>

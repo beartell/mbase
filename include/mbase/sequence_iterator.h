@@ -60,8 +60,8 @@ public:
 
     /* ===== OBSERVATION METHODS BEGIN ===== */
     MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE pointer get() noexcept;
-    MBASE_INLINE pointer operator->() const noexcept;
-    MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE reference operator*() const noexcept;
+    MBASE_INLINE pointer operator->() noexcept;
+    MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE reference operator*() noexcept;
     MBASE_INLINE reference operator[](difference_type in_index);
     /* ===== OBSERVATION METHODS END ===== */
 
@@ -122,10 +122,10 @@ public:
     /* ===== OPERATOR BUILDER METHODS END ===== */
 
     /* ===== OBSERVATION METHODS BEGIN ===== */
-    MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE const_pointer get() noexcept;
+    MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE const_pointer get() const noexcept;
     MBASE_INLINE const_pointer operator->() const noexcept;
     MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE const_reference operator*() const noexcept;
-    MBASE_INLINE const_reference operator[](difference_type in_index);
+    MBASE_INLINE const_reference operator[](difference_type in_index) const;
     /* ===== OBSERVATION METHODS END ===== */
 
     /* ===== OPERATOR STATE-MODIFIER METHODS BEGIN ===== */
@@ -295,13 +295,13 @@ MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE typename sequence_iterator<T>::po
 }
 
 template<typename T>
-MBASE_INLINE  typename sequence_iterator<T>::pointer sequence_iterator<T>::operator->() const noexcept 
+MBASE_INLINE  typename sequence_iterator<T>::pointer sequence_iterator<T>::operator->() noexcept 
 {
     return _ptr;
 }
 
 template<typename T>
-MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE typename sequence_iterator<T>::reference sequence_iterator<T>::operator*() const noexcept 
+MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE typename sequence_iterator<T>::reference sequence_iterator<T>::operator*() noexcept 
 {
     return *_ptr;
 }
@@ -491,7 +491,7 @@ const_sequence_iterator<T>& const_sequence_iterator<T>::operator=(sequence_itera
 }
 
 template<typename T>
-MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE typename const_sequence_iterator<T>::const_pointer const_sequence_iterator<T>::get() noexcept 
+MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE typename const_sequence_iterator<T>::const_pointer const_sequence_iterator<T>::get() const noexcept 
 {
     return _ptr;
 }
@@ -509,7 +509,7 @@ MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE typename const_sequence_iterator<
 }
 
 template<typename T>
-MBASE_INLINE typename const_sequence_iterator<T>::const_reference const_sequence_iterator<T>::operator[](difference_type in_index)
+MBASE_INLINE typename const_sequence_iterator<T>::const_reference const_sequence_iterator<T>::operator[](difference_type in_index) const 
 {
     return *(_ptr + in_index);
 }

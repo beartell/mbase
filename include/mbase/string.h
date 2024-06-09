@@ -92,10 +92,13 @@ public:
     /* ===== OBSERVATION METHODS BEGIN ===== */
     MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR reference operator[](size_type in_pos);
     MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR const_reference operator[](size_type in_pos) const;
-    MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR pointer data() const noexcept;
+    MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR pointer data() noexcept;
+    MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR const_pointer data() const noexcept;
     MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR const_pointer c_str() const noexcept;
     MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR reference front() noexcept;
+    MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR const_reference front() const noexcept;
     MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR reference back() noexcept;
+    MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR const_reference back() const noexcept;
     MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR reference at(size_type in_pos);
     MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR const_reference at(size_type in_pos) const;
     MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR Allocator get_allocator() const noexcept;
@@ -699,7 +702,13 @@ MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR typename character_sequence<SeqType
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR typename character_sequence<SeqType, SeqBase, Allocator>::pointer character_sequence<SeqType, SeqBase, Allocator>::data() const noexcept
+MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR typename character_sequence<SeqType, SeqBase, Allocator>::pointer character_sequence<SeqType, SeqBase, Allocator>::data() noexcept
+{
+    return mRawData;
+}
+
+template<typename SeqType, typename SeqBase, typename Allocator>
+MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR typename character_sequence<SeqType, SeqBase, Allocator>::const_pointer character_sequence<SeqType, SeqBase, Allocator>::data() const noexcept
 {
     return mRawData;
 }
@@ -717,7 +726,19 @@ MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR typename character_sequence<SeqType
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR typename character_sequence<SeqType, SeqBase, Allocator>::const_reference character_sequence<SeqType, SeqBase, Allocator>::front() const noexcept
+{
+    return mRawData[0];
+}
+
+template<typename SeqType, typename SeqBase, typename Allocator>
 MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR typename character_sequence<SeqType, SeqBase, Allocator>::reference character_sequence<SeqType, SeqBase, Allocator>::back() noexcept
+{
+    return mRawData[mSize - 1];
+}
+
+template<typename SeqType, typename SeqBase, typename Allocator>
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR typename character_sequence<SeqType, SeqBase, Allocator>::const_reference character_sequence<SeqType, SeqBase, Allocator>::back() const noexcept
 {
     return mRawData[mSize - 1];
 }

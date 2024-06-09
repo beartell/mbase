@@ -30,7 +30,7 @@ public:
 	/* ===== BUILDER METHODS END ===== */
 
 	/* ===== OBSERVATION METHODS BEGIN ===== */
-	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE I32 get_id() noexcept;
+	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE I32 get_id() const noexcept;
 	MBASE_ND(MBASE_OBS_IGNORE) static I32 get_current_thread_id() noexcept;
 	/* ===== OBSERVATION METHODS END ===== */
 
@@ -115,7 +115,7 @@ MBASE_INLINE thread<Func, Args...>::~thread() noexcept {
 }
 
 template<typename Func, typename ...Args>
-MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE I32 thread<Func, Args...>::get_id() noexcept {
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE I32 thread<Func, Args...>::get_id() const noexcept {
 	if (!mThreadId)
 	{
 		return GetCurrentThreadId();

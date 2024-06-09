@@ -6,89 +6,13 @@
 #include <mbase/vector.h>
 #include <mbase/list.h>
 #include <mbase/traits.h>
+#include <mbase/unordered_map_iterator.h>
 #include <initializer_list>
 #include <utility>
 
 MBASE_STD_BEGIN
 
-static const U32 gUmapDefaultBucketCount = 16;
-
-template<typename MapContainer, typename BucketIterator>
-class linear_bucket_iterator {
-public:
-	using value_type = typename MapContainer::value_type;
-	using pointer = typename MapContainer::pointer;
-	using const_pointer = typename MapContainer::const_pointer;
-	using reference = typename MapContainer::reference;
-	using size_type = typename MapContainer::size_type;
-	using difference_type = typename MapContainer::difference_type;
-	using iterator_category = std::bidirectional_iterator_tag;
-
-	linear_bucket_iterator() noexcept : mMapContainer(nullptr), mBucketListIterator(), mBucketIndex(0) {}
-
-	linear_bucket_iterator(MapContainer* in_map, U32 in_bucket_index) noexcept : mMapContainer(in_map), mBucketListIterator(), mBucketIndex(in_bucket_index)
-	{
-		mBucketListIterator = in_map->begin(in_bucket_index);
-	}
-
-	linear_bucket_iterator(MapContainer* in_map, U32 in_bucket_index, BucketIterator in_iterator) noexcept : mMapContainer(in_map), mBucketListIterator(in_iterator), mBucketIndex(in_bucket_index)
-	{
-	}
-
-	linear_bucket_iterator(const linear_bucket_iterator& in_rhs) noexcept : mMapContainer(in_rhs.mMapContainer), mBucketListIterator(in_rhs.mBucketListIterator), mBucketIndex(in_rhs.mBucketIndex) 
-	{
-	}
-
-	linear_bucket_iterator& operator=(const linear_bucket_iterator& in_rhs) noexcept 
-	{
-		mMapContainer = in_rhs.mMapContainer;
-		mBucketListIterator = in_rhs.mBucketListIterator;
-		mBucketIndex = in_rhs.mBucketIndex;
-		return *this;
-	}
-
-	linear_bucket_iterator& operator++() noexcept 
-	{
-		++mBucketListIterator;
-		if (mBucketListIterator == mMapContainer->end(mBucketIndex))
-		{
-			++mBucketIndex;
-			BucketIterator bucketIter;
-			for (mBucketIndex; mBucketIndex < mMapContainer->bucket_count(); mBucketIndex++)
-			{
-				bucketIter = mMapContainer->begin(mBucketIndex);
-				if (bucketIter != mMapContainer->end(mBucketIndex))
-				{
-					this->mBucketListIterator = bucketIter;
-					return *this;
-				}
-			}
-
-			*this = mMapContainer->end();
-			return *this;
-		}
-		return *this;
-	}
-
-	pointer operator->() noexcept {
-		return mBucketListIterator.get();
-	}
-
-	bool operator==(const linear_bucket_iterator& in_rhs)
-	{
-		return mMapContainer == in_rhs.mMapContainer && mBucketListIterator == in_rhs.mBucketListIterator && mBucketIndex == in_rhs.mBucketIndex;
-	}
-
-	bool operator!=(const linear_bucket_iterator& in_rhs)
-	{
-		return !(mMapContainer == in_rhs.mMapContainer && mBucketListIterator == in_rhs.mBucketListIterator && mBucketIndex == in_rhs.mBucketIndex);
-	}
-
-private:
-	MapContainer* mMapContainer;
-	BucketIterator mBucketListIterator;
-	U32 mBucketIndex;
-};
+static const SIZE_T gUmapDefaultBucketCount = 16;
 
 template<typename Key, 
 	typename Value, 
@@ -113,7 +37,7 @@ public:
 	using const_pointer = typename allocator_type::const_pointer;
 	using local_iterator = typename bucket_node_type::iterator;
 	using const_local_iterator = typename bucket_node_type::const_iterator;
-	using iterator = linear_bucket_iterator<unordered_map, local_iterator>;
+	using iterator = mbase::linear_bucket_iterator<unordered_map, local_iterator>;
 	using const_iterator = I16;
 	using node_type = F32;
 
@@ -199,47 +123,129 @@ public:
 		sh.value = const_cast<bucket_type*>(&mBucket);
 		return sh.get_serialized_size();
 	}
-	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR size_type size() const noexcept;
-	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR size_type max_size() const noexcept;
-	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR bool empty() const noexcept;
+	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR size_type size() const noexcept
+	{
+		return mSize;
+	}
+	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR size_type max_size() const noexcept
+	{
+		size_type result = (std::numeric_limits<difference_type>::max)();
+		return result;
+	}
+	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR bool empty() const noexcept
+	{
+		return mSize == 0;
+	}
 	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR size_type bucket_count() const
 	{
 		return mBucketCount;
 	}
-	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR size_type max_bucket_count() const;
-	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR hasher hash_function() const;
-	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR key_equal key_eq() const;
- 	MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE_EXPR size_type bucket_size(size_type in_bucket) const;
-	MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE_EXPR size_type bucket(const Key& in_key) const;
+	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR size_type max_bucket_count() const
+	{
+		size_type result = (std::numeric_limits<difference_type>::max)();
+		return result;
+	}
+	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR hasher hash_function() const
+	{
+		return mHash;
+	}
+	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR key_equal key_eq() const
+	{
+		return mKeyEqual;
+	}
+ 	MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE_EXPR size_type bucket_size(size_type in_bucket) const
+	{
+		return mBucket[in_bucket].size();
+	}
+	MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE_EXPR size_type bucket(const Key& in_key)
+	{
+		size_type bucketIndex = mHash(in_key) % mBucketCount;
+		return bucketIndex;
+	}
 	MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE_EXPR Value& at(const Key& in_key);
 	MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE_EXPR const Value& at(const Key& in_key) const;
-	MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE_EXPR size_type count(const Key& in_key) const;
-	MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE_EXPR iterator find(const Key& in_key);
+	MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE_EXPR size_type count(const Key& in_key) const
+	{
+		if(find(in_key) == end())
+		{
+			return 0;
+		}
+		return 1;
+	}
+
+	MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE_EXPR local_iterator find_local(const Key& in_key) 
+	{
+		size_type bucketIndex = bucket(in_key);
+		for (local_iterator It = mBucket[bucketIndex].begin(); It != mBucket[bucketIndex].end(); It++)
+		{
+			if (It->first == in_key)
+			{
+				return It;
+			}
+		}
+		return mBucket[bucketIndex].end();
+	}
+
+	MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE_EXPR iterator find(const Key& in_key)
+	{
+		size_type bucketIndex = bucket(in_key);
+		for (local_iterator It = mBucket[bucketIndex].begin(); It != mBucket[bucketIndex].end(); It++)
+		{
+			if (It->first == in_key)
+			{
+				return iterator(this, bucketIndex, It);
+			}
+		}
+		return end();
+	}
+
 	MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE_EXPR const_iterator find(const Key& in_key) const;
-	MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE_EXPR bool contains(const Key& in_key) const;
+	MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE_EXPR bool contains(const Key& in_key) const
+	{
+		return count(in_key);
+	}
 	MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE_EXPR mbase::pair<iterator, iterator> equal_range(const Key& in_key);
 	MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE_EXPR mbase::pair<const_iterator, const_iterator> equal_range(const Key& in_key) const;
-	MBASE_ND(MBASE_RESULT_IGNORE) Value& operator[](const Key& in_key);
-	MBASE_ND(MBASE_RESULT_IGNORE) Value& operator[](Key&& in_key);
+	MBASE_ND(MBASE_RESULT_IGNORE) Value& operator[](const Key& in_key)
+	{
+		return at(in_key);
+	}
+	MBASE_ND(MBASE_RESULT_IGNORE) Value& operator[](Key&& in_key)
+	{
+		return at(std::move(in_key));
+	}
 	/* ===== OBSERVATION METHODS END ===== */
 
 	MBASE_INLINE_EXPR GENERIC clear() noexcept
 	{
 		mBucket = std::move(bucket_type(mBucketCount, bucket_node_type()));
+		mSize = 0;
 	}
 
-	MBASE_INLINE_EXPR iterator erase(iterator in_pos);
+	MBASE_INLINE_EXPR iterator erase(iterator in_pos)
+	{
+		if(in_pos == end())
+		{
+			return end();
+		}
+		return _erase(in_pos->first);
+	}
 	MBASE_INLINE_EXPR iterator erase(const_iterator in_pos);
 	MBASE_INLINE_EXPR iterator erase(const_iterator in_first, const_iterator in_end);
-	MBASE_INLINE_EXPR size_type erase(const Key& in_key);
+	MBASE_INLINE_EXPR size_type erase(const Key& in_key)
+	{
+		_erase(in_key);
+		return 0;
+	}
 	MBASE_INLINE_EXPR GENERIC swap(unordered_map& in_rhs) noexcept;
 	MBASE_INLINE_EXPR mbase::pair<iterator, bool> insert(const value_type& in_value) noexcept
 	{
-		size_type bucketIndex = mHash(in_value.first) % mBucketCount;
+		size_type bucketIndex = bucket(in_value.first);
 		bucket_node_type& bucketNode = mBucket[bucketIndex];
 		local_iterator duplicateKey = _is_key_duplicate(bucketNode, in_value);
 		if (duplicateKey == bucketNode.end())
 		{
+			++mSize;
 			bucketNode.push_back(in_value);
 			return mbase::make_pair(iterator(), true);
 		}
@@ -250,11 +256,12 @@ public:
 
 	MBASE_INLINE_EXPR mbase::pair<iterator, bool> insert(value_type&& in_value) noexcept
 	{
-		size_type bucketIndex = mHash(in_value.first) % mBucketCount;
+		size_type bucketIndex = bucket(in_value.first);
 		bucket_node_type& bucketNode = mBucket[bucketIndex];
 		local_iterator duplicateKey = _is_key_duplicate(bucketNode, in_value);
 		if(duplicateKey == bucketNode.end())
 		{
+			++mSize;
 			bucketNode.push_back(std::move(in_value));
 			return mbase::make_pair(iterator(), true);
 		}
@@ -289,88 +296,105 @@ private:
 	Hash mHash;
 	key_equal mKeyEqual;
 	bucket_type mBucket;
-	iterator mLastNode;
+	size_type mSize;
 
-	local_iterator _is_key_duplicate(bucket_node_type& in_value, value_type& in_pair) const noexcept
+	local_iterator _is_key_duplicate(bucket_node_type& in_value, const Key& in_key) const noexcept
 	{
 		typename bucket_node_type::iterator It = in_value.begin();
 
-		for(It; It != in_value.end(); It++)
+		for (It; It != in_value.end(); It++)
 		{
-			if(It->first == in_pair.first)
+			if (It->first == in_key)
 			{
 				return It;
 			}
 		}
 		return in_value.end();
 	}
+
+	local_iterator _is_key_duplicate(bucket_node_type& in_value, value_type& in_pair) const noexcept
+	{
+		return _is_key_duplicate(in_value, in_pair.first);
+	}
+
+	iterator _erase(const Key& in_key) noexcept 
+	{
+		size_type bucketIndex = bucket(in_key);
+		bucket_node_type& bucketNode = mBucket[bucketIndex];
+		local_iterator duplicateKey = _is_key_duplicate(bucketNode, in_key);
+		if (duplicateKey != bucketNode.end())
+		{
+			iterator(this, bucketIndex, bucketNode.erase(duplicateKey));
+		}
+		return iterator();
+	}
 };
 
 template<typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator>
-MBASE_INLINE_EXPR unordered_map<Key, Value, Hash, KeyEqual, Allocator>::unordered_map() noexcept : mBucketCount(gUmapDefaultBucketCount), mHash(), mKeyEqual(), mBucket(mBucketCount, bucket_node_type())
+MBASE_INLINE_EXPR unordered_map<Key, Value, Hash, KeyEqual, Allocator>::unordered_map() noexcept : mBucketCount(gUmapDefaultBucketCount), mHash(), mKeyEqual(), mBucket(mBucketCount, bucket_node_type()), mSize(0)
 {
 	
 }
 
 template<typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator>
-MBASE_INLINE_EXPR unordered_map<Key, Value, Hash, KeyEqual, Allocator>::unordered_map(size_type in_bucket_count, const Hash& in_hash, const key_equal& in_equal, const Allocator& in_alloc) noexcept : mBucketCount(in_bucket_count), mHash(in_hash), mKeyEqual(in_equal), mBucket(mBucketCount, bucket_node_type())
+MBASE_INLINE_EXPR unordered_map<Key, Value, Hash, KeyEqual, Allocator>::unordered_map(size_type in_bucket_count, const Hash& in_hash, const key_equal& in_equal, const Allocator& in_alloc) noexcept : mBucketCount(in_bucket_count), mHash(in_hash), mKeyEqual(in_equal), mBucket(mBucketCount, bucket_node_type()), mSize(0)
 {
 }
 
 template<typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator>
-MBASE_INLINE_EXPR unordered_map<Key, Value, Hash, KeyEqual, Allocator>::unordered_map(size_type in_bucket_count, const Allocator& in_alloc) noexcept : mBucketCount(in_bucket_count), mHash(), mKeyEqual(), mBucket(mBucketCount)
-{
-
-}
-
-template<typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator>
-MBASE_INLINE_EXPR unordered_map<Key, Value, Hash, KeyEqual, Allocator>::unordered_map(size_type in_bucket_count, const Hash& in_hash, const Allocator& in_alloc) noexcept : mBucketCount(in_bucket_count), mHash(in_hash), mKeyEqual(), mBucket(mBucketCount)
+MBASE_INLINE_EXPR unordered_map<Key, Value, Hash, KeyEqual, Allocator>::unordered_map(size_type in_bucket_count, const Allocator& in_alloc) noexcept : mBucketCount(in_bucket_count), mHash(), mKeyEqual(), mBucket(mBucketCount), mSize(0)
 {
 
 }
 
 template<typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator>
-unordered_map<Key, Value, Hash, KeyEqual, Allocator>::unordered_map(const Allocator& in_alloc) noexcept : mBucketCount(gUmapDefaultBucketCount), mHash(), mKeyEqual(), mBucket(mBucketCount)
+MBASE_INLINE_EXPR unordered_map<Key, Value, Hash, KeyEqual, Allocator>::unordered_map(size_type in_bucket_count, const Hash& in_hash, const Allocator& in_alloc) noexcept : mBucketCount(in_bucket_count), mHash(in_hash), mKeyEqual(), mBucket(mBucketCount), mSize(0)
+{
+
+}
+
+template<typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator>
+unordered_map<Key, Value, Hash, KeyEqual, Allocator>::unordered_map(const Allocator& in_alloc) noexcept : mBucketCount(gUmapDefaultBucketCount), mHash(), mKeyEqual(), mBucket(mBucketCount), mSize(0)
 {
 
 }
 /* InputIt versions does not exist for now */
 template<typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator>
-MBASE_INLINE_EXPR unordered_map<Key, Value, Hash, KeyEqual, Allocator>::unordered_map(const unordered_map& in_rhs) noexcept : mBucketCount(in_rhs.mBucketCount), mHash(in_rhs.mHash), mKeyEqual(in_rhs.mKeyEqual), mBucket(in_rhs.mBucket)
+MBASE_INLINE_EXPR unordered_map<Key, Value, Hash, KeyEqual, Allocator>::unordered_map(const unordered_map& in_rhs) noexcept : mBucketCount(in_rhs.mBucketCount), mHash(in_rhs.mHash), mKeyEqual(in_rhs.mKeyEqual), mBucket(in_rhs.mBucket), mSize(0)
 {
 }
 
 template<typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator>
-MBASE_INLINE_EXPR unordered_map<Key, Value, Hash, KeyEqual, Allocator>::unordered_map(const unordered_map& in_rhs, const Allocator& in_alloc) noexcept : mBucketCount(in_rhs.mBucketCount), mHash(in_rhs.mHash), mKeyEqual(in_rhs.mKeyEqual), mBucket(in_rhs.mBucket)
+MBASE_INLINE_EXPR unordered_map<Key, Value, Hash, KeyEqual, Allocator>::unordered_map(const unordered_map& in_rhs, const Allocator& in_alloc) noexcept : mBucketCount(in_rhs.mBucketCount), mHash(in_rhs.mHash), mKeyEqual(in_rhs.mKeyEqual), mBucket(in_rhs.mBucket), mSize(0)
 {
 }
 
 template<typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator>
-MBASE_INLINE_EXPR unordered_map<Key, Value, Hash, KeyEqual, Allocator>::unordered_map(unordered_map&& in_rhs) noexcept : mBucketCount(in_rhs.mBucketCount), mHash(in_rhs.mHash), mKeyEqual(in_rhs.mKeyEqual), mBucket(std::move(in_rhs.mBucket))
+MBASE_INLINE_EXPR unordered_map<Key, Value, Hash, KeyEqual, Allocator>::unordered_map(unordered_map&& in_rhs) noexcept : mBucketCount(in_rhs.mBucketCount), mHash(in_rhs.mHash), mKeyEqual(in_rhs.mKeyEqual), mBucket(std::move(in_rhs.mBucket)), mSize(0)
 {
 	
 }
 
 template<typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator>
-MBASE_INLINE_EXPR unordered_map<Key, Value, Hash, KeyEqual, Allocator>::unordered_map(unordered_map&& in_rhs, const Allocator& in_alloc) noexcept : mBucketCount(in_rhs.mBucketCount), mHash(in_rhs.mHash), mKeyEqual(in_rhs.mKeyEqual), mBucket(std::move(in_rhs.mBucket))
+MBASE_INLINE_EXPR unordered_map<Key, Value, Hash, KeyEqual, Allocator>::unordered_map(unordered_map&& in_rhs, const Allocator& in_alloc) noexcept : mBucketCount(in_rhs.mBucketCount), mHash(in_rhs.mHash), mKeyEqual(in_rhs.mKeyEqual), mBucket(std::move(in_rhs.mBucket)), mSize(0)
 {
 
 }
 
 template<typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator>
-MBASE_INLINE_EXPR unordered_map<Key, Value, Hash, KeyEqual, Allocator>::unordered_map(std::initializer_list<value_type> in_pairs, size_type in_bucket_count, const Hash& in_hash, const key_equal& in_equal, const Allocator& in_alloc) noexcept : mBucketCount(in_bucket_count), mHash(in_hash), mKeyEqual(in_equal)
+MBASE_INLINE_EXPR unordered_map<Key, Value, Hash, KeyEqual, Allocator>::unordered_map(std::initializer_list<value_type> in_pairs, size_type in_bucket_count, const Hash& in_hash, const key_equal& in_equal, const Allocator& in_alloc) noexcept : mBucketCount(in_bucket_count), mHash(in_hash), mKeyEqual(in_equal), mSize(0)
 {
 
 }
 
 template<typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator>
-MBASE_INLINE_EXPR unordered_map<Key, Value, Hash, KeyEqual, Allocator>::unordered_map(std::initializer_list<value_type> in_pairs, size_type in_bucket_count, const Allocator& in_alloc) noexcept : mBucketCount(in_bucket_count), mBucket(mBucketCount)
+MBASE_INLINE_EXPR unordered_map<Key, Value, Hash, KeyEqual, Allocator>::unordered_map(std::initializer_list<value_type> in_pairs, size_type in_bucket_count, const Allocator& in_alloc) noexcept : mBucketCount(in_bucket_count), mBucket(mBucketCount), mSize(0)
 {
 
 }
 
 template<typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator>
-MBASE_INLINE_EXPR unordered_map<Key, Value, Hash, KeyEqual, Allocator>::unordered_map(std::initializer_list<value_type> in_pairs, size_type in_bucket_count, const Hash& in_hash, const Allocator& in_alloc) noexcept : mBucketCount(in_bucket_count), mHash(in_hash), mKeyEqual(), mBucket(mBucketCount)
+MBASE_INLINE_EXPR unordered_map<Key, Value, Hash, KeyEqual, Allocator>::unordered_map(std::initializer_list<value_type> in_pairs, size_type in_bucket_count, const Hash& in_hash, const Allocator& in_alloc) noexcept : mBucketCount(in_bucket_count), mHash(in_hash), mKeyEqual(), mBucket(mBucketCount), mSize(0)
 {
 
 }
@@ -388,6 +412,7 @@ MBASE_INLINE_EXPR unordered_map<Key, Value, Hash, KeyEqual, Allocator>& unordere
 	mHash = in_rhs.mHash;
 	mKeyEqual = in_rhs.mKeyEqual;
 	mBucket = in_rhs.mBucket;
+	mSize = in_rhs.mSize;
 
 	return *this;
 }
@@ -399,6 +424,9 @@ MBASE_INLINE_EXPR unordered_map<Key, Value, Hash, KeyEqual, Allocator>& unordere
 	mHash = in_rhs.mHash;
 	mKeyEqual = in_rhs.mKeyEqual;
 	mBucket = std::move(in_rhs.mBucket);
+	mSize = in_rhs.mSize;
+
+	in_rhs.mSize = 0;
 
 	return *this;
 }

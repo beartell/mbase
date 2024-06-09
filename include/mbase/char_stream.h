@@ -52,6 +52,7 @@ Both char_stream and deep_char_stream should be used with utmost care.
 
 class char_stream : protected type_sequence<IBYTE> {
 public:
+	using reference = IBYTE&;
 	using size_type = SIZE_T;
 	using difference_type = PTRDIFF;
 
@@ -63,15 +64,21 @@ public:
 	/* ===== BUILDER METHODS END ===== */
 
 	/* ===== OBSERVATION METHODS BEGIN ===== */
-	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR IBYTE front() const noexcept;
-	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR IBYTE back() const noexcept;
+	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR reference front() noexcept;
+	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR const_reference front() const noexcept;
+	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR reference back() noexcept;
+	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR const_reference back() const noexcept;
 	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR bool is_cursor_end() const noexcept;
 	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR size_type buffer_length() const noexcept;
 	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR difference_type get_pos() const noexcept;
-	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR IBYTE getc() const noexcept;
-	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR IBYTEBUFFER get_buffer() const noexcept;
-	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR IBYTEBUFFER get_bufferc() const noexcept;
-	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR IBYTEBUFFER data() const noexcept;
+	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR reference getc() noexcept;
+	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR const_reference getc() const noexcept;
+	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR IBYTEBUFFER get_buffer() noexcept;
+	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR IBYTEBUFFER get_bufferc() noexcept;
+	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR IBYTEBUFFER data() noexcept;
+	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR const IBYTEBUFFER get_buffer() const noexcept;
+	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR const IBYTEBUFFER get_bufferc() const noexcept;
+	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR const IBYTEBUFFER data() const noexcept;
 	/* ===== OBSERVATION METHODS END ===== */
 
 	/* ===== OPERATOR OBSERVATION METHODS BEGIN ===== */
@@ -194,12 +201,22 @@ MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE IBYTEBUFFER char_stream::operator
 	return mSrcBuffer + mStreamCursor;
 }
 
-MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR IBYTE char_stream::front() const noexcept 
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR typename char_stream::reference char_stream::front() noexcept
 {
 	return *mSrcBuffer;
 }
 
-MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR IBYTE char_stream::back() const noexcept 
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR typename char_stream::const_reference char_stream::front() const noexcept
+{
+	return *mSrcBuffer;
+}
+
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR typename char_stream::reference char_stream::back() noexcept
+{
+	return *(mSrcBuffer + (mBufferLength - 1));
+}
+
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR typename char_stream::const_reference char_stream::back() const noexcept
 {
 	return *(mSrcBuffer + (mBufferLength - 1));
 }
@@ -219,22 +236,42 @@ MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR char_stream::difference_type char_s
 	return mStreamCursor;
 }
 
-MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR IBYTE char_stream::getc() const noexcept 
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR typename char_stream::reference char_stream::getc() noexcept
 {
 	return *(mSrcBuffer + mStreamCursor);
 }
 
-MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR IBYTEBUFFER char_stream::get_buffer() const noexcept 
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR typename char_stream::const_reference char_stream::getc() const noexcept
+{
+	return *(mSrcBuffer + mStreamCursor);
+}
+
+MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR IBYTEBUFFER char_stream::get_buffer() noexcept
 {
 	return mSrcBuffer;
 }
 
-MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR IBYTEBUFFER char_stream::get_bufferc() const noexcept 
+MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR IBYTEBUFFER char_stream::get_bufferc() noexcept
 {
 	return mSrcBuffer + mStreamCursor;
 }
 
-MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR IBYTEBUFFER char_stream::data() const noexcept 
+MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR IBYTEBUFFER char_stream::data() noexcept
+{
+	return mSrcBuffer;
+}
+
+MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR const IBYTEBUFFER char_stream::get_buffer() const noexcept 
+{
+	return mSrcBuffer;
+}
+
+MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR const IBYTEBUFFER char_stream::get_bufferc() const noexcept 
+{
+	return mSrcBuffer + mStreamCursor;
+}
+
+MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR const IBYTEBUFFER char_stream::data() const noexcept 
 {
 	return mSrcBuffer;
 }

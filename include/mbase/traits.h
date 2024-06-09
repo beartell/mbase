@@ -286,6 +286,10 @@ struct pair {
     first_type first;
     second_type second;
 
+    MBASE_INLINE_EXPR pair() noexcept
+    {
+    }
+
     MBASE_INLINE_EXPR pair(const T1& in_first, const T2& in_second) noexcept : first(in_first), second(in_second)
     {
     }
@@ -327,11 +331,11 @@ struct pair {
     {
         SIZE_T blockLength = mbase::get_serialized_size(first);
         out_buffer.put_datan(reinterpret_cast<IBYTEBUFFER>(&blockLength), sizeof(SIZE_T));
-        serHelperFirst.serialize(out_buffer);
+        mbase::serialize(first, out_buffer);
 
         blockLength = mbase::get_serialized_size(second);
         out_buffer.put_datan(reinterpret_cast<IBYTEBUFFER>(&blockLength), sizeof(SIZE_T));
-        serHelperSecond.serialize(out_buffer);
+        mbase::serialize(second, out_buffer);
     }
 
     MBASE_INLINE static pair deserialize(IBYTEBUFFER in_src, SIZE_T in_length) noexcept

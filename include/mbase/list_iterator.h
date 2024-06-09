@@ -133,9 +133,9 @@ public:
 
     /* ===== OBSERVATION METHODS BEGIN ===== */
     MBASE_INLINE pointer _get_node() const noexcept;
-    MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE DataT* get() const noexcept;
-    MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE DataT& operator*() const noexcept;
-    MBASE_INLINE DataT* operator->() const noexcept;
+    MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE DataT* get() noexcept;
+    MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE DataT& operator*() noexcept;
+    MBASE_INLINE DataT* operator->() noexcept;
     /* ===== OBSERVATION METHODS END ===== */
 
     /* ===== OPERATOR STATE-MODIFIER METHODS BEGIN ===== */
@@ -217,8 +217,8 @@ public:
     /* ===== OBSERVATION METHODS BEGIN ===== */
     MBASE_INLINE pointer _get_node() const noexcept;
     MBASE_INLINE DataT* get() const noexcept;
-    MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE DataT& operator*() const noexcept;
-    MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE DataT* operator->() const noexcept;
+    MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE DataT& operator*() noexcept;
+    MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE DataT* operator->() noexcept;
     /* ===== OBSERVATION METHODS END ===== */
 
     /* ===== STATE-MODIFIER METHODS BEGIN ===== */
@@ -503,19 +503,19 @@ MBASE_INLINE typename forward_list_iterator<T, DataT>::pointer forward_list_iter
 }
 
 template<typename T, typename DataT>
-MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE DataT* forward_list_iterator<T, DataT>::get() const noexcept 
+MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE DataT* forward_list_iterator<T, DataT>::get() noexcept 
 {
     return &_ptr->data;
 }
 
 template<typename T, typename DataT>
-MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE DataT& forward_list_iterator<T, DataT>::operator*() const noexcept 
+MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE DataT& forward_list_iterator<T, DataT>::operator*() noexcept 
 {
     return _ptr->data;
 }
 
 template<typename T, typename DataT>
-MBASE_INLINE DataT* forward_list_iterator<T, DataT>::operator->() const noexcept 
+MBASE_INLINE DataT* forward_list_iterator<T, DataT>::operator->() noexcept 
 {
     return this->get();
 }
@@ -695,13 +695,13 @@ MBASE_INLINE DataT* backward_list_iterator<T, DataT>::get() const noexcept
 }
 
 template<typename T, typename DataT>
-MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE DataT& backward_list_iterator<T, DataT>::operator*() const noexcept 
+MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE DataT& backward_list_iterator<T, DataT>::operator*() noexcept 
 {
     return _ptr->data;
 }
 
 template<typename T, typename DataT>
-MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE DataT* backward_list_iterator<T, DataT>::operator->() const noexcept
+MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE DataT* backward_list_iterator<T, DataT>::operator->() noexcept
 {
     return this->get();
 }

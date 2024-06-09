@@ -97,8 +97,8 @@ public:
 	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR iterator end() noexcept;
 	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR const_iterator cbegin() const noexcept;
 	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR const_iterator cend() const noexcept;
-	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE reverse_iterator rbegin() const noexcept;
-	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR reverse_iterator rend() const noexcept;
+	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE reverse_iterator rbegin() noexcept;
+	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR reverse_iterator rend() noexcept;
 	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE const_reverse_iterator crbegin() const noexcept;
 	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR const_reverse_iterator crend() const noexcept;
 	/* ===== ITERATOR METHODS END ===== */
@@ -324,13 +324,13 @@ MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR typename list<T, Allocator>:
 }
 
 template<typename T, typename Allocator>
-MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE typename list<T, Allocator>::reverse_iterator list<T, Allocator>::rbegin() const noexcept
+MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE typename list<T, Allocator>::reverse_iterator list<T, Allocator>::rbegin() noexcept
 {
 	return reverse_iterator(mLastNode);
 }
 
 template<typename T, typename Allocator>
-MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR typename list<T, Allocator>::reverse_iterator list<T, Allocator>::rend() const noexcept
+MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR typename list<T, Allocator>::reverse_iterator list<T, Allocator>::rend() noexcept
 {
 	return reverse_iterator(nullptr);
 }
