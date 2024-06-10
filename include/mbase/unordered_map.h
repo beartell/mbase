@@ -8,6 +8,7 @@
 #include <mbase/traits.h>
 #include <mbase/unordered_map_iterator.h>
 #include <initializer_list>
+#include <exception>
 #include <utility>
 
 MBASE_STD_BEGIN
@@ -65,195 +66,36 @@ public:
 	/* ===== OPERATOR BUILDER METHODS END ===== */
 
 	/* ===== ITERATOR METHODS BEGIN ===== */
-	/*MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR iterator begin() noexcept;
+	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR iterator begin() noexcept;
 	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR iterator end() noexcept;
-	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR const_iterator begin() const noexcept;
-	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR const_iterator end() const noexcept;
 	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR const_iterator cbegin() const noexcept;
 	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR const_iterator cend() const noexcept;
-	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR local_iterator begin() noexcept;
-	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR local_iterator end() noexcept;
-	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR const_local_iterator begin() const noexcept;
-	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR const_local_iterator end() const noexcept;
-	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR const_local_iterator cbegin() const noexcept;
-	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR const_local_iterator cend() const noexcept;*/
+	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR local_iterator begin(size_type in_n) noexcept;
+	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR local_iterator end(size_type in_n) noexcept;
+	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR const_local_iterator cbegin(size_type in_n) const noexcept;
+	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR const_local_iterator cend(size_type in_n) const noexcept;
 	/* ===== ITERATOR METHODS END ===== */
 
-	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR local_iterator begin(size_type in_n) noexcept
-	{
-		bucket_node_type& bucketNode = mBucket[in_n];
-		return bucketNode.begin();
-	}
-
-	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR local_iterator end(size_type in_n) noexcept
-	{
-		bucket_node_type& bucketNode = mBucket[in_n];
-		return bucketNode.end();
-	}
-
-	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR const_local_iterator cbegin(size_type in_n) const noexcept
-	{
-		const bucket_node_type& bucketNode = mBucket[in_n];
-		return bucketNode.cbegin();
-	}
-
-	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR const_local_iterator cend(size_type in_n) const noexcept
-	{
-		const bucket_node_type& bucketNode = mBucket[in_n];
-		return bucketNode.cend();
-	}
-
-	iterator begin() noexcept 
-	{
-		for(size_type i = 0; i < mBucketCount; i++)
-		{
-			local_iterator firstItem = begin(i);
-			if(firstItem != end(i))
-			{
-				return iterator(this, i, firstItem);
-			}
-		}
-		return iterator();
-	}
-
-	iterator end() noexcept 
-	{
-		for(size_type i = mBucketCount - 1; i >= 0; i++)
-		{
-			local_iterator lastItem = begin(i);
-			if(lastItem != end(i))
-			{
-				// end(i); ----> Is the last item
-				return iterator(this, i, end(i));
-			}
-		}
-		return iterator(this, 0, mBucket[0].end());
-	}
-
-	const_iterator cbegin() const noexcept 
-	{
-		for (size_type i = 0; i < mBucketCount; i++)
-		{
-			const_local_iterator firstItem = cbegin(i);
-			if (firstItem != cend(i))
-			{
-				//return const_iterator(this, i, firstItem);
-				return const_iterator(const_cast<unordered_map*>(this), i, firstItem);
-			}
-		}
-		return const_iterator();
-	}
-
-	const_iterator cend() const noexcept
-	{
-		for (size_type i = mBucketCount - 1; i >= 0; i++)
-		{
-			const_local_iterator lastItem = cbegin(i);
-			if (lastItem != cend(i))
-			{
-				// end(i); ----> Is the last item
-				return const_iterator(const_cast<unordered_map*>(this), i, cend(i));
-			}
-		}
-		return const_iterator(const_cast<unordered_map*>(this), 0, mBucket[0].cend());
-	}
-
-
 	/* ===== OBSERVATION METHODS BEGIN ===== */
-	size_type get_serialized_size() const noexcept {
-		return mbase::get_serialized_size(mBucket);
-	}
-	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR size_type size() const noexcept
-	{
-		return mSize;
-	}
-	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR size_type max_size() const noexcept
-	{
-		size_type result = (std::numeric_limits<difference_type>::max)();
-		return result;
-	}
-	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR bool empty() const noexcept
-	{
-		return mSize == 0;
-	}
-	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR size_type bucket_count() const
-	{
-		return mBucketCount;
-	}
-	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR size_type max_bucket_count() const
-	{
-		size_type result = (std::numeric_limits<difference_type>::max)();
-		return result;
-	}
-	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR hasher hash_function() const
-	{
-		return mHash;
-	}
-	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR key_equal key_eq() const
-	{
-		return mKeyEqual;
-	}
- 	MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE_EXPR size_type bucket_size(size_type in_bucket) const
-	{
-		return mBucket[in_bucket].size();
-	}
-	MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE_EXPR size_type bucket(const Key& in_key)
-	{
-		size_type bucketIndex = mHash(in_key) % mBucketCount;
-		return bucketIndex;
-	}
+	MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE size_type get_serialized_size() const noexcept;
+	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR size_type size() const noexcept;
+	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR size_type max_size() const noexcept;
+	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR bool empty() const noexcept;
+	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR size_type bucket_count() const noexcept;
+	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR size_type max_bucket_count() const noexcept;
+	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR hasher hash_function() const noexcept;
+	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR key_equal key_eq() const noexcept;
+	MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE_EXPR size_type bucket_size(size_type in_bucket) const noexcept;
+	MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE_EXPR size_type bucket(const Key& in_key);
 	MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE_EXPR Value& at(const Key& in_key);
 	MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE_EXPR const Value& at(const Key& in_key) const;
-	MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE_EXPR size_type count(const Key& in_key) const
-	{
-		if(find(in_key) == end())
-		{
-			return 0;
-		}
-		return 1;
-	}
-
-	MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE_EXPR local_iterator find_local(const Key& in_key) 
-	{
-		size_type bucketIndex = bucket(in_key);
-		for (local_iterator It = mBucket[bucketIndex].begin(); It != mBucket[bucketIndex].end(); It++)
-		{
-			if (It->first == in_key)
-			{
-				return It;
-			}
-		}
-		return mBucket[bucketIndex].end();
-	}
-
-	MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE_EXPR iterator find(const Key& in_key)
-	{
-		size_type bucketIndex = bucket(in_key);
-		for (local_iterator It = mBucket[bucketIndex].begin(); It != mBucket[bucketIndex].end(); It++)
-		{
-			if (It->first == in_key)
-			{
-				return iterator(this, bucketIndex, It);
-			}
-		}
-		return end();
-	}
-
+	MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE_EXPR size_type count(const Key& in_key) const;
+	MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE_EXPR local_iterator find_local(const Key& in_key);
+	MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE_EXPR iterator find(const Key& in_key);
 	MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE_EXPR const_iterator find(const Key& in_key) const;
-	MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE_EXPR bool contains(const Key& in_key) const
-	{
-		return count(in_key);
-	}
-	MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE_EXPR mbase::pair<iterator, iterator> equal_range(const Key& in_key);
-	MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE_EXPR mbase::pair<const_iterator, const_iterator> equal_range(const Key& in_key) const;
-	MBASE_ND(MBASE_RESULT_IGNORE) Value& operator[](const Key& in_key)
-	{
-		return at(in_key);
-	}
-	MBASE_ND(MBASE_RESULT_IGNORE) Value& operator[](Key&& in_key)
-	{
-		return at(std::move(in_key));
-	}
+	MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE_EXPR bool contains(const Key& in_key) const;
+	MBASE_ND(MBASE_RESULT_IGNORE) Value& operator[](const Key& in_key);
+	MBASE_ND(MBASE_RESULT_IGNORE) Value& operator[](Key&& in_key);
 	/* ===== OBSERVATION METHODS END ===== */
 
 	MBASE_INLINE_EXPR GENERIC clear() noexcept
@@ -270,14 +112,26 @@ public:
 		}
 		return _erase(in_pos->first);
 	}
-	MBASE_INLINE_EXPR iterator erase(const_iterator in_pos);
-	MBASE_INLINE_EXPR iterator erase(const_iterator in_first, const_iterator in_end);
+	MBASE_INLINE_EXPR iterator erase(const_iterator in_pos)
+	{
+		if(in_pos == cend())
+		{
+			return end();
+		}
+		return _erase(in_pos->first);
+	}
 	MBASE_INLINE_EXPR size_type erase(const Key& in_key)
 	{
 		_erase(in_key);
 		return 0;
 	}
-	MBASE_INLINE_EXPR GENERIC swap(unordered_map& in_rhs) noexcept;
+	MBASE_INLINE_EXPR GENERIC swap(unordered_map& in_rhs) noexcept {
+		std::swap(mBucketCount, in_rhs.mBucketCount);
+		std::swap(mHash, in_rhs.mHash);
+		std::swap(mKeyEqual, in_rhs.mKeyEqual);
+		std::swap(mBucket, in_rhs.mBucket);
+		std::swap(mSize, in_rhs.mSize);
+	}
 	MBASE_INLINE_EXPR mbase::pair<iterator, bool> insert(const value_type& in_value) noexcept
 	{
 		size_type bucketIndex = bucket(in_value.first);
@@ -477,6 +331,246 @@ MBASE_INLINE_EXPR unordered_map<Key, Value, Hash, KeyEqual, Allocator>& unordere
 	return *this;
 }
 
+template<typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator>
+MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR typename unordered_map<Key, Value, Hash, KeyEqual, Allocator>::iterator unordered_map<Key, Value, Hash, KeyEqual, Allocator>::begin() noexcept
+{
+	for (size_type i = 0; i < mBucketCount; i++)
+	{
+		local_iterator firstItem = begin(i);
+		if (firstItem != end(i))
+		{
+			return iterator(this, i, firstItem);
+		}
+	}
+	return iterator();
+}
+
+template<typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator>
+MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR typename unordered_map<Key, Value, Hash, KeyEqual, Allocator>::iterator unordered_map<Key, Value, Hash, KeyEqual, Allocator>::end() noexcept
+{
+	for (size_type i = mBucketCount - 1; i >= 0; i++)
+	{
+		local_iterator lastItem = begin(i);
+		if (lastItem != end(i))
+		{
+			return iterator(this, i, end(i));
+		}
+	}
+	return iterator(this, 0, mBucket[0].end());
+}
+
+template<typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator>
+MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR typename unordered_map<Key, Value, Hash, KeyEqual, Allocator>::const_iterator unordered_map<Key, Value, Hash, KeyEqual, Allocator>::cbegin() const noexcept
+{
+	for (size_type i = 0; i < mBucketCount; i++)
+	{
+		const_local_iterator firstItem = cbegin(i);
+		if (firstItem != cend(i))
+		{
+			//return const_iterator(this, i, firstItem);
+			return const_iterator(const_cast<unordered_map*>(this), i, firstItem);
+		}
+	}
+	return const_iterator();
+}
+
+template<typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator>
+MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR typename unordered_map<Key, Value, Hash, KeyEqual, Allocator>::const_iterator unordered_map<Key, Value, Hash, KeyEqual, Allocator>::cend() const noexcept
+{
+	for (size_type i = mBucketCount - 1; i >= 0; i++)
+	{
+		const_local_iterator lastItem = cbegin(i);
+		if (lastItem != cend(i))
+		{
+			return const_iterator(const_cast<unordered_map*>(this), i, cend(i));
+		}
+	}
+	return const_iterator(const_cast<unordered_map*>(this), 0, mBucket[0].cend());
+}
+
+template<typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator>
+MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR typename unordered_map<Key, Value, Hash, KeyEqual, Allocator>::local_iterator unordered_map<Key, Value, Hash, KeyEqual, Allocator>::begin(size_type in_n) noexcept
+{
+	bucket_node_type& bucketNode = mBucket[in_n];
+	return bucketNode.begin();
+}
+
+template<typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator>
+MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR typename unordered_map<Key, Value, Hash, KeyEqual, Allocator>::local_iterator unordered_map<Key, Value, Hash, KeyEqual, Allocator>::end(size_type in_n) noexcept
+{
+	bucket_node_type& bucketNode = mBucket[in_n];
+	return bucketNode.end();
+}
+
+template<typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator>
+MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR typename unordered_map<Key, Value, Hash, KeyEqual, Allocator>::const_local_iterator unordered_map<Key, Value, Hash, KeyEqual, Allocator>::cbegin(size_type in_n) const noexcept
+{
+	const bucket_node_type& bucketNode = mBucket[in_n];
+	return bucketNode.cbegin();
+}
+
+template<typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator>
+MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR typename unordered_map<Key, Value, Hash, KeyEqual, Allocator>::const_local_iterator unordered_map<Key, Value, Hash, KeyEqual, Allocator>::cend(size_type in_n) const noexcept
+{
+	const bucket_node_type& bucketNode = mBucket[in_n];
+	return bucketNode.cend();
+}
+
+template<typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator>
+MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE typename unordered_map<Key, Value, Hash, KeyEqual, Allocator>::size_type unordered_map<Key, Value, Hash, KeyEqual, Allocator>::get_serialized_size() const noexcept {
+	return mbase::get_serialized_size(mBucket);
+}
+
+template<typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator>
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR typename unordered_map<Key, Value, Hash, KeyEqual, Allocator>::size_type unordered_map<Key, Value, Hash, KeyEqual, Allocator>::size() const noexcept
+{
+	return mSize;
+}
+
+template<typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator>
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR typename unordered_map<Key, Value, Hash, KeyEqual, Allocator>::size_type unordered_map<Key, Value, Hash, KeyEqual, Allocator>::max_size() const noexcept
+{
+	size_type result = (std::numeric_limits<difference_type>::max)();
+	return result;
+}
+
+template<typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator>
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR bool unordered_map<Key, Value, Hash, KeyEqual, Allocator>::empty() const noexcept
+{
+	return mSize == 0;
+}
+
+template<typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator>
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR typename unordered_map<Key, Value, Hash, KeyEqual, Allocator>::size_type unordered_map<Key, Value, Hash, KeyEqual, Allocator>::bucket_count() const noexcept
+{
+	return mBucketCount;
+}
+
+template<typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator>
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR typename unordered_map<Key, Value, Hash, KeyEqual, Allocator>::size_type unordered_map<Key, Value, Hash, KeyEqual, Allocator>::max_bucket_count() const noexcept
+{
+	size_type result = (std::numeric_limits<difference_type>::max)();
+	return result;
+}
+
+template<typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator>
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR typename unordered_map<Key, Value, Hash, KeyEqual, Allocator>::hasher unordered_map<Key, Value, Hash, KeyEqual, Allocator>::hash_function() const noexcept
+{
+	return mHash;
+}
+
+template<typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator>
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR typename unordered_map<Key, Value, Hash, KeyEqual, Allocator>::key_equal unordered_map<Key, Value, Hash, KeyEqual, Allocator>::key_eq() const noexcept
+{
+	return mKeyEqual;
+}
+
+template<typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator>
+MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE_EXPR typename unordered_map<Key, Value, Hash, KeyEqual, Allocator>::size_type unordered_map<Key, Value, Hash, KeyEqual, Allocator>::bucket_size(size_type in_bucket) const noexcept
+{
+	return mBucket[in_bucket].size();
+}
+
+template<typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator>
+MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE_EXPR typename unordered_map<Key, Value, Hash, KeyEqual, Allocator>::size_type unordered_map<Key, Value, Hash, KeyEqual, Allocator>::bucket(const Key& in_key)
+{
+	size_type bucketIndex = mHash(in_key) % mBucketCount;
+	return bucketIndex;
+}
+
+template<typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator>
+MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE_EXPR Value& unordered_map<Key, Value, Hash, KeyEqual, Allocator>::at(const Key& in_key)
+{
+	iterator foundKey = find(in_key);
+	if (foundKey == end())
+	{
+		throw std::out_of_range("value is not in range");
+	}
+
+	return foundKey->second;
+}
+
+template<typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator>
+MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE_EXPR const Value& unordered_map<Key, Value, Hash, KeyEqual, Allocator>::at(const Key& in_key) const
+{
+	const_iterator foundKey = find(in_key);
+	if (foundKey == cend())
+	{
+		throw std::out_of_range("value is not in range");
+	}
+
+	return foundKey->second;
+}
+
+template<typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator>
+MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE_EXPR typename unordered_map<Key, Value, Hash, KeyEqual, Allocator>::size_type unordered_map<Key, Value, Hash, KeyEqual, Allocator>::count(const Key& in_key) const
+{
+	if (find(in_key) == end())
+	{
+		return 0;
+	}
+	return 1;
+}
+
+template<typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator>
+MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE_EXPR typename unordered_map<Key, Value, Hash, KeyEqual, Allocator>::local_iterator unordered_map<Key, Value, Hash, KeyEqual, Allocator>::find_local(const Key& in_key)
+{
+	size_type bucketIndex = bucket(in_key);
+	for (local_iterator It = mBucket[bucketIndex].begin(); It != mBucket[bucketIndex].end(); ++It)
+	{
+		if (It->first == in_key)
+		{
+			return It;
+		}
+	}
+	return mBucket[bucketIndex].end();
+}
+
+template<typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator>
+MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE_EXPR typename unordered_map<Key, Value, Hash, KeyEqual, Allocator>::iterator unordered_map<Key, Value, Hash, KeyEqual, Allocator>::find(const Key& in_key)
+{
+	size_type bucketIndex = bucket(in_key);
+	for (local_iterator It = mBucket[bucketIndex].begin(); It != mBucket[bucketIndex].end(); ++It)
+	{
+		if (It->first == in_key)
+		{
+			return iterator(this, bucketIndex, It);
+		}
+	}
+	return end();
+}
+
+template<typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator>
+MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE_EXPR typename unordered_map<Key, Value, Hash, KeyEqual, Allocator>::const_iterator unordered_map<Key, Value, Hash, KeyEqual, Allocator>::find(const Key& in_key) const
+{
+	size_type bucketIndex = bucket(in_key);
+	for (const_local_iterator It = mBucket[bucketIndex].cbegin(); It != mBucket[bucketIndex].cend(); ++It)
+	{
+		if (It->first == in_key)
+		{
+			return const_iterator(const_cast<unordered_map*>(this), bucketIndex, It);
+		}
+	}
+	return cend();
+}
+
+template<typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator>
+MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE_EXPR bool unordered_map<Key, Value, Hash, KeyEqual, Allocator>::contains(const Key& in_key) const
+{
+	return count(in_key);
+}
+
+template<typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator>
+MBASE_ND(MBASE_RESULT_IGNORE) Value& unordered_map<Key, Value, Hash, KeyEqual, Allocator>::operator[](const Key& in_key)
+{
+	return at(in_key);
+}
+
+template<typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator>
+MBASE_ND(MBASE_RESULT_IGNORE) Value& unordered_map<Key, Value, Hash, KeyEqual, Allocator>::operator[](Key&& in_key)
+{
+	return at(std::move(in_key));
+}
 
 MBASE_STD_END
 
