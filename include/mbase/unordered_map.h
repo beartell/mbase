@@ -164,18 +164,39 @@ public:
 		return mbase::make_pair(iterator(), true);
 	}
 
-	template<typename P, typename = std::enable_if_t<std::is_constructible_v<value_type, P&&>>>
-	MBASE_INLINE_EXPR mbase::pair<iterator, bool> insert(P&& in_value) noexcept;
-	MBASE_INLINE_EXPR iterator insert(const_iterator in_hint, const value_type& in_value);
-	MBASE_INLINE_EXPR iterator insert(const_iterator in_hint, value_type&& in_value);
-	template<typename P, typename = std::enable_if_t<std::is_constructible_v<value_type, P&&>>>
-	MBASE_INLINE_EXPR iterator insert(const_iterator in_hint, P&& in_value);
+	//template<typename P, typename = std::enable_if_t<std::is_constructible_v<value_type, P&&>>>
+	//MBASE_INLINE_EXPR mbase::pair<iterator, bool> insert(P&& in_value) noexcept;
+	MBASE_INLINE_EXPR iterator insert(const_iterator in_hint, const value_type& in_value) {
+		return insert(in_value);
+	}
+	MBASE_INLINE_EXPR iterator insert(const_iterator in_hint, value_type&& in_value) {
+		return insert(std::move(in_value));
+	}
+	//template<typename P, typename = std::enable_if_t<std::is_constructible_v<value_type, P&&>>>
+	//MBASE_INLINE_EXPR iterator insert(const_iterator in_hint, P&& in_value);
 	/* INPUT IT WILL BE SET TOO */
-	MBASE_INLINE_EXPR GENERIC insert(std::initializer_list<value_type> in_pairs);
+	MBASE_INLINE_EXPR GENERIC insert(std::initializer_list<value_type> in_pairs) {
+		const value_type* iBegin = in_pairs.begin();
+		for(iBegin; iBegin != in_pairs.end(); ++iBegin)
+		{
+			insert(*iBegin);
+		}
+	}
+	/*template<typename ... Args>
+	MBASE_INLINE_EXPR mbase::pair<iterator, bool> emplace(Args&&... in_args) {
+		iterator insertResult = insert(std::move(value_type(std::forward<Args>(in_args)...)));
+
+		if(insertResult == end())
+		{
+			return mbase::make_pair(end(), false);
+		}
+
+		return mbase::make_pair(insertResult, true);
+	}
 	template<typename ... Args>
-	MBASE_INLINE_EXPR mbase::pair<iterator, bool> emplace(Args&&... in_args);
-	template<typename ... Args>
-	MBASE_INLINE_EXPR iterator emplace_hint(const_iterator in_hint, Args&&... in_args);
+	MBASE_INLINE_EXPR iterator emplace_hint(const_iterator in_hint, Args&&... in_args) {
+		return emplace(std::move(value_type(std::forward<Args>(in_args)...)));
+	}
 	template<typename ... Args>
 	MBASE_INLINE_EXPR mbase::pair<iterator, bool> try_emplace(const Key& in_key, Args&&... in_args);
 	template<typename ... Args>
@@ -183,7 +204,7 @@ public:
 	template<typename ... Args>
 	MBASE_INLINE_EXPR mbase::pair<iterator, bool> try_emplace(const_iterator in_hint, const Key& in_key, Args&&... in_args);
 	template<typename ... Args>
-	MBASE_INLINE_EXPR mbase::pair<iterator, bool> try_emplace(const_iterator in_hint, Key&& in_key, Args&&... in_args);
+	MBASE_INLINE_EXPR mbase::pair<iterator, bool> try_emplace(const_iterator in_hint, Key&& in_key, Args&&... in_args);*/
 
 private:
 	size_type mBucketCount;
@@ -218,7 +239,8 @@ private:
 		local_iterator duplicateKey = _is_key_duplicate(bucketNode, in_key);
 		if (duplicateKey != bucketNode.end())
 		{
-			iterator(this, bucketIndex, bucketNode.erase(duplicateKey));
+			--mSize;
+			return iterator(this, bucketIndex, bucketNode.erase(duplicateKey));
 		}
 		return iterator();
 	}
