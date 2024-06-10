@@ -38,7 +38,7 @@ public:
 	using local_iterator = typename bucket_node_type::iterator;
 	using const_local_iterator = typename bucket_node_type::const_iterator;
 	using iterator = mbase::linear_bucket_iterator<unordered_map, local_iterator>;
-	using const_iterator = I16;
+	using const_iterator = mbase::const_linear_bucket_iterator<unordered_map, const_local_iterator>;
 	using node_type = F32;
 
 	/* ===== BUILDER METHODS BEGIN ===== */
@@ -91,6 +91,18 @@ public:
 		return bucketNode.end();
 	}
 
+	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR const_local_iterator cbegin(size_type in_n) const noexcept
+	{
+		const bucket_node_type& bucketNode = mBucket[in_n];
+		return bucketNode.cbegin();
+	}
+
+	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR const_local_iterator cend(size_type in_n) const noexcept
+	{
+		const bucket_node_type& bucketNode = mBucket[in_n];
+		return bucketNode.cend();
+	}
+
 	iterator begin() noexcept 
 	{
 		for(size_type i = 0; i < mBucketCount; i++)
@@ -104,7 +116,8 @@ public:
 		return iterator();
 	}
 
-	iterator end() noexcept {
+	iterator end() noexcept 
+	{
 		for(size_type i = mBucketCount - 1; i >= 0; i++)
 		{
 			local_iterator lastItem = begin(i);
@@ -117,11 +130,38 @@ public:
 		return iterator(this, 0, mBucket[0].end());
 	}
 
+	const_iterator cbegin() const noexcept 
+	{
+		for (size_type i = 0; i < mBucketCount; i++)
+		{
+			const_local_iterator firstItem = cbegin(i);
+			if (firstItem != cend(i))
+			{
+				//return const_iterator(this, i, firstItem);
+				return const_iterator(const_cast<unordered_map*>(this), i, firstItem);
+			}
+		}
+		return const_iterator();
+	}
+
+	const_iterator cend() const noexcept
+	{
+		for (size_type i = mBucketCount - 1; i >= 0; i++)
+		{
+			const_local_iterator lastItem = cbegin(i);
+			if (lastItem != cend(i))
+			{
+				// end(i); ----> Is the last item
+				return const_iterator(const_cast<unordered_map*>(this), i, cend(i));
+			}
+		}
+		return const_iterator(const_cast<unordered_map*>(this), 0, mBucket[0].cend());
+	}
+
+
 	/* ===== OBSERVATION METHODS BEGIN ===== */
 	size_type get_serialized_size() const noexcept {
-		mbase::serialize_helper<typename bucket_type> sh;
-		sh.value = const_cast<bucket_type*>(&mBucket);
-		return sh.get_serialized_size();
+		return mbase::get_serialized_size(mBucket);
 	}
 	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR size_type size() const noexcept
 	{
