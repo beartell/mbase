@@ -98,90 +98,21 @@ public:
 	MBASE_ND(MBASE_RESULT_IGNORE) Value& operator[](Key&& in_key);
 	/* ===== OBSERVATION METHODS END ===== */
 
-	MBASE_INLINE_EXPR GENERIC clear() noexcept
-	{
-		mBucket = std::move(bucket_type(mBucketCount, bucket_node_type()));
-		mSize = 0;
-	}
-
-	MBASE_INLINE_EXPR iterator erase(iterator in_pos)
-	{
-		if(in_pos == end())
-		{
-			return end();
-		}
-		return _erase(in_pos->first);
-	}
-	MBASE_INLINE_EXPR iterator erase(const_iterator in_pos)
-	{
-		if(in_pos == cend())
-		{
-			return end();
-		}
-		return _erase(in_pos->first);
-	}
-	MBASE_INLINE_EXPR size_type erase(const Key& in_key)
-	{
-		_erase(in_key);
-		return 0;
-	}
-	MBASE_INLINE_EXPR GENERIC swap(unordered_map& in_rhs) noexcept {
-		std::swap(mBucketCount, in_rhs.mBucketCount);
-		std::swap(mHash, in_rhs.mHash);
-		std::swap(mKeyEqual, in_rhs.mKeyEqual);
-		std::swap(mBucket, in_rhs.mBucket);
-		std::swap(mSize, in_rhs.mSize);
-	}
-	MBASE_INLINE_EXPR mbase::pair<iterator, bool> insert(const value_type& in_value) noexcept
-	{
-		size_type bucketIndex = bucket(in_value.first);
-		bucket_node_type& bucketNode = mBucket[bucketIndex];
-		local_iterator duplicateKey = _is_key_duplicate(bucketNode, in_value);
-		if (duplicateKey == bucketNode.end())
-		{
-			++mSize;
-			bucketNode.push_back(in_value);
-			return mbase::make_pair(iterator(), true);
-		}
-
-		*duplicateKey = in_value;
-		return mbase::make_pair(iterator(), true);
-	}
-
-	MBASE_INLINE_EXPR mbase::pair<iterator, bool> insert(value_type&& in_value) noexcept
-	{
-		size_type bucketIndex = bucket(in_value.first);
-		bucket_node_type& bucketNode = mBucket[bucketIndex];
-		local_iterator duplicateKey = _is_key_duplicate(bucketNode, in_value);
-		if(duplicateKey == bucketNode.end())
-		{
-			++mSize;
-			bucketNode.push_back(std::move(in_value));
-			return mbase::make_pair(iterator(), true);
-		}
-		
-		*duplicateKey = std::move(in_value);
-		return mbase::make_pair(iterator(), true);
-	}
-
-	//template<typename P, typename = std::enable_if_t<std::is_constructible_v<value_type, P&&>>>
-	//MBASE_INLINE_EXPR mbase::pair<iterator, bool> insert(P&& in_value) noexcept;
-	MBASE_INLINE_EXPR iterator insert(const_iterator in_hint, const value_type& in_value) {
-		return insert(in_value);
-	}
-	MBASE_INLINE_EXPR iterator insert(const_iterator in_hint, value_type&& in_value) {
-		return insert(std::move(in_value));
-	}
+	MBASE_INLINE_EXPR GENERIC clear() noexcept;
+	MBASE_INLINE_EXPR iterator erase(iterator in_pos);
+	MBASE_INLINE_EXPR iterator erase(const_iterator in_pos);
+	MBASE_INLINE_EXPR size_type erase(const Key& in_key);
+	MBASE_INLINE_EXPR GENERIC swap(unordered_map& in_rhs) noexcept;
+	MBASE_INLINE_EXPR mbase::pair<iterator, bool> insert(const value_type& in_value) noexcept;
+	MBASE_INLINE_EXPR mbase::pair<iterator, bool> insert(value_type&& in_value) noexcept;
+	MBASE_INLINE_EXPR iterator insert(const_iterator in_hint, const value_type& in_value);
+	MBASE_INLINE_EXPR iterator insert(const_iterator in_hint, value_type&& in_value);
+	MBASE_INLINE_EXPR GENERIC insert(std::initializer_list<value_type> in_pairs);
 	//template<typename P, typename = std::enable_if_t<std::is_constructible_v<value_type, P&&>>>
 	//MBASE_INLINE_EXPR iterator insert(const_iterator in_hint, P&& in_value);
+		//template<typename P, typename = std::enable_if_t<std::is_constructible_v<value_type, P&&>>>
+	//MBASE_INLINE_EXPR mbase::pair<iterator, bool> insert(P&& in_value) noexcept;
 	/* INPUT IT WILL BE SET TOO */
-	MBASE_INLINE_EXPR GENERIC insert(std::initializer_list<value_type> in_pairs) {
-		const value_type* iBegin = in_pairs.begin();
-		for(iBegin; iBegin != in_pairs.end(); ++iBegin)
-		{
-			insert(*iBegin);
-		}
-	}
 	/*template<typename ... Args>
 	MBASE_INLINE_EXPR mbase::pair<iterator, bool> emplace(Args&&... in_args) {
 		iterator insertResult = insert(std::move(value_type(std::forward<Args>(in_args)...)));
@@ -206,6 +137,37 @@ public:
 	template<typename ... Args>
 	MBASE_INLINE_EXPR mbase::pair<iterator, bool> try_emplace(const_iterator in_hint, Key&& in_key, Args&&... in_args);*/
 
+	/* ===== NON-MODIFIER METHODS BEGIN ===== */
+	MBASE_INLINE_EXPR GENERIC serialize(char_stream& out_buffer) noexcept 
+	{
+		if(mSize)
+		{
+			out_buffer.put_datan<size_type>(mSize);
+			out_buffer.put_datan<size_type>(mBucketCount);
+			mBucket.serialize(out_buffer);
+		}
+	}
+	/* ===== NON-MODIFIER METHODS END ===== */
+
+	/* ===== NON-MEMBER FUNCTIONS BEGIN ===== */
+	MBASE_INLINE_EXPR static mbase::unordered_map<Key, Value, Hash, KeyEqual, Allocator> deserialize(IBYTEBUFFER in_src, SIZE_T in_length)
+	{
+		mbase::unordered_map<Key, Value, Hash, KeyEqual, Allocator> newMap;
+		char_stream cs(in_src, in_length);
+		if (in_length)
+		{
+			size_type mapSize = cs.get_datan<size_type>();
+			size_type bucketCount = cs.get_datan<size_type>();
+			bucket_type bucketList = std::move(mbase::deserialize<bucket_type>(in_src, in_length));
+			newMap.mSize = mapSize;
+			newMap.mBucketCount = bucketCount;
+			newMap.mBucket = std::move(bucketList);
+		}
+		
+		return newMap;
+	}
+	/* ===== NON-MEMBER FUNCTIONS END ===== */
+
 private:
 	size_type mBucketCount;
 	Hash mHash;
@@ -213,37 +175,9 @@ private:
 	bucket_type mBucket;
 	size_type mSize;
 
-	local_iterator _is_key_duplicate(bucket_node_type& in_value, const Key& in_key) const noexcept
-	{
-		typename bucket_node_type::iterator It = in_value.begin();
-
-		for (It; It != in_value.end(); It++)
-		{
-			if (It->first == in_key)
-			{
-				return It;
-			}
-		}
-		return in_value.end();
-	}
-
-	local_iterator _is_key_duplicate(bucket_node_type& in_value, value_type& in_pair) const noexcept
-	{
-		return _is_key_duplicate(in_value, in_pair.first);
-	}
-
-	iterator _erase(const Key& in_key) noexcept 
-	{
-		size_type bucketIndex = bucket(in_key);
-		bucket_node_type& bucketNode = mBucket[bucketIndex];
-		local_iterator duplicateKey = _is_key_duplicate(bucketNode, in_key);
-		if (duplicateKey != bucketNode.end())
-		{
-			--mSize;
-			return iterator(this, bucketIndex, bucketNode.erase(duplicateKey));
-		}
-		return iterator();
-	}
+	local_iterator _is_key_duplicate(bucket_node_type& in_value, const Key& in_key) const noexcept;
+	local_iterator _is_key_duplicate(bucket_node_type& in_value, value_type& in_pair) const noexcept;
+	iterator _erase(const Key& in_key) noexcept;
 };
 
 template<typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator>
@@ -440,6 +374,10 @@ MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR typename unordered_map<Key, 
 
 template<typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator>
 MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE typename unordered_map<Key, Value, Hash, KeyEqual, Allocator>::size_type unordered_map<Key, Value, Hash, KeyEqual, Allocator>::get_serialized_size() const noexcept {
+	if(!mSize)
+	{
+		return 0;
+	}
 	return mbase::get_serialized_size(mBucket);
 }
 
@@ -592,6 +530,151 @@ template<typename Key, typename Value, typename Hash, typename KeyEqual, typenam
 MBASE_ND(MBASE_RESULT_IGNORE) Value& unordered_map<Key, Value, Hash, KeyEqual, Allocator>::operator[](Key&& in_key)
 {
 	return at(std::move(in_key));
+}
+
+template<typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator>
+MBASE_INLINE_EXPR GENERIC unordered_map<Key, Value, Hash, KeyEqual, Allocator>::clear() noexcept
+{
+	mBucket = std::move(bucket_type(mBucketCount, bucket_node_type()));
+	mSize = 0;
+}
+
+template<typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator>
+MBASE_INLINE_EXPR typename unordered_map<Key, Value, Hash, KeyEqual, Allocator>::iterator unordered_map<Key, Value, Hash, KeyEqual, Allocator>::erase(iterator in_pos)
+{
+	if (in_pos == end())
+	{
+		return end();
+	}
+	return _erase(in_pos->first);
+}
+
+template<typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator>
+MBASE_INLINE_EXPR typename unordered_map<Key, Value, Hash, KeyEqual, Allocator>::iterator unordered_map<Key, Value, Hash, KeyEqual, Allocator>::erase(const_iterator in_pos)
+{
+	if (in_pos == cend())
+	{
+		return end();
+	}
+	return _erase(in_pos->first);
+}
+
+template<typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator>
+MBASE_INLINE_EXPR typename unordered_map<Key, Value, Hash, KeyEqual, Allocator>::size_type unordered_map<Key, Value, Hash, KeyEqual, Allocator>::erase(const Key& in_key)
+{
+	_erase(in_key);
+	return 0;
+}
+
+template<typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator>
+MBASE_INLINE_EXPR GENERIC unordered_map<Key, Value, Hash, KeyEqual, Allocator>::swap(unordered_map& in_rhs) noexcept {
+	std::swap(mBucketCount, in_rhs.mBucketCount);
+	std::swap(mHash, in_rhs.mHash);
+	std::swap(mKeyEqual, in_rhs.mKeyEqual);
+	std::swap(mBucket, in_rhs.mBucket);
+	std::swap(mSize, in_rhs.mSize);
+}
+
+template<typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator>
+MBASE_INLINE_EXPR mbase::pair<typename unordered_map<Key, Value, Hash, KeyEqual, Allocator>::iterator, bool> unordered_map<Key, Value, Hash, KeyEqual, Allocator>::insert(const value_type& in_value) noexcept
+{
+	size_type bucketIndex = bucket(in_value.first);
+	bucket_node_type& bucketNode = mBucket[bucketIndex];
+	local_iterator duplicateKey = _is_key_duplicate(bucketNode, in_value);
+	if (duplicateKey == bucketNode.end())
+	{
+		++mSize;
+		bucketNode.push_back(in_value);
+		//local_iterator lastItem = bucketNode.insert(bucketNode.end(), in_value);
+		//return mbase::make_pair(iterator(this, bucketIndex, lastItem), true);
+		return mbase::make_pair(iterator(), true);
+
+	}
+
+	*duplicateKey = in_value;
+	return mbase::make_pair(iterator(), true);
+}
+
+template<typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator>
+MBASE_INLINE_EXPR mbase::pair<typename unordered_map<Key, Value, Hash, KeyEqual, Allocator>::iterator, bool> unordered_map<Key, Value, Hash, KeyEqual, Allocator>::insert(value_type&& in_value) noexcept
+{
+	size_type bucketIndex = bucket(in_value.first);
+	bucket_node_type& bucketNode = mBucket[bucketIndex];
+	local_iterator duplicateKey = _is_key_duplicate(bucketNode, in_value);
+	if (duplicateKey == bucketNode.end())
+	{
+		++mSize;
+		bucketNode.push_back(std::move(in_value));
+		//local_iterator lastItem = bucketNode.insert(bucketNode.end(), std::move(in_value));
+		//return mbase::make_pair(iterator(this, bucketIndex, lastItem), true);
+		return mbase::make_pair(iterator(), true);
+
+	}
+
+	*duplicateKey = std::move(in_value);
+	return mbase::make_pair(iterator(), true);
+}
+
+template<typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator>
+MBASE_INLINE_EXPR typename unordered_map<Key, Value, Hash, KeyEqual, Allocator>::iterator unordered_map<Key, Value, Hash, KeyEqual, Allocator>::insert(const_iterator in_hint, const value_type& in_value) 
+{
+	return insert(in_value);
+}
+
+template<typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator>
+MBASE_INLINE_EXPR typename unordered_map<Key, Value, Hash, KeyEqual, Allocator>::iterator unordered_map<Key, Value, Hash, KeyEqual, Allocator>::insert(const_iterator in_hint, value_type&& in_value) 
+{
+	return insert(std::move(in_value));
+}
+
+template<typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator>
+MBASE_INLINE_EXPR GENERIC unordered_map<Key, Value, Hash, KeyEqual, Allocator>::insert(std::initializer_list<value_type> in_pairs) 
+{
+	const value_type* iBegin = in_pairs.begin();
+	for (iBegin; iBegin != in_pairs.end(); ++iBegin)
+	{
+		insert(*iBegin);
+	}
+}
+
+
+
+
+
+
+template<typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator>
+typename unordered_map<Key, Value, Hash, KeyEqual, Allocator>::local_iterator unordered_map<Key, Value, Hash, KeyEqual, Allocator>::_is_key_duplicate(bucket_node_type& in_value, const Key& in_key) const noexcept
+{
+	typename bucket_node_type::iterator It = in_value.begin();
+
+	for (It; It != in_value.end(); It++)
+	{
+		if (It->first == in_key)
+		{
+			return It;
+		}
+	}
+	return in_value.end();
+}
+
+template<typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator>
+typename unordered_map<Key, Value, Hash, KeyEqual, Allocator>::local_iterator unordered_map<Key, Value, Hash, KeyEqual, Allocator>::_is_key_duplicate(bucket_node_type& in_value, value_type& in_pair) const noexcept
+{
+	return _is_key_duplicate(in_value, in_pair.first);
+}
+
+template<typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator>
+typename unordered_map<Key, Value, Hash, KeyEqual, Allocator>::iterator unordered_map<Key, Value, Hash, KeyEqual, Allocator>::_erase(const Key& in_key) noexcept
+{
+	size_type bucketIndex = bucket(in_key);
+	bucket_node_type& bucketNode = mBucket[bucketIndex];
+	local_iterator duplicateKey = _is_key_duplicate(bucketNode, in_key);
+	if (duplicateKey != bucketNode.end())
+	{
+		--mSize;
+		return iterator(this, bucketIndex, bucketNode.erase(duplicateKey));
+	}
+	return iterator();
 }
 
 MBASE_STD_END

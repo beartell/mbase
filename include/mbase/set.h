@@ -11,7 +11,7 @@
 
 MBASE_STD_BEGIN
 
-#define MBASE_SERIALIZED_SET_BLOCK_LENGTH 4
+static const SIZE_T gSerializedSetBlockLength = 8;
 
 template<
 	typename Key, 
@@ -300,7 +300,7 @@ MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE typename set<Key, Compare, Allocator>::s
 	for (iterator It = begin(); It != end(); It++)
 	{
 		sh.value = It.get();
-		totalSize += sh.get_serialized_size() + MBASE_SERIALIZED_SET_BLOCK_LENGTH; // 4 is block length indicator
+		totalSize += sh.get_serialized_size() + gSerializedSetBlockLength; // 4 is block length indicator
 	}
 	return totalSize;
 }
@@ -583,8 +583,9 @@ MBASE_INLINE GENERIC set<Key, Compare, Allocator>::serialize(char_stream& out_bu
 
 		for (iterator It = begin(); It != end(); It++)
 		{
-			I32 blockLength = mbase::get_serialized_size(*It);
-			out_buffer.put_datan(reinterpret_cast<IBYTEBUFFER>(&blockLength), sizeof(I32));
+			size_type blockLength = mbase::get_serialized_size(*It);
+			out_buffer.put_datan(blockLength);
+			//out_buffer.put_datan(reinterpret_cast<IBYTEBUFFER>(&blockLength), sizeof(I32));
 			mbase::serialize(*It, out_buffer);
 		}
 	}
@@ -606,8 +607,7 @@ MBASE_INLINE mbase::set<Key, Compare, Allocator> set<Key, Compare, Allocator>::d
 
 		while (inBuffer.get_bufferc() < eofBuffer)
 		{
-			I32 blockLength = *inBuffer.get_bufferc();
-			inBuffer.advance(sizeof(I32));
+			I32 blockLength = inBuffer.get_datan<I32>()();
 			IBYTEBUFFER blockData = inBuffer.get_bufferc();
 			deserializedContainer.insert(std::move(mbase::deserialize<value_type>(blockData, blockLength)));
 			inBuffer.advance(blockLength);

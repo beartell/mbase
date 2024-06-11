@@ -87,7 +87,8 @@ struct serialize_helper<I16> {
 
     MBASE_INLINE GENERIC serialize(char_stream& out_buffer) noexcept 
     {
-        out_buffer.put_datan(reinterpret_cast<IBYTEBUFFER>(value), sizeof(I16));
+        out_buffer.put_datan<value_type>(*value);
+        //out_buffer.put_datan(reinterpret_cast<IBYTEBUFFER>(value), sizeof(I16));
     }
 
     MBASE_INLINE value_type deserialize(IBYTEBUFFER in_src, SIZE_T in_length) 
@@ -112,7 +113,8 @@ struct serialize_helper<I32> {
 
     MBASE_INLINE GENERIC serialize(char_stream& out_buffer) noexcept 
     {
-        out_buffer.put_datan(reinterpret_cast<IBYTEBUFFER>(value), sizeof(I32));
+        out_buffer.put_datan<value_type>(*value);
+        //out_buffer.put_datan(reinterpret_cast<IBYTEBUFFER>(value), sizeof(I32));
     }
 
     MBASE_INLINE value_type deserialize(IBYTEBUFFER in_src, SIZE_T in_length) 
@@ -137,7 +139,8 @@ struct serialize_helper<I64> {
 
     MBASE_INLINE GENERIC serialize(char_stream& out_buffer) noexcept 
     {
-        out_buffer.put_datan(reinterpret_cast<IBYTEBUFFER>(value), sizeof(I64));
+        out_buffer.put_datan<value_type>(*value);
+        //out_buffer.put_datan(reinterpret_cast<IBYTEBUFFER>(value), sizeof(I64));
     }
 
     MBASE_INLINE value_type deserialize(IBYTEBUFFER in_src, SIZE_T in_length) 
@@ -162,7 +165,8 @@ struct serialize_helper<U8> {
 
     MBASE_INLINE GENERIC serialize(char_stream& out_buffer) noexcept 
     {
-        out_buffer.put_datan(reinterpret_cast<IBYTEBUFFER>(value), sizeof(U8));
+        out_buffer.put_datan<value_type>(*value);
+        //out_buffer.put_datan(reinterpret_cast<IBYTEBUFFER>(value), sizeof(U8));
     }
 
     MBASE_INLINE value_type deserialize(IBYTEBUFFER in_src, SIZE_T in_length) 
@@ -187,7 +191,8 @@ struct serialize_helper<U16> {
 
     MBASE_INLINE GENERIC serialize(char_stream& out_buffer) noexcept 
     {
-        out_buffer.put_datan(reinterpret_cast<IBYTEBUFFER>(value), sizeof(U16));
+        out_buffer.put_datan<value_type>(*value);
+        //out_buffer.put_datan(reinterpret_cast<IBYTEBUFFER>(value), sizeof(U16));
     }
 
     MBASE_INLINE value_type deserialize(IBYTEBUFFER in_src, SIZE_T in_length) 
@@ -211,7 +216,8 @@ struct serialize_helper<U32> {
 
     MBASE_INLINE GENERIC serialize(char_stream& out_buffer) noexcept 
     {
-        out_buffer.put_datan(reinterpret_cast<IBYTEBUFFER>(value), sizeof(U32));
+        out_buffer.put_datan<value_type>(*value);
+        //out_buffer.put_datan(reinterpret_cast<IBYTEBUFFER>(value), sizeof(U32));
     }
 
     MBASE_INLINE value_type deserialize(IBYTEBUFFER in_src, SIZE_T in_length) 
@@ -236,7 +242,8 @@ struct serialize_helper<U64> {
 
     MBASE_INLINE GENERIC serialize(char_stream& out_buffer) noexcept 
     {
-        out_buffer.put_datan(reinterpret_cast<IBYTEBUFFER>(value), sizeof(U64));
+        out_buffer.put_datan<value_type>(*value);
+        //out_buffer.put_datan(reinterpret_cast<IBYTEBUFFER>(value), sizeof(U64));
     }
 
     MBASE_INLINE value_type deserialize(IBYTEBUFFER in_src, SIZE_T in_length) 
@@ -275,7 +282,7 @@ SerializedType deserialize(IBYTEBUFFER in_src, SIZE_T in_length) noexcept
     return helper.deserialize(in_src, in_length);
 }
 
-static const SIZE_T gPairSerializeBlockLength = 4;
+static const SIZE_T gPairSerializeBlockLength = 8;
 
 template<typename T1, typename T2>
 struct pair {
@@ -324,17 +331,21 @@ struct pair {
     }
 
     MBASE_INLINE size_type get_serialized_size() const noexcept {
-        return (mbase::get_serialized_size(first) + mbase::get_serialized_size(second)) + sizeof(SIZE_T) * 2;
+        size_type firstBlockSize = mbase::get_serialized_size(first) + gPairSerializeBlockLength;
+        size_type secondBlockSize = mbase::get_serialized_size(second) + gPairSerializeBlockLength;
+
+        return firstBlockSize + secondBlockSize;
     }
 
     MBASE_INLINE GENERIC serialize(char_stream& out_buffer) noexcept
     {
         SIZE_T blockLength = mbase::get_serialized_size(first);
-        out_buffer.put_datan(reinterpret_cast<IBYTEBUFFER>(&blockLength), sizeof(SIZE_T));
+        out_buffer.put_datan<SIZE_T>(blockLength);
         mbase::serialize(first, out_buffer);
 
+
         blockLength = mbase::get_serialized_size(second);
-        out_buffer.put_datan(reinterpret_cast<IBYTEBUFFER>(&blockLength), sizeof(SIZE_T));
+        out_buffer.put_datan<SIZE_T>(blockLength);
         mbase::serialize(second, out_buffer);
     }
 
@@ -342,14 +353,11 @@ struct pair {
     {
         char_stream cs(in_src, in_length);
         
-        SIZE_T blockLength = *cs.get_bufferc();
-        cs.advance(sizeof(SIZE_T));
+        SIZE_T blockLength = cs.get_datan<SIZE_T>();
         first_type ft(std::move(mbase::deserialize<first_type>(cs.get_bufferc(), blockLength)));
+
         cs.advance(blockLength);
-
-        blockLength = *cs.get_bufferc();
-        cs.advance(sizeof(SIZE_T));
-
+        blockLength = cs.get_datan<SIZE_T>();
         second_type st(std::move(mbase::deserialize<second_type>(cs.get_bufferc(), blockLength)));
 
         return { std::move(ft), std::move(st) };

@@ -21,8 +21,8 @@
 
 MBASE_STD_BEGIN
 
-static const U32 gSerializedVectorBlockLength = 4;
-static const U32 gVectorDefaultCapacity = 4;
+static const SIZE_T gSerializedVectorBlockLength = 8;
+static const SIZE_T gVectorDefaultCapacity = 4;
 
 /* --- OBJECT BEHAVIOURS --- */
 
@@ -144,7 +144,6 @@ public:
 
 	/* ===== NON-MODIFIER METHODS BEGIN ===== */
 	MBASE_INLINE_EXPR GENERIC serialize(char_stream& out_buffer) noexcept;
-	MBASE_INLINE_EXPR GENERIC serialize(IBYTEBUFFER in_src, SIZE_T in_length) noexcept;
 	/* ===== NON-MODIFIER METHODS END ===== */
 
 	/* ===== NON-MEMBER FUNCTIONS BEGIN ===== */
@@ -873,18 +872,12 @@ MBASE_INLINE_EXPR GENERIC vector<T, Allocator>::serialize(char_stream& out_buffe
 
 		for(iterator It = begin(); It != end(); It++)
 		{
-			I32 blockLength = mbase::get_serialized_size(*It);
-			out_buffer.put_datan(reinterpret_cast<IBYTEBUFFER>(&blockLength), sizeof(I32));
+			size_type blockLength = mbase::get_serialized_size(*It);
+			out_buffer.put_datan<size_type>(blockLength);
+			//out_buffer.put_datan(reinterpret_cast<IBYTEBUFFER>(&blockLength), sizeof(I32));
 			mbase::serialize(*It, out_buffer);
 		}
 	}
-}
-
-template<typename T, typename Allocator>
-MBASE_INLINE_EXPR GENERIC vector<T, Allocator>::serialize(IBYTEBUFFER in_src, SIZE_T in_length) noexcept
-{
-	char_stream cs(in_src, in_length);
-	serialize(cs);
 }
 
 template<typename T, typename Allocator>
@@ -903,8 +896,7 @@ MBASE_INLINE_EXPR mbase::vector<T, Allocator> mbase::vector<T, Allocator>::deser
 		
 		while(inBuffer.get_bufferc() < eofBuffer)
 		{
-			I32 blockLength = *inBuffer.get_bufferc();
-			inBuffer.advance(sizeof(I32));
+			size_type blockLength = inBuffer.get_datan<size_type>();
 			IBYTEBUFFER blockData = inBuffer.get_bufferc();
 			deserializedVec.push_back(std::move(mbase::deserialize<value_type>(blockData, blockLength)));
 			inBuffer.advance(blockLength);

@@ -14,7 +14,7 @@
 
 MBASE_STD_BEGIN
 
-static const U32 gSerializedListBlockLength = 4;
+static const U32 gSerializedListBlockLength = 8;
 
 /*
 
@@ -49,6 +49,7 @@ template<typename T, typename Allocator = mbase::allocator<T>>
 class list {
 private:
 	using node_type = typename list_node<T>;
+	using node_allocator = typename mbase::allocator<typename node_type>;
 	node_type* mFirstNode;
 	node_type* mLastNode;
 	SIZE_T mSize;
@@ -66,6 +67,7 @@ public:
 	using move_reference = T&&;
 	using size_type = SIZE_T;
 	using difference_type = PTRDIFF;
+	using allocator_type = Allocator;
 	using iterator = typename bi_list_iterator<node_type, value_type>;
 	using const_iterator = typename const_bi_list_iterator<node_type, value_type>;
 	using reverse_iterator = typename reverse_bi_list_iterator<node_type, value_type>;
@@ -431,9 +433,9 @@ MBASE_INLINE GENERIC list<T, Allocator>::assign(InputIt in_begin, InputIt in_end
 template<typename T, typename Allocator>
 MBASE_INLINE GENERIC list<T, Allocator>::assign(std::initializer_list<value_type> in_vals) 
 {
+	clear();
 	if(!in_vals.size())
 	{
-		clear();
 		return;
 	}
 
@@ -569,6 +571,12 @@ MBASE_INLINE_EXPR typename list<T, Allocator>::iterator list<T, Allocator>::inse
 	{
 		push_back(in_object);
 		return iterator(mLastNode);
+	}
+
+	if(in_pos == cbegin())
+	{
+		push_front(in_object);
+		return iterator(mFirstNode);
 	}
 
 	node_type* mNode = const_cast<node_type*>(in_pos._get_node());
@@ -923,8 +931,9 @@ MBASE_INLINE GENERIC list<T, Allocator>::serialize(char_stream& out_buffer) noex
 
 		for (iterator It = begin(); It != end(); It++)
 		{
-			I32 blockLength = mbase::get_serialized_size(*It);
-			out_buffer.put_datan(reinterpret_cast<IBYTEBUFFER>(&blockLength), sizeof(I32));
+			size_type blockLength = mbase::get_serialized_size(*It);
+			out_buffer.put_datan(blockLength);
+			//out_buffer.put_datan(reinterpret_cast<IBYTEBUFFER>(&blockLength), sizeof(I32));
 			mbase::serialize(*It, out_buffer);
 		}
 	}
@@ -946,8 +955,7 @@ MBASE_INLINE mbase::list<T, Allocator> list<T, Allocator>::deserialize(IBYTEBUFF
 
 		while (inBuffer.get_bufferc() < eofBuffer)
 		{
-			I32 blockLength = *inBuffer.get_bufferc();
-			inBuffer.advance(sizeof(I32));
+			size_type blockLength = inBuffer.get_datan<size_type>();
 			IBYTEBUFFER blockData = inBuffer.get_bufferc();
 			deserializedContainer.push_back(std::move(mbase::deserialize<value_type>(blockData, blockLength)));
 			inBuffer.advance(blockLength);

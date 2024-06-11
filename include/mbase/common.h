@@ -182,6 +182,7 @@ using UBYTEPTR = PTRU8;
 
 using IBYTEBUFFER = IBYTEPTR;
 using UBYTEBUFFER = UBYTEPTR;
+using CBYTEBUFFER = const I8*;
 
 using MSTRING = const I8*;
 using MSTRING16 = const C16*;

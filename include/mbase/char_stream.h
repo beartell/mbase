@@ -70,15 +70,21 @@ public:
 	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR const_reference back() const noexcept;
 	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR bool is_cursor_end() const noexcept;
 	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR size_type buffer_length() const noexcept;
-	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR difference_type get_pos() const noexcept;
+	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR size_type get_pos() const noexcept;
 	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR reference getc() noexcept;
 	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR const_reference getc() const noexcept;
+	template<typename T>
+	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR const T& get_data() const noexcept;
+	template<typename T>
+	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR T& get_data() noexcept;
+	template<typename T>
+	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR T& get_datan(size_type in_length = sizeof(T)) noexcept;
 	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR IBYTEBUFFER get_buffer() noexcept;
 	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR IBYTEBUFFER get_bufferc() noexcept;
 	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR IBYTEBUFFER data() noexcept;
-	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR const IBYTEBUFFER get_buffer() const noexcept;
-	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR const IBYTEBUFFER get_bufferc() const noexcept;
-	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR const IBYTEBUFFER data() const noexcept;
+	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR CBYTEBUFFER get_buffer() const noexcept;
+	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR CBYTEBUFFER get_bufferc() const noexcept;
+	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR CBYTEBUFFER data() const noexcept;
 	/* ===== OBSERVATION METHODS END ===== */
 
 	/* ===== OPERATOR OBSERVATION METHODS BEGIN ===== */
@@ -87,14 +93,18 @@ public:
 
 	/* ===== STATE-MODIFIER METHODS BEGIN ===== */
 	MBASE_INLINE_EXPR GENERIC advance() noexcept;
-	MBASE_INLINE_EXPR GENERIC advance(difference_type in_length) noexcept;
+	MBASE_INLINE_EXPR GENERIC advance(size_type in_length) noexcept;
 	MBASE_INLINE_EXPR GENERIC reverse() noexcept;
-	MBASE_INLINE_EXPR GENERIC reverse(difference_type in_length) noexcept;
+	MBASE_INLINE_EXPR GENERIC reverse(size_type in_length) noexcept;
 	MBASE_INLINE_EXPR GENERIC putc(IBYTE in_byte) noexcept;
 	MBASE_INLINE_EXPR GENERIC putcn(IBYTE in_byte) noexcept;
-	MBASE_INLINE_EXPR GENERIC put_data(IBYTEBUFFER in_data, size_type in_length) noexcept;
-	MBASE_INLINE_EXPR GENERIC put_datan(IBYTEBUFFER in_data, size_type in_length) noexcept;
-	MBASE_INLINE_EXPR GENERIC set_cursor_pos(difference_type in_pos) noexcept;
+	MBASE_INLINE_EXPR GENERIC put_buffer(CBYTEBUFFER in_data, size_type in_length) noexcept;
+	MBASE_INLINE_EXPR GENERIC put_buffern(CBYTEBUFFER in_data, size_type in_length) noexcept;
+	template<typename T>
+	MBASE_INLINE_EXPR GENERIC put_data(const T& in_data, size_type in_length = sizeof(T)) noexcept;
+	template<typename T>
+	MBASE_INLINE_EXPR GENERIC put_datan(const T& in_data, size_type in_length = sizeof(T)) noexcept;
+	MBASE_INLINE_EXPR GENERIC set_cursor_pos(size_type in_pos) noexcept;
 	MBASE_INLINE_EXPR GENERIC set_cursor_front() noexcept;
 	MBASE_INLINE_EXPR GENERIC set_cursor_end() noexcept;
 	MBASE_INLINE_EXPR GENERIC zero_out_buffer() noexcept;
@@ -103,10 +113,10 @@ public:
 	/* ===== STATE-MODIFIER METHODS END ===== */
 
 	/* ===== OPERATOR STATE-MODIFIER METHODS BEGIN ===== */
-	MBASE_INLINE IBYTEBUFFER operator+=(difference_type in_rhs) noexcept;
+	MBASE_INLINE IBYTEBUFFER operator+=(size_type in_rhs) noexcept;
 	MBASE_INLINE IBYTEBUFFER operator++() noexcept;
 	MBASE_INLINE IBYTEBUFFER operator++(I32) noexcept;
-	MBASE_INLINE IBYTEBUFFER operator-=(difference_type in_rhs) noexcept;
+	MBASE_INLINE IBYTEBUFFER operator-=(size_type in_rhs) noexcept;
 	MBASE_INLINE IBYTEBUFFER operator--() noexcept;
 	MBASE_INLINE IBYTEBUFFER operator--(I32) noexcept;
 	/* ===== OPERATOR STATE-MODIFIER METHODS END ===== */
@@ -125,7 +135,7 @@ public:
 
 protected:
 	size_type mBufferLength;
-	difference_type mStreamCursor;
+	size_type mStreamCursor;
 	IBYTEBUFFER mSrcBuffer;
 };
 
@@ -231,7 +241,7 @@ MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR char_stream::size_type char_stream:
 	return mBufferLength;
 }
 
-MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR char_stream::difference_type char_stream::get_pos() const noexcept 
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR char_stream::size_type char_stream::get_pos() const noexcept
 {
 	return mStreamCursor;
 }
@@ -244,6 +254,24 @@ MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR typename char_stream::reference cha
 MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR typename char_stream::const_reference char_stream::getc() const noexcept
 {
 	return *(mSrcBuffer + mStreamCursor);
+}
+
+template<typename T>
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR const T& char_stream::get_data() const noexcept
+{
+	return *(reinterpret_cast<T*>(mSrcBuffer));
+}
+template<typename T>
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR T& char_stream::get_data() noexcept
+{
+	return *(reinterpret_cast<T*>(mSrcBuffer));
+}
+template<typename T>
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR T& char_stream::get_datan(size_type in_length) noexcept
+{
+	T* iData = reinterpret_cast<T*>(mSrcBuffer + mStreamCursor);
+	advance(in_length);
+	return *iData;
 }
 
 MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR IBYTEBUFFER char_stream::get_buffer() noexcept
@@ -261,17 +289,17 @@ MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR IBYTEBUFFER char_stream::dat
 	return mSrcBuffer;
 }
 
-MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR const IBYTEBUFFER char_stream::get_buffer() const noexcept 
+MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR CBYTEBUFFER char_stream::get_buffer() const noexcept
 {
 	return mSrcBuffer;
 }
 
-MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR const IBYTEBUFFER char_stream::get_bufferc() const noexcept 
+MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR CBYTEBUFFER char_stream::get_bufferc() const noexcept
 {
 	return mSrcBuffer + mStreamCursor;
 }
 
-MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR const IBYTEBUFFER char_stream::data() const noexcept 
+MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR CBYTEBUFFER char_stream::data() const noexcept
 {
 	return mSrcBuffer;
 }
@@ -281,7 +309,7 @@ MBASE_INLINE_EXPR GENERIC char_stream::advance() noexcept
 	++mStreamCursor;
 }
 
-MBASE_INLINE_EXPR GENERIC char_stream::advance(difference_type in_length) noexcept 
+MBASE_INLINE_EXPR GENERIC char_stream::advance(size_type in_length) noexcept
 {
 	mStreamCursor += in_length;
 }
@@ -291,7 +319,7 @@ MBASE_INLINE_EXPR GENERIC char_stream::reverse() noexcept
 	--mStreamCursor;
 }
 
-MBASE_INLINE_EXPR GENERIC char_stream::reverse(difference_type in_length) noexcept 
+MBASE_INLINE_EXPR GENERIC char_stream::reverse(size_type in_length) noexcept
 {
 	mStreamCursor -= in_length;
 }
@@ -306,16 +334,16 @@ MBASE_INLINE_EXPR GENERIC char_stream::putcn(IBYTE in_byte) noexcept
 	*(mSrcBuffer + mStreamCursor++) = in_byte;
 }
 
-MBASE_INLINE_EXPR GENERIC char_stream::put_data(IBYTEBUFFER in_data, size_type in_length) noexcept 
+MBASE_INLINE_EXPR GENERIC char_stream::put_buffer(CBYTEBUFFER in_data, size_type in_length) noexcept 
 {
-	difference_type tempCursorPos = mStreamCursor;
+	size_type tempCursorPos = mStreamCursor;
 	for (size_type i = 0; i < in_length; i++)
 	{
 		*(mSrcBuffer + tempCursorPos++) = *(in_data + i);
 	}
 }
 
-MBASE_INLINE_EXPR GENERIC char_stream::put_datan(IBYTEBUFFER in_data, size_type in_length) noexcept
+MBASE_INLINE_EXPR GENERIC char_stream::put_buffern(CBYTEBUFFER in_data, size_type in_length) noexcept
 {
 	for (size_type i = 0; i < in_length; i++)
 	{
@@ -323,7 +351,19 @@ MBASE_INLINE_EXPR GENERIC char_stream::put_datan(IBYTEBUFFER in_data, size_type 
 	}
 }
 
-MBASE_INLINE_EXPR GENERIC char_stream::set_cursor_pos(difference_type in_pos) noexcept
+template<typename T>
+MBASE_INLINE_EXPR GENERIC char_stream::put_data(const T& in_data, size_type in_length) noexcept
+{
+	put_buffer(reinterpret_cast<CBYTEBUFFER>(&in_data), in_length);
+}
+
+template<typename T>
+MBASE_INLINE_EXPR GENERIC char_stream::put_datan(const T& in_data, size_type in_length) noexcept
+{
+	put_buffern(reinterpret_cast<CBYTEBUFFER>(&in_data), in_length);
+}
+
+MBASE_INLINE_EXPR GENERIC char_stream::set_cursor_pos(size_type in_pos) noexcept
 {
 	if (in_pos < 0)
 	{
@@ -346,7 +386,7 @@ MBASE_INLINE_EXPR GENERIC char_stream::set_cursor_end() noexcept
 
 MBASE_INLINE_EXPR GENERIC char_stream::zero_out_buffer() noexcept 
 {
-	difference_type oldCursorPos = mStreamCursor;
+	size_type oldCursorPos = mStreamCursor;
 	set_cursor_front();
 	putcn(0);
 	set_cursor_pos(oldCursorPos);
@@ -362,7 +402,7 @@ MBASE_INLINE GENERIC char_stream::_destroy_self() noexcept
 	// do nothing
 }
 
-MBASE_INLINE IBYTEBUFFER char_stream::operator+=(difference_type in_rhs) noexcept 
+MBASE_INLINE IBYTEBUFFER char_stream::operator+=(size_type in_rhs) noexcept
 {
 	advance(in_rhs);
 	return mSrcBuffer;
@@ -380,7 +420,7 @@ MBASE_INLINE IBYTEBUFFER char_stream::operator++(I32) noexcept
 	return mSrcBuffer;
 }
 
-MBASE_INLINE IBYTEBUFFER char_stream::operator-=(difference_type in_rhs) noexcept 
+MBASE_INLINE IBYTEBUFFER char_stream::operator-=(size_type in_rhs) noexcept
 {
 	reverse(in_rhs);
 	return mSrcBuffer;
