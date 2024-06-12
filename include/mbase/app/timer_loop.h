@@ -28,7 +28,7 @@ public:
 
 	/* ===== BUILDER METHODS BEGIN ===== */
 	MBASE_INLINE timer_loop();
-	MBASE_INLINE ~timer_loop() {}
+	MBASE_INLINE ~timer_loop();
 	/* ===== BUILDER METHODS END ===== */
 
 	/* ===== OBSERVATION METHODS BEGIN ===== */

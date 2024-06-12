@@ -18,9 +18,12 @@ public:
 
 	using user_data = PTRGENERIC;
 
+	/* ===== BUILDER METHODS BEGIN ===== */
 	timer_base() noexcept;
 	MBASE_EXPLICIT timer_base(user_data in_data) noexcept;
+	/* ===== BUILDER METHODS END ===== */
 
+	/* ===== OBSERVATION METHODS BEGIN ===== */
 	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE I32 get_loop_id() const noexcept;
 	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE I32 get_target_time() const noexcept;
 	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE I32 get_current_time() const noexcept;
@@ -28,15 +31,17 @@ public:
 	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE flags get_timer_type() const noexcept;
 	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE flags get_execution_policy() const noexcept;
 	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE bool is_registered() const noexcept;
+	/* ===== OBSERVATION METHODS END ===== */
 
+	/* ===== STATE-MODIFIER METHODS BEGIN ===== */
 	MBASE_INLINE GENERIC set_target_time(U32 in_time_inms, flags in_policy = flags::TIMER_POLICY_IMMEDIATE) noexcept;
 	MBASE_INLINE GENERIC set_execution_policy(flags in_policy) noexcept;
 	MBASE_INLINE GENERIC reset_time() noexcept;
-
-	friend class timer_loop;
-
 	virtual GENERIC on_register() { /* DEFAULT IMPL */ }
 	virtual GENERIC on_unregister() { /* DEFAULT IMPL */ }
+	/* ===== STATE-MODIFIER METHODS END ===== */
+
+	friend class timer_loop;
 
 protected:
 	bool mIsRegistered;
@@ -78,7 +83,7 @@ timer_base::timer_base() noexcept : handler_base(), mCurrentTime(0), mTargetTime
 {
 }
 
-MBASE_EXPLICIT timer_base::timer_base(user_data in_data) noexcept : mCurrentTime(0), mTargetTime(0), mPolicy(flags::TIMER_POLICY_IMMEDIATE), mIsRegistered(false), mLoopId(-1), mSelfIter(nullptr)
+timer_base::timer_base(user_data in_data) noexcept : mCurrentTime(0), mTargetTime(0), mPolicy(flags::TIMER_POLICY_IMMEDIATE), mIsRegistered(false), mLoopId(-1), mSelfIter(nullptr)
 {
 	mSuppliedData = in_data;
 }

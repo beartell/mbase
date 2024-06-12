@@ -89,6 +89,7 @@ public:
 
 	/* ===== OPERATOR OBSERVATION METHODS BEGIN ===== */
 	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE IBYTEBUFFER operator*() noexcept;
+	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE CBYTEBUFFER operator*() const noexcept;
 	/* ===== OPERATOR OBSERVATION METHODS END ===== */
 
 	/* ===== STATE-MODIFIER METHODS BEGIN ===== */
@@ -207,6 +208,11 @@ MBASE_INLINE char_stream::~char_stream() noexcept
 }
 
 MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE IBYTEBUFFER char_stream::operator*() noexcept 
+{
+	return mSrcBuffer + mStreamCursor;
+}
+
+MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE CBYTEBUFFER char_stream::operator*() const noexcept
 {
 	return mSrcBuffer + mStreamCursor;
 }

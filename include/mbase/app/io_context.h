@@ -29,9 +29,12 @@ public:
 		ASYNC_CTX_ERR_UNKNOWN = MBASE_ASYNC_CTX_FLAGS_MAX
 	};
 
+	/* ===== BUILDER METHODS BEGIN ===== */
 	MBASE_INLINE async_io_context(io_base& in_base, flags in_io_direction = flags::ASYNC_CTX_DIRECTION_INPUT) noexcept;
 	MBASE_INLINE ~async_io_context() noexcept;
+	/* ===== BUILDER METHODS END ===== */
 
+	/* ===== OBSERVATION METHODS BEGIN ===== */
 	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE size_type get_bytes_transferred() const noexcept;
 	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE size_type get_total_transferred_bytes() const noexcept;
 	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE size_type get_bytes_on_each_iteration() const noexcept;
@@ -40,16 +43,19 @@ public:
 	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE U32 get_calculated_hop_count() const noexcept;
 	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE U32 get_hop_counter() const noexcept;
 	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE flags get_io_direction() const noexcept;
-	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE flags get_io_status();
+	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE flags get_io_status() const noexcept;
 	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE bool is_active() const noexcept;
 	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE bool is_registered() const noexcept;
 	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE io_base* get_io_handle() noexcept;
 	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE char_stream* get_character_stream() noexcept;
+	/* ===== OBSERVATION METHODS END ===== */
 
+	/* ===== STATE-MODIFIER METHODS BEGIN ===== */
 	MBASE_INLINE flags construct_context(io_base& in_base, flags in_io_direction = flags::ASYNC_CTX_DIRECTION_INPUT);
 	MBASE_INLINE GENERIC flush_context() noexcept;
 	MBASE_INLINE flags halt_context() noexcept;
 	MBASE_INLINE flags resume_context() noexcept;
+	/* ===== STATE-MODIFIER METHODS END ===== */
 
 	friend class async_io_manager;
 
@@ -130,7 +136,7 @@ MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE typename async_io_context::size_type asy
 
 MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE typename async_io_context::size_type async_io_context::get_requested_bytes_count() const noexcept 
 {
-	return bTargetBytes;
+	return mTargetBytes;
 }
 
 MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE typename async_io_context::difference_type async_io_context::get_remaining_bytes() const noexcept 
@@ -153,7 +159,7 @@ MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE async_io_context::flags async_io_context
 	return mIoDirection;
 }
 
-MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE async_io_context::flags async_io_context::get_io_status() 
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE async_io_context::flags async_io_context::get_io_status() const noexcept
 {
 	return mContextState;
 }
@@ -178,7 +184,7 @@ MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE char_stream* async_io_context::ge
 	return mSrcBuffer;
 }
 
-MBASE_INLINE async_io_context::flags async_io_context::construct_context(io_base& in_base, flags in_io_direction = flags::ASYNC_CTX_DIRECTION_INPUT) 
+MBASE_INLINE async_io_context::flags async_io_context::construct_context(io_base& in_base, flags in_io_direction) 
 {
 	if (is_registered())
 	{

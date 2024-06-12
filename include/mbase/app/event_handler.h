@@ -17,14 +17,14 @@ public:
 		EVENT_ERR_UNKNOWN = MBASE_EVENT_HANDLER_FLAGS_MAX
 	};
 
-	event_handler() : handler_base(), mEventType(flags::EVENT_ON), mSelfIter(nullptr), mEventName(""), mManagerId(-1) {};
-	mbase::string get_event_name() {
-		return mEventName;
-	}
+	/* ===== BUILDER METHODS BEGIN ===== */
+	MBASE_INLINE event_handler();
+	/* ===== BUILDER METHODS END ===== */
 
-	flags get_event_type() {
-		return mEventType;
-	}
+	/* ===== OBSERVATION METHODS BEGIN ===== */
+	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE mbase::string get_event_name();
+	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE flags get_event_type();
+	/* ===== OBSERVATION METHODS END ===== */
 
 	friend class event_manager;
 private:
@@ -35,6 +35,20 @@ private:
 	flags mEventType;
 	I32 mManagerId;
 };
+
+MBASE_INLINE event_handler::event_handler() : handler_base(), mEventType(flags::EVENT_ON), mSelfIter(nullptr), mEventName(""), mManagerId(-1)
+{
+}
+
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE mbase::string event_handler::get_event_name()
+{
+	return mEventName;
+}
+
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE event_handler::flags event_handler::get_event_type()
+{
+	return mEventType;
+}
 
 MBASE_END
 

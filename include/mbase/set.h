@@ -135,7 +135,7 @@ public:
 	/* ===== STATE-MODIFIER METHODS END ===== */
 
 	/* ===== NON-MODIFIER METHODS BEGIN ===== */
-	MBASE_INLINE GENERIC serialize(char_stream& out_buffer) noexcept;
+	MBASE_INLINE GENERIC serialize(char_stream& out_buffer) const noexcept;
 	/* ===== NON-MODIFIER METHODS END ===== */
 
 	/* ===== NON-MEMBER FUNCTIONS BEGIN ===== */
@@ -297,10 +297,17 @@ MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE typename set<Key, Compare, Allocator>::s
 {
 	serialize_helper<value_type> sh;
 	size_type totalSize = 0;
-	for (iterator It = begin(); It != end(); It++)
+	for (const_iterator It = cbegin(); It != cend(); ++It)
 	{
-		sh.value = It.get();
-		totalSize += sh.get_serialized_size() + gSerializedSetBlockLength; // 4 is block length indicator
+		bool isPrimitive = std::is_integral_v<value_type>;
+		if (isPrimitive)
+		{
+			totalSize += mbase::get_serialized_size(*It);
+		}
+		else
+		{
+			totalSize += mbase::get_serialized_size(*It) + gSerializedSetBlockLength;
+		}
 	}
 	return totalSize;
 }
@@ -570,7 +577,7 @@ MBASE_INLINE GENERIC set<Key, Compare, Allocator>::swap(set& in_rhs) noexcept
 }
 
 template<typename Key, typename Compare, typename Allocator>
-MBASE_INLINE GENERIC set<Key, Compare, Allocator>::serialize(char_stream& out_buffer) noexcept 
+MBASE_INLINE GENERIC set<Key, Compare, Allocator>::serialize(char_stream& out_buffer) const noexcept 
 {
 	if (mSize)
 	{
@@ -583,8 +590,12 @@ MBASE_INLINE GENERIC set<Key, Compare, Allocator>::serialize(char_stream& out_bu
 
 		for (iterator It = begin(); It != end(); It++)
 		{
-			size_type blockLength = mbase::get_serialized_size(*It);
-			out_buffer.put_datan(blockLength);
+			bool isPrimitive = std::is_integral_v<value_type>;
+			if (!isPrimitive)
+			{
+				size_type blockLength = mbase::get_serialized_size(*It);
+				out_buffer.put_datan<size_type>(blockLength);
+			}
 			//out_buffer.put_datan(reinterpret_cast<IBYTEBUFFER>(&blockLength), sizeof(I32));
 			mbase::serialize(*It, out_buffer);
 		}
