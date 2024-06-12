@@ -5,8 +5,7 @@
 #include <mbase/behaviors.h>
 #include <mbase/string.h>
 #include <mbase/app/event_handler.h>
-#include <string>
-#include <unordered_map>
+#include <mbase/unordered_map.h>
 #include <time.h>
 
 MBASE_BEGIN
@@ -26,7 +25,7 @@ struct event_group {
 class event_manager : public non_copymovable {
 public:
 	using user_data = PTRGENERIC;
-	using event_map = std::unordered_map<std::string, event_group>;
+	using event_map = mbase::unordered_map<mbase::string, event_group>;
 
 	enum class flags : U32 {
 		EVENT_MNG_SUCCESS = 0,
@@ -44,10 +43,10 @@ public:
 	/* ===== BUILDER METHODS END ===== */
 
 	/* ===== STATE-MODIFIER METHODS BEGIN ===== */
-	MBASE_INLINE flags dispatch_event(const std::string& in_event, user_data in_data) noexcept;
-	MBASE_INLINE flags add_event_listener(const std::string& in_event, event_handler& in_handler) noexcept;
+	MBASE_INLINE flags dispatch_event(const mbase::string& in_event, user_data in_data = nullptr) noexcept;
+	MBASE_INLINE flags add_event_listener(const mbase::string& in_event, event_handler& in_handler) noexcept;
 	MBASE_INLINE flags remove_listener(event_handler& in_handler) noexcept;
-	MBASE_INLINE flags remove_all_listeners(const std::string& in_event) noexcept;
+	MBASE_INLINE flags remove_all_listeners(const mbase::string& in_event) noexcept;
 	/* ===== STATE-MODIFIER METHODS END ===== */
 
 	/* ===== OBSERVATION METHODS BEGIN ===== */
@@ -74,7 +73,7 @@ MBASE_INLINE event_manager::~event_manager() noexcept
 	}
 }
 
-MBASE_INLINE event_manager::flags event_manager::dispatch_event(const std::string& in_event, user_data in_data) noexcept 
+MBASE_INLINE event_manager::flags event_manager::dispatch_event(const mbase::string& in_event, user_data in_data) noexcept 
 {
 	auto foundElement = mEventMap.find(in_event);
 	if (foundElement != mEventMap.end())
@@ -102,7 +101,7 @@ MBASE_INLINE event_manager::flags event_manager::dispatch_event(const std::strin
 	return flags::EVENT_MNG_ERR_NOT_FOUND;
 }
 
-MBASE_INLINE event_manager::flags event_manager::add_event_listener(const std::string& in_event, event_handler& in_handler) noexcept 
+MBASE_INLINE event_manager::flags event_manager::add_event_listener(const mbase::string& in_event, event_handler& in_handler) noexcept 
 {
 	if (in_handler.mManagerId != -1)
 	{
@@ -166,7 +165,7 @@ MBASE_INLINE event_manager::flags event_manager::remove_listener(event_handler& 
 	return flags::EVENT_MNG_SUCCESS;
 }
 
-MBASE_INLINE event_manager::flags event_manager::remove_all_listeners(const std::string& in_event) noexcept
+MBASE_INLINE event_manager::flags event_manager::remove_all_listeners(const mbase::string& in_event) noexcept
 {
 	auto foundElement = mEventMap.find(in_event);
 	if (foundElement != mEventMap.end())

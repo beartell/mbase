@@ -263,7 +263,7 @@ public:
     MBASE_ND(MBASE_RESULT_IGNORE) I32 to_i64() noexcept { return _atoi64(this->c_str()); }
     MBASE_ND(MBASE_RESULT_IGNORE) F32 to_f32() noexcept { return strtof(this->c_str(), nullptr); }
     MBASE_ND(MBASE_RESULT_IGNORE) F64 to_f64() noexcept { return atof(this->c_str()); }
-    MBASE_INLINE GENERIC serialize(char_stream& out_buffer);
+    MBASE_INLINE GENERIC serialize(char_stream& out_buffer) const;
     /* ===== NON-MODIFIER METHODS END ===== */
 
     /* ===== NON-MEMBER FUNCTIONS BEGIN ===== */
@@ -1975,7 +1975,7 @@ character_sequence<SeqType, SeqBase, Allocator>& character_sequence<SeqType, Seq
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_INLINE GENERIC character_sequence<SeqType, SeqBase, Allocator>::serialize(char_stream& out_buffer)
+MBASE_INLINE GENERIC character_sequence<SeqType, SeqBase, Allocator>::serialize(char_stream& out_buffer) const
 {
     if (mSize)
     {
@@ -2110,9 +2110,31 @@ MBASE_INLINE GENERIC character_sequence<SeqType, SeqBase, Allocator>::_clear_sel
 }
 
 using string = character_sequence<IBYTE>;
+
+
 using wstring = string; // WSTRING WILL BE IMPLEMENTED LATER
 using string_view = string; // STRING VIEW WILL BE IMPLEMENTED LATER
 
 MBASE_STD_END
+template<>
+struct std::hash<mbase::string> {
+    std::size_t operator()(const mbase::string& in_rhs) const noexcept
+    {
+        mbase::string::const_pointer myBuffer = in_rhs.c_str();
+        mbase::I32 myVal = 0;
+        while(*myBuffer != '\0')
+        {
+            mbase::I32 tmp;
+            myVal = (myVal << 4) + (*myBuffer);
+            if(tmp = (myVal & 0xf0000000))
+            {
+                myVal = myVal ^ (tmp >> 24);
+                myVal = myVal ^ tmp;
+            }
+            ++myBuffer;
+        }
+        return myVal;
+    }
+};
 
 #endif // MBASE_STRING_H

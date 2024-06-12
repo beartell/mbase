@@ -97,12 +97,15 @@ public:
 	/* ===== ITERATOR METHODS BEGIN ===== */
 	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR iterator begin() noexcept;
 	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR iterator end() noexcept;
+	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR const_iterator begin() const noexcept;
+	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR const_iterator end() const noexcept;
 	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR const_iterator cbegin() const noexcept;
 	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR const_iterator cend() const noexcept;
 	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE reverse_iterator rbegin() noexcept;
 	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR reverse_iterator rend() noexcept;
 	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE const_reverse_iterator crbegin() const noexcept;
 	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR const_reverse_iterator crend() const noexcept;
+	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR iterator end_node() noexcept;
 	/* ===== ITERATOR METHODS END ===== */
 
 	/* ===== OBSERVATION METHODS BEGIN ===== */
@@ -177,7 +180,7 @@ public:
 	/* ===== STATE-MODIFIER METHODS END ===== */
 
 	/* ===== NON-MODIFIER METHODS BEGIN ===== */
-	MBASE_INLINE GENERIC serialize(char_stream& out_buffer) noexcept;
+	MBASE_INLINE GENERIC serialize(char_stream& out_buffer) const noexcept;
 	/* ===== NON-MODIFIER METHODS END ===== */
 
 	/* ===== NON-MEMBER FUNCTIONS BEGIN ===== */
@@ -314,6 +317,18 @@ MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR typename list<T, Allocator>:
 }
 
 template<typename T, typename Allocator>
+MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR typename list<T, Allocator>::const_iterator list<T, Allocator>::begin() const noexcept
+{
+	return const_iterator(mFirstNode);
+}
+
+template<typename T, typename Allocator>
+MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR typename list<T, Allocator>::const_iterator list<T, Allocator>::end() const noexcept
+{
+	return const_iterator(nullptr);
+}
+
+template<typename T, typename Allocator>
 MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR typename list<T, Allocator>::const_iterator list<T, Allocator>::cbegin() const noexcept
 {
 	return const_iterator(mFirstNode);
@@ -350,12 +365,26 @@ MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR typename list<T, Allocator>:
 }
 
 template<typename T, typename Allocator>
+MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR typename list<T, Allocator>::iterator list<T, Allocator>::end_node() noexcept
+{
+	return iterator(mLastNode);
+}
+
+template<typename T, typename Allocator>
 MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE_EXPR typename list<T, Allocator>::size_type list<T, Allocator>::get_serialized_size() const noexcept
 {
 	size_type totalSize = 0;
 	for (const_iterator It = cbegin(); It != cend(); It++)
 	{
-		totalSize += mbase::get_serialized_size(*It) + gSerializedListBlockLength; // 4 is block length indicator
+		bool isPrimitive = std::is_integral_v<value_type>;
+		if (isPrimitive)
+		{
+			totalSize += mbase::get_serialized_size(*It);
+		}
+		else
+		{
+			totalSize += mbase::get_serialized_size(*It) + gSerializedListBlockLength;
+		}
 	}
 	return totalSize;
 }
@@ -918,7 +947,7 @@ MBASE_INLINE_EXPR GENERIC list<T, Allocator>::swap(list& in_src) noexcept
 }
 
 template<typename T, typename Allocator>
-MBASE_INLINE GENERIC list<T, Allocator>::serialize(char_stream& out_buffer) noexcept 
+MBASE_INLINE GENERIC list<T, Allocator>::serialize(char_stream& out_buffer) const noexcept 
 {
 	if (mSize)
 	{
@@ -931,8 +960,12 @@ MBASE_INLINE GENERIC list<T, Allocator>::serialize(char_stream& out_buffer) noex
 
 		for (iterator It = begin(); It != end(); It++)
 		{
-			size_type blockLength = mbase::get_serialized_size(*It);
-			out_buffer.put_datan(blockLength);
+			bool isPrimitive = std::is_integral_v<value_type>;
+			if (!isPrimitive)
+			{
+				size_type blockLength = mbase::get_serialized_size(*It);
+				out_buffer.put_datan(blockLength);
+			}
 			//out_buffer.put_datan(reinterpret_cast<IBYTEBUFFER>(&blockLength), sizeof(I32));
 			mbase::serialize(*It, out_buffer);
 		}
@@ -955,7 +988,16 @@ MBASE_INLINE mbase::list<T, Allocator> list<T, Allocator>::deserialize(IBYTEBUFF
 
 		while (inBuffer.get_bufferc() < eofBuffer)
 		{
-			size_type blockLength = inBuffer.get_datan<size_type>();
+			bool isPrimitive = std::is_integral_v<value_type>;
+			size_type blockLength = 0;
+			if (isPrimitive)
+			{
+				blockLength = sizeof(value_type);
+			}
+			else
+			{
+				blockLength = inBuffer.get_datan<size_type>();
+			}
 			IBYTEBUFFER blockData = inBuffer.get_bufferc();
 			deserializedContainer.push_back(std::move(mbase::deserialize<value_type>(blockData, blockLength)));
 			inBuffer.advance(blockLength);

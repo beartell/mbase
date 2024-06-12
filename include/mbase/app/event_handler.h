@@ -3,7 +3,7 @@
 
 #include <mbase/common.h>
 #include <mbase/list.h>
-#include <string>
+#include <mbase/string.h>
 #include <mbase/app/handler_base.h>
 
 MBASE_BEGIN
@@ -18,7 +18,7 @@ public:
 	};
 
 	event_handler() : handler_base(), mEventType(flags::EVENT_ON), mSelfIter(nullptr), mEventName(""), mManagerId(-1) {};
-	std::string get_event_name() {
+	mbase::string get_event_name() {
 		return mEventName;
 	}
 
@@ -31,7 +31,7 @@ private:
 	using event_element = mbase::list<event_handler*>::iterator;
 	
 	event_element mSelfIter;
-	std::string mEventName;
+	mbase::string mEventName;
 	flags mEventType;
 	I32 mManagerId;
 };

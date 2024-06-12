@@ -13,7 +13,7 @@
 
 MBASE_STD_BEGIN
 
-static const SIZE_T gUmapDefaultBucketCount = 16;
+static const SIZE_T gUmapDefaultBucketCount = 8;
 
 template<typename Key, 
 	typename Value, 
@@ -158,7 +158,7 @@ public:
 		{
 			size_type mapSize = cs.get_datan<size_type>();
 			size_type bucketCount = cs.get_datan<size_type>();
-			bucket_type bucketList = std::move(mbase::deserialize<bucket_type>(in_src, in_length));
+			bucket_type bucketList = std::move(mbase::deserialize<bucket_type>(cs.get_bufferc(), cs.buffer_length() - cs.get_pos()));
 			newMap.mSize = mapSize;
 			newMap.mBucketCount = bucketCount;
 			newMap.mBucket = std::move(bucketList);
@@ -378,7 +378,8 @@ MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE typename unordered_map<Key, Value, Ha
 	{
 		return 0;
 	}
-	return mbase::get_serialized_size(mBucket);
+
+	return mbase::get_serialized_size(mBucket) + (sizeof(SIZE_T) * 2);
 }
 
 template<typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator>
@@ -523,12 +524,20 @@ MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE_EXPR bool unordered_map<Key, Value, H
 template<typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator>
 MBASE_ND(MBASE_RESULT_IGNORE) Value& unordered_map<Key, Value, Hash, KeyEqual, Allocator>::operator[](const Key& in_key)
 {
+	if(find(in_key) == end())
+	{
+		return insert(mbase::make_pair(in_key, mapped_type())).first->second;
+	}
 	return at(in_key);
 }
 
 template<typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator>
 MBASE_ND(MBASE_RESULT_IGNORE) Value& unordered_map<Key, Value, Hash, KeyEqual, Allocator>::operator[](Key&& in_key)
 {
+	if (find(in_key) == end())
+	{
+		return insert(mbase::make_pair(std::move(in_key), mapped_type())).first->second;
+	}
 	return at(std::move(in_key));
 }
 
@@ -587,12 +596,12 @@ MBASE_INLINE_EXPR mbase::pair<typename unordered_map<Key, Value, Hash, KeyEqual,
 		bucketNode.push_back(in_value);
 		//local_iterator lastItem = bucketNode.insert(bucketNode.end(), in_value);
 		//return mbase::make_pair(iterator(this, bucketIndex, lastItem), true);
-		return mbase::make_pair(iterator(), true);
+		return mbase::make_pair(iterator(this, bucketIndex, bucketNode.end_node()), true);
 
 	}
 
 	*duplicateKey = in_value;
-	return mbase::make_pair(iterator(), true);
+	return mbase::make_pair(iterator(this, bucketIndex, duplicateKey), true);
 }
 
 template<typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator>
@@ -607,12 +616,12 @@ MBASE_INLINE_EXPR mbase::pair<typename unordered_map<Key, Value, Hash, KeyEqual,
 		bucketNode.push_back(std::move(in_value));
 		//local_iterator lastItem = bucketNode.insert(bucketNode.end(), std::move(in_value));
 		//return mbase::make_pair(iterator(this, bucketIndex, lastItem), true);
-		return mbase::make_pair(iterator(), true);
+		return mbase::make_pair(iterator(this, bucketIndex, bucketNode.end_node()), true);
 
 	}
 
 	*duplicateKey = std::move(in_value);
-	return mbase::make_pair(iterator(), true);
+	return mbase::make_pair(iterator(this, bucketIndex, duplicateKey), true);
 }
 
 template<typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator>
