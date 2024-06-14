@@ -100,6 +100,22 @@ public:
 			SetFilePointer(mRawContext.raw_handle, in_distance, nullptr, (DWORD)in_method);
 		}
 	}
+	template<typename SerializableObject>
+	size_type write_data(SerializableObject& in_src)
+	{
+		mbase::deep_char_stream dcs(in_src.get_serialized_size());
+		in_src.serialize(dcs);
+		return write_data(dcs.get_buffer(), dcs.buffer_length());
+	}
+
+	template<typename SerializableObject>
+	size_type read_data(SerializableObject& in_target, IBYTEBUFFER in_src, size_type in_length)
+	{
+		mbase::char_stream cs(in_src, in_length);
+		size_type readLength = read_data(in_src, in_length);
+		in_target = std::move(in_target.deserialize(in_src, in_length));
+		return readLength;
+	}
 	/* ===== STATE-MODIFIER METHODS END ===== */
 
 protected:

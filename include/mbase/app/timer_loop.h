@@ -3,7 +3,6 @@
 
 #include <mbase/common.h>
 #include <mbase/list.h>
-#include <mbase/index_assigner.h>
 #include <mbase/app/timers.h>
 #include <mbase/app/thread_pool.h>
 #include <time.h>
@@ -43,8 +42,10 @@ public:
 	MBASE_INLINE flags register_timer(timer_base& in_timer, PTRGENERIC in_usr_data) noexcept;
 	MBASE_INLINE flags unregister_timer(timer_base& in_timer) noexcept;
 	MBASE_INLINE GENERIC run_timer_loop() noexcept;
+	MBASE_INLINE GENERIC run_timers() noexcept;
 	MBASE_INLINE GENERIC set_timer_limit(U32 in_limit) noexcept;
 	MBASE_INLINE GENERIC halt() noexcept;
+	MBASE_INLINE GENERIC clear_timers() noexcept;
 	/* ===== STATE-MODIFIER METHODS END ===== */
 
 protected:
@@ -70,11 +71,12 @@ MBASE_INLINE timer_loop::timer_loop() : mTimerLimit(gDefaultTimerLimit), mTimerI
 
 MBASE_INLINE timer_loop::~timer_loop()
 {
+	clear_timers();
 }
 
 MBASE_INLINE timer_loop::flags timer_loop::register_timer(timer_base& in_timer) noexcept
 {
-	if (in_timer.mIsRegistered)
+	if (in_timer.is_registered())
 	{
 		return flags::TIMER_ERR_ALREADY_REGISTERED;
 	}
@@ -92,7 +94,6 @@ MBASE_INLINE timer_loop::flags timer_loop::register_timer(timer_base& in_timer) 
 		terr = flags::TIMER_WARN_TIMER_WILL_EXECUTE_IMM;
 	}
 
-	in_timer.mIsRegistered = true;
 	in_timer.mLoopId = mTimerLoopId;
 	in_timer.on_register();
 	in_timer.mSelfIter = mRegisteredTimers.insert(mRegisteredTimers.cend(), &in_timer); // WE WILL FIX IT LATER
@@ -102,7 +103,7 @@ MBASE_INLINE timer_loop::flags timer_loop::register_timer(timer_base& in_timer) 
 
 MBASE_INLINE timer_loop::flags timer_loop::register_timer(timer_base& in_timer, PTRGENERIC in_usr_data) noexcept
 {
-	if (in_timer.mIsRegistered)
+	if (in_timer.is_registered())
 	{
 		return flags::TIMER_ERR_ALREADY_REGISTERED;
 	}
@@ -121,7 +122,6 @@ MBASE_INLINE timer_loop::flags timer_loop::register_timer(timer_base& in_timer, 
 		terr = flags::TIMER_WARN_TIMER_WILL_EXECUTE_IMM;
 	}
 
-	in_timer.mIsRegistered = true;
 	in_timer.mSuppliedData = in_usr_data;
 	in_timer.mLoopId = mTimerLoopId;
 	in_timer.on_register();
@@ -132,7 +132,7 @@ MBASE_INLINE timer_loop::flags timer_loop::register_timer(timer_base& in_timer, 
 
 MBASE_INLINE timer_loop::flags timer_loop::unregister_timer(timer_base& in_timer) noexcept
 {
-	if (!in_timer.mIsRegistered)
+	if (!in_timer.is_registered())
 	{
 		return flags::TIMER_SUCCESS;
 	}
@@ -145,10 +145,10 @@ MBASE_INLINE timer_loop::flags timer_loop::unregister_timer(timer_base& in_timer
 	MBASE_NULL_CHECK_RETURN_VAL(in_timer.mSelfIter.get(), flags::TIMER_ERR_INVALID_DATA); // SERIOUS PROBLEM IF THIS OCCURS
 	timer_base* tb = *in_timer.mSelfIter;
 
-	tb->mIsRegistered = false;
 	tb->mLoopId = -1;
 	tb->mSuppliedData = nullptr;
 	tb->on_unregister();
+	tb->mStatus = mbase::timer_base::flags::TIMER_STATUS_UNREGISTERED;
 	mRegisteredTimers.erase(in_timer.mSelfIter);
 
 	return flags::TIMER_SUCCESS;
@@ -204,14 +204,14 @@ MBASE_INLINE GENERIC timer_loop::run_timer_loop() noexcept
 			{
 				if (tmpTimerBase->get_execution_policy() == mbase::timer_base::flags::TIMER_POLICY_ASYNC)
 				{
-					mThreadPool.execute_job(tmpTimerBase);
+					mThreadPool.execute_job(*tmpTimerBase);
 				}
 				else
 				{
 					tmpTimerBase->on_call(tmpTimerBase->get_user_data());
 				}
 
-				if (!tmpTimerBase->mIsRegistered)
+				if (!tmpTimerBase->is_registered())
 				{
 					// which means that the handler in on_call method unregistered itself
 					continue;
@@ -219,7 +219,6 @@ MBASE_INLINE GENERIC timer_loop::run_timer_loop() noexcept
 
 				if (tmpTimerBase->get_timer_type() == mbase::timer_base::flags::TIMER_TYPE_TIMEOUT)
 				{
-					tmpTimerBase->mIsRegistered = false;
 					tmpTimerBase->mLoopId = -1;
 					tmpTimerBase->on_unregister();
 					It = mRegisteredTimers.erase(tmpTimerBase->mSelfIter);
@@ -233,7 +232,6 @@ MBASE_INLINE GENERIC timer_loop::run_timer_loop() noexcept
 					{
 						if (ti->mTickCount >= ti->mTickLimit)
 						{
-							ti->mIsRegistered = false;
 							ti->mLoopId = -1;
 							ti->on_unregister();
 							It = mRegisteredTimers.erase(ti->mSelfIter);
@@ -253,6 +251,19 @@ MBASE_INLINE GENERIC timer_loop::set_timer_limit(U32 in_limit) noexcept
 MBASE_INLINE GENERIC timer_loop::halt() noexcept
 {
 	mIsRunning = false;
+}
+
+MBASE_INLINE GENERIC timer_loop::clear_timers() noexcept
+{
+	timer_container::iterator It = mRegisteredTimers.begin();
+	for (It; It != mRegisteredTimers.end(); ++It)
+	{
+		timer_base* ti = *It;
+		ti->mLoopId = -1;
+		ti->mStatus = mbase::timer_base::flags::TIMER_STATUS_ABANDONED;
+		ti->on_unregister();
+		It = mRegisteredTimers.erase(ti->mSelfIter);
+	}
 }
 
 MBASE_END

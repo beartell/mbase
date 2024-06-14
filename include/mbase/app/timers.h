@@ -13,7 +13,10 @@ public:
 		TIMER_TYPE_TIMEOUT = 2,
 		TIMER_TYPE_INTERVAL = 3,
 		TIMER_POLICY_IMMEDIATE = 4,
-		TIMER_POLICY_ASYNC = 5
+		TIMER_POLICY_ASYNC = 5,
+		TIMER_STATUS_REGISTERED = 6,
+		TIMER_STATUS_UNREGISTERED = 7,
+		TIMER_STATUS_ABANDONED = 8
 	};
 
 	using user_data = PTRGENERIC;
@@ -24,12 +27,13 @@ public:
 	/* ===== BUILDER METHODS END ===== */
 
 	/* ===== OBSERVATION METHODS BEGIN ===== */
-	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE I32 get_loop_id() const noexcept;
+	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE U32 get_loop_id() const noexcept;
 	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE I32 get_target_time() const noexcept;
 	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE I32 get_current_time() const noexcept;
 	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE I32 get_remaining_time() const noexcept;
 	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE flags get_timer_type() const noexcept;
 	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE flags get_execution_policy() const noexcept;
+	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE flags get_timer_status() const noexcept;
 	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE bool is_registered() const noexcept;
 	/* ===== OBSERVATION METHODS END ===== */
 
@@ -44,10 +48,10 @@ public:
 	friend class timer_loop;
 
 protected:
-	bool mIsRegistered;
 	flags mTimerType;
 	flags mPolicy;
-	I32 mLoopId;
+	flags mStatus;
+	U32 mLoopId;
 	F64 mCurrentTime;
 	F64 mTargetTime;
 private:
@@ -79,16 +83,16 @@ private:
 	U32 mTickLimit;
 };
 
-timer_base::timer_base() noexcept : handler_base(), mCurrentTime(0), mTargetTime(0), mPolicy(flags::TIMER_POLICY_IMMEDIATE), mIsRegistered(false), mLoopId(-1), mSelfIter(nullptr)
+timer_base::timer_base() noexcept : handler_base(), mCurrentTime(0), mTargetTime(0), mPolicy(flags::TIMER_POLICY_IMMEDIATE), mLoopId(0), mSelfIter(nullptr), mStatus(flags::TIMER_STATUS_UNREGISTERED)
 {
 }
 
-timer_base::timer_base(user_data in_data) noexcept : mCurrentTime(0), mTargetTime(0), mPolicy(flags::TIMER_POLICY_IMMEDIATE), mIsRegistered(false), mLoopId(-1), mSelfIter(nullptr)
+timer_base::timer_base(user_data in_data) noexcept : mCurrentTime(0), mTargetTime(0), mPolicy(flags::TIMER_POLICY_IMMEDIATE), mLoopId(0), mSelfIter(nullptr), mStatus(flags::TIMER_STATUS_UNREGISTERED)
 {
 	mSuppliedData = in_data;
 }
 
-MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE I32 timer_base::get_loop_id() const noexcept 
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE U32 timer_base::get_loop_id() const noexcept 
 {
 	return mLoopId;
 }
@@ -118,9 +122,14 @@ MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE timer_base::flags timer_base::get_execut
 	return mPolicy;
 }
 
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE timer_base::flags timer_base::get_timer_status() const noexcept
+{
+	return mStatus;
+}
+
 MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE bool timer_base::is_registered() const noexcept 
 {
-	return mIsRegistered;
+	return mStatus == flags::TIMER_STATUS_REGISTERED;
 }
 
 MBASE_INLINE GENERIC timer_base::set_target_time(U32 in_time_inms, flags in_policy) noexcept 

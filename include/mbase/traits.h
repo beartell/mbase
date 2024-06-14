@@ -86,6 +86,27 @@ struct pair {
     /* ===== NON-MODIFIER METHODS END ===== */
 };
 
+struct i32_represent_f32 {
+    using int_type = I32;
+    using float_type = F32;
+
+    union 
+    {
+        F32 mFloat;
+        I32 mInt;
+    };
+};
+
+struct i64_represent_f64 {
+    using int_type = I64;
+    using float_type = F64;
+
+    union 
+    {
+        F64 mFloat;
+        I64 mInt;
+    };
+};
 
 template<typename SerializedType>
 MBASE_INLINE typename serialize_helper<SerializedType>::size_type serialize_helper<SerializedType>::get_serialized_size() const noexcept
@@ -257,6 +278,54 @@ MBASE_INLINE typename serialize_helper<U64>::value_type serialize_helper<U64>::d
     return *bf;
 }
 
+template<>
+MBASE_INLINE typename serialize_helper<F32>::size_type serialize_helper<F32>::get_serialized_size() const noexcept
+{
+
+    return sizeof(typename i32_represent_f32::int_type);
+}
+
+template<>
+MBASE_INLINE GENERIC serialize_helper<F32>::serialize(char_stream& out_buffer) noexcept
+{
+    i32_represent_f32 if32;
+    if32.mFloat = *value;
+
+    serialize_helper<I32> i32Serializer;
+    i32Serializer.value = &if32.mInt;
+
+    out_buffer.put_datan<typename i32_represent_f32::int_type>(*i32Serializer.value);
+}
+
+template<>
+MBASE_INLINE typename serialize_helper<F64>::size_type serialize_helper<F64>::get_serialized_size() const noexcept
+{
+    return sizeof(typename i64_represent_f64::int_type);
+}
+
+template<>
+MBASE_INLINE GENERIC serialize_helper<F64>::serialize(char_stream& out_buffer) noexcept
+{
+    i64_represent_f64 if64;
+    if64.mFloat = *value;
+
+    serialize_helper<I64> i64Serializer;
+    i64Serializer.value = &if64.mInt;
+
+    out_buffer.put_datan<typename i64_represent_f64::int_type>(*i64Serializer.value);
+}
+
+
+template<>
+MBASE_INLINE typename serialize_helper<F64>::value_type serialize_helper<F64>::deserialize(IBYTEBUFFER in_src, SIZE_T in_length)
+{
+    i64_represent_f64 if64;
+    serialize_helper<I64> i64Serializer;
+
+    if64.mInt = i64Serializer.deserialize(in_src, in_length);
+    return if64.mFloat;
+}
+
 SIZE_T get_serialized_size() noexcept
 {
     return 0;
@@ -287,7 +356,7 @@ SerializedType deserialize(IBYTEBUFFER in_src, SIZE_T in_length) noexcept
 }
 
 template<typename T1, typename T2>
-mbase::pair<T1, T2> make_pair(T1 in_first, T2 in_second) noexcept
+mbase::pair<T1, T2> make_pair(const T1& in_first, const T2& in_second) noexcept
 {
     return mbase::pair<T1, T2>(in_first, in_second);
 }

@@ -49,14 +49,19 @@ public:
 		OPEN = OPEN_ALWAYS // always succeeds
 	};
 
+	/* ===== BUILDER METHODS BEGIN ===== */
 	io_file() noexcept;
 	io_file(const mbase::string& in_filename, access_mode in_accmode = access_mode::RW_ACCESS, disposition in_disp = disposition::OVERWRITE) noexcept;
 	~io_file() noexcept;
+	/* ===== BUILDER METHODS END ===== */
 
+	/* ===== OBSERVATION METHODS BEGIN ===== */
 	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE bool is_file_open() const noexcept;
 	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE mbase::string get_file_name() const noexcept;
 	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE size_type get_file_size() const noexcept;
+	/* ===== OBSERVATION METHODS END ===== */
 
+	/* ===== STATE-MODIFIER METHODS BEGIN ===== */
 	MBASE_INLINE PTRGENERIC open_file(const mbase::string& in_filename, access_mode in_accmode = access_mode::RW_ACCESS, disposition in_disp = disposition::OVERWRITE) noexcept;
 	MBASE_INLINE GENERIC close_file() noexcept;
 	size_type write_data(IBYTEBUFFER in_src) override;
@@ -67,23 +72,7 @@ public:
 	size_type read_data(IBYTEBUFFER in_src, size_type in_length) override;
 	size_type read_data(char_stream& in_src) override;
 	size_type read_data(char_stream& in_src, size_type in_length) override;
-
-	template<typename SerializableObject>
-	size_type write_data(SerializableObject& in_src) 
-	{
-		mbase::deep_char_stream dcs(in_src.get_serialized_size());
-		in_src.serialize(dcs);
-		return write_data(dcs.get_buffer(), dcs.buffer_length());
-	}
-
-	template<typename SerializableObject>
-	size_type read_data(SerializableObject& in_target, IBYTEBUFFER in_src, size_type in_length) 
-	{
-		mbase::char_stream cs(in_src, in_length);
-		size_type readLength = read_data(in_src, in_length);
-		in_target = std::move(in_target.deserialize(in_src, in_length));
-		return readLength;
-	}
+	/* ===== STATE-MODIFIER METHODS END ===== */
 
 private:
 	bool mIsFileOpen;
@@ -98,12 +87,13 @@ io_file::io_file(const mbase::string& in_filename, access_mode in_accmode, dispo
 {
 	DWORD fileAttrs = FILE_ATTRIBUTE_NORMAL;
 	PTRGENERIC rawHandle = CreateFileA(mFileName.c_str(), (DWORD)in_accmode, FILE_SHARE_READ, nullptr, (DWORD)in_disp, fileAttrs, nullptr);
-	if (!mRawContext.raw_handle)
+	if (!rawHandle)
 	{
 		_set_last_error(GetLastError());
 	}
 	else
 	{
+		mRawContext.raw_handle = rawHandle;
 		mOperateReady = true;
 		mIsFileOpen = true;
 		_set_raw_context(rawHandle);
@@ -145,12 +135,13 @@ MBASE_INLINE PTRGENERIC io_file::open_file(const mbase::string& in_filename, acc
 	DWORD fileAttrs = FILE_ATTRIBUTE_NORMAL;
 	PTRGENERIC rawHandle = CreateFileA(in_filename.c_str(), (DWORD)in_accmode, FILE_SHARE_READ, nullptr, (DWORD)in_disp, fileAttrs, nullptr);
 	mFileName = in_filename;
-	if (!mRawContext.raw_handle)
+	if (!rawHandle)
 	{
 		_set_last_error(GetLastError());
 	}
 	else
 	{
+		mRawContext.raw_handle = rawHandle;
 		mOperateReady = true;
 		mIsFileOpen = true;
 		_set_raw_context(rawHandle);

@@ -36,13 +36,18 @@ To achieve async io behavior, refer to the section Async I/O in MBASE.
 
 class io_tcp_client : public io_base, public non_copymovable {
 public:
+	/* ===== BUILDER METHODS BEGIN ===== */
 	io_tcp_client() noexcept;
 	io_tcp_client(const mbase::string& in_name, const mbase::string& in_port) noexcept;
 	~io_tcp_client() noexcept;
+	/* ===== BUILDER METHODS END ===== */
 
+	/* ===== OBSERVATION METHODS BEGIN ===== */
 	MBASE_ND(MBASE_OBS_IGNORE) mbase::string get_remote_ipv4() const noexcept;
 	MBASE_ND(MBASE_OBS_IGNORE) mbase::string get_remote_ipv6() const noexcept;
+	/* ===== OBSERVATION METHODS END ===== */
 
+	/* ===== STATE-MODIFIER METHODS BEGIN ===== */
 	I32 connect_target(const mbase::string& in_name, const mbase::string& in_port) noexcept;
 	I32 disconnect() noexcept;
 	size_type write_data(IBYTEBUFFER in_src) override;
@@ -53,20 +58,7 @@ public:
 	size_type read_data(IBYTEBUFFER in_src, size_type in_length) override;
 	size_type read_data(char_stream& in_src) override;
 	size_type read_data(char_stream& in_src, size_type in_length) override { return 0; }
-
-	template<typename SerializableObject>
-	size_type write_data(SerializableObject& in_src) {
-		mbase::deep_char_stream dcs(in_src.get_serialized_size());
-		in_src.serialize(dcs);
-		return write_data(dcs.get_buffer(), dcs.buffer_length());
-	}
-
-	template<typename SerializableObject>
-	size_type read_data(SerializableObject& in_target, IBYTEBUFFER in_src, size_type in_length) {
-		size_type readLength = read_data(in_src, in_length);
-		in_target.deserialize(in_src, in_length);
-		return readLength;
-	}
+	/* ===== STATE-MODIFIER METHODS END ===== */
 
 private:
 	SOCKET mRawHandle = INVALID_SOCKET;
