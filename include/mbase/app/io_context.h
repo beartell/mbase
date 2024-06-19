@@ -21,9 +21,10 @@ public:
 		ASYNC_CTX_STAT_IDLE,
 		ASYNC_CTX_STAT_ABANDONED,
 		ASYNC_CTX_STAT_FAILED,
-		ASYNC_CTX_STAT_FLUSHED,
+		ASYNC_CTX_STAT_HALTED,
 		ASYNC_CTX_STAT_OPERATING,
 		ASYNC_CTX_STAT_FINISHED,
+		ASYNC_CTX_STAT_FLUSHED,
 		ASYNC_CTX_DIRECTION_INPUT,
 		ASYNC_CTX_DIRECTION_OUTPUT,
 		ASYNC_CTX_ERR_UNKNOWN = MBASE_ASYNC_CTX_FLAGS_MAX
@@ -39,6 +40,7 @@ public:
 	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE size_type get_total_transferred_bytes() const noexcept;
 	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE size_type get_bytes_on_each_iteration() const noexcept;
 	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE size_type get_requested_bytes_count() const noexcept;
+	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE size_type get_aio_manager_id() const noexcept;
 	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE difference_type get_remaining_bytes() const noexcept;
 	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE U32 get_calculated_hop_count() const noexcept;
 	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE U32 get_hop_counter() const noexcept;
@@ -60,7 +62,7 @@ public:
 	friend class async_io_manager;
 
 private:
-	GENERIC _setup_context(size_type in_bytes_to_write, size_type in_bytes_on_each) noexcept {
+	GENERIC _setup_context(size_type in_bytes_to_write, size_type in_bytes_on_each, size_type in_manager_id) noexcept {
 		mContextState = flags::ASYNC_CTX_STAT_IDLE;
 		mTargetBytes = in_bytes_to_write;
 		mBytesOnEachIteration = in_bytes_on_each;
@@ -69,12 +71,16 @@ private:
 		mBytesTransferred = 0;
 		mHopCounter = 0;
 		mSrcBuffer->set_cursor_front();
+		mIsActive = true;
 	}
+
+	using aio_ctx_element = mbase::list<async_io_context*>::iterator;
 
 	size_type mTotalBytesTransferred;
 	size_type mBytesTransferred;
 	size_type mTargetBytes;
 	size_type mBytesOnEachIteration;
+	size_type mAioManagerId;
 	U32 mLastFraction;
 	U32 mCalculatedHop;
 	U32 mHopCounter;
@@ -84,6 +90,7 @@ private:
 	char_stream* mSrcBuffer;
 	flags mContextState;
 	flags mIoDirection;
+	aio_ctx_element mSelfIter;
 };
 
 MBASE_INLINE async_io_context::async_io_context(io_base& in_base, flags in_io_direction) noexcept :
@@ -91,13 +98,15 @@ MBASE_INLINE async_io_context::async_io_context(io_base& in_base, flags in_io_di
 	mBytesTransferred(0),
 	mTargetBytes(0),
 	mBytesOnEachIteration(0),
+	mAioManagerId(0),
 	mLastFraction(0),
 	mCalculatedHop(0),
 	mHopCounter(0),
 	mIsActive(false),
 	mIoDirection(in_io_direction),
 	mIsBufferInternal(false),
-	mIoHandle(&in_base)
+	mIoHandle(&in_base),
+	mSelfIter(nullptr)
 {
 	if (in_io_direction == flags::ASYNC_CTX_DIRECTION_OUTPUT)
 	{
@@ -109,7 +118,8 @@ MBASE_INLINE async_io_context::async_io_context(io_base& in_base, flags in_io_di
 	}
 }
 
-MBASE_INLINE async_io_context::~async_io_context() noexcept {
+MBASE_INLINE async_io_context::~async_io_context() noexcept 
+{
 	if (!mIsBufferInternal)
 	{
 		delete mSrcBuffer;
@@ -137,6 +147,11 @@ MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE typename async_io_context::size_type asy
 MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE typename async_io_context::size_type async_io_context::get_requested_bytes_count() const noexcept 
 {
 	return mTargetBytes;
+}
+
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE typename async_io_context::size_type async_io_context::get_aio_manager_id() const noexcept
+{
+	return mAioManagerId;
 }
 
 MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE typename async_io_context::difference_type async_io_context::get_remaining_bytes() const noexcept 
@@ -216,7 +231,7 @@ MBASE_INLINE async_io_context::flags async_io_context::construct_context(io_base
 MBASE_INLINE GENERIC async_io_context::flush_context() noexcept 
 {
 	mSrcBuffer->set_cursor_front();
-	mIoHandle->set_file_pointer(0, mbase::io_base::move_method::MV_BEGIN);
+	//mIoHandle->set_file_pointer(0, mbase::io_base::move_method::MV_BEGIN);
 	mHopCounter = 0;
 	mBytesTransferred = 0;
 	mContextState = flags::ASYNC_CTX_STAT_FLUSHED;
@@ -230,8 +245,8 @@ MBASE_INLINE async_io_context::flags async_io_context::halt_context() noexcept
 	}
 
 	mIsActive = false;
-	mSrcBuffer->set_cursor_front();
-	mIoHandle->set_file_pointer(0, mbase::io_base::move_method::MV_BEGIN);
+	//mSrcBuffer->set_cursor_front();
+	//mIoHandle->set_file_pointer(0, mbase::io_base::move_method::MV_BEGIN);
 	return flags::ASYNC_CTX_SUCCESS;
 }
 
@@ -244,7 +259,7 @@ MBASE_INLINE async_io_context::flags async_io_context::resume_context() noexcept
 
 	mIsActive = true;
 	mSrcBuffer->advance(mBytesTransferred);
-	mIoHandle->set_file_pointer(mBytesTransferred, mbase::io_base::move_method::MV_BEGIN);
+	//mIoHandle->set_file_pointer(mBytesTransferred, mbase::io_base::move_method::MV_BEGIN);
 	return flags::ASYNC_CTX_SUCCESS;
 }
 

@@ -31,6 +31,7 @@ public:
 		EVENT_MNG_SUCCESS = 0,
 		EVENT_MNG_ERR_ID_MISMATCH = MBASE_EVENT_MANAGER_FLAGS_MIN,
 		EVENT_MNG_ERR_BELONGS_TO_FOREIGN_MANAGER,
+		EVENT_MNG_ERR_ALREADY_REGISTERED,
 		EVENT_MNG_ERR_GROUP_BLOCKED,
 		EVENT_MNG_ERR_NOT_FOUND,
 		EVENT_MNG_ERR_REACHED_MAX_LISTENERS,
@@ -92,7 +93,10 @@ MBASE_INLINE event_manager::flags event_manager::dispatch_event(const mbase::str
 			suppliedHandler->on_call(in_data);
 			if (suppliedHandler->mEventType == event_handler::flags::EVENT_ONCE)
 			{
+				suppliedHandler->on_unregister();
+				suppliedHandler->mEventName.clear();
 				suppliedHandler->mManagerId = -1;
+				suppliedHandler->mStatus = event_handler::flags::EVENT_UNREGISTERED;
 				It = eventList.erase(suppliedHandler->mSelfIter);
 			}
 		}
@@ -103,9 +107,9 @@ MBASE_INLINE event_manager::flags event_manager::dispatch_event(const mbase::str
 
 MBASE_INLINE event_manager::flags event_manager::add_event_listener(const mbase::string& in_event, event_handler& in_handler) noexcept 
 {
-	if (in_handler.mManagerId != -1)
+	if(in_handler.is_registered())
 	{
-		return flags::EVENT_MNG_ERR_BELONGS_TO_FOREIGN_MANAGER;
+		return flags::EVENT_MNG_ERR_ALREADY_REGISTERED;
 	}
 
 	auto foundElement = mEventMap.find(in_event);
@@ -137,13 +141,21 @@ MBASE_INLINE event_manager::flags event_manager::add_event_listener(const mbase:
 		in_handler.mSelfIter = eventList.insert(eventList.cend(), &in_handler);
 	}
 
-	in_handler.mManagerId = this->mManagerId;
+	in_handler.mEventName = in_event;
+	in_handler.mManagerId = mManagerId;
+	in_handler.mStatus = event_handler::flags::EVENT_REGISTERED;
+	in_handler.on_register();
 
 	return flags::EVENT_MNG_SUCCESS;
 }
 
 MBASE_INLINE event_manager::flags event_manager::remove_listener(event_handler& in_handler) noexcept
 {
+	if(!in_handler.is_registered())
+	{
+		return flags::EVENT_MNG_SUCCESS;
+	}
+
 	if (in_handler.mManagerId != this->mManagerId)
 	{
 		return flags::EVENT_MNG_ERR_BELONGS_TO_FOREIGN_MANAGER;
@@ -162,6 +174,11 @@ MBASE_INLINE event_manager::flags event_manager::remove_listener(event_handler& 
 		eventList.erase(in_handler.mSelfIter);
 	}
 
+	in_handler.on_unregister();
+	in_handler.mEventName.clear();
+	in_handler.mManagerId = -1;
+	in_handler.mStatus = event_handler::flags::EVENT_UNREGISTERED;
+
 	return flags::EVENT_MNG_SUCCESS;
 }
 
@@ -172,6 +189,14 @@ MBASE_INLINE event_manager::flags event_manager::remove_all_listeners(const mbas
 	{
 		event_group& eventGroup = foundElement->second;
 		event_group::handler_container& eventList = eventGroup.listeners;
+		for(event_group::handler_container::iterator It = eventList.begin(); It != eventList.end(); ++It)
+		{
+			event_handler* evh = *It;
+			evh->on_unregister();
+			evh->mEventName.clear();
+			evh->mManagerId = -1;
+			evh->mStatus = event_handler::flags::EVENT_UNREGISTERED;
+		}
 		eventList.clear();
 		mEventMap.erase(in_event);
 		return flags::EVENT_MNG_SUCCESS;
