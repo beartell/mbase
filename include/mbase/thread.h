@@ -71,7 +71,7 @@ private:
 
 		raw_handle _mThreadHandle = CreateThread(nullptr,
 			0,
-			THREAD_ROUTINE,
+			(LPTHREAD_START_ROUTINE)THREAD_ROUTINE,
 			(LPVOID)&mThreadParams,
 			0,
 			(LPDWORD)&mThreadId);

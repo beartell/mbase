@@ -95,8 +95,9 @@ MBASE_INLINE timer_loop::flags timer_loop::register_timer(timer_base& in_timer) 
 	}
 
 	in_timer.mLoopId = mTimerLoopId;
-	in_timer.on_register();
+	in_timer.mStatus = mbase::timer_base::flags::TIMER_STATUS_REGISTERED;
 	in_timer.mSelfIter = mRegisteredTimers.insert(mRegisteredTimers.cend(), &in_timer); // WE WILL FIX IT LATER
+	in_timer.on_register();
 
 	return terr;
 }
@@ -124,8 +125,9 @@ MBASE_INLINE timer_loop::flags timer_loop::register_timer(timer_base& in_timer, 
 
 	in_timer.mSuppliedData = in_usr_data;
 	in_timer.mLoopId = mTimerLoopId;
-	in_timer.on_register();
+	in_timer.mStatus = mbase::timer_base::flags::TIMER_STATUS_REGISTERED;
 	in_timer.mSelfIter = mRegisteredTimers.insert(mRegisteredTimers.cend(), &in_timer); // WE WILL FIX IT LATER
+	in_timer.on_register();
 
 	return terr;
 }

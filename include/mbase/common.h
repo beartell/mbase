@@ -154,7 +154,7 @@ using U64 = uint64_t;
 using F32 = float;
 using F64 = double;
 
-using SIZE_T = U64;
+using SIZE_T = size_t;
 using PTRDIFF = I64;
 
 using PTR8 = I8*;
