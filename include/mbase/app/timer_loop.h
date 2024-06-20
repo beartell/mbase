@@ -5,12 +5,12 @@
 #include <mbase/list.h>
 #include <mbase/app/timers.h>
 #include <mbase/app/thread_pool.h>
-#include <time.h>
 #include <Windows.h>
 
 MBASE_BEGIN
 
 static const U32 gDefaultTimerLimit = 2048;
+static SIZE_T gTimerLoopIdCounter = 0;
 
 class timer_loop : public non_copymovable {
 public:
@@ -33,16 +33,17 @@ public:
 	/* ===== OBSERVATION METHODS BEGIN ===== */
 	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE U32 get_active_timer_count() const noexcept;
 	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE U32 get_delta_seconds() const noexcept;
-	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE mbase::tpool* get_thread_pool() noexcept;
-	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE mbase::list<timer_base*>* get_timer_list() noexcept;
+	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE mbase::tpool& get_thread_pool() noexcept;
+	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE mbase::list<timer_base*>& get_timer_list() noexcept;
 	/* ===== OBSERVATION METHODS END ===== */
 
 	/* ===== STATE-MODIFIER METHODS BEGIN ===== */
 	MBASE_INLINE flags register_timer(timer_base& in_timer) noexcept;
 	MBASE_INLINE flags register_timer(timer_base& in_timer, PTRGENERIC in_usr_data) noexcept;
 	MBASE_INLINE flags unregister_timer(timer_base& in_timer) noexcept;
-	MBASE_INLINE GENERIC run_timer_loop() noexcept;
 	MBASE_INLINE GENERIC run_timers() noexcept;
+	MBASE_INLINE GENERIC run_timer_loop() noexcept;
+	MBASE_INLINE GENERIC reset_timer() noexcept;
 	MBASE_INLINE GENERIC set_timer_limit(U32 in_limit) noexcept;
 	MBASE_INLINE GENERIC halt() noexcept;
 	MBASE_INLINE GENERIC clear_timers() noexcept;
@@ -53,20 +54,20 @@ protected:
 	F64 mFrequency;
 	U32 mTimerLimit;
 	U32 mTimerIdCounter;
+	U64 mPrevTime;
 	I32 mTimerLoopId;
 	bool mIsRunning;
 	timer_container mRegisteredTimers;
 	mbase::tpool mThreadPool;
 };
 
-MBASE_INLINE timer_loop::timer_loop() : mTimerLimit(gDefaultTimerLimit), mTimerIdCounter(0), mIsRunning(false), mTimerLoopId(0)
+MBASE_INLINE timer_loop::timer_loop() : mTimerLimit(gDefaultTimerLimit), mTimerIdCounter(0), mPrevTime(0), mIsRunning(false), mTimerLoopId(0)
 {
 	LARGE_INTEGER performanceFrequency = {};
 	QueryPerformanceFrequency(&performanceFrequency);
 	mFrequency = 1000 / (F64)performanceFrequency.QuadPart; // MS ACCURACY
 	mDeltaTime = mFrequency;
-	mTimerLoopId = 1 + (rand() % 1000000);
-	srand(time(0));
+	mTimerLoopId = ++gTimerLoopIdCounter;
 }
 
 MBASE_INLINE timer_loop::~timer_loop()
@@ -149,8 +150,8 @@ MBASE_INLINE timer_loop::flags timer_loop::unregister_timer(timer_base& in_timer
 
 	tb->mLoopId = -1;
 	tb->mSuppliedData = nullptr;
-	tb->on_unregister();
 	tb->mStatus = mbase::timer_base::flags::TIMER_STATUS_UNREGISTERED;
+	tb->on_unregister();
 	mRegisteredTimers.erase(in_timer.mSelfIter);
 
 	return flags::TIMER_SUCCESS;
@@ -166,14 +167,78 @@ MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE U32 timer_loop::get_delta_seconds() cons
 	return mDeltaTime;
 }
 
-MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE mbase::tpool* timer_loop::get_thread_pool() noexcept
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE mbase::tpool& timer_loop::get_thread_pool() noexcept
 {
-	return &mThreadPool;
+	return mThreadPool;
 }
 
-MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE mbase::list<timer_base*>* timer_loop::get_timer_list() noexcept
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE mbase::list<timer_base*>& timer_loop::get_timer_list() noexcept
 {
-	return &mRegisteredTimers;
+	return mRegisteredTimers;
+}
+
+MBASE_INLINE GENERIC timer_loop::run_timers() noexcept
+{
+	LARGE_INTEGER queryTime;
+	QueryPerformanceCounter(&queryTime);
+	U64 currentTime = queryTime.QuadPart;
+
+	if(!mPrevTime)
+	{
+		mPrevTime = currentTime; // only the first case
+	}
+
+	mDeltaTime = (currentTime - mPrevTime) * mFrequency;
+
+	timer_container::iterator It = mRegisteredTimers.begin();
+	while (It != mRegisteredTimers.end())
+	{
+		timer_base* tmpTimerBase = *It;
+		tmpTimerBase->mCurrentTime += mDeltaTime;
+		++It;
+		if (tmpTimerBase->mCurrentTime >= tmpTimerBase->mTargetTime)
+		{
+			if (tmpTimerBase->get_execution_policy() == mbase::timer_base::flags::TIMER_POLICY_ASYNC)
+			{
+				mThreadPool.execute_job(*tmpTimerBase);
+			}
+			else
+			{
+				tmpTimerBase->on_call(tmpTimerBase->get_user_data());
+			}
+
+			if (!tmpTimerBase->is_registered())
+			{
+				// which means that the handler in on_call method unregistered itself
+				continue;
+			}
+
+			if (tmpTimerBase->get_timer_type() == mbase::timer_base::flags::TIMER_TYPE_TIMEOUT)
+			{
+				tmpTimerBase->mLoopId = -1;
+				tmpTimerBase->on_unregister();
+				It = mRegisteredTimers.erase(tmpTimerBase->mSelfIter);
+			}
+			else
+			{
+				time_interval* ti = static_cast<time_interval*>(tmpTimerBase);
+				ti->reset_time();
+				ti->mTickCount++;
+				if (ti->mTickLimit != 0)
+				{
+					if (ti->mTickCount >= ti->mTickLimit)
+					{
+						ti->mLoopId = -1;
+						ti->mStatus = mbase::timer_base::flags::TIMER_STATUS_UNREGISTERED;
+						ti->on_unregister();
+						It = mRegisteredTimers.erase(ti->mSelfIter);
+					}
+				}
+			}
+		}
+	}
+	QueryPerformanceCounter(&queryTime);
+	mPrevTime = currentTime;
 }
 
 MBASE_INLINE GENERIC timer_loop::run_timer_loop() noexcept
@@ -182,68 +247,89 @@ MBASE_INLINE GENERIC timer_loop::run_timer_loop() noexcept
 	{
 		return;
 	}
+
 	mIsRunning = true;
 
-	LARGE_INTEGER queryTime;
-	QueryPerformanceCounter(&queryTime);
-
-	U64 currentTime = queryTime.QuadPart;
-	U64 prevTime = currentTime;
 	while (mIsRunning)
 	{
-		QueryPerformanceCounter(&queryTime);
-		currentTime = queryTime.QuadPart;
-		mDeltaTime = (currentTime - prevTime) * mFrequency;
-		prevTime = currentTime;
-
-		timer_container::iterator It = mRegisteredTimers.begin();
-		while (It != mRegisteredTimers.end())
-		{
-			timer_base* tmpTimerBase = *It;
-			tmpTimerBase->mCurrentTime += mDeltaTime;
-			++It;
-			if (tmpTimerBase->mCurrentTime >= tmpTimerBase->mTargetTime)
-			{
-				if (tmpTimerBase->get_execution_policy() == mbase::timer_base::flags::TIMER_POLICY_ASYNC)
-				{
-					mThreadPool.execute_job(*tmpTimerBase);
-				}
-				else
-				{
-					tmpTimerBase->on_call(tmpTimerBase->get_user_data());
-				}
-
-				if (!tmpTimerBase->is_registered())
-				{
-					// which means that the handler in on_call method unregistered itself
-					continue;
-				}
-
-				if (tmpTimerBase->get_timer_type() == mbase::timer_base::flags::TIMER_TYPE_TIMEOUT)
-				{
-					tmpTimerBase->mLoopId = -1;
-					tmpTimerBase->on_unregister();
-					It = mRegisteredTimers.erase(tmpTimerBase->mSelfIter);
-				}
-				else
-				{
-					time_interval* ti = static_cast<time_interval*>(tmpTimerBase);
-					ti->reset_time();
-					ti->mTickCount++;
-					if (ti->mTickLimit != 0)
-					{
-						if (ti->mTickCount >= ti->mTickLimit)
-						{
-							ti->mLoopId = -1;
-							ti->on_unregister();
-							It = mRegisteredTimers.erase(ti->mSelfIter);
-						}
-					}
-				}
-			}
-		}
+		run_timers();
 	}
 }
+
+MBASE_INLINE GENERIC timer_loop::reset_timer() noexcept
+{
+	mPrevTime = 0;
+}
+
+//MBASE_INLINE GENERIC timer_loop::run_timer_loop() noexcept
+//{
+//	if (mIsRunning)
+//	{
+//		return;
+//	}
+//	mIsRunning = true;
+//
+//	LARGE_INTEGER queryTime;
+//	QueryPerformanceCounter(&queryTime);
+//
+//	U64 currentTime = queryTime.QuadPart;
+//	U64 prevTime = currentTime;
+//	while (mIsRunning)
+//	{
+//		QueryPerformanceCounter(&queryTime);
+//		currentTime = queryTime.QuadPart;
+//		mDeltaTime = (currentTime - prevTime) * mFrequency;
+//		prevTime = currentTime;
+//
+//		timer_container::iterator It = mRegisteredTimers.begin();
+//		while (It != mRegisteredTimers.end())
+//		{
+//			timer_base* tmpTimerBase = *It;
+//			tmpTimerBase->mCurrentTime += mDeltaTime;
+//			++It;
+//			if (tmpTimerBase->mCurrentTime >= tmpTimerBase->mTargetTime)
+//			{
+//				if (tmpTimerBase->get_execution_policy() == mbase::timer_base::flags::TIMER_POLICY_ASYNC)
+//				{
+//					mThreadPool.execute_job(*tmpTimerBase);
+//				}
+//				else
+//				{
+//					tmpTimerBase->on_call(tmpTimerBase->get_user_data());
+//				}
+//
+//				if (!tmpTimerBase->is_registered())
+//				{
+//					// which means that the handler in on_call method unregistered itself
+//					continue;
+//				}
+//
+//				if (tmpTimerBase->get_timer_type() == mbase::timer_base::flags::TIMER_TYPE_TIMEOUT)
+//				{
+//					tmpTimerBase->mLoopId = -1;
+//					tmpTimerBase->on_unregister();
+//					It = mRegisteredTimers.erase(tmpTimerBase->mSelfIter);
+//				}
+//				else
+//				{
+//					time_interval* ti = static_cast<time_interval*>(tmpTimerBase);
+//					ti->reset_time();
+//					ti->mTickCount++;
+//					if (ti->mTickLimit != 0)
+//					{
+//						if (ti->mTickCount >= ti->mTickLimit)
+//						{
+//							ti->mLoopId = -1;
+//							ti->mStatus = mbase::timer_base::flags::TIMER_STATUS_UNREGISTERED;
+//							ti->on_unregister();
+//							It = mRegisteredTimers.erase(ti->mSelfIter);
+//						}
+//					}
+//				}
+//			}
+//		}
+//	}
+//}
 
 MBASE_INLINE GENERIC timer_loop::set_timer_limit(U32 in_limit) noexcept
 {
@@ -257,8 +343,7 @@ MBASE_INLINE GENERIC timer_loop::halt() noexcept
 
 MBASE_INLINE GENERIC timer_loop::clear_timers() noexcept
 {
-	timer_container::iterator It = mRegisteredTimers.begin();
-	for (It; It != mRegisteredTimers.end(); ++It)
+	for (timer_container::iterator It = mRegisteredTimers.begin(); It != mRegisteredTimers.end(); ++It)
 	{
 		timer_base* ti = *It;
 		ti->mLoopId = -1;

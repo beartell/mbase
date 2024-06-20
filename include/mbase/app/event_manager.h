@@ -12,6 +12,7 @@ MBASE_BEGIN
 
 static const bool gDefaultEventGroupBlockState = true;
 static const U32 gDefaultMaxListeners = 1024;
+static SIZE_T gEventManagerIdCounter = 0;
 
 struct event_group {
 	using size_type = SIZE_T;
@@ -62,8 +63,7 @@ private:
 
 MBASE_INLINE event_manager::event_manager() noexcept
 {
-	this->mManagerId = 1 + (rand() % 1000000);
-	srand(time(0));
+	this->mManagerId = ++gEventManagerIdCounter;
 }
 
 MBASE_INLINE event_manager::~event_manager() noexcept
