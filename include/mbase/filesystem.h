@@ -5,21 +5,23 @@
 #include <mbase/string.h> // mbase::string
 #include <mbase/vector.h> // mbase::vector
 
+#ifdef MBASE_PLATFORM_WINDOWS
 #include <Windows.h>
 /*
 ERROR_ALREADY_EXISTS,
 ERROR_PATH_NOT_FOUND,
 ERROR_ACCESS_DENIED,
-CreateDirectoryA, 
-FindFirstFileA, 
-FindNextFileA, 
-FindClose, 
-CopyFileA, 
-DeleteFileA, 
-GetTempPathA, 
-GetCurrentDirectoryA, 
+CreateDirectoryA,
+FindFirstFileA,
+FindNextFileA,
+FindClose,
+CopyFileA,
+DeleteFileA,
+GetTempPathA,
+GetCurrentDirectoryA,
 GetTempFileNameA
 */
+#endif
 
 MBASE_STD_BEGIN
 
@@ -47,6 +49,7 @@ MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE mbase::string get_temp_file(const mba
 template<typename ContainerType = mbase::vector<FS_FILE_INFORMATION>>
 MBASE_INLINE GENERIC get_directory(const mbase::string_view& in_path, ContainerType& out_files) noexcept
 {
+#ifdef MBASE_PLATFORM_WINDOWS
 	WIN32_FIND_DATAA findData;
 	HANDLE findHandle = FindFirstFileA(in_path.c_str(), &findData);
 	do {
@@ -56,12 +59,14 @@ MBASE_INLINE GENERIC get_directory(const mbase::string_view& in_path, ContainerT
 		out_files.push_back(ffi);
 	} while (FindNextFileA(findHandle, &findData));
 	FindClose(findHandle);
+#endif
 }
 
 /* IMPLEMENTATIONS */
 
 MBASE_INLINE FS_ERROR err_convert(I16 in_err) noexcept
 {
+#ifdef MBASE_PLATFORM_WINDOWS
 	switch (in_err)
 	{
 	case ERROR_ALREADY_EXISTS:
@@ -73,26 +78,31 @@ MBASE_INLINE FS_ERROR err_convert(I16 in_err) noexcept
 	default:
 		return FS_ERROR::FS_UNKNOWN_ERROR;
 	}
+#endif
 }
 
 MBASE_INLINE FS_ERROR create_directory(const mbase::string_view& in_path) noexcept 
 {
+#ifdef MBASE_PLATFORM_WINDOWS
 	if (!CreateDirectoryA(in_path.c_str(), nullptr))
 	{
 		return err_convert(GetLastError());
 	}
 
 	return FS_ERROR::FS_SUCCESS;
+#endif
 }
 
 MBASE_INLINE FS_ERROR copy_file(const mbase::string_view& in_path, const mbase::string_view& in_copypath) noexcept 
 {
+#ifdef MBASE_PLATFORM_WINDOWS
 	if (!CopyFileA(in_path.c_str(), in_copypath.c_str(), false))
 	{
 		return err_convert(GetLastError());
 	}
 
 	return FS_ERROR::FS_SUCCESS;
+#endif
 }
 
 MBASE_INLINE FS_ERROR delete_file(const mbase::string_view& in_path) noexcept 
@@ -107,23 +117,29 @@ MBASE_INLINE FS_ERROR delete_file(const mbase::string_view& in_path) noexcept
 
 MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE mbase::string get_temp_path() noexcept 
 {
+#ifdef MBASE_PLATFORM_WINDOWS
 	IBYTE pathString[MAX_PATH + 1] = { 0 };
 	GetTempPathA(MAX_PATH + 1, pathString);
 	return mbase::string(pathString);
+#endif
 }
 
 MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE mbase::string get_current_path() noexcept 
 {
+#ifdef MBASE_PLATFORM_WINDOWS
 	IBYTE pathString[MAX_PATH + 1] = { 0 };
 	GetCurrentDirectoryA(MAX_PATH + 1, pathString);
 	return mbase::string(pathString);
+#endif
 }
 
 MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE mbase::string get_temp_file(const mbase::string_view& in_prefix) noexcept 
 {
+#ifdef MBASE_PLATFORM_WINDOWS
 	IBYTE pathString[MAX_PATH + 1] = { 0 };
 	GetTempFileNameA(".", in_prefix.c_str(), 0, pathString);
 	return mbase::string(pathString);
+#endif
 }
 
 

@@ -5,7 +5,10 @@
 #include <mbase/char_stream.h> // mbase::char_stream
 #include <mbase/string.h> // mbase::string
 #include <mbase/safe_buffer.h> // mbase::safe_buffer
+
+#ifdef MBASE_PLATFORM_WINDOWS
 #include <Windows.h> // FILE_BEGIN, FILE_CURRENT, FILE_END, SetFilePointer
+#endif
 
 MBASE_STD_BEGIN
 

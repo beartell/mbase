@@ -2,9 +2,12 @@
 #define MBASE_IOTCPCLIENT_H
 
 #include <mbase/io_base.h>
-#include <mbase/wsa_init.h> // static wsa socket initializiation through mbase::wsa_initializer
 #include <mbase/string.h> // mbase::string
 #include <mbase/behaviors.h> // mbase::non_copymovable
+
+#ifdef MBASE_PLATFORM_WINDOWS
+#include <mbase/wsa_init.h> // static wsa socket initializiation through mbase::wsa_initializer
+#endif
 
 MBASE_STD_BEGIN
 
@@ -67,7 +70,6 @@ private:
 
 io_tcp_client::io_tcp_client() noexcept : mRawHandle(INVALID_SOCKET) 
 {
-
 }
 
 io_tcp_client::io_tcp_client(const mbase::string& in_name, const mbase::string& in_port) noexcept 
@@ -98,6 +100,8 @@ MBASE_ND(MBASE_OBS_IGNORE) mbase::string io_tcp_client::get_remote_ipv6() const 
 
 I32 io_tcp_client::connect_target(const mbase::string& in_name, const mbase::string& in_port) noexcept 
 {
+	disconnect();
+
 	mRawHandle = INVALID_SOCKET;
 
 	addrinfo* result = nullptr;
@@ -119,7 +123,9 @@ I32 io_tcp_client::connect_target(const mbase::string& in_name, const mbase::str
 		mRawHandle = socket(pt_addr->ai_family, pt_addr->ai_socktype, pt_addr->ai_protocol);
 		if (mRawHandle == INVALID_SOCKET)
 		{
+#ifdef MBASE_PLATFORM_WINDOWS
 			_set_last_error(WSAGetLastError());
+#endif
 			freeaddrinfo(result);
 			return 1;
 		}
@@ -138,7 +144,9 @@ I32 io_tcp_client::connect_target(const mbase::string& in_name, const mbase::str
 
 	if (mRawHandle == INVALID_SOCKET)
 	{
+#ifdef MBASE_PLATFORM_WINDOWS
 		_set_last_error(WSAGetLastError());
+#endif
 		return 1;
 	}
 
@@ -154,7 +162,9 @@ I32 io_tcp_client::disconnect() noexcept
 	I32 dcResult = closesocket(mRawHandle);
 	if (dcResult == SOCKET_ERROR)
 	{
+#ifdef MBASE_PLATFORM_WINDOWS
 		_set_last_error(WSAGetLastError());
+#endif
 	}
 
 	return dcResult;
@@ -168,7 +178,10 @@ typename io_tcp_client::size_type io_tcp_client::write_data(IBYTEBUFFER in_src)
 	dataWritten = send(mRawHandle, in_src, dataLength, 0);
 	if (dataWritten == SOCKET_ERROR)
 	{
+		disconnect();
+#ifdef MBASE_PLATFORM_WINDOWS
 		_set_last_error(WSAGetLastError());
+#endif
 	}
 	return dataWritten;
 }
@@ -179,7 +192,11 @@ typename io_tcp_client::size_type io_tcp_client::write_data(IBYTEBUFFER in_src, 
 	dataWritten = send(mRawHandle, in_src, in_length, 0);
 	if (dataWritten == SOCKET_ERROR)
 	{
+		disconnect();
+#ifdef MBASE_PLATFORM_WINDOWS
 		_set_last_error(WSAGetLastError());
+#endif
+		return 0;
 	}
 	return dataWritten;
 }
@@ -190,7 +207,10 @@ typename io_tcp_client::size_type io_tcp_client::write_data(const mbase::string&
 	dataWritten = send(mRawHandle, in_src.c_str(), in_src.size(), 0);
 	if (dataWritten == SOCKET_ERROR)
 	{
+		disconnect();
+#ifdef MBASE_PLATFORM_WINDOWS
 		_set_last_error(WSAGetLastError());
+#endif
 	}
 	return dataWritten;
 }
@@ -203,7 +223,10 @@ typename io_tcp_client::size_type io_tcp_client::write_data(char_stream& in_src)
 	dataWritten = send(mRawHandle, tmpBuffer, in_src.buffer_length() - cursorPos, 0);
 	if (dataWritten == SOCKET_ERROR)
 	{
+		disconnect();
+#ifdef MBASE_PLATFORM_WINDOWS
 		_set_last_error(WSAGetLastError());
+#endif
 	}
 	return dataWritten;
 }
@@ -214,7 +237,10 @@ typename io_tcp_client::size_type io_tcp_client::read_data(IBYTEBUFFER in_src, s
 	dataRead = recv(mRawHandle, in_src, in_length, 0);
 	if (dataRead == SOCKET_ERROR)
 	{
+		disconnect();
+#ifdef MBASE_PLATFORM_WINDOWS
 		_set_last_error(WSAGetLastError());
+#endif
 	}
 	return dataRead;
 }
@@ -227,7 +253,11 @@ typename io_tcp_client::size_type io_tcp_client::read_data(char_stream& in_src)
 	dataRead = recv(mRawHandle, tmpBuffer, in_src.buffer_length() - cursorPos, 0);
 	if (dataRead == SOCKET_ERROR)
 	{
+		disconnect();
+#ifdef MBASE_PLATFORM_WINDOWS
 		_set_last_error(WSAGetLastError());
+#endif
+
 	}
 	return dataRead;
 }

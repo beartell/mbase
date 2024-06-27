@@ -4,14 +4,17 @@
 #include <mbase/common.h>
 #include <mbase/behaviors.h>
 #include <tuple>
+
+#ifdef MBASE_PLATFORM_WINDOWS
 #include <Windows.h>
+#endif
 
 MBASE_STD_BEGIN
 
 enum class thread_error : U32 {
 	THREAD_SUCCESS = 0,
-	THREAD_INVALID_PARAMS = ERROR_INVALID_PARAMETER,
-	THREAD_NO_AVAILABLE = ERROR_ALREADY_THREAD,
+	THREAD_INVALID_PARAMS = 1,
+	THREAD_NO_AVAILABLE = 2,
 	THREAD_MISSING_THREAD = 3,
 	THREAD_UNKNOWN_ERROR = 4,
 	THREAD_INVALID_CALL = 5,
@@ -21,7 +24,9 @@ enum class thread_error : U32 {
 template<typename Func, typename ... Args>
 class thread {
 public:
+#ifdef MBASE_PLATFORM_WINDOWS
 	using raw_handle = HANDLE;
+#endif
 
 	/* ===== BUILDER METHODS BEGIN ===== */
 	MBASE_INLINE thread(Func&& in_fptr, Args&&... in_args) noexcept;
@@ -68,6 +73,7 @@ private:
 			// REPORT ON DIAGNOSTICS
 			return thread_error::THREAD_CANT_JOIN_LAST_OPERATION;
 		}
+#ifdef MBASE_PLATFORM_WINDOWS
 
 		raw_handle _mThreadHandle = CreateThread(nullptr,
 			0,
@@ -81,7 +87,7 @@ private:
 		{
 			return (thread_error)GetLastError();
 		}
-
+#endif
 		return thread_error::THREAD_SUCCESS;
 	}
 	thread_param mThreadParams;
@@ -118,7 +124,9 @@ template<typename Func, typename ...Args>
 MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE I32 thread<Func, Args...>::get_id() const noexcept {
 	if (!mThreadId)
 	{
+#ifdef MBASE_PLATFORM_WINDOWS
 		return GetCurrentThreadId();
+#endif
 	}
 
 	return mThreadId;
@@ -126,7 +134,9 @@ MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE I32 thread<Func, Args...>::get_id() cons
 
 template<typename Func, typename ...Args>
 MBASE_ND(MBASE_OBS_IGNORE) I32 thread<Func, Args...>::get_current_thread_id() noexcept {
+#ifdef MBASE_PLATFORM_WINDOWS
 	return GetCurrentThreadId();
+#endif
 }
 
 template<typename Func, typename ...Args>
@@ -151,6 +161,7 @@ template<typename Func, typename ...Args>
 MBASE_INLINE thread_error thread<Func, Args...>::join() noexcept {
 	if (mThreadHandle)
 	{
+#ifdef MBASE_PLATFORM_WINDOWS
 		thread_error t_err = thread_error::THREAD_SUCCESS;
 		if (WaitForSingleObject(mThreadHandle, INFINITE) == WAIT_FAILED)
 		{
@@ -159,6 +170,7 @@ MBASE_INLINE thread_error thread<Func, Args...>::join() noexcept {
 		mThreadHandle = nullptr;
 		mThreadId = 0;
 		return t_err;
+#endif
 	}
 
 	return thread_error::THREAD_MISSING_THREAD;
@@ -168,11 +180,13 @@ template<typename Func, typename ...Args>
 MBASE_INLINE thread_error thread<Func, Args...>::halt() noexcept {
 	if (mThreadHandle)
 	{
+#ifdef MBASE_PLATFORM_WINDOWS
 		if (SuspendThread(mThreadHandle) == -1)
 		{
 			return thread_error::THREAD_UNKNOWN_ERROR;
 		}
 		return thread_error::THREAD_SUCCESS;
+#endif
 	}
 
 	return thread_error::THREAD_MISSING_THREAD;
@@ -182,11 +196,13 @@ template<typename Func, typename ...Args>
 MBASE_INLINE thread_error thread<Func, Args...>::resume() noexcept {
 	if (mThreadHandle)
 	{
+#ifdef MBASE_PLATFORM_WINDOWS
 		if (ResumeThread(mThreadHandle) == -1)
 		{
 			return thread_error::THREAD_UNKNOWN_ERROR;
 		}
 		return thread_error::THREAD_SUCCESS;
+#endif
 	}
 	return thread_error::THREAD_MISSING_THREAD;
 }
@@ -195,6 +211,7 @@ template<typename Func, typename ...Args>
 MBASE_INLINE thread_error thread<Func, Args...>::exit(I32 in_exit_code) noexcept {
 	if (mThreadHandle)
 	{
+#ifdef MBASE_PLATFORM_WINDOWS
 		if (TerminateThread(mThreadHandle, in_exit_code) == -1)
 		{
 			mThreadHandle = nullptr;
@@ -204,6 +221,7 @@ MBASE_INLINE thread_error thread<Func, Args...>::exit(I32 in_exit_code) noexcept
 		mThreadHandle = nullptr;
 		mThreadId = 0;
 		return thread_error::THREAD_SUCCESS;
+#endif
 	}
 	return thread_error::THREAD_MISSING_THREAD;
 }

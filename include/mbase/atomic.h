@@ -2,7 +2,10 @@
 #define MBASE_ATOMIC_H
 
 #include <mbase/common.h>
+
+#ifdef MBASE_PLATFORM_WINDOWS
 #include <Windows.h> // InterlockedExchange64, InterlockedAdd64, InterlockedIncrement64, InterlockedDecrement64
+#endif
 
 MBASE_STD_BEGIN
 

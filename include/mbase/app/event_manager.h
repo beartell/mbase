@@ -6,7 +6,6 @@
 #include <mbase/string.h>
 #include <mbase/app/event_handler.h>
 #include <mbase/unordered_map.h>
-#include <time.h>
 
 MBASE_BEGIN
 

@@ -5,7 +5,10 @@
 #include <mbase/list.h>
 #include <mbase/app/timers.h>
 #include <mbase/app/thread_pool.h>
+
+#ifdef MBASE_PLATFORM_WINDOWS
 #include <Windows.h>
+#endif
 
 MBASE_BEGIN
 
@@ -18,11 +21,11 @@ public:
 
 	enum class flags : U32 {
 		TIMER_SUCCESS = 0,
-		TIMER_ERR_LIMIT_REACHED = 1,
-		TIMER_ERR_INVALID_DATA = 2,
-		TIMER_WARN_TIMER_WILL_EXECUTE_IMM = 3,
-		TIMER_ERR_BELONGS_TO_FOREIGN_LOOP = 4,
-		TIMER_ERR_ALREADY_REGISTERED = 5
+		TIMER_ERR_LIMIT_REACHED = MBASE_TIMER_LOOP_FLAGS_MIN,
+		TIMER_ERR_INVALID_DATA,
+		TIMER_WARN_TIMER_WILL_EXECUTE_IMM,
+		TIMER_ERR_BELONGS_TO_FOREIGN_LOOP,
+		TIMER_ERR_ALREADY_REGISTERED = MBASE_TIMER_LOOP_FLAGS_MAX
 	};
 
 	/* ===== BUILDER METHODS BEGIN ===== */
@@ -97,7 +100,8 @@ MBASE_INLINE timer_loop::flags timer_loop::register_timer(timer_base& in_timer) 
 
 	in_timer.mLoopId = mTimerLoopId;
 	in_timer.mStatus = mbase::timer_base::flags::TIMER_STATUS_REGISTERED;
-	in_timer.mSelfIter = mRegisteredTimers.insert(mRegisteredTimers.cend(), &in_timer); // WE WILL FIX IT LATER
+	mRegisteredTimers.push_back(&in_timer);
+	in_timer.mSelfIter = mRegisteredTimers.end_node();
 	in_timer.on_register();
 
 	return terr;
@@ -127,7 +131,8 @@ MBASE_INLINE timer_loop::flags timer_loop::register_timer(timer_base& in_timer, 
 	in_timer.mSuppliedData = in_usr_data;
 	in_timer.mLoopId = mTimerLoopId;
 	in_timer.mStatus = mbase::timer_base::flags::TIMER_STATUS_REGISTERED;
-	in_timer.mSelfIter = mRegisteredTimers.insert(mRegisteredTimers.cend(), &in_timer); // WE WILL FIX IT LATER
+	mRegisteredTimers.push_back(&in_timer);
+	in_timer.mSelfIter = mRegisteredTimers.end_node();
 	in_timer.on_register();
 
 	return terr;

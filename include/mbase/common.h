@@ -6,13 +6,25 @@
 #include <limits>
 
 #ifdef _WIN32
+	#define MBASE_PLATFORM_WINDOWS
+#endif
+
+#ifdef __unix__
+	#define MBASE_PLATFORM_UNIX
+#endif // __unix__
+
+#ifdef __APPLE__
+	#define MBASE_PLATFORM_APPLE
+#endif // __APPLE__
+
+
+#ifdef MBASE_PLATFORM_WINDOWS
 
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
+#endif // WINDOWS LEAN AND MEAN
 
-#endif
-
-#endif
+#endif // MBASE_PLATFORM_WINDOWS
 
 /* LANGUAGE VERSION CONTROL */
 
@@ -21,15 +33,15 @@
 #endif // !__cplusplus
 
 #ifdef __cpp_pack_indexing
-#define MBASE_CPP_VERSION 26
+	#define MBASE_CPP_VERSION 26
 #elif __cpp_multidimensional_subscript
-#define MBASE_CPP_VERSION 23
+	#define MBASE_CPP_VERSION 23
 #elif __cpp_concepts
-#define MBASE_CPP_VERSION 20
+	#define MBASE_CPP_VERSION 20
 #elif __cpp_fold_expressions
-#define MBASE_CPP_VERSION 17
+	#define MBASE_CPP_VERSION 17
 #else
-#error Invalid C++ version. MBASE require at least C++17.
+	#error Invalid C++ version. MBASE require at least C++17.
 #endif // !__cpp_pack_indexing
 
 /* LANGUAGE VERSION CONTROL */
