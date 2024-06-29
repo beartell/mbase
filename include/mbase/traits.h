@@ -129,7 +129,7 @@ MBASE_INLINE typename serialize_helper<SerializedType>::value_type serialize_hel
 template<>
 MBASE_INLINE typename serialize_helper<I8>::size_type serialize_helper<I8>::get_serialized_size() const noexcept
 {
-    return sizeof(typename value_type);
+    return sizeof(typename serialize_helper<I8>::value_type);
 }
 
 template<>
@@ -148,7 +148,7 @@ MBASE_INLINE typename serialize_helper<I8>::value_type serialize_helper<I8>::des
 template<>
 MBASE_INLINE typename serialize_helper<I16>::size_type serialize_helper<I16>::get_serialized_size() const noexcept
 {
-    return sizeof(typename value_type);
+    return sizeof(typename serialize_helper<I16>::value_type);
 }
 
 template<>
@@ -167,7 +167,7 @@ MBASE_INLINE typename serialize_helper<I16>::value_type serialize_helper<I16>::d
 template<>
 MBASE_INLINE typename serialize_helper<I32>::size_type serialize_helper<I32>::get_serialized_size() const noexcept
 {
-    return sizeof(typename value_type);
+    return sizeof(typename serialize_helper<I32>::value_type);
 }
 
 template<>
@@ -186,7 +186,7 @@ MBASE_INLINE typename serialize_helper<I32>::value_type serialize_helper<I32>::d
 template<>
 MBASE_INLINE typename serialize_helper<I64>::size_type serialize_helper<I64>::get_serialized_size() const noexcept
 {
-    return sizeof(typename value_type);
+    return sizeof(typename serialize_helper<I64>::value_type);
 }
 
 template<>
@@ -205,7 +205,7 @@ MBASE_INLINE typename serialize_helper<I64>::value_type serialize_helper<I64>::d
 template<>
 MBASE_INLINE typename serialize_helper<U8>::size_type serialize_helper<U8>::get_serialized_size() const noexcept
 {
-    return sizeof(typename value_type);
+    return sizeof(typename serialize_helper<U8>::value_type);
 }
 
 template<>
@@ -224,7 +224,7 @@ MBASE_INLINE typename serialize_helper<U8>::value_type serialize_helper<U8>::des
 template<>
 MBASE_INLINE typename serialize_helper<U16>::size_type serialize_helper<U16>::get_serialized_size() const noexcept
 {
-    return sizeof(typename value_type);
+    return sizeof(typename serialize_helper<U16>::value_type);
 }
 
 template<>
@@ -243,7 +243,7 @@ MBASE_INLINE typename serialize_helper<U16>::value_type serialize_helper<U16>::d
 template<>
 MBASE_INLINE typename serialize_helper<U32>::size_type serialize_helper<U32>::get_serialized_size() const noexcept
 {
-    return sizeof(typename value_type);
+    return sizeof(typename serialize_helper<U32>::value_type);
 }
 
 template<>
@@ -262,7 +262,7 @@ MBASE_INLINE typename serialize_helper<U32>::value_type serialize_helper<U32>::d
 template<>
 MBASE_INLINE typename serialize_helper<U64>::size_type serialize_helper<U64>::get_serialized_size() const noexcept
 {
-    return sizeof(typename value_type);
+    return sizeof(typename serialize_helper<U64>::value_type);
 }
 
 template<>

@@ -23,12 +23,20 @@ GetTempFileNameA
 */
 #endif
 
+#ifdef MBASE_PLATFORM_UNIX
+#include <dirent.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <stdio.h>
+#include <unistd.h>
+#endif
+
 MBASE_STD_BEGIN
 
 // THIS INFORMATION STRUCT WILL BE EXTENDED LATER
 struct FS_FILE_INFORMATION {
-	mbase::string_view fileName;
-	SIZE_T fileSize;
+	mbase::string fileName;
+	SIZE_T fileSize = 0;
 };
 
 enum class FS_ERROR : I32{
@@ -45,7 +53,7 @@ MBASE_INLINE FS_ERROR copy_file(const mbase::string_view& in_path, const mbase::
 MBASE_INLINE FS_ERROR delete_file(const mbase::string_view& in_path) noexcept;
 MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE mbase::string get_temp_path() noexcept;
 MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE mbase::string get_current_path() noexcept;
-MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE mbase::string get_temp_file(const mbase::string_view& in_prefix) noexcept;
+MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE mbase::string get_temp_file(const mbase::string_view& in_prefix = "") noexcept;
 template<typename ContainerType = mbase::vector<FS_FILE_INFORMATION>>
 MBASE_INLINE GENERIC get_directory(const mbase::string_view& in_path, ContainerType& out_files) noexcept
 {
@@ -59,6 +67,28 @@ MBASE_INLINE GENERIC get_directory(const mbase::string_view& in_path, ContainerT
 		out_files.push_back(ffi);
 	} while (FindNextFileA(findHandle, &findData));
 	FindClose(findHandle);
+#endif
+#ifdef MBASE_PLATFORM_UNIX
+	DIR *d = nullptr;
+	struct dirent* dir = nullptr;
+	d = opendir(in_path.c_str());
+	if(d)
+	{
+		while((dir = readdir(d)) != NULL)
+		{
+			FS_FILE_INFORMATION ffi;
+			struct stat st = {0};
+			
+			ffi.fileName = dir->d_name;
+
+			if(!stat(dir->d_name, &st))
+			{
+				ffi.fileSize = st.st_size;
+			}
+			out_files.push_back(ffi);
+		}
+		closedir(d);
+	}
 #endif
 }
 
@@ -79,6 +109,7 @@ MBASE_INLINE FS_ERROR err_convert(I16 in_err) noexcept
 		return FS_ERROR::FS_UNKNOWN_ERROR;
 	}
 #endif
+	return FS_ERROR::FS_SUCCESS;
 }
 
 MBASE_INLINE FS_ERROR create_directory(const mbase::string_view& in_path) noexcept 
@@ -88,9 +119,14 @@ MBASE_INLINE FS_ERROR create_directory(const mbase::string_view& in_path) noexce
 	{
 		return err_convert(GetLastError());
 	}
-
-	return FS_ERROR::FS_SUCCESS;
 #endif
+#ifdef MBASE_PLATFORM_UNIX
+	if(mkdir(in_path.c_str(), 0600))
+	{
+
+	}
+#endif
+	return FS_ERROR::FS_SUCCESS;
 }
 
 MBASE_INLINE FS_ERROR copy_file(const mbase::string_view& in_path, const mbase::string_view& in_copypath) noexcept 
@@ -100,18 +136,24 @@ MBASE_INLINE FS_ERROR copy_file(const mbase::string_view& in_path, const mbase::
 	{
 		return err_convert(GetLastError());
 	}
-
-	return FS_ERROR::FS_SUCCESS;
 #endif
+#ifdef MBASE_PLATFORM_UNIX
+
+#endif
+	return FS_ERROR::FS_SUCCESS;
 }
 
 MBASE_INLINE FS_ERROR delete_file(const mbase::string_view& in_path) noexcept 
 {
+#ifdef MBASE_PLATFORM_WINDOWS
 	if (!DeleteFileA(in_path.c_str()))
 	{
 		return err_convert(GetLastError());
 	}
-
+#endif
+#ifdef MBASE_PLATFORM_UNIX
+	remove(in_path.c_str());
+#endif
 	return FS_ERROR::FS_SUCCESS;
 }
 
@@ -122,6 +164,9 @@ MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE mbase::string get_temp_path() noexcep
 	GetTempPathA(MAX_PATH + 1, pathString);
 	return mbase::string(pathString);
 #endif
+#ifdef MBASE_PLATFORM_UNIX
+	return mbase::string("/tmp/");
+#endif
 }
 
 MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE mbase::string get_current_path() noexcept 
@@ -131,6 +176,9 @@ MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE mbase::string get_current_path() noex
 	GetCurrentDirectoryA(MAX_PATH + 1, pathString);
 	return mbase::string(pathString);
 #endif
+#ifdef MBASE_PLATFORM_UNIX
+	return mbase::string(get_current_dir_name());
+#endif
 }
 
 MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE mbase::string get_temp_file(const mbase::string_view& in_prefix) noexcept 
@@ -139,6 +187,11 @@ MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE mbase::string get_temp_file(const mba
 	IBYTE pathString[MAX_PATH + 1] = { 0 };
 	GetTempFileNameA(".", in_prefix.c_str(), 0, pathString);
 	return mbase::string(pathString);
+#endif
+#ifdef MBASE_PLATFORM_UNIX
+	mbase::string tempName = in_prefix + "XXXXXX";
+	mkstemp(tempName.data());
+	return tempName;
 #endif
 }
 

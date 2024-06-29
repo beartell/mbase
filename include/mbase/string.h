@@ -299,40 +299,42 @@ public:
         return character_sequence(new_data, totalSize, totalCapacity);
     }
     MBASE_INLINE_EXPR friend character_sequence operator+(const character_sequence& in_lhs, const_pointer in_rhs) noexcept {
-        size_type rhsSize = this->length(in_rhs);
+        size_type rhsSize = SeqBase::length_bytes(in_rhs);
         if (!rhsSize)
         {
             return character_sequence(in_lhs);
         }
-        size_type totalSize = in_lhs.mSize + this->length(in_rhs);
+        size_type totalSize = in_lhs.mSize + rhsSize;
         size_type totalCapacity = in_lhs.mCapacity;
         while (totalSize >= totalCapacity)
         {
             totalCapacity *= 2;
         }
-        pointer new_data = mExternalAllocator.allocate(totalCapacity, true);
+        allocator alc;
+        pointer new_data = alc.allocate(totalCapacity, true);
 
-        this->concat(new_data, in_lhs.mRawData, in_lhs.mSize);
-        this->concat(new_data + in_lhs.mSize, in_rhs, rhsSize);
+        SeqBase::concat(new_data, in_lhs.mRawData, in_lhs.mSize);
+        SeqBase::concat(new_data + in_lhs.mSize, in_rhs, rhsSize);
 
         return character_sequence(new_data, totalSize, totalCapacity);
     }
     MBASE_INLINE_EXPR friend character_sequence operator+(const character_sequence& in_lhs, value_type in_rhs) noexcept {
-        size_type rhsSize = this->length(in_rhs);
+        size_type rhsSize = SeqBase::length(in_rhs);
         if (!rhsSize)
         {
             return character_sequence(in_lhs);
         }
-        size_type totalSize = in_lhs.mSize + type_sequence<value_type>::length(in_rhs);
+        size_type totalSize = in_lhs.mSize + SeqBase::length(in_rhs);
         size_type totalCapacity = in_lhs.mCapacity;
         while (totalSize >= totalCapacity)
         {
             totalCapacity *= 2;
         }
-        pointer new_data = mExternalAllocator.allocate(totalCapacity, true);
+        allocator alc;
+        pointer new_data = alc.allocate(totalCapacity, true);
 
-        this->concat(new_data, in_lhs.mRawData, in_lhs.mSize);
-        this->concat(new_data + in_lhs.mSize, in_rhs, rhsSize);
+        SeqBase::concat(new_data, in_lhs.mRawData, in_lhs.mSize);
+        SeqBase::concat(new_data + in_lhs.mSize, in_rhs, rhsSize);
 
         return character_sequence(new_data, totalSize, totalCapacity);
     }
@@ -620,6 +622,7 @@ MBASE_INLINE character_sequence<SeqType, SeqBase, Allocator>& character_sequence
     _clear_self();
     size_type st_length = this->length_bytes(in_rhs);
     mCapacity = this->_calculate_capacity(st_length);
+    mSize = st_length;
     _build_string(mCapacity);
     this->copy_bytes(mRawData, in_rhs, st_length);
     return *this;
@@ -2110,8 +2113,6 @@ MBASE_INLINE GENERIC character_sequence<SeqType, SeqBase, Allocator>::_clear_sel
 }
 
 using string = character_sequence<IBYTE>;
-
-
 using wstring = string; // WSTRING WILL BE IMPLEMENTED LATER
 using string_view = string; // STRING VIEW WILL BE IMPLEMENTED LATER
 

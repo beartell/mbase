@@ -68,7 +68,7 @@ Description:
 template<typename T, typename Allocator>
 struct exposed_set_node {
     using value_type = T;
-    using allocator_type = typename Allocator;
+    using allocator_type = Allocator;
 
     MBASE_INLINE_EXPR exposed_set_node() noexcept : dataSet(false){}
     MBASE_INLINE_EXPR exposed_set_node(T&& in_data) noexcept : nodeData(std::move(in_data)), dataSet(true){}

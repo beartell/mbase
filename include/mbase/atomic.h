@@ -7,6 +7,10 @@
 #include <Windows.h> // InterlockedExchange64, InterlockedAdd64, InterlockedIncrement64, InterlockedDecrement64
 #endif
 
+#ifdef MBASE_PLATFORM_UNIX
+
+#endif
+
 MBASE_STD_BEGIN
 
 /*

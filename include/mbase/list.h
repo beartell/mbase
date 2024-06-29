@@ -48,8 +48,8 @@ Description:
 template<typename T, typename Allocator = mbase::allocator<T>>
 class list {
 private:
-	using node_type = typename list_node<T>;
-	using node_allocator = typename mbase::allocator<typename node_type>;
+	using node_type = list_node<T>;
+	using node_allocator = typename mbase::allocator<node_type>;
 	node_type* mFirstNode;
 	node_type* mLastNode;
 	SIZE_T mSize;
@@ -68,10 +68,10 @@ public:
 	using size_type = SIZE_T;
 	using difference_type = PTRDIFF;
 	using allocator_type = Allocator;
-	using iterator = typename bi_list_iterator<node_type, value_type>;
-	using const_iterator = typename const_bi_list_iterator<node_type, value_type>;
-	using reverse_iterator = typename reverse_bi_list_iterator<node_type, value_type>;
-	using const_reverse_iterator = typename const_reverse_bi_list_iterator<node_type, value_type>;
+	using iterator = bi_list_iterator<node_type, value_type>;
+	using const_iterator = const_bi_list_iterator<node_type, value_type>;
+	using reverse_iterator = reverse_bi_list_iterator<node_type, value_type>;
+	using const_reverse_iterator = const_reverse_bi_list_iterator<node_type, value_type>;
 
 	/* ===== BUILDER METHODS BEGIN ===== */
 	MBASE_INLINE list() noexcept;
@@ -958,7 +958,7 @@ MBASE_INLINE GENERIC list<T, Allocator>::serialize(char_stream& out_buffer) cons
 			return;
 		}
 
-		for (iterator It = begin(); It != end(); It++)
+		for (const_iterator It = begin(); It != end(); It++)
 		{
 			bool isPrimitive = std::is_integral_v<value_type>;
 			if (!isPrimitive)

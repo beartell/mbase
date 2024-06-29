@@ -60,10 +60,20 @@ public:
 	using pointer = T*;
 	using const_pointer = const T*;
 	using allocator_type = Allocator;
+
+	#ifdef MBASE_PLATFORM_WINDOWS
 	using iterator = typename sequence_iterator<T>;
 	using const_iterator = typename const_sequence_iterator<T>;
 	using reverse_iterator = typename reverse_sequence_iterator<T>;
 	using const_reverse_iterator = typename const_reverse_sequence_iterator<T>;
+	#endif
+
+	#ifdef MBASE_PLATFORM_UNIX
+	using iterator = sequence_iterator<T>;
+	using const_iterator = const_sequence_iterator<T>;
+	using reverse_iterator = reverse_sequence_iterator<T>;
+	using const_reverse_iterator = const_reverse_sequence_iterator<T>;
+	#endif
 
 	/* ===== BUILDER METHODS BEGIN ===== */
 	MBASE_INLINE_EXPR MBASE_EXPLICIT vector() noexcept;

@@ -10,6 +10,10 @@
 #include <Windows.h> // FILE_BEGIN, FILE_CURRENT, FILE_END, SetFilePointer
 #endif
 
+#ifdef MBASE_PLATFORM_UNIX
+#include <unistd.h>
+#endif
+
 MBASE_STD_BEGIN
 
 /*
@@ -28,8 +32,9 @@ it is used for storing the raw file handle and it's OS dependant 'context'.
 
 */
 
+template<typename OSFhandle>
 struct io_context {
-	PTRGENERIC raw_handle = nullptr;
+	OSFhandle raw_handle = 0;
 	PTRGENERIC context_body = nullptr;
 };
 
@@ -61,19 +66,31 @@ much easier to maintain and track. To use stream association, refer to the Strea
 class io_base {
 public:
 	using size_type = SIZE_T;
-
+	#ifdef MBASE_PLATFORM_WINDOWS
+	using os_file_handle = PTRGENERIC;
+	#endif
+	#ifdef MBASE_PLATFORM_UNIX
+	using os_file_handle = I32;
+	#endif
 	enum class move_method : U8 {
+		#ifdef MBASE_PLATFORM_WINDOWS
 		MV_BEGIN = FILE_BEGIN,
 		MV_CURRENT = FILE_CURRENT,
 		MV_ENC = FILE_END
+		#endif
+		#ifdef MBASE_PLATFORM_UNIX
+		MV_BEGIN = SEEK_SET,
+		MV_CURRENT = SEEK_CUR,
+		MV_ENC = SEEK_END
+		#endif
 	};
-	
+
 	/* ===== BUILDER METHODS BEGIN ===== */
 	io_base() : mIstream(nullptr), mOstream(nullptr), mOperateReady(false), mLastError(0) {}
 	/* ===== BUILDER METHODS END ===== */
 
 	/* ===== OBSERVATION METHODS BEGIN ===== */
-	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) io_context& get_raw_context() noexcept { return mRawContext; }
+	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) io_context<os_file_handle>& get_raw_context() noexcept { return mRawContext; }
 	MBASE_ND(MBASE_OBS_IGNORE) U32 get_last_error() const noexcept { return mLastError; }
 	MBASE_ND(MBASE_OBS_IGNORE) bool is_operate_ready() const noexcept { return mOperateReady; }
 	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) char_stream* get_is() noexcept { return mIstream; }
@@ -81,8 +98,8 @@ public:
 	/* ===== OBSERVATION METHODS END ===== */
 
 	/* ===== STATE-MODIFIER METHODS BEGIN ===== */
-	virtual size_type write_data(IBYTEBUFFER in_src) = 0;
-	virtual size_type write_data(IBYTEBUFFER in_src, size_type in_length) = 0;
+	virtual size_type write_data(const IBYTEBUFFER in_src) = 0;
+	virtual size_type write_data(const IBYTEBUFFER in_src, size_type in_length) = 0;
 	virtual size_type write_data(const mbase::string& in_src) = 0;
 	virtual size_type write_data(char_stream& in_src) = 0;
 	virtual size_type write_data(char_stream& in_src, size_type in_length) = 0;
@@ -100,7 +117,12 @@ public:
 	{ 
 		if(mRawContext.raw_handle)
 		{
+			#ifdef MBASE_PLATFORM_WINDOWS
 			SetFilePointer(mRawContext.raw_handle, in_distance, nullptr, (DWORD)in_method);
+			#endif
+			#ifdef MBASE_PLATFORM_UNIX
+			lseek((I32)mRawContext.raw_handle, in_distance, (I32)in_method);
+			#endif
 		}
 	}
 	template<typename SerializableObject>
@@ -122,13 +144,13 @@ public:
 	/* ===== STATE-MODIFIER METHODS END ===== */
 
 protected:
-	GENERIC _set_raw_context(PTRGENERIC raw_handle) noexcept 
+	GENERIC _set_raw_context(os_file_handle raw_handle) noexcept 
 	{
 		mRawContext.raw_handle = raw_handle;
 		mRawContext.context_body = nullptr;
 	}
 
-	GENERIC _set_raw_context(PTRGENERIC raw_handle, PTRGENERIC context_body) noexcept 
+	GENERIC _set_raw_context(os_file_handle raw_handle, PTRGENERIC context_body) noexcept 
 	{
 		mRawContext.raw_handle = raw_handle;
 		mRawContext.context_body = context_body;
@@ -139,7 +161,7 @@ protected:
 		mLastError = in_errcode;
 	}
 
-	io_context mRawContext;
+	io_context<os_file_handle> mRawContext;
 	char_stream* mIstream;
 	char_stream* mOstream;
 	U32 mLastError;

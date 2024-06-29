@@ -3,6 +3,7 @@
 
 #include <mbase/common.h>
 #include <utility> // std::forward
+#include <cstring>
 MBASE_STD_BEGIN
 
 /* 

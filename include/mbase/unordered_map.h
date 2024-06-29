@@ -28,12 +28,12 @@ public:
 	using size_type = SIZE_T;
 	using difference_type = PTRDIFF;
 	using hasher = Hash;
-	using bucket_node_type = mbase::list<typename value_type>;
-	using bucket_type = mbase::vector<typename bucket_node_type>;
+	using bucket_node_type = mbase::list<value_type>;
+	using bucket_type = mbase::vector<bucket_node_type>;
 	using key_equal = KeyEqual;
 	using allocator_type = Allocator;
-	using reference = typename value_type&;
-	using const_reference = typename const value_type&;
+	using reference = value_type&;
+	using const_reference = const value_type&;
 	using pointer = typename allocator_type::pointer;
 	using const_pointer = typename allocator_type::const_pointer;
 	using local_iterator = typename bucket_node_type::iterator;
