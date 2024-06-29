@@ -10,6 +10,10 @@
 #include <Windows.h>
 #endif
 
+#ifdef MBASE_PLATFORM_UNIX
+#include <time.h>
+#endif
+
 MBASE_BEGIN
 
 static const U32 gDefaultTimerLimit = 2048;
@@ -54,7 +58,9 @@ public:
 
 protected:
 	F64 mDeltaTime;
+	#ifdef MBASE_PLATFORM_WINDOWS
 	F64 mFrequency;
+	#endif
 	U32 mTimerLimit;
 	U32 mTimerIdCounter;
 	U64 mPrevTime;
@@ -66,11 +72,19 @@ protected:
 
 MBASE_INLINE timer_loop::timer_loop() : mTimerLimit(gDefaultTimerLimit), mTimerIdCounter(0), mPrevTime(0), mIsRunning(false), mTimerLoopId(0)
 {
+	mTimerLoopId = ++gTimerLoopIdCounter;
+	#ifdef MBASE_PLATFORM_WINDOWS
 	LARGE_INTEGER performanceFrequency = {};
 	QueryPerformanceFrequency(&performanceFrequency);
 	mFrequency = 1000 / (F64)performanceFrequency.QuadPart; // MS ACCURACY
 	mDeltaTime = mFrequency;
-	mTimerLoopId = ++gTimerLoopIdCounter;
+	#endif	
+
+	#ifdef MBASE_PLATFORM_UNIX
+	struct timespec ts;
+	clock_gettime(CLOCK_MONOTONIC, &ts);
+	mPrevTime = ts.tv_sec * 1000 + ts.tv_nsec / 1000000;
+	#endif
 }
 
 MBASE_INLINE timer_loop::~timer_loop()
@@ -184,16 +198,31 @@ MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE mbase::list<timer_base*>& timer_loop::ge
 
 MBASE_INLINE GENERIC timer_loop::run_timers() noexcept
 {
+	#ifdef MBASE_PLATFORM_WINDOWS
 	LARGE_INTEGER queryTime;
 	QueryPerformanceCounter(&queryTime);
 	U64 currentTime = queryTime.QuadPart;
+	#endif
+
+	#ifdef MBASE_PLATFORM_UNIX
+	struct timespec ts;
+	clock_gettime(CLOCK_MONOTONIC, &ts);
+	U64 currentTime = ts.tv_sec * 1000 + ts.tv_nsec / 1000000;
+	#endif
 
 	if(!mPrevTime)
 	{
 		mPrevTime = currentTime; // only the first case
 	}
 
+	#ifdef MBASE_PLATFORM_WINDOWS
 	mDeltaTime = (currentTime - mPrevTime) * mFrequency;
+	#endif
+
+	#ifdef MBASE_PLATFORM_UNIX
+	mDeltaTime = (currentTime - mPrevTime);
+	#endif
+
 
 	timer_container::iterator It = mRegisteredTimers.begin();
 	while (It != mRegisteredTimers.end())
@@ -242,7 +271,13 @@ MBASE_INLINE GENERIC timer_loop::run_timers() noexcept
 			}
 		}
 	}
+	#ifdef MBASE_PLATFORM_WINDOWS
 	QueryPerformanceCounter(&queryTime);
+	#endif
+
+	#ifdef MBASE_PLATFORM_UNIX
+	clock_gettime(CLOCK_MONOTONIC, &ts);
+	#endif
 	mPrevTime = currentTime;
 }
 

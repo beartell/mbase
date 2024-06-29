@@ -6,7 +6,6 @@
 #include <mbase/synchronization.h>
 #include <mbase/app/handler_base.h>
 #include <mbase/thread.h>
-#include <mbase/atomic.h>
 
 MBASE_BEGIN
 
