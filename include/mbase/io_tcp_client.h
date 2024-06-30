@@ -9,6 +9,13 @@
 #include <mbase/wsa_init.h> // static wsa socket initializiation through mbase::wsa_initializer
 #endif
 
+#ifdef MBASE_PLATFORM_UNIX
+#include <stdio.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#endif
+
 MBASE_STD_BEGIN
 
 /*
