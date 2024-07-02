@@ -103,6 +103,19 @@ public:
 	/* ===== OPERATOR BUILDER METHODS END ===== */
 };
 
+template<typename Object>
+class singleton : public non_copymovable {
+public:
+	static Object& get_instance() noexcept
+	{
+		static Object mInstance;
+		return mInstance;
+	}
+protected:
+	singleton(){}
+	~singleton(){}
+};
+
 MBASE_STD_END
 
 #endif // !MBASE_BEHAVIORS_H

@@ -150,6 +150,7 @@ MBASE_INLINE io_base::os_file_handle io_file::open_file(const mbase::string& in_
 #ifdef MBASE_PLATFORM_WINDOWS
 	DWORD fileAttrs = FILE_ATTRIBUTE_NORMAL;
 	PTRGENERIC rawHandle = CreateFileA(mFileName.c_str(), (DWORD)in_accmode, FILE_SHARE_READ, nullptr, (DWORD)in_disp, fileAttrs, nullptr);
+	mFileName = in_filename;
 	if (!rawHandle)
 	{
 		_set_last_error(GetLastError());
@@ -172,7 +173,6 @@ MBASE_INLINE io_base::os_file_handle io_file::open_file(const mbase::string& in_
 	}
 	else
 	{
-		mFileName = in_filename;
 		mOperateReady = true;
 		_set_raw_context(fHandle);
 	}
