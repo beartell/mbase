@@ -27,10 +27,13 @@ class PcProgram : public mbase::singleton<PcProgram> {
 public:
 	using MBDate = U32; // placeholder: not a real date
 
+	PcProgram();
+	~PcProgram();
+
 	PcConfig* get_config() noexcept;
 	PcDiagnostics* get_diagnostics_manager() noexcept;
 	PcIoManager* get_io_manager() noexcept;
-	PcState* get_state_manager() noexcept;
+	PcState* get_program_state() noexcept;
 	const PcProgramInfo* get_program_info() const noexcept;
 	event_manager* get_event_manager() noexcept;
 	bool is_running() const noexcept;
@@ -46,65 +49,74 @@ private:
 	PcConfig* mConfig;
 	PcDiagnostics* mDiagnostics;
 	PcIoManager* mIoManager;
-	PcState* mState;
 	PcProgramInfo mProgramInfo;
+	PcState mState;
 	event_manager mEventManager;
 	bool mIsRunning;
 	bool mIsAuthorized;
+	bool mIsInitialized;
 	MBDate mSessionTime;
 	MBDate mLastSessionTime;
 };
 
+PcProgram::PcProgram()
+{
+
+}
+
+PcProgram::~PcProgram()
+{
+
+}
+
 PcConfig* PcProgram::get_config() noexcept
 {
-	return nullptr;
+	return mConfig;
 }
 
 PcDiagnostics* PcProgram::get_diagnostics_manager() noexcept
 {
-	return nullptr;
+	return mDiagnostics;
 }
 
 PcIoManager* PcProgram::get_io_manager() noexcept
 {
-	return nullptr;
+	return mIoManager;
 }
 
-PcState* PcProgram::get_state_manager() noexcept
+PcState* PcProgram::get_program_state() noexcept
 {
-	return nullptr;
+	return &mState;
 }
 
 const PcProgramInfo* PcProgram::get_program_info() const noexcept
 {
-	return nullptr;
+	return &mProgramInfo;
 }
 
 event_manager* PcProgram::get_event_manager() noexcept
 {
-	return nullptr;
+	return &mEventManager;
 }
 
 bool PcProgram::is_running() const noexcept
 {
-	return false;
+	return mIsRunning;
 }
 
 bool PcProgram::is_initialized() const noexcept
 {
-	return false;
+	return mIsInitialized;
 }
 
 GENERIC PcProgram::initialize()
 {
 	mDiagnostics = &PcDiagnostics::get_instance();
 	mConfig = &PcConfig::get_instance();
-	mState = &PcState::get_instance();
 	mIoManager = &PcIoManager::get_instance();
 
 	mDiagnostics->initialize();
 	mConfig->initialize();
-	mState->initialize();
 	mIoManager->initialize();
 }
 

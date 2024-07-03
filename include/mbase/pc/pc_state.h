@@ -8,7 +8,7 @@
 
 MBASE_BEGIN
 
-class PcState : public mbase::singleton<PcState> {
+class PcState : public mbase::non_copyable {
 public:
 	using key_val_map = mbase::unordered_map<mbase::string, mbase::char_stream>;
 
@@ -18,6 +18,9 @@ public:
 		STATE_ERR_MISSING_DATA,
 		STATE_ERR_NOT_FOUND
 	};
+
+	PcState() = default;
+	~PcState() = default;
 
 	bool initialize();
 	flags set_state_file(const mbase::string& in_path, bool in_transfer_state = true) noexcept;
