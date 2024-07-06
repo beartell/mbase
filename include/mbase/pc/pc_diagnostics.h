@@ -6,6 +6,7 @@
 #include <mbase/behaviors.h>
 #include <mbase/vector.h>
 #include <mbase/synchronization.h>
+#include <iostream>
 
 MBASE_BEGIN
 
@@ -64,7 +65,7 @@ PcDiagnostics::flags PcDiagnostics::log(flags in_log_type, flags in_log_importan
 		return flags::DIAGNOSTICS_ERR_MISSING_MESSAGE;
 	}
 
-	mbase::string totalLog = std::move(_build_log_heading(in_log_type, in_log_importance));
+	mbase::string totalLog = _build_log_heading(in_log_type, in_log_importance);
 	totalLog += in_message + MBASE_PLATFORM_NEWLINE;
 
 	mbase::lock_guard lockGuard(mLogMutex);
@@ -81,8 +82,9 @@ PcDiagnostics::flags PcDiagnostics::log(flags in_log_type, flags in_log_importan
 		return flags::DIAGNOSTICS_ERR_MISSING_MESSAGE;
 	}
 
-	mbase::string totalLog = std::move(_build_log_heading(in_log_type, in_log_importance));
-	totalLog += mbase::string::from_format(in_format, in_params) + MBASE_PLATFORM_NEWLINE;
+	mbase::string totalLog = _build_log_heading(in_log_type, in_log_importance);
+
+	totalLog += mbase::string::from_format(in_format, std::forward<Params>(in_params)...) + MBASE_PLATFORM_NEWLINE;
 
 	mbase::lock_guard lockGuard(mLogMutex);
 	mLogList.push_back(totalLog);

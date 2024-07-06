@@ -108,6 +108,8 @@ public:
 	virtual size_type read_data(char_stream& in_src, size_type in_length) = 0;
 	GENERIC associate_is(char_stream& in_stream) noexcept { mIstream = &in_stream; }
 	GENERIC associate_os(char_stream& in_stream) noexcept { mOstream = &in_stream; }
+	GENERIC clear_is() noexcept { mIstream = nullptr; }
+	GENERIC clear_os() noexcept { mOstream = nullptr; }
 	size_type sync_is() noexcept { return read_data(*mIstream); }
 	size_type sync_is(size_type in_length) noexcept { return read_data(*mIstream, in_length); }
 	size_type sync_os() noexcept { return write_data(*mOstream); }

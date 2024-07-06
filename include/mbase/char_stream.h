@@ -170,6 +170,7 @@ Both char_stream and deep_char_stream should be used with utmost care.
 class deep_char_stream : public char_stream {
 public:
 	/* ===== BUILDER METHODS BEGIN ===== */
+	MBASE_INLINE deep_char_stream() noexcept;
 	MBASE_INLINE MBASE_EXPLICIT deep_char_stream(IBYTEBUFFER in_src) noexcept;
 	MBASE_INLINE MBASE_EXPLICIT deep_char_stream(IBYTEBUFFER in_src, size_type in_length) noexcept;
 	MBASE_INLINE MBASE_EXPLICIT deep_char_stream(size_type in_length);
@@ -443,6 +444,12 @@ MBASE_INLINE IBYTEBUFFER char_stream::operator--(I32) noexcept
 	reverse();
 	return mSrcBuffer;
 }
+
+MBASE_INLINE deep_char_stream::deep_char_stream() noexcept : char_stream()
+{
+
+}
+
 
 MBASE_INLINE deep_char_stream::deep_char_stream(IBYTEBUFFER in_src) noexcept : char_stream(in_src) 
 {

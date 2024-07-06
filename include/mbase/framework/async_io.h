@@ -33,6 +33,7 @@ public:
 	};
 
 	/* ===== BUILDER METHODS BEGIN ===== */
+	MBASE_INLINE async_io_manager() noexcept;
 	MBASE_INLINE async_io_manager(U32 in_max_write_context, U32 in_max_read_context) noexcept;
 	MBASE_INLINE ~async_io_manager() noexcept;
 	/* ===== BUILDER METHODS END ===== */
@@ -43,6 +44,8 @@ public:
 	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE U32 get_allowed_write_context() const noexcept;
 	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE U32 get_allowed_read_context() const noexcept;
 	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE SIZE_T get_manager_id() const noexcept;
+	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE bool is_write_context_available() const noexcept;
+	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE bool is_read_context_available() const noexcept;
 	/* ===== OBSERVATION METHODS END ===== */
 
 	/* ===== STATE-MODIFIER METHODS BEGIN ===== */
@@ -77,6 +80,13 @@ private:
 		mbase::mutex mReadQueueMutex;
 	#endif
 };
+
+MBASE_INLINE async_io_manager::async_io_manager() noexcept
+{
+	mAioId = ++gAioMngIdCounter;
+	mMaximumAllowedWriteContext = 32;
+	mMaximumAllowedReadContext = 32;
+}
 
 MBASE_INLINE async_io_manager::async_io_manager(U32 in_max_write_context, U32 in_max_read_context) noexcept
 {
@@ -115,6 +125,26 @@ MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE U32 async_io_manager::get_allowed_read_c
 MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE SIZE_T async_io_manager::get_manager_id() const noexcept
 {
 	return mAioId;
+}
+
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE bool async_io_manager::is_write_context_available() const noexcept
+{
+	if (mWriteContextList.size() > mMaximumAllowedWriteContext)
+	{
+		return false;
+	}
+
+	return true;
+}
+
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE bool async_io_manager::is_read_context_available() const noexcept
+{
+	if (mReadContextList.size() > mMaximumAllowedReadContext)
+	{
+		return false;
+	}
+
+	return true;
 }
 
 MBASE_INLINE async_io_manager::flags async_io_manager::enqueue_write_context(async_io_context& in_ctx, size_type in_bytes_on_each) noexcept 
@@ -425,6 +455,7 @@ MBASE_INLINE async_io_manager::flags async_io_manager::run_target_write_context(
 
 	in_ctx.mBytesTransferred += writtenBytes;
 	in_ctx.mTotalBytesTransferred += writtenBytes;
+	in_ctx.mBytesTransferredLastIteration = writtenBytes;
 	in_ctx.mContextState = tempFlag;
 
 	if(!writtenBytes)
@@ -486,6 +517,7 @@ MBASE_INLINE async_io_manager::flags async_io_manager::run_target_read_context(a
 
 	in_ctx.mBytesTransferred += readBytes;
 	in_ctx.mTotalBytesTransferred += readBytes;
+	in_ctx.mBytesTransferredLastIteration = readBytes;
 	in_ctx.mContextState = tempFlag;
 
 	if (!readBytes)

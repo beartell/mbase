@@ -249,7 +249,7 @@ public:
 
     /* ===== OPERATOR STATE-MODIFIER METHODS BEGIN ===== */
     character_sequence& operator+=(const character_sequence& in_rhs) noexcept;
-    character_sequence& operator+=(const_pointer in_rhs) noexcept;
+    // character_sequence& operator+=(const_pointer in_rhs) noexcept;
     character_sequence& operator+=(const value_type& in_character) noexcept;
     character_sequence& operator+=(std::initializer_list<value_type> in_chars);
     /* ===== OPERATOR STATE-MODIFIER METHODS END ===== */
@@ -292,7 +292,8 @@ public:
         {
             totalCapacity *= 2;
         }
-        pointer new_data = mbase::allocator_simple<value_type>::allocate(totalCapacity, true);
+        allocator alc;
+        pointer new_data = alc.allocate(totalCapacity, true);
         //this->length();
         type_sequence<value_type>::concat(new_data, in_lhs.mRawData, in_lhs.mSize);
         type_sequence<value_type>::concat(new_data + in_lhs.mSize, in_rhs.mRawData, in_rhs.mSize);
@@ -302,6 +303,7 @@ public:
         size_type rhsSize = SeqBase::length_bytes(in_rhs);
         if (!rhsSize)
         {
+            
             return character_sequence(in_lhs);
         }
         size_type totalSize = in_lhs.mSize + rhsSize;
@@ -1920,7 +1922,7 @@ character_sequence<SeqType, SeqBase, Allocator>& character_sequence<SeqType, Seq
         return *this;
     }
 
-    size_type totalSize = mSize + in_rhs.mSize;
+    /*size_type totalSize = mSize + in_rhs.mSize;
     if (totalSize >= mCapacity)
     {
         while (totalSize >= mCapacity)
@@ -1931,37 +1933,38 @@ character_sequence<SeqType, SeqBase, Allocator>& character_sequence<SeqType, Seq
     }
 
     this->concat(mRawData + mSize, in_rhs.mRawData, in_rhs.mSize);
-    mSize = totalSize;
+    mSize = totalSize;*/
+    *this = *this + in_rhs;
     return *this;
 }
 
-template<typename SeqType, typename SeqBase, typename Allocator>
-character_sequence<SeqType, SeqBase, Allocator>& character_sequence<SeqType, SeqBase, Allocator>::operator+=(const_pointer in_rhs) noexcept 
-{
-    if (!in_rhs)
-    {
-        return *this;
-    }
-    size_type rhsSize = this->length_bytes(in_rhs);
-    size_type totalSize = mSize + rhsSize;
-    if (totalSize == mSize)
-    {
-        return *this;
-    }
-
-    if (totalSize >= mCapacity)
-    {
-        while (totalSize >= mCapacity)
-        {
-            mCapacity *= 2;
-        }
-        _resize(mCapacity);
-    }
-
-    this->concat(mRawData + mSize, in_rhs, rhsSize);
-    mSize = totalSize;
-    return *this;
-}
+//template<typename SeqType, typename SeqBase, typename Allocator>
+//character_sequence<SeqType, SeqBase, Allocator>& character_sequence<SeqType, SeqBase, Allocator>::operator+=(const_pointer in_rhs) noexcept 
+//{
+//    if (!in_rhs)
+//    {
+//        return *this;
+//    }
+//    size_type rhsSize = this->length_bytes(in_rhs);
+//    size_type totalSize = mSize + rhsSize;
+//    if (totalSize == mSize)
+//    {
+//        return *this;
+//    }
+//
+//    if (totalSize >= mCapacity)
+//    {
+//        while (totalSize >= mCapacity)
+//        {
+//            mCapacity *= 2;
+//        }
+//        _resize(mCapacity);
+//    }
+//
+//    this->concat(mRawData + mSize, in_rhs, rhsSize);
+//    mSize = totalSize;
+//    return *this;
+//}
 
 template<typename SeqType, typename SeqBase, typename Allocator>
 character_sequence<SeqType, SeqBase, Allocator>& character_sequence<SeqType, SeqBase, Allocator>::operator+=(const value_type& in_character) noexcept 

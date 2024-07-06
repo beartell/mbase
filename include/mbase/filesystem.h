@@ -35,7 +35,7 @@ MBASE_STD_BEGIN
 
 // THIS INFORMATION STRUCT WILL BE EXTENDED LATER
 struct FS_FILE_INFORMATION {
-	mbase::string fileName;
+	mbase::string fileName = "";
 	SIZE_T fileSize = 0;
 };
 

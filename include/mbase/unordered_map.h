@@ -298,12 +298,17 @@ MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR typename unordered_map<Key, 
 			return iterator(this, i, firstItem);
 		}
 	}
-	return iterator();
+	return iterator(this, 0, mBucket[0].begin());
 }
 
 template<typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator>
 MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR typename unordered_map<Key, Value, Hash, KeyEqual, Allocator>::iterator unordered_map<Key, Value, Hash, KeyEqual, Allocator>::end() noexcept
 {
+	if(!mSize)
+	{
+		return iterator(this, 0, mBucket[0].end());
+	}
+
 	for (size_type i = mBucketCount - 1; i >= 0; i++)
 	{
 		local_iterator lastItem = begin(i);
@@ -327,7 +332,7 @@ MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR typename unordered_map<Key, 
 			return const_iterator(const_cast<unordered_map*>(this), i, firstItem);
 		}
 	}
-	return const_iterator();
+	return const_iterator(const_cast<unordered_map*>(this), 0, cbegin(0));
 }
 
 template<typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator>

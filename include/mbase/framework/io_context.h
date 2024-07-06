@@ -38,6 +38,7 @@ public:
 	/* ===== OBSERVATION METHODS BEGIN ===== */
 	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE size_type get_bytes_transferred() const noexcept;
 	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE size_type get_total_transferred_bytes() const noexcept;
+	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE size_type get_bytes_transferred_last_iteration() const noexcept;
 	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE size_type get_bytes_on_each_iteration() const noexcept;
 	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE size_type get_requested_bytes_count() const noexcept;
 	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE size_type get_aio_manager_id() const noexcept;
@@ -57,6 +58,7 @@ public:
 	MBASE_INLINE GENERIC flush_context() noexcept;
 	MBASE_INLINE flags halt_context() noexcept;
 	MBASE_INLINE flags resume_context() noexcept;
+	MBASE_INLINE flags set_stream(mbase::char_stream* in_stream) noexcept;
 	/* ===== STATE-MODIFIER METHODS END ===== */
 
 	friend class async_io_manager;
@@ -80,6 +82,7 @@ private:
 	size_type mBytesTransferred;
 	size_type mTargetBytes;
 	size_type mBytesOnEachIteration;
+	size_type mBytesTransferredLastIteration;
 	size_type mAioManagerId;
 	U32 mLastFraction;
 	U32 mCalculatedHop;
@@ -98,6 +101,7 @@ MBASE_INLINE async_io_context::async_io_context(io_base& in_base, flags in_io_di
 	mBytesTransferred(0),
 	mTargetBytes(0),
 	mBytesOnEachIteration(0),
+	mBytesTransferredLastIteration(0),
 	mAioManagerId(0),
 	mLastFraction(0),
 	mCalculatedHop(0),
@@ -137,6 +141,11 @@ MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE typename async_io_context::size_type asy
 MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE typename async_io_context::size_type async_io_context::get_total_transferred_bytes() const noexcept 
 {
 	return mTotalBytesTransferred;
+}
+
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE typename async_io_context::size_type async_io_context::get_bytes_transferred_last_iteration() const noexcept
+{
+	return mBytesTransferredLastIteration;
 }
 
 MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE typename async_io_context::size_type async_io_context::get_bytes_on_each_iteration() const noexcept 
@@ -260,6 +269,20 @@ MBASE_INLINE async_io_context::flags async_io_context::resume_context() noexcept
 	mIsActive = true;
 	mSrcBuffer->advance(mBytesTransferred);
 	//mIoHandle->set_file_pointer(mBytesTransferred, mbase::io_base::move_method::MV_BEGIN);
+	return flags::ASYNC_CTX_SUCCESS;
+}
+
+MBASE_INLINE async_io_context::flags async_io_context::set_stream(mbase::char_stream* in_stream) noexcept
+{
+	if(mSrcBuffer)
+	{
+		if(!mIsBufferInternal)
+		{
+			delete mSrcBuffer;
+		}
+	}
+	mSrcBuffer = in_stream;
+	mIsBufferInternal = true;
 	return flags::ASYNC_CTX_SUCCESS;
 }
 

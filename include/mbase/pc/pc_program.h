@@ -41,7 +41,7 @@ public:
 
 	GENERIC initialize();
 	bool authorize(mbase::string in_name, mbase::string in_password);
-	bool run();
+	bool update();
 	bool halt();
 	bool exit(I32 in_code, mbase::string in_message = "");
 
@@ -125,7 +125,7 @@ bool PcProgram::authorize(mbase::string in_name, mbase::string in_password)
 	return false;
 }
 
-bool PcProgram::run()
+bool PcProgram::update()
 {
 	return false;
 }
@@ -135,7 +135,7 @@ bool PcProgram::halt()
 	return false;
 }
 
-bool PcProgram::exit(I32 in_code, mbase::string in_message = "")
+bool PcProgram::exit(I32 in_code, mbase::string in_message)
 {
 	return false;
 }

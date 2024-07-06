@@ -8,6 +8,7 @@
 #include <mbase/unordered_map.h>
 
 #include <mbase/pc/pc_program.h>
+#include <mbase/pc/pc_diagnostics.h>
 
 MBASE_BEGIN
 
@@ -87,6 +88,11 @@ bool PcConfig::is_initialized() const noexcept
 
 bool PcConfig::initialize(mbase::string in_temp_path, mbase::string in_root_path, mbase::string in_config_path)
 {
+	if(is_initialized())
+	{
+		return true;
+	}
+
 	PcDiagnostics& pcDiag = PcDiagnostics::get_instance();
 	pcDiag.log(mbase::PcDiagnostics::flags::LOGTYPE_INFO, mbase::PcDiagnostics::flags::LOGIMPORTANCE_LOW, "Initializing program config.");
 
@@ -108,31 +114,33 @@ bool PcConfig::initialize(mbase::string in_temp_path, mbase::string in_root_path
 	{
 		mConfigPath = std::move(mbase::get_current_path());
 	}
-
+	
 	pcDiag.log(mbase::PcDiagnostics::flags::LOGTYPE_INFO, mbase::PcDiagnostics::flags::LOGIMPORTANCE_LOW, "Program temporary path: " + mTempPath);
 	pcDiag.log(mbase::PcDiagnostics::flags::LOGTYPE_INFO, mbase::PcDiagnostics::flags::LOGIMPORTANCE_LOW, "Program root path: " + mRootPath);
-
+	
 	mbase::vector<mbase::FS_FILE_INFORMATION> fileInfo;
 	mbase::get_directory(mConfigPath, fileInfo);
 	mConfigPath += "/config";
-	for(mbase::vector<mbase::FS_FILE_INFORMATION>::iterator It; It != fileInfo.end(); ++It)
-	{
-		if(It->fileName == "config")
-		{
-			// config folder exists
-			pcDiag.log(mbase::PcDiagnostics::flags::LOGTYPE_INFO, mbase::PcDiagnostics::flags::LOGIMPORTANCE_MID, "'config' folder found and set");
-			pcDiag.log(mbase::PcDiagnostics::flags::LOGTYPE_SUCCESS, mbase::PcDiagnostics::flags::LOGIMPORTANCE_LOW, "Config object initialized.");
-			return true;
-		}
-	}
+	
+	//for(mbase::vector<mbase::FS_FILE_INFORMATION>::iterator It; It != fileInfo.end(); ++It)
+	//{
+
+	//	if(It->fileName == "config")
+	//	{
+	//		// config folder exists
+	//		pcDiag.log(mbase::PcDiagnostics::flags::LOGTYPE_INFO, mbase::PcDiagnostics::flags::LOGIMPORTANCE_MID, "'config' folder found and set");
+	//		pcDiag.log(mbase::PcDiagnostics::flags::LOGTYPE_SUCCESS, mbase::PcDiagnostics::flags::LOGIMPORTANCE_LOW, "Config object initialized.");
+	//		mIsInitialized = true;
+	//		return true;
+	//	}
+	//}
 	
 	pcDiag.log(mbase::PcDiagnostics::flags::LOGTYPE_INFO, mbase::PcDiagnostics::flags::LOGIMPORTANCE_LOW, "Creating 'config' folder under root.");
-
 	if(mbase::create_directory(mConfigPath) != mbase::FS_ERROR::FS_SUCCESS)
 	{
 		pcDiag.log(mbase::PcDiagnostics::flags::LOGTYPE_ERROR, mbase::PcDiagnostics::flags::LOGIMPORTANCE_FATAL, "Unable to create 'config' folder under directory: " + mConfigPath);
 	}
-
+	mIsInitialized = true;
 	return true;
 }
 
@@ -193,6 +201,7 @@ PcConfig::flags PcConfig::load_config_file(const mbase::string& in_file, config_
 	MBASE_CONFIG_RETURN_UNINITIALIZED;
 
 	PcDiagnostics& pcDiag = PcDiagnostics::get_instance();
+	return flags::CONFIG_SUCCESS;
 }
 
 PcConfig::flags PcConfig::update() noexcept
@@ -202,7 +211,7 @@ PcConfig::flags PcConfig::update() noexcept
 
 	PcDiagnostics& pcDiag = PcDiagnostics::get_instance();
 
-
+	return flags::CONFIG_SUCCESS;
 }
 
 PcConfig::flags PcConfig::update(config_map& in_cmap) noexcept
@@ -214,6 +223,7 @@ PcConfig::flags PcConfig::update(config_map& in_cmap) noexcept
 	mConfigMap = in_cmap;
 
 	pcDiag.log(mbase::PcDiagnostics::flags::LOGTYPE_INFO, mbase::PcDiagnostics::flags::LOGIMPORTANCE_MID, "New config map loaded");
+	return flags::CONFIG_SUCCESS;
 }
 
 PcConfig::flags PcConfig::set_config_param(const mbase::string& in_key, const mbase::string& in_param) noexcept

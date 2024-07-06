@@ -3,6 +3,7 @@
 
 #include <mbase/common.h>
 #include <mbase/behaviors.h>
+#include <mbase/list.h>
 #include <mbase/framework/handler_base.h>
 
 MBASE_BEGIN

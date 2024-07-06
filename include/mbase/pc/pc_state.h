@@ -22,16 +22,16 @@ public:
 	PcState() = default;
 	~PcState() = default;
 
-	bool initialize();
-	flags set_state_file(const mbase::string& in_path, bool in_transfer_state = true) noexcept;
-	flags set_state_file_prefix(const mbase::string& in_prefix);
-	flags set_state(const mbase::string& in_key, char_stream& in_stream);
-	flags set_state_map(const key_val_map& in_kvmap);
-	flags load_state_from_file(const mbase::string& in_path, key_val_map& out_state);
-	flags update_state_to_file(const mbase::string& in_path);
-	flags update();
-	flags get_state(const mbase::string& in_key, char_stream& out_stream);
-	flags get_state_file(mbase::string& out_file);
+	bool initialize() { return true; }
+	flags set_state_file(const mbase::string& in_path, bool in_transfer_state = true) noexcept { return flags::STATE_SUCCESS; }
+	flags set_state_file_prefix(const mbase::string& in_prefix) { return flags::STATE_SUCCESS; }
+	flags set_state(const mbase::string& in_key, char_stream& in_stream) { return flags::STATE_SUCCESS; }
+	flags set_state_map(const key_val_map& in_kvmap) { return flags::STATE_SUCCESS; }
+	flags load_state_from_file(const mbase::string& in_path, key_val_map& out_state) { return flags::STATE_SUCCESS; }
+	flags update_state_to_file(const mbase::string& in_path) { return flags::STATE_SUCCESS; }
+	flags update() { return flags::STATE_SUCCESS; }
+	flags get_state(const mbase::string& in_key, char_stream& out_stream) { return flags::STATE_SUCCESS; }
+	flags get_state_file(mbase::string& out_file) { return flags::STATE_SUCCESS; }
 
 private:
 	key_val_map mKvMap;
