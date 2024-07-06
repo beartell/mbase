@@ -306,10 +306,10 @@ MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR typename unordered_map<Key, 
 {
 	if(!mSize)
 	{
-		return iterator(this, 0, mBucket[0].end());
+		return iterator(this, 0, end(0));
 	}
 
-	for (size_type i = mBucketCount - 1; i >= 0; i++)
+	for (size_type i = mBucketCount - 1; i >= 0; i--)
 	{
 		local_iterator lastItem = begin(i);
 		if (lastItem != end(i))
@@ -317,7 +317,7 @@ MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR typename unordered_map<Key, 
 			return iterator(this, i, end(i));
 		}
 	}
-	return iterator(this, 0, mBucket[0].end());
+	return iterator(this, 0, end(0));
 }
 
 template<typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator>
@@ -338,7 +338,12 @@ MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR typename unordered_map<Key, 
 template<typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator>
 MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR typename unordered_map<Key, Value, Hash, KeyEqual, Allocator>::const_iterator unordered_map<Key, Value, Hash, KeyEqual, Allocator>::cend() const noexcept
 {
-	for (size_type i = mBucketCount - 1; i >= 0; i++)
+	if(!mSize)
+	{
+		return const_iterator(const_cast<unordered_map*>(this), 0, cend(0));
+	}
+
+	for (size_type i = mBucketCount - 1; i >= 0; i--)
 	{
 		const_local_iterator lastItem = cbegin(i);
 		if (lastItem != cend(i))
@@ -346,7 +351,7 @@ MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR typename unordered_map<Key, 
 			return const_iterator(const_cast<unordered_map*>(this), i, cend(i));
 		}
 	}
-	return const_iterator(const_cast<unordered_map*>(this), 0, mBucket[0].cend());
+	return const_iterator(const_cast<unordered_map*>(this), 0, cend(0));
 }
 
 template<typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator>
