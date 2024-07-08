@@ -62,7 +62,7 @@ struct pair {
     MBASE_INLINE_EXPR pair() = default;
     MBASE_INLINE_EXPR pair(const pair&) = default;
     MBASE_INLINE_EXPR pair(pair&&) = default;
-    ~pair() = default;
+    MBASE_INLINE ~pair() = default;
     /* ===== BUILDER METHODS END ===== */
 
     /* ===== OPERATOR BUILDER METHODS BEGIN ===== */
@@ -81,8 +81,8 @@ struct pair {
     /* ===== STATE-MODIFIER METHODS END ===== */
 
     /* ===== NON-MODIFIER METHODS BEGIN ===== */
-    bool operator==(const pair& in_rhs);
-    bool operator!=(const pair& in_rhs);
+    MBASE_INLINE bool operator==(const pair& in_rhs);
+    MBASE_INLINE bool operator!=(const pair& in_rhs);
     /* ===== NON-MODIFIER METHODS END ===== */
 };
 
@@ -326,13 +326,13 @@ MBASE_INLINE typename serialize_helper<F64>::value_type serialize_helper<F64>::d
     return if64.mFloat;
 }
 
-SIZE_T get_serialized_size() noexcept
+MBASE_INLINE SIZE_T get_serialized_size() noexcept
 {
     return 0;
 }
 
 template<typename FirstType, typename ... TypesRest>
-SIZE_T get_serialized_size(const FirstType& in_arg, const TypesRest&... in_rest) noexcept
+MBASE_INLINE SIZE_T get_serialized_size(const FirstType& in_arg, const TypesRest&... in_rest) noexcept
 {
     serialize_helper<FirstType> helper;
     helper.value = const_cast<FirstType*>(&in_arg);
@@ -341,7 +341,7 @@ SIZE_T get_serialized_size(const FirstType& in_arg, const TypesRest&... in_rest)
 }
 
 template<typename SerializedType>
-GENERIC serialize(const SerializedType& in_value, char_stream& out_buffer) noexcept 
+MBASE_INLINE GENERIC serialize(const SerializedType& in_value, char_stream& out_buffer) noexcept
 {
     serialize_helper<SerializedType> helper;
     helper.value = const_cast<SerializedType*>(&in_value);
@@ -349,26 +349,26 @@ GENERIC serialize(const SerializedType& in_value, char_stream& out_buffer) noexc
 }
 
 template<typename SerializedType>
-SerializedType deserialize(IBYTEBUFFER in_src, SIZE_T in_length) noexcept 
+MBASE_INLINE SerializedType deserialize(IBYTEBUFFER in_src, SIZE_T in_length) noexcept
 {
     serialize_helper<SerializedType> helper;
     return helper.deserialize(in_src, in_length);
 }
 
 template<typename T1, typename T2>
-mbase::pair<T1, T2> make_pair(const T1& in_first, const T2& in_second) noexcept
+MBASE_INLINE mbase::pair<T1, T2> make_pair(const T1& in_first, const T2& in_second) noexcept
 {
     return mbase::pair<T1, T2>(in_first, in_second);
 }
 
 template<typename T1, typename T2>
-std::pair<T1, T2> to_stdpair(const mbase::pair<T1, T2>& in_pair) noexcept
+MBASE_INLINE std::pair<T1, T2> to_stdpair(const mbase::pair<T1, T2>& in_pair) noexcept
 {
     return std::make_pair(in_pair.first, in_pair.second);
 }
 
 template<typename T1, typename T2>
-std::pair<T1, T2> to_stdpair(mbase::pair<T1, T2>&& in_pair) noexcept
+MBASE_INLINE std::pair<T1, T2> to_stdpair(mbase::pair<T1, T2>&& in_pair) noexcept
 {
     return std::make_pair(std::move(in_pair.first), std::move(in_pair.second));
 }
@@ -443,13 +443,13 @@ MBASE_INLINE pair<T1, T2> pair<T1, T2>::deserialize(IBYTEBUFFER in_src, SIZE_T i
 }
 
 template<typename T1, typename T2>
-bool pair<T1, T2>::operator==(const pair& in_rhs)
+MBASE_INLINE bool pair<T1, T2>::operator==(const pair& in_rhs)
 {
     return (first == in_rhs.first ? true : false) && (second == in_rhs.second ? true : false);
 }
 
 template<typename T1, typename T2>
-bool pair<T1, T2>::operator!=(const pair& in_rhs)
+MBASE_INLINE bool pair<T1, T2>::operator!=(const pair& in_rhs)
 {
     return (first != in_rhs.first ? true : false) && (second != in_rhs.second ? true : false);
 }

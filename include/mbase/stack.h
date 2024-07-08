@@ -46,7 +46,7 @@ public:
 	/* ===== STATE-MODIFIER METHODS END ===== */
 
 	/* ===== NON-MEMBER FUNCTIONS BEGIN ===== */
-	MBASE_INLINE GENERIC serialize(safe_buffer& out_buffer) noexcept;
+	MBASE_INLINE GENERIC serialize(char_stream& out_buffer) noexcept;
 	/* ===== NON-MEMBER FUNCTIONS END ===== */
 
 private:
@@ -127,7 +127,7 @@ MBASE_INLINE_EXPR GENERIC stack<T, SourceContainer>::pop() noexcept {
 }
 
 template<typename T, typename SourceContainer>
-MBASE_INLINE GENERIC stack<T, SourceContainer>::serialize(safe_buffer& out_buffer) noexcept {
+MBASE_INLINE GENERIC stack<T, SourceContainer>::serialize(char_stream& out_buffer) noexcept {
 	mSourceContainer.serialize(out_buffer);
 }
 

@@ -10,6 +10,7 @@
 #include <initializer_list>
 #include <exception>
 #include <utility>
+#include <stdexcept>
 
 MBASE_STD_BEGIN
 
@@ -56,7 +57,7 @@ public:
 	MBASE_INLINE_EXPR unordered_map(std::initializer_list<value_type> in_pairs, size_type in_bucket_count = gUmapDefaultBucketCount, const Hash& in_hash = Hash(), const key_equal& in_equal = key_equal(), const Allocator& in_alloc = Allocator()) noexcept;
 	MBASE_INLINE_EXPR unordered_map(std::initializer_list<value_type> in_pairs, size_type in_bucket_count, const Allocator& in_alloc) noexcept;
 	MBASE_INLINE_EXPR unordered_map(std::initializer_list<value_type> in_pairs, size_type in_bucket_count, const Hash& in_hash, const Allocator& in_alloc) noexcept;
-	~unordered_map();
+	MBASE_INLINE ~unordered_map();
 	/* ===== BUILDER METHODS END ===== */
 
 	/* ===== OPERATOR BUILDER METHODS BEGIN ===== */
@@ -250,7 +251,7 @@ MBASE_INLINE_EXPR unordered_map<Key, Value, Hash, KeyEqual, Allocator>::unordere
 }
 
 template<typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator>
-unordered_map<Key, Value, Hash, KeyEqual, Allocator>::~unordered_map()
+MBASE_INLINE unordered_map<Key, Value, Hash, KeyEqual, Allocator>::~unordered_map()
 {
 	//clear();
 }

@@ -2,6 +2,7 @@
 #define MBASE_SEQUENCE_ITERATOR_H
 
 #include <mbase/common.h>
+#include <iterator>
 
 MBASE_STD_BEGIN
 

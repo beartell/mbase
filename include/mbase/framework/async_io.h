@@ -473,7 +473,8 @@ MBASE_INLINE async_io_manager::flags async_io_manager::run_target_write_context(
 		return flags::AIO_MNG_SUCCESS;
 	}
 
-	MBASE_TS_UNLOCK(mWriteQueueMutex)
+	MBASE_TS_UNLOCK(mWriteQueueMutex);
+	return flags::AIO_MNG_SUCCESS;
 }
 
 MBASE_INLINE async_io_manager::flags async_io_manager::run_target_read_context(async_io_context& in_ctx) noexcept
@@ -536,6 +537,7 @@ MBASE_INLINE async_io_manager::flags async_io_manager::run_target_read_context(a
 	}
 
 	MBASE_TS_UNLOCK(mReadQueueMutex)
+	return flags::AIO_MNG_SUCCESS;
 }
 
 MBASE_INLINE GENERIC async_io_manager::run_write_contexts() noexcept 

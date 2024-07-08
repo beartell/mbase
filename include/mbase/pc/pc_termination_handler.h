@@ -14,6 +14,35 @@ public:
 	virtual GENERIC on_abort() = 0;
 };
 
+class PcTerminationBasic : public PcTerminationHandler {
+public:
+
+	GENERIC on_termination() override 
+	{
+
+	}
+
+	GENERIC on_segfault() override 
+	{
+
+	}
+
+	GENERIC on_interrupt() override 
+	{
+
+	}
+
+	GENERIC on_invalidation() override 
+	{
+
+	}
+
+	GENERIC on_abort() override 
+	{
+
+	}
+};
+
 MBASE_END
 
 #endif // !MBASE_TERMINATION_HANDLER_H
