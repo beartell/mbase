@@ -35,8 +35,8 @@ public:
 
 	bool initialize();
 	flags log(flags in_log_type, flags in_log_importance, const mbase::string& in_message) noexcept;
-	template<typename ... Params>
-	flags log(flags in_log_type, flags in_log_importance, MSTRING in_format, Params ... in_params) noexcept;
+	//template<typename ... Params>
+	//flags log(flags in_log_type, flags in_log_importance, MSTRING in_format, Params ... in_params) noexcept;
 	GENERIC flush_logs() noexcept;
 	GENERIC print_logs() const noexcept;
 	flags dump_logs_to_file(const mbase::string& in_file) noexcept;
