@@ -2,10 +2,20 @@
 #include <mbase/pc/pc_config.h>
 #include <mbase/pc/pc_diagnostics.h>
 #include <mbase/pc/pc_io_manager.h>
+#include <mbase/pc/pc_net_manager.h>
 
 MBASE_BEGIN
 
-PcProgram::PcProgram()
+PcProgram::PcProgram() :
+	mConfig(NULL),
+	mDiagnostics(NULL),
+	mIoManager(NULL),
+	mNetManager(NULL),
+	mIsRunning(false),
+	mIsAuthorized(false),
+	mIsInitialized(false),
+	mSessionTime(0),
+	mLastSessionTime(0)
 {
 
 }
@@ -30,6 +40,11 @@ PcIoManager* PcProgram::get_io_manager() noexcept
 	return mIoManager;
 }
 
+PcNetManager* PcProgram::get_net_manager() noexcept
+{
+	return mNetManager;
+}
+
 PcState* PcProgram::get_program_state() noexcept
 {
 	return &mState;
@@ -43,6 +58,11 @@ const PcProgramInfo* PcProgram::get_program_info() const noexcept
 event_manager* PcProgram::get_event_manager() noexcept
 {
 	return &mEventManager;
+}
+
+timer_loop* PcProgram::get_timer_loop() noexcept
+{
+	return &mTimerLoop;
 }
 
 bool PcProgram::is_running() const noexcept
@@ -60,6 +80,7 @@ GENERIC PcProgram::initialize()
 	mDiagnostics = &PcDiagnostics::get_instance();
 	mConfig = &PcConfig::get_instance();
 	mIoManager = &PcIoManager::get_instance();
+	mNetManager = &PcNetManager::get_instance();
 
 	mDiagnostics->initialize();
 	mConfig->initialize();
@@ -73,6 +94,7 @@ bool PcProgram::authorize(mbase::string in_name, mbase::string in_password)
 
 bool PcProgram::update()
 {
+	mTimerLoop.run_timers();
 	return false;
 }
 

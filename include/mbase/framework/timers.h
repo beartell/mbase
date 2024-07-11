@@ -23,8 +23,8 @@ public:
 	using user_data = PTRGENERIC;
 
 	/* ===== BUILDER METHODS BEGIN ===== */
-	timer_base() noexcept;
-	MBASE_EXPLICIT timer_base(user_data in_data) noexcept;
+	MBASE_INLINE timer_base() noexcept;
+	MBASE_INLINE MBASE_EXPLICIT timer_base(user_data in_data) noexcept;
 	/* ===== BUILDER METHODS END ===== */
 
 	/* ===== OBSERVATION METHODS BEGIN ===== */
@@ -62,7 +62,7 @@ private:
 
 class timeout : public timer_base {
 public:
-	timeout() noexcept;
+	MBASE_INLINE timeout() noexcept;
 	virtual GENERIC on_call(user_data in_data) override { /* Do nothing literally */ }
 
 	friend class timer_loop;
@@ -70,11 +70,11 @@ public:
 
 class time_interval : public timer_base {
 public:
-	time_interval() noexcept;
+	MBASE_INLINE time_interval() noexcept;
 
-	GENERIC set_tick_limit(U32 in_tick_limit) noexcept;
-	GENERIC reset_tick_counter() noexcept;
-	U32 get_tick_count() const noexcept;
+	MBASE_INLINE GENERIC set_tick_limit(U32 in_tick_limit) noexcept;
+	MBASE_INLINE GENERIC reset_tick_counter() noexcept;
+	MBASE_INLINE U32 get_tick_count() const noexcept;
 
 	virtual GENERIC on_call(user_data in_data) override { /* Do nothing literally */ }
 	friend class timer_loop;
@@ -84,11 +84,11 @@ private:
 	U32 mTickLimit;
 };
 
-timer_base::timer_base() noexcept : handler_base(), mCurrentTime(0), mTargetTime(0), mPolicy(flags::TIMER_POLICY_IMMEDIATE), mLoopId(0), mSelfIter(nullptr), mStatus(flags::TIMER_STATUS_UNREGISTERED)
+MBASE_INLINE timer_base::timer_base() noexcept : handler_base(), mCurrentTime(0), mTargetTime(0), mPolicy(flags::TIMER_POLICY_IMMEDIATE), mLoopId(0), mSelfIter(nullptr), mStatus(flags::TIMER_STATUS_UNREGISTERED)
 {
 }
 
-timer_base::timer_base(user_data in_data) noexcept : mCurrentTime(0), mTargetTime(0), mPolicy(flags::TIMER_POLICY_IMMEDIATE), mLoopId(0), mSelfIter(nullptr), mStatus(flags::TIMER_STATUS_UNREGISTERED)
+MBASE_INLINE timer_base::timer_base(user_data in_data) noexcept : mCurrentTime(0), mTargetTime(0), mPolicy(flags::TIMER_POLICY_IMMEDIATE), mLoopId(0), mSelfIter(nullptr), mStatus(flags::TIMER_STATUS_UNREGISTERED)
 {
 	mSuppliedData = in_data;
 }
@@ -150,26 +150,26 @@ MBASE_INLINE GENERIC timer_base::reset_time() noexcept
 	mCurrentTime = 0;
 }
 
-timeout::timeout() noexcept : timer_base(nullptr) 
+MBASE_INLINE timeout::timeout() noexcept : timer_base(nullptr)
 {
 	mTimerType = flags::TIMER_TYPE_TIMEOUT;
 }
 
-time_interval::time_interval() noexcept : timer_base(nullptr), mTickCount(0), mTickLimit(0) {
+MBASE_INLINE time_interval::time_interval() noexcept : timer_base(nullptr), mTickCount(0), mTickLimit(0) {
 	mTimerType = flags::TIMER_TYPE_INTERVAL;
 }
 
-GENERIC time_interval::set_tick_limit(U32 in_tick_limit) noexcept
+MBASE_INLINE GENERIC time_interval::set_tick_limit(U32 in_tick_limit) noexcept
 {
 	mTickLimit = in_tick_limit;
 }
 
-GENERIC time_interval::reset_tick_counter() noexcept
+MBASE_INLINE GENERIC time_interval::reset_tick_counter() noexcept
 {
 	mTickCount = 0;
 }
 
-U32 time_interval::get_tick_count() const noexcept
+MBASE_INLINE U32 time_interval::get_tick_count() const noexcept
 {
 	return mTickCount;
 }
