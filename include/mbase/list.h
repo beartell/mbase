@@ -966,7 +966,6 @@ MBASE_INLINE GENERIC list<T, Allocator>::serialize(char_stream& out_buffer) cons
 				size_type blockLength = mbase::get_serialized_size(*It);
 				out_buffer.put_datan(blockLength);
 			}
-			//out_buffer.put_datan(reinterpret_cast<IBYTEBUFFER>(&blockLength), sizeof(I32));
 			mbase::serialize(*It, out_buffer);
 		}
 	}
@@ -976,34 +975,45 @@ template<typename T, typename Allocator>
 MBASE_INLINE mbase::list<T, Allocator> list<T, Allocator>::deserialize(IBYTEBUFFER in_src, SIZE_T in_length) 
 {
 	mbase::list<T, Allocator> deserializedContainer;
-	if (in_length)
+	bool isPrimitive = std::is_integral_v<value_type>;
+
+	if (isPrimitive)
 	{
-		char_stream inBuffer(in_src, in_length);
-
-		inBuffer.set_cursor_end();
-		inBuffer.advance();
-
-		IBYTEBUFFER eofBuffer = inBuffer.get_bufferc();
-		inBuffer.set_cursor_front();
-
-		while (inBuffer.get_bufferc() < eofBuffer)
+		if (in_length < sizeof(value_type))
 		{
-			bool isPrimitive = std::is_integral_v<value_type>;
-			size_type blockLength = 0;
-			if (isPrimitive)
-			{
-				blockLength = sizeof(value_type);
-			}
-			else
-			{
-				blockLength = inBuffer.get_datan<size_type>();
-			}
-			IBYTEBUFFER blockData = inBuffer.get_bufferc();
-			deserializedContainer.push_back(std::move(mbase::deserialize<value_type>(blockData, blockLength)));
-			inBuffer.advance(blockLength);
+			throw mbase::invalid_size();
 		}
 	}
 
+	if (in_length < sizeof(size_type))
+	{
+		throw mbase::invalid_size();
+	}
+	
+	char_stream inBuffer(in_src, in_length);
+
+	inBuffer.set_cursor_end();
+	inBuffer.advance();
+
+	IBYTEBUFFER eofBuffer = inBuffer.get_bufferc();
+	inBuffer.set_cursor_front();
+
+	while (inBuffer.get_bufferc() < eofBuffer)
+	{
+		size_type blockLength = 0;
+		if (isPrimitive)
+		{
+			blockLength = sizeof(value_type);
+		}
+		else
+		{
+			blockLength = inBuffer.get_datan<size_type>();
+		}
+		IBYTEBUFFER blockData = inBuffer.get_bufferc();
+		deserializedContainer.push_back(std::move(mbase::deserialize<value_type>(blockData, blockLength)));
+		inBuffer.advance(blockLength);
+	}
+	
 	return deserializedContainer;
 }
 

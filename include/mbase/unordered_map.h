@@ -154,16 +154,18 @@ public:
 	MBASE_INLINE_EXPR static mbase::unordered_map<Key, Value, Hash, KeyEqual, Allocator> deserialize(IBYTEBUFFER in_src, SIZE_T in_length)
 	{
 		mbase::unordered_map<Key, Value, Hash, KeyEqual, Allocator> newMap;
-		char_stream cs(in_src, in_length);
-		if (in_length)
+		if (in_length < sizeof(size_type) * 2)
 		{
-			size_type mapSize = cs.get_datan<size_type>();
-			size_type bucketCount = cs.get_datan<size_type>();
-			bucket_type bucketList = std::move(mbase::deserialize<bucket_type>(cs.get_bufferc(), cs.buffer_length() - cs.get_pos()));
-			newMap.mSize = mapSize;
-			newMap.mBucketCount = bucketCount;
-			newMap.mBucket = std::move(bucketList);
+			throw mbase::invalid_size();
 		}
+
+		char_stream cs(in_src, in_length);
+		size_type mapSize = cs.get_datan<size_type>();
+		size_type bucketCount = cs.get_datan<size_type>();
+		bucket_type bucketList = std::move(mbase::deserialize<bucket_type>(cs.get_bufferc(), cs.buffer_length() - cs.get_pos()));
+		newMap.mSize = mapSize;
+		newMap.mBucketCount = bucketCount;
+		newMap.mBucket = std::move(bucketList);
 		
 		return newMap;
 	}
@@ -389,8 +391,18 @@ MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE typename unordered_map<Key, Value, Ha
 	{
 		return 0;
 	}
+	
+	size_type totalSerializedSize = 0;
 
-	return mbase::get_serialized_size(mBucket) + (sizeof(SIZE_T) * 2);
+	for(I32 i = 0; i < mBucketCount; ++i)
+	{
+		if(mBucket[i].size())
+		{
+			totalSerializedSize += mBucket[i].get_serialized_size();
+		}
+	}
+
+	return totalSerializedSize + (sizeof(SIZE_T) * 2);
 }
 
 template<typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator>

@@ -14,7 +14,8 @@ if (this->is_processing())\
 return flags::IO_HANDLER_ERR_IOMNG_PROCESSING_STREAM; \
 }
 
-PcIoManager::~PcIoManager() {
+PcIoManager::~PcIoManager() 
+{
 	if(is_initialized())
 	{
 		mbase::lock_guard ioMutex(mIoMutex);
@@ -92,9 +93,8 @@ PcIoManager::flags PcIoManager::register_handler(const mbase::string& in_filenam
 		return flags::IO_MNG_ERR_ALREADY_REGISTERED;
 	}
 
-	//out_handler._clear_handler();
-	out_handler.mIoBase.open_file(in_filename, mbase::io_file::access_mode::READ_ACCESS, mbase::io_file::disposition::APPEND, true);
-
+	out_handler.mIoBase.open_file(in_filename, mbase::io_file::access_mode::RW_ACCESS, mbase::io_file::disposition::OVERWRITE, true);
+	  
 	if(!out_handler.mIoBase.is_file_open())
 	{
 		return flags::IO_MNG_ERR_UNABLE_OPEN_FILE;
@@ -182,16 +182,22 @@ PcIoManager::flags PcIoManager::add_handler(PcIoHandler& in_handler)
 		return flags::IO_MNG_ERR_HANDLE_IS_BEING_PROCESSED;
 	}
 
-	mbase::io_file::os_file_handle mHandle = in_handler.get_io_handle()->get_raw_context().raw_handle;
-	ULONG_PTR mCompKey = (ULONG_PTR)mHandle;
-
-	if(CreateIoCompletionPort(mHandle, mSyncHandle, mCompKey, 0) == NULL)
+	if(in_handler.mIocpKey)
 	{
-		return flags::IO_MNG_ERR_INVALID_RAW_HANDLE;
+		
 	}
+	else
+	{
+		mbase::io_file::os_file_handle mHandle = in_handler.get_io_handle()->get_raw_context().raw_handle;
+		ULONG_PTR mCompKey = (ULONG_PTR)mHandle;
 
-	in_handler.mIocpKey = mCompKey;
+		if (CreateIoCompletionPort(mHandle, mSyncHandle, mCompKey, 0) == NULL)
+		{
+			return flags::IO_MNG_ERR_INVALID_RAW_HANDLE;
+		}
 
+		in_handler.mIocpKey = mCompKey;
+	}
 	mbase::lock_guard lg(mIoMutex);
 	mIoParticipants.push_back(&in_handler);
 
@@ -217,11 +223,11 @@ PcIoManager::flags PcIoManager::update()
 				tmpHandler->mProcessorStream->advance(bytesTransferred);
 				if(tmpHandler->get_io_direction() == PcIoHandler::direction::IO_HANDLER_DIRECTION_OUTPUT)
 				{
-					tmpHandler->on_write(*tmpHandler->mProcessorStream);
+					tmpHandler->on_write(tmpHandler->mProcessorStream->get_buffer(), bytesTransferred);
 				}
 				else
 				{
-					tmpHandler->on_read(*tmpHandler->mProcessorStream);
+					tmpHandler->on_read(tmpHandler->mProcessorStream->get_buffer(), bytesTransferred);
 				}
 			}
 		}
@@ -238,7 +244,6 @@ PcIoManager::flags PcIoManager::update_io_loop()
 		PcIoHandler* ioh = *It;
 		IBYTEBUFFER bytesToOperate = ioh->mProcessorStream->get_buffer();
 		U32 bytesLength = ioh->mProcessorStream->get_pos();
-
 		if (bytesLength)
 		{
 			if (ioh->get_io_direction() == PcIoHandler::direction::IO_HANDLER_DIRECTION_OUTPUT)
@@ -334,6 +339,7 @@ PcIoHandler::flags PcIoHandler::set_stream(mbase::char_stream& in_stream)
 	ioMng->get_stream_manager()->release_stream(mPolledStreamHandle);
 	mPolledStreamHandle = MBASE_INVALID_STREAM_HANDLE;
 	mProcessorStream = &in_stream;
+	return flags::IO_HANDLER_SUCCESS;
 }
 
 PcIoHandler::flags PcIoHandler::write_buffer(CBYTEBUFFER in_data, size_type in_size)
@@ -344,6 +350,7 @@ PcIoHandler::flags PcIoHandler::write_buffer(CBYTEBUFFER in_data, size_type in_s
 		return flags::IO_HANDLER_ERR_INVALID_DIRECTION;
 	}
 	mProcessorStream->put_buffern(in_data, in_size);
+	return flags::IO_HANDLER_SUCCESS;
 }
 
 PcIoHandler::flags PcIoHandler::read_buffer(size_type in_size)
@@ -355,12 +362,14 @@ PcIoHandler::flags PcIoHandler::read_buffer(size_type in_size)
 	}
 
 	mProcessorStream->advance(in_size);
+	return flags::IO_HANDLER_SUCCESS;
 }
 
 PcIoHandler::flags PcIoHandler::flush_stream()
 {
 	MBASE_IO_HANDLER_USUAL_CHECK();
 	mProcessorStream->set_cursor_front();
+	return flags::IO_HANDLER_SUCCESS;
 }
 
 PcIoHandler::flags PcIoHandler::finish()
@@ -368,7 +377,7 @@ PcIoHandler::flags PcIoHandler::finish()
 	MBASE_IO_HANDLER_USUAL_CHECK();
 	PcIoManager* ioMng = MBASE_PROGRAM_IO_MANAGER();
 	
-	ioMng->add_handler(*this); // 100% success
+	std::cout << (int)ioMng->add_handler(*this) << std::endl;
 	mIsProcessing = true;
 	return flags::IO_HANDLER_SUCCESS;
 }
@@ -384,12 +393,12 @@ GENERIC PcIoHandler::on_unregistered()
 
 }
 
-GENERIC PcIoHandler::on_write(mbase::char_stream& out_data)
+GENERIC PcIoHandler::on_write(CBYTEBUFFER out_data, size_type out_size)
 {
 
 }
 
-GENERIC PcIoHandler::on_read(mbase::char_stream& out_data)
+GENERIC PcIoHandler::on_read(CBYTEBUFFER out_data, size_type out_size)
 {
 
 }

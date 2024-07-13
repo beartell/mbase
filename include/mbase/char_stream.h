@@ -47,7 +47,6 @@ Both char_stream and deep_char_stream should be used with utmost care.
 |        |        |        |        |        |
 +--------+--------+--------+--------+--------+
 
-
 */
 
 class char_stream : protected type_sequence<IBYTE> {

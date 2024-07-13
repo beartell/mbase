@@ -25,6 +25,20 @@ Description:
 
 static const SIZE_T gPairSerializeBlockLength = 8;
 
+class invalid_format : public std::exception {
+public:
+    MSTRING what() const {
+        return "invalid buffer format.";
+    }
+};
+
+class invalid_size : public std::exception {
+public:
+    MSTRING what() const {
+        return "invalid buffer size.";
+    }
+};
+
 template <typename SerializedType>
 struct serialize_helper {
 	using value_type = SerializedType;
@@ -77,7 +91,7 @@ struct pair {
     /* ===== STATE-MODIFIER METHODS BEGIN ===== */
     MBASE_INLINE_EXPR GENERIC swap(pair& in_rhs) noexcept;
     MBASE_INLINE GENERIC serialize(char_stream& out_buffer) noexcept;
-    MBASE_INLINE static pair deserialize(IBYTEBUFFER in_src, SIZE_T in_length) noexcept;
+    MBASE_INLINE static pair deserialize(IBYTEBUFFER in_src, SIZE_T in_length);
     /* ===== STATE-MODIFIER METHODS END ===== */
 
     /* ===== NON-MODIFIER METHODS BEGIN ===== */
@@ -141,6 +155,10 @@ MBASE_INLINE GENERIC serialize_helper<I8>::serialize(char_stream& out_buffer) no
 template<>
 MBASE_INLINE typename serialize_helper<I8>::value_type serialize_helper<I8>::deserialize(IBYTEBUFFER in_src, SIZE_T in_length)
 {
+    if(in_length < sizeof(value_type))
+    {
+        throw mbase::invalid_size();
+    }
     PTR8 bf = reinterpret_cast<PTR8>(in_src);
     return *bf;
 }
@@ -160,6 +178,10 @@ MBASE_INLINE GENERIC serialize_helper<I16>::serialize(char_stream& out_buffer) n
 template<>
 MBASE_INLINE typename serialize_helper<I16>::value_type serialize_helper<I16>::deserialize(IBYTEBUFFER in_src, SIZE_T in_length)
 {
+    if (in_length < sizeof(value_type))
+    {
+        throw mbase::invalid_size();
+    }
     PTR16 bf = reinterpret_cast<PTR16>(in_src);
     return *bf;
 }
@@ -179,6 +201,10 @@ MBASE_INLINE GENERIC serialize_helper<I32>::serialize(char_stream& out_buffer) n
 template<>
 MBASE_INLINE typename serialize_helper<I32>::value_type serialize_helper<I32>::deserialize(IBYTEBUFFER in_src, SIZE_T in_length)
 {
+    if (in_length < sizeof(value_type))
+    {
+        throw mbase::invalid_size();
+    }
     PTR32 bf = reinterpret_cast<PTR32>(in_src);
     return *bf;
 }
@@ -198,6 +224,10 @@ MBASE_INLINE GENERIC serialize_helper<I64>::serialize(char_stream& out_buffer) n
 template<>
 MBASE_INLINE typename serialize_helper<I64>::value_type serialize_helper<I64>::deserialize(IBYTEBUFFER in_src, SIZE_T in_length)
 {
+    if (in_length < sizeof(value_type))
+    {
+        throw mbase::invalid_size();
+    }
     PTR64 bf = reinterpret_cast<PTR64>(in_src);
     return *bf;
 }
@@ -217,6 +247,10 @@ MBASE_INLINE GENERIC serialize_helper<U8>::serialize(char_stream& out_buffer) no
 template<>
 MBASE_INLINE typename serialize_helper<U8>::value_type serialize_helper<U8>::deserialize(IBYTEBUFFER in_src, SIZE_T in_length)
 {
+    if (in_length < sizeof(value_type))
+    {
+        throw mbase::invalid_size();
+    }
     PTRU8 bf = reinterpret_cast<PTRU8>(in_src);
     return *bf;
 }
@@ -236,6 +270,10 @@ MBASE_INLINE GENERIC serialize_helper<U16>::serialize(char_stream& out_buffer) n
 template<>
 MBASE_INLINE typename serialize_helper<U16>::value_type serialize_helper<U16>::deserialize(IBYTEBUFFER in_src, SIZE_T in_length)
 {
+    if (in_length < sizeof(value_type))
+    {
+        throw mbase::invalid_size();
+    }
     PTRU16 bf = reinterpret_cast<PTRU16>(in_src);
     return *bf;
 }
@@ -255,6 +293,10 @@ MBASE_INLINE GENERIC serialize_helper<U32>::serialize(char_stream& out_buffer) n
 template<>
 MBASE_INLINE typename serialize_helper<U32>::value_type serialize_helper<U32>::deserialize(IBYTEBUFFER in_src, SIZE_T in_length)
 {
+    if (in_length < sizeof(value_type))
+    {
+        throw mbase::invalid_size();
+    }
     PTRU32 bf = reinterpret_cast<PTRU32>(in_src);
     return *bf;
 }
@@ -274,6 +316,10 @@ MBASE_INLINE GENERIC serialize_helper<U64>::serialize(char_stream& out_buffer) n
 template<>
 MBASE_INLINE typename serialize_helper<U64>::value_type serialize_helper<U64>::deserialize(IBYTEBUFFER in_src, SIZE_T in_length)
 {
+    if (in_length < sizeof(value_type))
+    {
+        throw mbase::invalid_size();
+    }
     PTRU64 bf = reinterpret_cast<PTRU64>(in_src);
     return *bf;
 }
@@ -298,6 +344,21 @@ MBASE_INLINE GENERIC serialize_helper<F32>::serialize(char_stream& out_buffer) n
 }
 
 template<>
+MBASE_INLINE typename serialize_helper<F32>::value_type serialize_helper<F32>::deserialize(IBYTEBUFFER in_src, SIZE_T in_length)
+{
+    if (in_length < sizeof(value_type))
+    {
+        throw mbase::invalid_size();
+    }
+    i32_represent_f32 if32;
+    serialize_helper<I32> i32Serializer;
+
+    if32.mInt = i32Serializer.deserialize(in_src, in_length);
+    return if32.mFloat;
+}
+
+
+template<>
 MBASE_INLINE typename serialize_helper<F64>::size_type serialize_helper<F64>::get_serialized_size() const noexcept
 {
     return sizeof(typename i64_represent_f64::int_type);
@@ -315,10 +376,13 @@ MBASE_INLINE GENERIC serialize_helper<F64>::serialize(char_stream& out_buffer) n
     out_buffer.put_datan<typename i64_represent_f64::int_type>(*i64Serializer.value);
 }
 
-
 template<>
 MBASE_INLINE typename serialize_helper<F64>::value_type serialize_helper<F64>::deserialize(IBYTEBUFFER in_src, SIZE_T in_length)
 {
+    if (in_length < sizeof(value_type))
+    {
+        throw mbase::invalid_size();
+    }
     i64_represent_f64 if64;
     serialize_helper<I64> i64Serializer;
 
@@ -428,9 +492,14 @@ MBASE_INLINE GENERIC pair<T1, T2>::serialize(char_stream& out_buffer) noexcept
 }
 
 template<typename T1, typename T2>
-MBASE_INLINE pair<T1, T2> pair<T1, T2>::deserialize(IBYTEBUFFER in_src, SIZE_T in_length) noexcept
+MBASE_INLINE pair<T1, T2> pair<T1, T2>::deserialize(IBYTEBUFFER in_src, SIZE_T in_length)
 {
     char_stream cs(in_src, in_length);
+
+    if(in_length < sizeof(SIZE_T) * 2)
+    {
+        throw mbase::invalid_size();
+    }
 
     SIZE_T blockLength = cs.get_datan<SIZE_T>();
     first_type ft(std::move(mbase::deserialize<first_type>(cs.get_bufferc(), blockLength)));

@@ -45,11 +45,6 @@ PcNetManager* PcProgram::get_net_manager() noexcept
 	return mNetManager;
 }
 
-PcState* PcProgram::get_program_state() noexcept
-{
-	return &mState;
-}
-
 const PcProgramInfo* PcProgram::get_program_info() const noexcept
 {
 	return &mProgramInfo;
@@ -96,6 +91,7 @@ bool PcProgram::update()
 {
 	mTimerLoop.run_timers();
 	mIoManager->update();
+	mIoManager->update_io_loop();
 	return false;
 }
 

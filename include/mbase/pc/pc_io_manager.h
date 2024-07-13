@@ -109,8 +109,8 @@ public:
 
 	virtual GENERIC on_registered();
 	virtual GENERIC on_unregistered();
-	virtual GENERIC on_write(mbase::char_stream& out_data);
-	virtual GENERIC on_read(mbase::char_stream& out_data);
+	virtual GENERIC on_write(CBYTEBUFFER out_data, size_type out_size);
+	virtual GENERIC on_read(CBYTEBUFFER out_data, size_type out_size);
 private:
 
 	GENERIC _clear_handler();

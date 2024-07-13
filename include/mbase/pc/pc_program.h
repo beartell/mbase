@@ -39,6 +39,7 @@ struct PcProgramInfo {
 class PcProgram : public mbase::singleton<PcProgram> {
 public:
 	using MBDate = U32; // placeholder: not a real date
+	using size_type = SIZE_T;
 
 	PcProgram();
 	~PcProgram();
@@ -47,18 +48,20 @@ public:
 	PcDiagnostics* get_diagnostics_manager() noexcept;
 	PcIoManager* get_io_manager() noexcept;
 	PcNetManager* get_net_manager() noexcept;
-	PcState* get_program_state() noexcept;
 	const PcProgramInfo* get_program_info() const noexcept;
 	event_manager* get_event_manager() noexcept;
 	timer_loop* get_timer_loop() noexcept;
 	bool is_running() const noexcept;
 	bool is_initialized() const noexcept;
+	bool get_program_data(const mbase::string& in_key, char_stream& out_data);
 
 	GENERIC initialize();
 	bool authorize(mbase::string in_name, mbase::string in_password);
 	bool update();
 	bool halt();
 	bool exit(I32 in_code, mbase::string in_message = "");
+	GENERIC set_program_data(const mbase::string& in_key, CBYTEBUFFER in_data, size_type in_size);
+	GENERIC set_program_data(const mbase::string& in_key, char_stream& in_data);
 
 private:
 	PcConfig* mConfig;
