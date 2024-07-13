@@ -3,12 +3,11 @@
 
 #include <mbase/common.h>
 #include <mbase/behaviors.h>
-#include <mbase/io_base.h>
+#include <mbase/io_file.h>
 #include <mbase/list.h>
 #include <mbase/vector.h>
+#include <mbase/synchronization.h>
 #include <mbase/framework/handler_base.h>
-#include <mbase/framework/async_io.h>
-#include <mbase/framework/io_context.h>
 #include <mbase/pc/pc_stream_manager.h>
 
 MBASE_BEGIN
@@ -17,20 +16,6 @@ MBASE_BEGIN
 if(!is_initialized())\
 {\
 	return flags::IO_MNG_ERR_NOT_INITIALIZED;\
-}
-
-#define MBASE_IOMNG_USUAL_CHECK \
-if(!is_initialized())\
-{\
-	return flags::IO_MNG_ERR_NOT_INITIALIZED;\
-}\
-if(!in_handler.is_registered())\
-{\
-	return flags::IO_MNG_ERR_NOT_REGISTERED;\
-}\
-if (in_handler.get_io_context()->is_registered())\
-{\
-	return flags::IO_MNG_ERR_HANDLE_IS_ACTIVE;\
 }
 
 static const U32 gIoManagerMaxReadsDefault = 32;
@@ -42,82 +27,105 @@ class PcIoManager;
 class PcIoManager : public mbase::singleton<PcIoManager> {
 public:
 	using size_type = SIZE_T;
-	using io_participants = mbase::list<PcIoHandler*>;
+	using io_participants = mbase::vector<PcIoHandler*>;
+	using registered_handlers = mbase::list<PcIoHandler*>;
+	using _sync_handle = HANDLE; // iocp handle
 
 	enum class flags : U8 {
 		IO_MNG_SUCCESS,
-		IO_MNG_ERR_MISSING_DATA,
-		IO_MNG_ERR_INVALID_SIZE,
-		IO_MNG_ERR_STREAMS_ARE_FULL,
+		IO_MNG_ERR_UNABLE_OPEN_FILE,
+		IO_MNG_ERR_HANDLE_IS_BEING_PROCESSED,
 		IO_MNG_ERR_NOT_INITIALIZED,
+		IO_MNG_ERR_UNREGISTERED_HANDLER,
+		IO_MNG_ERR_FILE_IS_NOT_OPEN,
+		IO_MNG_ERR_INVALID_RAW_HANDLE,
 		IO_MNG_ERR_ALREADY_REGISTERED,
-		IO_MNG_ERR_NOT_REGISTERED,
-		IO_MNG_ERR_HANDLE_IS_ACTIVE,
-		IO_MNG_ERR_INVALID_DIRECTION,
-		IO_MNG_DIRECTION_READ,
-		IO_MNG_DIRECTION_WRITE
+		IO_MNG_WARN_FAILED_TO_ASSIGN_STREAM
 	};
 
 	PcIoManager() = default;
-	~PcIoManager() = default;
+	~PcIoManager();
 
-	const mbase::async_io_manager* get_aio_mng() const;
 	const io_participants* get_io_participants() const;
 	bool is_initialized() const;
+	PcStreamManager* get_stream_manager();
+	_sync_handle _get_sync_handle();
 
-	bool initialize(U32 in_max_write_count = gIoManagerMaxWritesDefault, U32 in_max_read_count = gIoManagerMaxReadsDefault);
-	flags register_io_base(PcIoHandler& out_io_handler);
-	flags unregister_io_handler(PcIoHandler& in_io_handler);
-	flags io_mng_write(PcIoHandler& in_handler);
-	flags io_mng_write(PcIoHandler& in_handler, mbase::char_stream& in_data);
-	flags io_mng_read(PcIoHandler& in_handler);
-	flags io_mng_read(PcIoHandler& in_handler, size_type in_size);
-	flags update();
-	flags halt();
-	flags update_writes();
-	flags update_reads();
+	flags initialize(U32 in_max_write_count = gIoManagerMaxWritesDefault, U32 in_max_read_count = gIoManagerMaxReadsDefault);
+	flags register_handler(const mbase::string& in_filename, PcIoHandler& out_handler, bool in_stream_polled = true);
+	flags unregister_handler(PcIoHandler& in_handler);
+	flags add_handler(PcIoHandler& in_handler);
+	flags update(); // SHOULD BE CALLED ON LOGIC LOOP
+	flags update_io_loop(); // SHOULD BE CALLED ON FILE IO LOOP
 
 private:
+	PcStreamManager mStreamManager;
 	io_participants mIoParticipants;
-	async_io_manager mAioMng;
-	PcStreamManager mReaderStreams;
-	U32 mMaxWriterCount;
-	U32 mMaxReaderCount;
-	U32 mActiveWriterCount;
-	U32 mActiveReaderCount;
+	registered_handlers mRegisteredHandlers;
+	mbase::mutex mIoMutex;
+	mbase::mutex mRegistryMutex;
 	bool mIsInitialized = false;
+	_sync_handle mSyncHandle;
 };
+
 
 class PcIoHandler : public handler_base {
 public:
-	using io_handle = io_base*;
+	using io_handle_base = io_file;
 	using size_type = SIZE_T;
 
-	enum class flags : U8 {
+	friend class PcIoManager;
+
+	enum class direction : U8 {
 		IO_HANDLER_DIRECTION_INPUT,
 		IO_HANDLER_DIRECTION_OUTPUT
 	};
 
-	PcIoHandler(io_base& in_io_base, async_io_context::flags io_direction) : mIoContext(in_io_base, io_direction), mSelfIter(NULL), mIsRegistered(false), mStreamHandle(-1) {}
+	enum class flags : U8 {
+		IO_HANDLER_SUCCESS,
+		IO_HANDLER_ERR_INVALID_FLAG,
+		IO_HANDLER_ERR_MISSING_DATA,
+		IO_HANDLER_ERR_INVALID_DIRECTION,
+		IO_HANDLER_ERR_IOMNG_PROCESSING_STREAM,
+		IO_HANDLER_ERR_UNREGISTERED_HANDLER,
+		IO_HANDLER_ERR_BUFFER_OVERFLOW
+	};
 
-	bool is_registered() const { return mIsRegistered; }
-	const async_io_context* get_io_context() const { return &mIoContext; }
+	PcIoHandler();
+	~PcIoHandler();
 
-	virtual GENERIC on_write(char_stream& out_data, size_type out_size) {}
-	virtual GENERIC on_read(const char_stream& out_data, size_type out_size) {}
-	virtual GENERIC on_finish(char_stream& out_data, size_type out_total_size) {}
+	bool is_open() const noexcept;
+	bool is_registered() const noexcept;
+	bool is_processing() const noexcept;
+	direction get_io_direction() const noexcept;
+	io_handle_base* get_io_handle() noexcept;
 
+	flags set_io_direction(direction in_direction); // SELF-NOTE: THIS SETS THE CURSOR ON THE FRONT
+	flags set_stream(mbase::char_stream& in_stream);
+	flags write_buffer(CBYTEBUFFER in_data, size_type in_size);
+	flags read_buffer(size_type in_size);
+	flags flush_stream();
+	flags finish();
+
+	virtual GENERIC on_registered();
+	virtual GENERIC on_unregistered();
+	virtual GENERIC on_write(mbase::char_stream& out_data);
+	virtual GENERIC on_read(mbase::char_stream& out_data);
 private:
 
+	GENERIC _clear_handler();
+
 	friend class PcIoManager;
-	using io_handler_element = typename PcIoManager::io_participants::iterator;
-
-	async_io_context mIoContext;
-	PcStreamManager::stream_handle mStreamHandle; // -1 IF NOT EXISTS
-	io_handler_element mSelfIter;
 	bool mIsRegistered;
+	bool mIsProcessing;
+	mbase::char_stream* mProcessorStream;
+	io_handle_base mIoBase;
+	direction mIoDirection;
+	OVERLAPPED mOvp;
+	ULONG_PTR mIocpKey;
+	PcStreamManager::stream_handle mPolledStreamHandle;
+	PcIoManager::registered_handlers::iterator mSelfIter;
 };
-
 
 MBASE_END
 

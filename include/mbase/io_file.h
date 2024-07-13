@@ -74,9 +74,9 @@ public:
 	};
 
 	/* ===== BUILDER METHODS BEGIN ===== */
-	io_file() noexcept;
-	io_file(const mbase::string& in_filename, access_mode in_accmode = access_mode::RW_ACCESS, disposition in_disp = disposition::OVERWRITE) noexcept;
-	~io_file() noexcept;
+	MBASE_INLINE io_file() noexcept;
+	MBASE_INLINE io_file(const mbase::string& in_filename, access_mode in_accmode = access_mode::RW_ACCESS, disposition in_disp = disposition::OVERWRITE, bool in_async = false) noexcept;
+	MBASE_INLINE ~io_file() noexcept;
 	/* ===== BUILDER METHODS END ===== */
 
 	/* ===== OBSERVATION METHODS BEGIN ===== */
@@ -86,32 +86,32 @@ public:
 	/* ===== OBSERVATION METHODS END ===== */
 
 	/* ===== STATE-MODIFIER METHODS BEGIN ===== */
-	MBASE_INLINE os_file_handle open_file(const mbase::string& in_filename, access_mode in_accmode = access_mode::RW_ACCESS, disposition in_disp = disposition::OVERWRITE) noexcept;
+	MBASE_INLINE os_file_handle open_file(const mbase::string& in_filename, access_mode in_accmode = access_mode::RW_ACCESS, disposition in_disp = disposition::OVERWRITE, bool in_async = false) noexcept;
 	MBASE_INLINE GENERIC close_file() noexcept;
-	size_type write_data(const IBYTEBUFFER in_src) override;
-	size_type write_data(const IBYTEBUFFER in_src, size_type in_length) override;
-	size_type write_data(const mbase::string& in_src) override;
-	size_type write_data(char_stream& in_src) override;
-	size_type write_data(char_stream& in_src, size_type in_length) override;
-	size_type read_data(IBYTEBUFFER in_src, size_type in_length) override;
-	size_type read_data(char_stream& in_src) override;
-	size_type read_data(char_stream& in_src, size_type in_length) override;
+	MBASE_INLINE size_type write_data(const IBYTEBUFFER in_src) override;
+	MBASE_INLINE size_type write_data(const IBYTEBUFFER in_src, size_type in_length) override;
+	MBASE_INLINE size_type write_data(const mbase::string& in_src) override;
+	MBASE_INLINE size_type write_data(char_stream& in_src) override;
+	MBASE_INLINE size_type write_data(char_stream& in_src, size_type in_length) override;
+	MBASE_INLINE size_type read_data(IBYTEBUFFER in_src, size_type in_length) override;
+	MBASE_INLINE size_type read_data(char_stream& in_src) override;
+	MBASE_INLINE size_type read_data(char_stream& in_src, size_type in_length) override;
 	/* ===== STATE-MODIFIER METHODS END ===== */
 
 private:
 	mbase::string mFileName;
 };
 
-io_file::io_file() noexcept : mFileName()
+MBASE_INLINE io_file::io_file() noexcept : mFileName()
 {
 }
 
-io_file::io_file(const mbase::string& in_filename, access_mode in_accmode, disposition in_disp) noexcept : mFileName(in_filename)
+MBASE_INLINE io_file::io_file(const mbase::string& in_filename, access_mode in_accmode, disposition in_disp, bool in_async) noexcept : mFileName(in_filename)
 {
-	open_file(in_filename, in_accmode, in_disp);
+	open_file(in_filename, in_accmode, in_disp, in_async);
 }
 
-io_file::~io_file() noexcept 
+MBASE_INLINE io_file::~io_file() noexcept
 {
 	close_file();
 }
@@ -145,10 +145,15 @@ MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE typename io_file::size_type io_file::get
 #endif
 }
 
-MBASE_INLINE io_base::os_file_handle io_file::open_file(const mbase::string& in_filename, access_mode in_accmode, disposition in_disp) noexcept
+MBASE_INLINE io_base::os_file_handle io_file::open_file(const mbase::string& in_filename, access_mode in_accmode, disposition in_disp, bool is_async) noexcept
 {
 #ifdef MBASE_PLATFORM_WINDOWS
 	DWORD fileAttrs = FILE_ATTRIBUTE_NORMAL;
+	if (is_async) 
+	{
+		fileAttrs |= FILE_FLAG_OVERLAPPED;
+	}
+
 	PTRGENERIC rawHandle = CreateFileA(mFileName.c_str(), (DWORD)in_accmode, FILE_SHARE_READ, nullptr, (DWORD)in_disp, fileAttrs, nullptr);
 	mFileName = in_filename;
 	if (!rawHandle)
@@ -197,7 +202,7 @@ MBASE_INLINE GENERIC io_file::close_file() noexcept
 	mRawContext.raw_handle = 0;
 }
 
-typename io_file::size_type io_file::write_data(const IBYTEBUFFER in_src)
+MBASE_INLINE typename io_file::size_type io_file::write_data(const IBYTEBUFFER in_src)
 {
 	if(!is_file_open())
 	{
@@ -229,7 +234,7 @@ typename io_file::size_type io_file::write_data(const IBYTEBUFFER in_src)
 #endif
 }
 
-typename io_file::size_type io_file::write_data(const IBYTEBUFFER in_src, size_type in_length)
+MBASE_INLINE typename io_file::size_type io_file::write_data(const IBYTEBUFFER in_src, size_type in_length)
 {
 	if(!is_file_open())
 	{
@@ -293,7 +298,7 @@ typename io_file::size_type io_file::write_data(const mbase::string& in_src)
 #endif
 }
 
-typename io_file::size_type io_file::write_data(char_stream& in_src)
+MBASE_INLINE typename io_file::size_type io_file::write_data(char_stream& in_src)
 {
 	if(!is_file_open())
 	{
@@ -328,7 +333,7 @@ typename io_file::size_type io_file::write_data(char_stream& in_src)
 #endif
 }
 
-typename io_file::size_type io_file::write_data(char_stream& in_src, size_type in_length)
+MBASE_INLINE typename io_file::size_type io_file::write_data(char_stream& in_src, size_type in_length)
 {
 	if(!is_file_open())
 	{
@@ -361,7 +366,7 @@ typename io_file::size_type io_file::write_data(char_stream& in_src, size_type i
 #endif
 }
 
-typename io_file::size_type io_file::read_data(IBYTEBUFFER in_src, size_type in_length)
+MBASE_INLINE typename io_file::size_type io_file::read_data(IBYTEBUFFER in_src, size_type in_length)
 {
 	if(!is_file_open())
 	{
@@ -390,7 +395,7 @@ typename io_file::size_type io_file::read_data(IBYTEBUFFER in_src, size_type in_
 #endif
 }
 
-typename io_file::size_type io_file::read_data(char_stream& in_src)
+MBASE_INLINE typename io_file::size_type io_file::read_data(char_stream& in_src)
 {
 	if(!is_file_open())
 	{
@@ -422,7 +427,7 @@ typename io_file::size_type io_file::read_data(char_stream& in_src)
 #endif
 }
 
-typename io_file::size_type io_file::read_data(char_stream& in_src, size_type in_length)
+MBASE_INLINE typename io_file::size_type io_file::read_data(char_stream& in_src, size_type in_length)
 {
 	if(!is_file_open())
 	{

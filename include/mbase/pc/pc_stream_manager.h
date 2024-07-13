@@ -9,6 +9,8 @@
 
 MBASE_BEGIN
 
+#define MBASE_INVALID_STREAM_HANDLE -1
+
 static const U32 gDefaultStreamCount = 32;
 static const U32 gDefaultStreamSize = 0xfffff; // 1MB
 

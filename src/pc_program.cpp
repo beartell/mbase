@@ -95,6 +95,7 @@ bool PcProgram::authorize(mbase::string in_name, mbase::string in_password)
 bool PcProgram::update()
 {
 	mTimerLoop.run_timers();
+	mIoManager->update();
 	return false;
 }
 

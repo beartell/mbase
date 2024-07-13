@@ -4,12 +4,44 @@
 
 MBASE_BEGIN
 
-const mbase::async_io_manager* PcIoManager::get_aio_mng() const
-{
-	return &mAioMng;
+#define MBASE_IO_HANDLER_USUAL_CHECK() \
+if(!this->is_registered())\
+{\
+	return flags::IO_HANDLER_ERR_UNREGISTERED_HANDLER;\
+}\
+if (this->is_processing())\
+{\
+return flags::IO_HANDLER_ERR_IOMNG_PROCESSING_STREAM; \
 }
 
-typename const PcIoManager::io_participants* PcIoManager::get_io_participants() const
+PcIoManager::~PcIoManager() {
+	if(is_initialized())
+	{
+		mbase::lock_guard ioMutex(mIoMutex);
+		mbase::lock_guard rgrMutex(mRegistryMutex);
+
+		mIoParticipants.clear();
+		for(registered_handlers::iterator It = mRegisteredHandlers.begin(); It != mRegisteredHandlers.end(); ++It)
+		{
+			PcIoHandler* mIoHandler = *It;
+			mIoHandler->mIsRegistered = false;
+			mIoHandler->mIsProcessing = false;
+			mIoHandler->mOvp = { 0 };
+			mIoHandler->mIocpKey = 0;
+			
+			if(mIoHandler->mPolledStreamHandle != MBASE_INVALID_STREAM_HANDLE)
+			{
+				mStreamManager.release_stream(mIoHandler->mPolledStreamHandle);
+				mIoHandler->mPolledStreamHandle = MBASE_INVALID_STREAM_HANDLE;
+				mIoHandler->mProcessorStream = NULL;
+			}
+			mIoHandler->mSelfIter = NULL;
+			mIoHandler->on_unregistered();
+		}
+	}
+}
+
+const typename PcIoManager::io_participants* PcIoManager::get_io_participants() const
 {
 	return &mIoParticipants;
 }
@@ -19,363 +51,352 @@ bool PcIoManager::is_initialized() const
 	return mIsInitialized;
 }
 
-bool PcIoManager::initialize(U32 in_max_write_count, U32 in_max_read_count)
+PcIoManager::flags PcIoManager::initialize(U32 in_max_write_count, U32 in_max_read_count)
 {
-	if (is_initialized())
+	if(is_initialized())
 	{
-		return true;
-	}
-
-	PcDiagnostics& pcDiag = PcDiagnostics::get_instance();
-	pcDiag.log(mbase::PcDiagnostics::flags::LOGTYPE_INFO, mbase::PcDiagnostics::flags::LOGIMPORTANCE_MID, "Initializing io manager.");
-
-	mMaxWriterCount = in_max_write_count;
-	mMaxReaderCount = in_max_read_count;
-
-	if (!mMaxWriterCount)
-	{
-		mMaxWriterCount = gIoManagerMaxWritesDefault;
-	}
-
-	if (!mMaxReaderCount)
-	{
-		mMaxReaderCount = gIoManagerMaxReadsDefault;
-	}
-
-	mAioMng.set_allowed_write_context(mMaxWriterCount);
-	mAioMng.set_allowed_read_context(mMaxReaderCount);
-
-	//pcDiag.log(mbase::PcDiagnostics::flags::LOGTYPE_INFO, mbase::PcDiagnostics::flags::LOGIMPORTANCE_MID, "Allowed max write context count set: %d.", mMaxWriterCount);
-	//pcDiag.log(mbase::PcDiagnostics::flags::LOGTYPE_INFO, mbase::PcDiagnostics::flags::LOGIMPORTANCE_MID, "Allowed max read context count set: %d.", mMaxReaderCount);
-
-	mReaderStreams.initialize(mMaxReaderCount);
-	pcDiag.log(mbase::PcDiagnostics::flags::LOGTYPE_INFO, mbase::PcDiagnostics::flags::LOGIMPORTANCE_MID, "Reader streams for Io manager is initialized.");
-
-	return true;
-}
-
-PcIoManager::flags PcIoManager::register_io_base(PcIoHandler& out_io_handler)
-{
-	MBASE_IOMNG_RETURN_UNINITIALIZED;
-	PcDiagnostics& pcDiag = PcDiagnostics::get_instance();
-
-	if (out_io_handler.is_registered())
-	{
-		//pcDiag.log(mbase::PcDiagnostics::flags::LOGTYPE_ERROR, mbase::PcDiagnostics::flags::LOGIMPORTANCE_MID, "Failed to register Io handler(code: %d). ", flags::IO_MNG_ERR_ALREADY_REGISTERED);
-		return flags::IO_MNG_ERR_ALREADY_REGISTERED;
-	}
-
-	mIoParticipants.push_back(&out_io_handler);
-	out_io_handler.mSelfIter = mIoParticipants.end_node();
-	out_io_handler.mIsRegistered = true;
-
-	pcDiag.log(mbase::PcDiagnostics::flags::LOGTYPE_INFO, mbase::PcDiagnostics::flags::LOGIMPORTANCE_MID, "Registered new Io handler.");
-
-	return flags::IO_MNG_SUCCESS;
-}
-
-PcIoManager::flags PcIoManager::unregister_io_handler(PcIoHandler& in_io_handler)
-{
-	MBASE_IOMNG_RETURN_UNINITIALIZED;
-	PcDiagnostics& pcDiag = PcDiagnostics::get_instance();
-
-	if (!in_io_handler.is_registered())
-	{
-		pcDiag.log(mbase::PcDiagnostics::flags::LOGTYPE_INFO, mbase::PcDiagnostics::flags::LOGIMPORTANCE_MID, "Attempted to unregister an already unregistered io handle.");
 		return flags::IO_MNG_SUCCESS;
 	}
 
-	if (in_io_handler.get_io_context()->is_registered())
+	mSyncHandle = CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, 0, 0);
+	if(mSyncHandle == NULL)
 	{
-		// MEANS, WE ARE ABANDONING AN IO OPERATION
-		// TODO: NOTIFY THE USER
+		return flags::IO_MNG_ERR_NOT_INITIALIZED; // not the correct flags, return here later
+	}
+	mStreamManager.initialize(in_max_write_count + in_max_read_count);
+	mIsInitialized = true;
+	return flags::IO_MNG_SUCCESS;
+}
+
+PcStreamManager* PcIoManager::get_stream_manager()
+{
+	return &mStreamManager;
+}
+
+typename PcIoManager::_sync_handle PcIoManager::_get_sync_handle()
+{
+	return mSyncHandle;
+}
+
+PcIoManager::flags PcIoManager::register_handler(const mbase::string& in_filename, PcIoHandler& out_handler, bool in_stream_polled)
+{
+	MBASE_IOMNG_RETURN_UNINITIALIZED;
+
+	if(out_handler.is_processing())
+	{
+		return flags::IO_MNG_ERR_HANDLE_IS_BEING_PROCESSED;
 	}
 
-	in_io_handler.mIsRegistered = false;
-	mIoParticipants.erase(in_io_handler.mSelfIter);
-	pcDiag.log(mbase::PcDiagnostics::flags::LOGTYPE_INFO, mbase::PcDiagnostics::flags::LOGIMPORTANCE_MID, "Io handle is unregistered.");
+	if(out_handler.is_registered())
+	{
+		return flags::IO_MNG_ERR_ALREADY_REGISTERED;
+	}
+
+	//out_handler._clear_handler();
+	out_handler.mIoBase.open_file(in_filename, mbase::io_file::access_mode::READ_ACCESS, mbase::io_file::disposition::APPEND, true);
+
+	if(!out_handler.mIoBase.is_file_open())
+	{
+		return flags::IO_MNG_ERR_UNABLE_OPEN_FILE;
+	}
+
+	out_handler.mIsRegistered = true;
+	out_handler.mIsProcessing = false;
+
+	if(in_stream_polled)
+	{
+		PcStreamManager::stream_handle streamHandle = MBASE_INVALID_STREAM_HANDLE;
+		if(mStreamManager.acquire_stream(streamHandle, out_handler.mProcessorStream) != PcStreamManager::flags::STREAM_MNG_SUCCESS)
+		{
+			return flags::IO_MNG_WARN_FAILED_TO_ASSIGN_STREAM;
+		}
+		out_handler.mPolledStreamHandle = streamHandle;
+	}
+
+	// SELF-NOTE: The reason I don't use lockguard here is because
+	// I don't want the on_registered function to block the IO LOOP
+
+	mRegistryMutex.acquire();
+	mRegisteredHandlers.push_back(&out_handler);
+	out_handler.mSelfIter = mRegisteredHandlers.end_node();
+	mRegistryMutex.release();
+
+	out_handler.on_registered();
 
 	return flags::IO_MNG_SUCCESS;
 }
 
-PcIoManager::flags PcIoManager::io_mng_write(PcIoHandler& in_handler)
+PcIoManager::flags PcIoManager::unregister_handler(PcIoHandler& in_handler)
 {
-	MBASE_IOMNG_USUAL_CHECK;
+	MBASE_IOMNG_RETURN_UNINITIALIZED;
 
-	mbase::char_stream* in_data = in_handler.mIoContext.get_io_handle()->get_os();
-	if (in_handler.get_io_context()->get_io_direction() == mbase::async_io_context::flags::ASYNC_CTX_DIRECTION_INPUT)
+	if(in_handler.is_processing())
 	{
-		return flags::IO_MNG_ERR_INVALID_DIRECTION;
+		return flags::IO_MNG_ERR_HANDLE_IS_BEING_PROCESSED;
 	}
 
-	if (!in_data)
+	if(!in_handler.is_registered())
 	{
-		return flags::IO_MNG_ERR_MISSING_DATA;
+		return flags::IO_MNG_SUCCESS;
 	}
 
-	if (!in_data->buffer_length())
+	mRegistryMutex.acquire();
+
+	if (in_handler.mPolledStreamHandle != MBASE_INVALID_STREAM_HANDLE)
 	{
-		return flags::IO_MNG_ERR_INVALID_SIZE;
+		mStreamManager.release_stream(in_handler.mPolledStreamHandle);
+		in_handler.mPolledStreamHandle = MBASE_INVALID_STREAM_HANDLE;
+		in_handler.mProcessorStream = NULL;
 	}
 
-	SIZE_T bytesOnEachUpdate = in_data->buffer_length();
-	if (bytesOnEachUpdate >= gDefaultStreamSize)
-	{
-		bytesOnEachUpdate = gDefaultStreamSize;
-	}
+	mRegisteredHandlers.erase(in_handler.mSelfIter);
+	in_handler.mSelfIter = NULL;
+	in_handler.mIsRegistered = false;
+	in_handler.mIsProcessing = false;
+	in_handler.mOvp = { 0 };
+	in_handler.mIocpKey = 0;
 
-	if (mAioMng.enqueue_write_context(in_handler.mIoContext, bytesOnEachUpdate) != async_io_manager::flags::AIO_MNG_SUCCESS)
-	{
-		return flags::IO_MNG_ERR_STREAMS_ARE_FULL;
-	}
-	in_handler.mIoContext.get_character_stream()->set_cursor_front();
+	mRegistryMutex.release();
+
+	in_handler.on_unregistered();
+
 	return flags::IO_MNG_SUCCESS;
 }
 
-PcIoManager::flags PcIoManager::io_mng_write(PcIoHandler& in_handler, mbase::char_stream& in_data)
+PcIoManager::flags PcIoManager::add_handler(PcIoHandler& in_handler)
 {
-	MBASE_IOMNG_USUAL_CHECK;
+	MBASE_IOMNG_RETURN_UNINITIALIZED;
 
-	if (!in_data.buffer_length())
+	if(!in_handler.is_registered())
 	{
-		return flags::IO_MNG_ERR_MISSING_DATA;
+		return flags::IO_MNG_ERR_UNREGISTERED_HANDLER;
 	}
 
-	if (in_handler.get_io_context()->get_io_direction() == mbase::async_io_context::flags::ASYNC_CTX_DIRECTION_INPUT)
+	if(!in_handler.is_open())
 	{
-		return flags::IO_MNG_ERR_INVALID_DIRECTION;
+		return flags::IO_MNG_ERR_FILE_IS_NOT_OPEN;
 	}
 
-	char_stream* oldOutStream = in_handler.mIoContext.get_io_handle()->get_os();
-
-	in_handler.mIoContext.get_io_handle()->associate_os(in_data);
-	SIZE_T bytesOnEachUpdate = in_data.buffer_length();
-	if (bytesOnEachUpdate >= gDefaultStreamSize)
+	if(in_handler.is_processing())
 	{
-		bytesOnEachUpdate = gDefaultStreamSize;
+		return flags::IO_MNG_ERR_HANDLE_IS_BEING_PROCESSED;
 	}
 
-	if (mAioMng.enqueue_write_context(in_handler.mIoContext, bytesOnEachUpdate) != mbase::async_io_manager::flags::AIO_MNG_SUCCESS)
-	{
-		in_handler.mIoContext.get_io_handle()->associate_os(*oldOutStream);
-		return flags::IO_MNG_ERR_STREAMS_ARE_FULL;
-	}
-	in_handler.mIoContext.get_character_stream()->set_cursor_front();
-	return flags::IO_MNG_SUCCESS;
-}
+	mbase::io_file::os_file_handle mHandle = in_handler.get_io_handle()->get_raw_context().raw_handle;
+	ULONG_PTR mCompKey = (ULONG_PTR)mHandle;
 
-PcIoManager::flags PcIoManager::io_mng_read(PcIoHandler& in_handler)
-{
-	MBASE_IOMNG_USUAL_CHECK;
-
-	mbase::char_stream* in_data = in_handler.mIoContext.get_io_handle()->get_is();
-	if (in_handler.get_io_context()->get_io_direction() == mbase::async_io_context::flags::ASYNC_CTX_DIRECTION_OUTPUT)
+	if(CreateIoCompletionPort(mHandle, mSyncHandle, mCompKey, 0) == NULL)
 	{
-		return flags::IO_MNG_ERR_INVALID_DIRECTION;
+		return flags::IO_MNG_ERR_INVALID_RAW_HANDLE;
 	}
 
-	if (!in_data)
-	{
-		return flags::IO_MNG_ERR_MISSING_DATA;
-	}
+	in_handler.mIocpKey = mCompKey;
 
-	if (!in_data->buffer_length())
-	{
-		return flags::IO_MNG_ERR_INVALID_SIZE;
-	}
+	mbase::lock_guard lg(mIoMutex);
+	mIoParticipants.push_back(&in_handler);
 
-	SIZE_T bytesOnEachUpdate = in_data->buffer_length();
-	if (bytesOnEachUpdate >= gDefaultStreamSize)
-	{
-		bytesOnEachUpdate = gDefaultStreamSize;
-	}
-
-	if (mAioMng.enqueue_read_context(in_handler.mIoContext, bytesOnEachUpdate) != async_io_manager::flags::AIO_MNG_SUCCESS)
-	{
-		return flags::IO_MNG_ERR_STREAMS_ARE_FULL;
-	}
-	in_handler.mIoContext.get_character_stream()->set_cursor_front();
-	return flags::IO_MNG_SUCCESS;
-}
-
-PcIoManager::flags PcIoManager::io_mng_read(PcIoHandler& in_handler, size_type in_size)
-{
-	MBASE_IOMNG_USUAL_CHECK;
-
-	mbase::char_stream* in_data = in_handler.mIoContext.get_io_handle()->get_is();
-	PcStreamManager::stream_handle tempStreamHandle;
-	if (in_handler.get_io_context()->get_io_direction() == mbase::async_io_context::flags::ASYNC_CTX_DIRECTION_OUTPUT)
-	{
-		return flags::IO_MNG_ERR_INVALID_DIRECTION;
-	}
-	if (!in_data)
-	{
-		// BRINGING A READER STREAM
-		if (in_size < mReaderStreams.get_stream_size())
-		{
-
-			if (mReaderStreams.acquire_stream(tempStreamHandle) != PcStreamManager::flags::STREAM_MNG_SUCCESS)
-			{
-				if (mAioMng.enqueue_read_context(in_handler.mIoContext, in_size, in_size) != async_io_manager::flags::AIO_MNG_SUCCESS)
-				{
-					return flags::IO_MNG_ERR_STREAMS_ARE_FULL;
-				}
-			}
-			else
-			{
-				mbase::char_stream* outStream = nullptr;
-				mReaderStreams.get_stream_by_handle(tempStreamHandle, outStream); // 100% success
-				in_handler.mStreamHandle = tempStreamHandle;
-				in_handler.mIoContext.set_stream(outStream);
-				if (mAioMng.enqueue_read_context(in_handler.mIoContext, in_size, in_size) != async_io_manager::flags::AIO_MNG_SUCCESS)
-				{
-					mReaderStreams.release_stream(in_handler.mStreamHandle);
-					in_handler.mStreamHandle = -1;
-					in_handler.mIoContext.set_stream(nullptr);
-					return flags::IO_MNG_ERR_STREAMS_ARE_FULL;
-				}
-			}
-		}
-		else
-		{
-			if (mAioMng.enqueue_read_context(in_handler.mIoContext, in_size, mReaderStreams.get_stream_size()) != async_io_manager::flags::AIO_MNG_SUCCESS)
-			{
-				return flags::IO_MNG_ERR_STREAMS_ARE_FULL;
-			}
-		}
-	}
-
-	else
-	{
-		SIZE_T bytesOnEachUpdate = in_data->buffer_length();
-		if (bytesOnEachUpdate < in_size)
-		{
-			return flags::IO_MNG_ERR_INVALID_SIZE;
-		}
-
-		if (bytesOnEachUpdate >= gDefaultStreamSize)
-		{
-			bytesOnEachUpdate = gDefaultStreamSize;
-		}
-
-		if (mAioMng.enqueue_read_context(in_handler.mIoContext, bytesOnEachUpdate) != async_io_manager::flags::AIO_MNG_SUCCESS)
-		{
-			return flags::IO_MNG_ERR_STREAMS_ARE_FULL;
-		}
-	}
-	in_handler.mIoContext.get_character_stream()->set_cursor_front();
 	return flags::IO_MNG_SUCCESS;
 }
 
 PcIoManager::flags PcIoManager::update()
 {
 	MBASE_IOMNG_RETURN_UNINITIALIZED;
-
-	mAioMng.run_both_contexts();
-
-	for (io_participants::iterator It = mIoParticipants.begin(); It != mIoParticipants.end(); It++)
+	DWORD bytesTransferred = 0;
+	ULONG_PTR compKey = 0;
+	LPOVERLAPPED ovpStruct = NULL;
+	if(GetQueuedCompletionStatus(mSyncHandle, &bytesTransferred, &compKey, &ovpStruct, 0))
 	{
-		PcIoHandler* tmpHandler = *It;
-		async_io_context& tmpContext = tmpHandler->mIoContext;
-
-		if (!tmpContext.is_active())
+		mbase::lock_guard rgrMutex(mRegistryMutex);
+		ovpStruct->Offset += bytesTransferred;
+		for(registered_handlers::iterator It = mRegisteredHandlers.begin(); It != mRegisteredHandlers.end(); ++It)
 		{
-			continue;
-		}
-
-		switch (tmpContext.get_io_direction())
-		{
-		case async_io_context::flags::ASYNC_CTX_DIRECTION_INPUT:
-			tmpHandler->on_read(*tmpContext.get_character_stream(), tmpContext.get_bytes_transferred_last_iteration());
-			break;
-		case async_io_context::flags::ASYNC_CTX_DIRECTION_OUTPUT:
-			tmpHandler->on_write(*tmpContext.get_character_stream(), tmpContext.get_bytes_transferred_last_iteration());
-			break;
-		}
-
-		if (tmpContext.get_io_status() == async_io_context::flags::ASYNC_CTX_STAT_FINISHED || tmpContext.get_io_status() == async_io_context::flags::ASYNC_CTX_STAT_ABANDONED)
-		{
-			tmpHandler->on_finish(*tmpContext.get_character_stream(), tmpContext.get_total_transferred_bytes());
-			if (tmpHandler->mStreamHandle != -1)
+			PcIoHandler* tmpHandler = *It;
+			if(tmpHandler->mIocpKey == compKey)
 			{
-				// MEANS WE ARE USING READER STREAMS
-				mReaderStreams.release_stream(tmpHandler->mStreamHandle);
-				tmpHandler->mStreamHandle = -1;
-				tmpHandler->mIoContext.set_stream(nullptr);
-			}
-		}
-	}
-
-	//mbase::PcProgram::get_instance().get_event_manager()->dispatch_event("root_path_updated", nullptr);
-
-
-	return flags::IO_MNG_SUCCESS;
-}
-
-PcIoManager::flags PcIoManager::update_writes()
-{
-	MBASE_IOMNG_RETURN_UNINITIALIZED;
-
-	mAioMng.run_write_contexts();
-	for (io_participants::iterator It = mIoParticipants.begin(); It != mIoParticipants.end(); It++)
-	{
-		PcIoHandler* tmpHandler = *It;
-		async_io_context& tmpContext = tmpHandler->mIoContext;
-
-		if (!tmpContext.is_active())
-		{
-			continue;
-		}
-
-		if (tmpContext.get_io_direction() == async_io_context::flags::ASYNC_CTX_DIRECTION_OUTPUT)
-		{
-			tmpHandler->on_write(*tmpContext.get_character_stream(), tmpContext.get_bytes_transferred_last_iteration());
-			if (tmpContext.get_io_status() == async_io_context::flags::ASYNC_CTX_STAT_FINISHED || tmpContext.get_io_status() == async_io_context::flags::ASYNC_CTX_STAT_ABANDONED)
-			{
-				tmpHandler->on_finish(*tmpContext.get_character_stream(), tmpContext.get_total_transferred_bytes());
-			}
-		}
-	}
-
-	return flags::IO_MNG_SUCCESS;
-}
-
-PcIoManager::flags PcIoManager::update_reads()
-{
-	MBASE_IOMNG_RETURN_UNINITIALIZED;
-
-	mAioMng.run_read_contexts();
-
-	for (io_participants::iterator It = mIoParticipants.begin(); It != mIoParticipants.end(); It++)
-	{
-		PcIoHandler* tmpHandler = *It;
-		async_io_context& tmpContext = tmpHandler->mIoContext;
-
-		if (!tmpContext.is_active())
-		{
-			continue;
-		}
-
-		if (tmpContext.get_io_direction() == async_io_context::flags::ASYNC_CTX_DIRECTION_INPUT)
-		{
-			tmpHandler->on_read(*tmpContext.get_character_stream(), tmpContext.get_bytes_transferred_last_iteration());
-			if (tmpContext.get_io_status() == async_io_context::flags::ASYNC_CTX_STAT_FINISHED || tmpContext.get_io_status() == async_io_context::flags::ASYNC_CTX_STAT_ABANDONED)
-			{
-				tmpHandler->on_finish(*tmpContext.get_character_stream(), tmpContext.get_total_transferred_bytes());
-				if (tmpHandler->mStreamHandle != -1)
+				tmpHandler->mProcessorStream->set_cursor_front();
+				tmpHandler->mProcessorStream->advance(bytesTransferred);
+				if(tmpHandler->get_io_direction() == PcIoHandler::direction::IO_HANDLER_DIRECTION_OUTPUT)
 				{
-					// MEANS WE ARE USING READER STREAMS
-					mReaderStreams.release_stream(tmpHandler->mStreamHandle);
-					tmpHandler->mStreamHandle = -1;
-					tmpHandler->mIoContext.set_stream(nullptr);
+					tmpHandler->on_write(*tmpHandler->mProcessorStream);
+				}
+				else
+				{
+					tmpHandler->on_read(*tmpHandler->mProcessorStream);
 				}
 			}
 		}
 	}
+	return flags::IO_MNG_SUCCESS;
+}
+
+PcIoManager::flags PcIoManager::update_io_loop()
+{
+	MBASE_IOMNG_RETURN_UNINITIALIZED;
+	mbase::lock_guard lg(mIoMutex);
+	for (io_participants::iterator It = mIoParticipants.begin(); It != mIoParticipants.end(); ++It)
+	{
+		PcIoHandler* ioh = *It;
+		IBYTEBUFFER bytesToOperate = ioh->mProcessorStream->get_buffer();
+		U32 bytesLength = ioh->mProcessorStream->get_pos();
+
+		if (bytesLength)
+		{
+			if (ioh->get_io_direction() == PcIoHandler::direction::IO_HANDLER_DIRECTION_OUTPUT)
+			{
+				WriteFile(ioh->get_io_handle()->get_raw_context().raw_handle, bytesToOperate, bytesLength, NULL, &ioh->mOvp);
+			}
+			else
+			{
+				ReadFile(ioh->get_io_handle()->get_raw_context().raw_handle, bytesToOperate, bytesLength, NULL, &ioh->mOvp);
+			}
+
+			DWORD lastError = GetLastError();
+			if (lastError != ERROR_IO_PENDING)
+			{
+				// THERE IS A PROBLEM HERE
+			}
+		}
+
+		ioh->mIsProcessing = false;
+	}
+	mIoParticipants.clear();
 
 	return flags::IO_MNG_SUCCESS;
 }
 
 
+PcIoHandler::PcIoHandler() :
+	mIsRegistered(false),
+	mIsProcessing(false),
+	mProcessorStream(NULL),
+	mIoBase(),
+	mIoDirection(direction::IO_HANDLER_DIRECTION_OUTPUT),
+	mOvp({0}),
+	mIocpKey(0),
+	mPolledStreamHandle(MBASE_INVALID_STREAM_HANDLE),
+	mSelfIter(NULL)
+{
+}
+
+PcIoHandler::~PcIoHandler()
+{
+	PcIoManager* ioMng = MBASE_PROGRAM_IO_MANAGER();
+	if(is_registered())
+	{
+		ioMng->unregister_handler(*this);
+	}
+}
+
+bool PcIoHandler::is_open() const noexcept
+{
+	return mIoBase.is_file_open();
+}
+
+bool PcIoHandler::is_registered() const noexcept
+{
+	return mIsRegistered;
+}
+
+bool PcIoHandler::is_processing() const noexcept
+{
+	return mIsProcessing;
+}
+
+PcIoHandler::direction PcIoHandler::get_io_direction() const noexcept
+{
+	return mIoDirection;
+}
+
+typename PcIoHandler::io_handle_base* PcIoHandler::get_io_handle() noexcept
+{
+	return &mIoBase;
+}
+
+PcIoHandler::flags PcIoHandler::set_io_direction(direction in_direction) // SELF-NOTE: THIS SETS THE CURSOR ON THE FRONT
+{
+	MBASE_IO_HANDLER_USUAL_CHECK();
+
+	if(in_direction == mIoDirection)
+	{
+		return flags::IO_HANDLER_SUCCESS;
+	}
+
+	mIoDirection = in_direction;
+	mProcessorStream->set_cursor_front();
+
+	return flags::IO_HANDLER_SUCCESS;
+} 
+
+PcIoHandler::flags PcIoHandler::set_stream(mbase::char_stream& in_stream)
+{
+	MBASE_IO_HANDLER_USUAL_CHECK();
+	PcIoManager* ioMng = MBASE_PROGRAM_IO_MANAGER();
+	ioMng->get_stream_manager()->release_stream(mPolledStreamHandle);
+	mPolledStreamHandle = MBASE_INVALID_STREAM_HANDLE;
+	mProcessorStream = &in_stream;
+}
+
+PcIoHandler::flags PcIoHandler::write_buffer(CBYTEBUFFER in_data, size_type in_size)
+{
+	MBASE_IO_HANDLER_USUAL_CHECK();
+	if(mIoDirection != direction::IO_HANDLER_DIRECTION_OUTPUT)
+	{
+		return flags::IO_HANDLER_ERR_INVALID_DIRECTION;
+	}
+	mProcessorStream->put_buffern(in_data, in_size);
+}
+
+PcIoHandler::flags PcIoHandler::read_buffer(size_type in_size)
+{
+	MBASE_IO_HANDLER_USUAL_CHECK();
+	if(mIoDirection != direction::IO_HANDLER_DIRECTION_INPUT)
+	{
+		return flags::IO_HANDLER_ERR_INVALID_DIRECTION;
+	}
+
+	mProcessorStream->advance(in_size);
+}
+
+PcIoHandler::flags PcIoHandler::flush_stream()
+{
+	MBASE_IO_HANDLER_USUAL_CHECK();
+	mProcessorStream->set_cursor_front();
+}
+
+PcIoHandler::flags PcIoHandler::finish()
+{
+	MBASE_IO_HANDLER_USUAL_CHECK();
+	PcIoManager* ioMng = MBASE_PROGRAM_IO_MANAGER();
+	
+	ioMng->add_handler(*this); // 100% success
+	mIsProcessing = true;
+	return flags::IO_HANDLER_SUCCESS;
+}
+
+
+GENERIC PcIoHandler::on_registered()
+{
+
+}
+
+GENERIC PcIoHandler::on_unregistered()
+{
+
+}
+
+GENERIC PcIoHandler::on_write(mbase::char_stream& out_data)
+{
+
+}
+
+GENERIC PcIoHandler::on_read(mbase::char_stream& out_data)
+{
+
+}
+
+GENERIC PcIoHandler::_clear_handler()
+{
+
+}
 
 MBASE_END
