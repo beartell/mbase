@@ -6,8 +6,25 @@
 #include <mbase/string.h>
 #include <mbase/filesystem.h>
 #include <mbase/unordered_map.h>
+#include <mbase/synchronization.h>
+#include <mbase/pc/pc_io_manager.h>
 
 MBASE_BEGIN
+
+class PcConfig;
+
+class PcConfigFileHandler : public PcIoHandler {
+public:
+	PcConfigFileHandler(PcConfig& in_self);
+
+	GENERIC on_registered() override;
+	GENERIC on_write(CBYTEBUFFER out_data, size_type out_size) override;
+	GENERIC	on_read(CBYTEBUFFER out_data, size_type out_size) override;
+	GENERIC on_unregistered() override;
+
+private:
+	PcConfig* configSelf;
+};
 
 class PcConfig : public mbase::singleton<PcConfig> {
 public:
@@ -24,10 +41,10 @@ public:
 		CONFIG_WARN_EMPTY_CONFIG_MAP
 	};
 
-	PcConfig() = default;
+	PcConfig();
 	~PcConfig() = default;
 
-	flags get_config_param(const mbase::string& in_key, mbase::string& out_param) const noexcept; 
+	flags get_config_param(const mbase::string& in_key, mbase::string& out_param) noexcept; 
 	mbase::string get_temp_path() const noexcept;
 	mbase::string get_root_path() const noexcept;
 	const config_map& get_config_map() const noexcept;
@@ -41,13 +58,17 @@ public:
 	flags update() noexcept;
 	flags update(config_map& in_cmap) noexcept;
 	flags set_config_param(const mbase::string& in_key, const mbase::string& in_param) noexcept;
+	flags dump_to_string(mbase::string& out_config_string) noexcept;
 
 private:
+	PcConfigFileHandler mConfigFileHandler;
+	mbase::mutex mConfigSync;
 	mbase::string mTempPath;
 	mbase::string mRootPath;
 	mbase::string mConfigPath;
 	config_map mConfigMap;
-	bool mIsInitialized = false;
+	bool mIsInitialized;
+	bool mIsUpdated;
 };
 
 MBASE_END

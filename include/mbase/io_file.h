@@ -88,6 +88,7 @@ public:
 	/* ===== STATE-MODIFIER METHODS BEGIN ===== */
 	MBASE_INLINE os_file_handle open_file(const mbase::string& in_filename, access_mode in_accmode = access_mode::RW_ACCESS, disposition in_disp = disposition::OVERWRITE, bool in_async = false) noexcept;
 	MBASE_INLINE GENERIC close_file() noexcept;
+	MBASE_INLINE GENERIC clear_file() noexcept;
 	MBASE_INLINE size_type write_data(const IBYTEBUFFER in_src) override;
 	MBASE_INLINE size_type write_data(const IBYTEBUFFER in_src, size_type in_length) override;
 	MBASE_INLINE size_type write_data(const mbase::string& in_src) override;
@@ -202,6 +203,15 @@ MBASE_INLINE GENERIC io_file::close_file() noexcept
 	}
 	mOperateReady = false;
 	mRawContext.raw_handle = 0;
+}
+
+MBASE_INLINE GENERIC io_file::clear_file() noexcept
+{
+	if(mRawContext.raw_handle)
+	{
+		set_file_pointer(0, mbase::io_base::move_method::MV_BEGIN);
+		SetEndOfFile(mRawContext.raw_handle);
+	}
 }
 
 MBASE_INLINE typename io_file::size_type io_file::write_data(const IBYTEBUFFER in_src)

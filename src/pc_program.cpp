@@ -77,9 +77,9 @@ GENERIC PcProgram::initialize()
 	mIoManager = &PcIoManager::get_instance();
 	mNetManager = &PcNetManager::get_instance();
 
+	mIoManager->initialize();
 	mDiagnostics->initialize();
 	mConfig->initialize();
-	mIoManager->initialize();
 }
 
 bool PcProgram::authorize(mbase::string in_name, mbase::string in_password)
@@ -90,6 +90,7 @@ bool PcProgram::authorize(mbase::string in_name, mbase::string in_password)
 bool PcProgram::update()
 {
 	mTimerLoop.run_timers();
+	mConfig->update();
 	mIoManager->update();
 	mIoManager->update_io_loop();
 	return false;
@@ -104,6 +105,5 @@ bool PcProgram::exit(I32 in_code, mbase::string in_message)
 {
 	return false;
 }
-
 
 MBASE_END

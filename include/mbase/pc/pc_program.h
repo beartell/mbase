@@ -9,15 +9,16 @@
 #include <mbase/pc/pc_state.h>
 #include <mbase/pc/pc_termination_handler.h>
 
-#define MBASE_PROGRAM_INVOKE_EVENT(in_event_name) PcProgram::get_instance().get_event_manager()->dispatch_event(in_event_name, nullptr)
-#define MBASE_PROGRAM_INVOKE_EVENT_WDATA(in_event_name, in_data) PcProgram::get_instance().get_event_manager()->dispatch_event(in_event_name, (mbase::event_manager::user_data)in_data)
+#define MBASE_PROGRAM_INVOKE_EVENT(in_event_name) mbase::PcProgram::get_instance().get_event_manager()->dispatch_event(in_event_name, nullptr)
+#define MBASE_PROGRAM_INVOKE_EVENT_WDATA(in_event_name, in_data) mbase::PcProgram::get_instance().get_event_manager()->dispatch_event(in_event_name, (mbase::event_manager::user_data)in_data)
 
-#define MBASE_PROGRAM_DIAGNOSTICS_MANAGER() PcProgram::get_instance().get_diagnostics_manager();
-#define MBASE_PROGRAM_IO_MANAGER() PcProgram::get_instance().get_io_manager();
-#define MBASE_PROGRAM_STATE() PcProgram::get_instance().get_program_state();
-#define MBASE_PROGRAM_EVENT_MANAGER() PcProgram::get_instance().get_event_manager();
-#define MBASE_PROGRAM_TIMER() PcProgram::get_instance().get_timer_loop();
-#define MBASE_PROGRAM_NET_MANAGER() PcProgram::get_instance().get_net_manager();
+#define MBASE_PROGRAM_DIAGNOSTICS_MANAGER() mbase::PcProgram::get_instance().get_diagnostics_manager();
+#define MBASE_PROGRAM_IO_MANAGER() mbase::PcProgram::get_instance().get_io_manager();
+#define MBASE_PROGRAM_STATE() mbase::PcProgram::get_instance().get_program_state();
+#define MBASE_PROGRAM_EVENT_MANAGER() mbase::PcProgram::get_instance().get_event_manager();
+#define MBASE_PROGRAM_TIMER() mbase::PcProgram::get_instance().get_timer_loop();
+#define MBASE_PROGRAM_NET_MANAGER() mbase::PcProgram::get_instance().get_net_manager();
+#define MBASE_PROGRAM_CONFIG_MANAGER() mbase::PcProgram::get_instance().get_config();
 
 MBASE_BEGIN
 

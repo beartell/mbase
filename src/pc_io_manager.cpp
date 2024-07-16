@@ -9,10 +9,18 @@ if(!this->is_registered())\
 {\
 	return flags::IO_HANDLER_ERR_UNREGISTERED_HANDLER;\
 }\
-if (this->is_processing())\
+if(is_sync)\
 {\
-return flags::IO_HANDLER_ERR_IOMNG_PROCESSING_STREAM; \
+	while(this->is_processing()){}\
+}\
+else\
+{\
+	if (this->is_processing())\
+	{\
+		return flags::IO_HANDLER_ERR_IOMNG_PROCESSING_STREAM;\
+	}\
 }
+
 
 PcIoManager::~PcIoManager() 
 {
@@ -93,7 +101,7 @@ PcIoManager::flags PcIoManager::register_handler(const mbase::string& in_filenam
 		return flags::IO_MNG_ERR_ALREADY_REGISTERED;
 	}
 
-	out_handler.mIoBase.open_file(in_filename, mbase::io_file::access_mode::RW_ACCESS, mbase::io_file::disposition::OVERWRITE, true);
+	out_handler.mIoBase.open_file(in_filename, mbase::io_file::access_mode::RW_ACCESS, mbase::io_file::disposition::OPEN, true);
 	  
 	if(!out_handler.mIoBase.is_file_open())
 	{
@@ -317,7 +325,7 @@ typename PcIoHandler::io_handle_base* PcIoHandler::get_io_handle() noexcept
 	return &mIoBase;
 }
 
-PcIoHandler::flags PcIoHandler::set_io_direction(direction in_direction) // SELF-NOTE: THIS SETS THE CURSOR ON THE FRONT
+PcIoHandler::flags PcIoHandler::set_io_direction(direction in_direction, bool is_sync) // SELF-NOTE: THIS SETS THE CURSOR ON THE FRONT
 {
 	MBASE_IO_HANDLER_USUAL_CHECK();
 
@@ -332,7 +340,7 @@ PcIoHandler::flags PcIoHandler::set_io_direction(direction in_direction) // SELF
 	return flags::IO_HANDLER_SUCCESS;
 } 
 
-PcIoHandler::flags PcIoHandler::set_stream(mbase::char_stream& in_stream)
+PcIoHandler::flags PcIoHandler::set_stream(mbase::char_stream& in_stream, bool is_sync)
 {
 	MBASE_IO_HANDLER_USUAL_CHECK();
 	PcIoManager* ioMng = MBASE_PROGRAM_IO_MANAGER();
@@ -342,7 +350,7 @@ PcIoHandler::flags PcIoHandler::set_stream(mbase::char_stream& in_stream)
 	return flags::IO_HANDLER_SUCCESS;
 }
 
-PcIoHandler::flags PcIoHandler::write_buffer(CBYTEBUFFER in_data, size_type in_size)
+PcIoHandler::flags PcIoHandler::write_buffer(CBYTEBUFFER in_data, size_type in_size, bool is_sync)
 {
 	MBASE_IO_HANDLER_USUAL_CHECK();
 	if(mIoDirection != direction::IO_HANDLER_DIRECTION_OUTPUT)
@@ -353,7 +361,7 @@ PcIoHandler::flags PcIoHandler::write_buffer(CBYTEBUFFER in_data, size_type in_s
 	return flags::IO_HANDLER_SUCCESS;
 }
 
-PcIoHandler::flags PcIoHandler::read_buffer(size_type in_size)
+PcIoHandler::flags PcIoHandler::read_buffer(size_type in_size, bool is_sync)
 {
 	MBASE_IO_HANDLER_USUAL_CHECK();
 	if(mIoDirection != direction::IO_HANDLER_DIRECTION_INPUT)
@@ -365,23 +373,31 @@ PcIoHandler::flags PcIoHandler::read_buffer(size_type in_size)
 	return flags::IO_HANDLER_SUCCESS;
 }
 
-PcIoHandler::flags PcIoHandler::flush_stream()
+PcIoHandler::flags PcIoHandler::flush_stream(bool is_sync)
 {
 	MBASE_IO_HANDLER_USUAL_CHECK();
 	mProcessorStream->set_cursor_front();
 	return flags::IO_HANDLER_SUCCESS;
 }
 
-PcIoHandler::flags PcIoHandler::finish()
+PcIoHandler::flags PcIoHandler::finish(bool is_sync)
 {
 	MBASE_IO_HANDLER_USUAL_CHECK();
 	PcIoManager* ioMng = MBASE_PROGRAM_IO_MANAGER();
 	
-	std::cout << (int)ioMng->add_handler(*this) << std::endl;
+	ioMng->add_handler(*this);
 	mIsProcessing = true;
 	return flags::IO_HANDLER_SUCCESS;
 }
 
+PcIoHandler::flags PcIoHandler::clear_file()
+{
+	bool is_sync = true;
+	MBASE_IO_HANDLER_USUAL_CHECK();
+
+	mOvp.Offset = 0;
+	mIoBase.clear_file();
+}
 
 GENERIC PcIoHandler::on_registered()
 {

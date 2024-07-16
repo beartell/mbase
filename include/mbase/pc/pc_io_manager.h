@@ -68,7 +68,6 @@ private:
 	_sync_handle mSyncHandle;
 };
 
-
 class PcIoHandler : public handler_base {
 public:
 	using io_handle_base = io_file;
@@ -100,12 +99,13 @@ public:
 	direction get_io_direction() const noexcept;
 	io_handle_base* get_io_handle() noexcept;
 
-	flags set_io_direction(direction in_direction); // SELF-NOTE: THIS SETS THE CURSOR ON THE FRONT
-	flags set_stream(mbase::char_stream& in_stream);
-	flags write_buffer(CBYTEBUFFER in_data, size_type in_size);
-	flags read_buffer(size_type in_size);
-	flags flush_stream();
-	flags finish();
+	flags set_io_direction(direction in_direction, bool is_sync = false); // SELF-NOTE: THIS SETS THE CURSOR ON THE FRONT
+	flags set_stream(mbase::char_stream& in_stream, bool is_sync = false);
+	flags write_buffer(CBYTEBUFFER in_data, size_type in_size, bool is_sync = false);
+	flags read_buffer(size_type in_size, bool is_sync = false);
+	flags flush_stream(bool is_sync = false);
+	flags finish(bool is_sync = false);
+	flags clear_file();
 
 	virtual GENERIC on_registered();
 	virtual GENERIC on_unregistered();

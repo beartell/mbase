@@ -953,7 +953,7 @@ MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE I32 character_sequence<SeqType, SeqBase,
 template<typename SeqType, typename SeqBase, typename Allocator>
 MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR typename character_sequence<SeqType, SeqBase, Allocator>::size_type character_sequence<SeqType, SeqBase, Allocator>::get_serialized_size() const noexcept
 {
-    return mSize + 1;
+    return mSize;
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
