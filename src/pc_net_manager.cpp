@@ -423,7 +423,7 @@ GENERIC PcNetServer::accept()
 			newClient.mPeerSocket = resultClient;
 			newClient.mIsConnected = true;
 			newClient.mIsProcessed = false;
-			newClient.mIsReadReady = true;
+			newClient.mIsReadReady = false;
 
 			mConnectedClients.push_back(std::move(newClient));
 			on_accept(mConnectedClients.back());
@@ -440,7 +440,6 @@ GENERIC PcNetServer::update()
 		{
 			CBYTEBUFFER bytesToSend = currentClient.mNetPacket.mPacketContent.get_buffer();
 			U16 bytesLength = currentClient.mNetPacket.mPacketContent.get_pos();
-
 			if(bytesLength)
 			{
 				I32 sResult = send(currentClient.mPeerSocket, bytesToSend, bytesLength, 0);
@@ -468,10 +467,10 @@ GENERIC PcNetServer::update()
 		{
 			IBYTEBUFFER bytesToReceive = currentClient.mNetPacket.mPacketContent.data();
 			I32 rResult = recv(currentClient.mPeerSocket, bytesToReceive, gNetDefaultPacketSize, 0);
-			if (rResult == SOCKET_ERROR)
+			if (rResult == SOCKET_ERROR || rResult == 0)
 			{
 				I32 socketLastError = WSAGetLastError();
-				if (socketLastError == WSAEWOULDBLOCK || socketLastError == WSAEINPROGRESS)
+				if (socketLastError == WSAEWOULDBLOCK)
 				{
 					++It;
 					continue;
@@ -607,6 +606,8 @@ PcNetManager::flags PcNetManager::create_server(const mbase::string& in_addr, I3
 	out_server.mAddr = in_addr;
 	out_server.mPort = in_port;
 	out_server.mIsListening = true;
+
+	out_server.on_listen();
 
 	return flags::NET_MNG_SUCCESS;
 

@@ -616,7 +616,7 @@ MBASE_INLINE_EXPR GENERIC vector<T, Allocator>::resize(size_type in_size) noexce
 	{
 		reserve(in_size * 2);
 	}
-	size_type sizeDifference = mSize - in_size;
+	I32 sizeDifference = mSize - in_size;
 	for(difference_type i = 0; i < sizeDifference; i++)
 	{
 		pop_back();
