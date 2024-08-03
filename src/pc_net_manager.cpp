@@ -84,7 +84,7 @@ PcNetPacket& PcNetPacket::operator=(PcNetPacket&& in_rhs) noexcept
 	return *this;
 }
 
-PcNetPeerClient::PcNetPeerClient() : 
+PcNetPeerClient::PcNetPeerClient() :
 	mPeerSocket(INVALID_SOCKET), 
 	mIsProcessed(false), 
 	mIsReadReady(false),
@@ -135,6 +135,20 @@ MBASE_ND(MBASE_OBS_IGNORE) bool PcNetPeerClient::is_connected() const noexcept
 	return mIsConnected;
 }
 
+MBASE_ND(MBASE_OBS_IGNORE) bool PcNetPeerClient::is_available() const noexcept
+{
+	if(mNetPacket.mPacketContent.get_pos())
+	{
+		return false; // means we are writing to buffer
+	}
+
+	if((!mIsProcessed && !mIsReadReady) && mNetPacket.mPacketSize)
+	{
+		return true;
+	}
+	return false;
+}
+
 MBASE_ND(MBASE_OBS_IGNORE) bool PcNetPeerClient::is_awaiting_connection() const noexcept
 {
 	return mIsConnecting;
@@ -157,6 +171,11 @@ PcNetPeerClient::flags PcNetPeerClient::write_data(CBYTEBUFFER in_data, size_typ
 		return flags::NET_PEER_ERR_DISCONNECTED;
 	}
 
+	if(!in_size)
+	{
+		return flags::NET_PEER_ERR_INVALID_SIZE;
+	}
+
 	if (is_processed())
 	{
 		return flags::NET_PEER_ERR_ALREADY_PROCESSED;
@@ -173,7 +192,24 @@ PcNetPeerClient::flags PcNetPeerClient::write_data(CBYTEBUFFER in_data, size_typ
 	}*/
 
 	mNetPacket.mPacketContent.put_buffern(in_data, in_size);
-	mNetPacket.mPacketSize += in_size;
+	return flags::NET_PEER_SUCCCES;
+}
+
+PcNetPeerClient::flags PcNetPeerClient::read_data(IBYTEBUFFER& out_data, size_type& out_size)
+{
+	if (!is_connected())
+	{
+		return flags::NET_PEER_ERR_DISCONNECTED;
+	}
+
+	if(!is_available())
+	{
+		return flags::NET_PEER_ERR_DATA_IS_NOT_AVAILABLE;
+	}
+
+	out_data = mNetPacket.mPacketContent.get_buffer();
+	out_size = mNetPacket.mPacketSize;
+
 	return flags::NET_PEER_SUCCCES;
 }
 
@@ -210,6 +246,16 @@ PcNetPeerClient::flags PcNetPeerClient::finish_and_ready()
 	return flags::NET_PEER_SUCCCES;
 }
 
+PcNetPeerClient::flags PcNetPeerClient::disconnect()
+{
+	if (!is_connected())
+	{
+		return flags::NET_PEER_ERR_DISCONNECTED;
+	}
+	_destroy_peer();
+	return flags::NET_PEER_SUCCCES;
+}
+
 bool PcNetPeerClient::operator==(const PcNetPeerClient& in_rhs)
 {
 	return mPeerSocket == in_rhs.mPeerSocket;
@@ -232,6 +278,8 @@ GENERIC PcNetPeerClient::_destroy_peer() noexcept
 	mIsProcessed = false;
 	mIsReadReady = false;
 	mIsConnected = false;
+	mNetPacket.mPacketSize = 0;
+	mNetPacket.mPacketContent.set_cursor_front();
 }
 
 GENERIC PcNetPeerClient::_set_new_socket_handle(socket_handle in_socket) noexcept
@@ -245,6 +293,140 @@ GENERIC PcNetPeerClient::_set_new_socket_handle(socket_handle in_socket) noexcep
 
 PcNetClient::PcNetClient() : mReconnector(*this), mIsReconnect(false) 
 {
+}
+
+PcNetPeerUdpClient::PcNetPeerUdpClient() :
+	mIsProcessed(false),
+	mIsReadReady(false),
+	mNetPacket(),
+	mPeerAddr(),
+	mPeerPort(0)
+{
+	struct sockaddr_in tmpAddr = { 0 };
+	mSockAddr = tmpAddr;
+}
+
+PcNetPeerUdpClient::PcNetPeerUdpClient(PcNetPeerUdpClient&& in_rhs) noexcept
+{
+	mIsProcessed = in_rhs.mIsProcessed;
+	mIsReadReady = in_rhs.mIsReadReady;
+	mPeerAddr = in_rhs.mPeerAddr;
+	mPeerPort = in_rhs.mPeerPort;
+	mNetPacket = std::move(in_rhs.mNetPacket);
+	mSockAddr = in_rhs.mSockAddr;
+
+	in_rhs.mIsProcessed = false;
+	in_rhs.mIsReadReady = false;
+	in_rhs.mPeerPort = 0;
+	in_rhs.mSockAddr = { 0 };
+}
+
+PcNetPeerUdpClient::~PcNetPeerUdpClient()
+{
+	// _destroy_peer()
+}
+
+MBASE_ND(MBASE_OBS_IGNORE) bool PcNetPeerUdpClient::is_read_ready() const noexcept
+{
+	return mIsReadReady;
+}
+
+MBASE_ND(MBASE_OBS_IGNORE) bool PcNetPeerUdpClient::is_processed() const noexcept
+{
+	return mIsProcessed;
+}
+
+MBASE_ND(MBASE_OBS_IGNORE) bool PcNetPeerUdpClient::is_available() const noexcept
+{
+	if (mNetPacket.mPacketContent.get_pos())
+	{
+		return false; // means we are writing to buffer
+	}
+
+	if ((!mIsProcessed && !mIsReadReady) && mNetPacket.mPacketSize)
+	{
+		return true;
+	}
+	return false;
+}
+
+MBASE_ND(MBASE_OBS_IGNORE) mbase::string PcNetPeerUdpClient::get_peer_addr() const noexcept
+{
+	return mPeerAddr;
+}
+
+MBASE_ND(MBASE_OBS_IGNORE) I32 PcNetPeerUdpClient::get_peer_port() const noexcept
+{
+	return mPeerPort;
+}
+
+PcNetPeerUdpClient::flags PcNetPeerUdpClient::write_data(CBYTEBUFFER in_data, size_type in_size)
+{
+	if (!in_size)
+	{
+		return flags::NET_PEER_UDP_ERR_INVALID_SIZE;
+	}
+
+	if (is_processed())
+	{
+		return flags::NET_PEER_UDP_ERR_ALREADY_PROCESSED;
+	}
+
+	if (is_read_ready())
+	{
+		return flags::NET_PEER_UDP_ERR_AWAITING_DATA;
+	}
+
+	mNetPacket.mPacketContent.put_buffern(in_data, in_size);
+	return flags::NET_PEER_UDP_SUCCCES;
+}
+
+PcNetPeerUdpClient::flags PcNetPeerUdpClient::read_data(IBYTEBUFFER& out_data, size_type& out_size)
+{
+	if (!is_available())
+	{
+		return flags::NET_PEER_UDP_ERR_DATA_IS_NOT_AVAILABLE;
+	}
+
+	out_data = mNetPacket.mPacketContent.get_buffer();
+	out_size = mNetPacket.mPacketSize;
+
+	return flags::NET_PEER_UDP_SUCCCES;
+}
+
+PcNetPeerUdpClient::flags PcNetPeerUdpClient::finish()
+{
+	if (is_read_ready())
+	{
+		return flags::NET_PEER_UDP_ERR_AWAITING_DATA;
+	}
+
+	mIsProcessed = true;
+	return flags::NET_PEER_UDP_SUCCCES;
+}
+
+PcNetPeerUdpClient::flags PcNetPeerUdpClient::finish_and_ready()
+{
+	if (is_read_ready())
+	{
+		return flags::NET_PEER_UDP_ERR_AWAITING_DATA;
+	}
+
+	mIsProcessed = true;
+	mIsReadReady = true;
+	return flags::NET_PEER_UDP_SUCCCES;
+}
+
+bool PcNetPeerUdpClient::operator==(const PcNetPeerUdpClient& in_rhs)
+{
+	// TODO, IMPLEMENT
+	return true;
+}
+
+bool PcNetPeerUdpClient::operator!=(const PcNetPeerUdpClient& in_rhs)
+{
+	// TODO, IMPLEMENT
+	return true;
 }
 
 MBASE_ND(MBASE_OBS_IGNORE) PcNetPeerClient& PcNetClient::get_peer_client()
@@ -278,6 +460,7 @@ GENERIC PcNetClient::update()
 					}
 					else
 					{
+						// DO THIS OPERATION ON THE LOGIC LOOP
 						mConnectedClient._destroy_peer();
 						on_disconnect();
 						if(is_reconnect_set())
@@ -290,7 +473,7 @@ GENERIC PcNetClient::update()
 				}
 				else
 				{
-					// DATA IS WRITTEN
+					// DO THIS OPERATION ON THE LOGIC LOOP
 					on_send(mConnectedClient, mConnectedClient.mNetPacket.mPacketContent.get_buffer(), sResult);
 					mConnectedClient.mIsProcessed = false;
 					mConnectedClient.mNetPacket.mPacketContent.set_cursor_front();
@@ -326,6 +509,7 @@ GENERIC PcNetClient::update()
 				// DATA RECEIVED
 				mConnectedClient.mIsReadReady = false;
 				mConnectedClient.mIsProcessed = false;
+				mConnectedClient.mNetPacket.mPacketSize = rResult;
 				on_receive(mConnectedClient, mConnectedClient.mNetPacket.mPacketContent.get_buffer(), rResult);
 			}
 		}
@@ -344,7 +528,11 @@ GENERIC PcNetClient::set_reconnect_params(U32 in_reconnect_attempt, U32 in_inter
 	mReconnector.set_target_time(in_interval_ms, mbase::timer_base::flags::TIMER_POLICY_ASYNC);
 }
 
-PcNetServer::PcNetServer() : mIsListening(false), mRawSocket(INVALID_SOCKET), mConnectedClients(), mAddr(""), mPort(0)
+PcNetServer::PcNetServer() : 
+	mIsListening(false), 
+	mRawSocket(INVALID_SOCKET), 
+	mAddr(""), 
+	mPort(0)
 {
 }
 
@@ -368,13 +556,13 @@ MBASE_ND(MBASE_OBS_IGNORE) I32 PcNetServer::get_port() const noexcept
 	return mPort;
 }
 
-MBASE_ND(MBASE_OBS_IGNORE) typename const PcNetServer::client_list& PcNetServer::get_connected_peers() const noexcept
-{
-	return mConnectedClients;
-}
-
 PcNetServer::flags PcNetServer::listen() noexcept
 {
+	if(mRawSocket == INVALID_SOCKET || mRawSocket == SOCKET_ERROR)
+	{
+		return flags::NER_SERVER_ERR_SOCKET_NOT_SET;
+	}
+
 	if(mIsListening)
 	{
 		return flags::NET_SERVER_WARN_ALREADY_LISTENING;
@@ -387,17 +575,22 @@ PcNetServer::flags PcNetServer::listen() noexcept
 
 PcNetServer::flags PcNetServer::stop() noexcept
 {
+	if (mRawSocket == INVALID_SOCKET || mRawSocket == SOCKET_ERROR)
+	{
+		return flags::NER_SERVER_ERR_SOCKET_NOT_SET;
+	}
+
 	mIsListening = false;
 	on_stop();
 	return flags::NET_SERVER_SUCCESS;
 }
 
-PcNetServer::flags PcNetServer::broadcast_message() 
+MBASE_ND(MBASE_OBS_IGNORE) typename const PcNetTcpServer::client_list& PcNetTcpServer::get_connected_peers() const noexcept
 {
-	return flags::NET_SERVER_SUCCESS;
+	return mConnectedClients;
 }
 
-GENERIC PcNetServer::accept()
+GENERIC PcNetTcpServer::accept()
 {
 	if(is_listening())
 	{
@@ -424,18 +617,30 @@ GENERIC PcNetServer::accept()
 			newClient.mIsConnected = true;
 			newClient.mIsProcessed = false;
 			newClient.mIsReadReady = false;
-
-			mConnectedClients.push_back(std::move(newClient));
+			
+			mConnectedClients.push_back(std::make_shared<PcNetPeerClient>(std::move(newClient)));
+			//mbase::lock_guard accMut(mAcceptMutex);
+			//mAcceptClients.push_back(mConnectedClients.back());
 			on_accept(mConnectedClients.back());
 		}
 	}
 }
 
-GENERIC PcNetServer::update()
+GENERIC PcNetTcpServer::update()
+{
+	mAcceptMutex.acquire();
+	for(accept_clients::iterator It = mAcceptClients.begin(); It != mAcceptClients.end(); ++It)
+	{
+
+	}
+	mAcceptMutex.release();
+}
+
+GENERIC PcNetTcpServer::update_t()
 {
 	for(client_list::iterator It = mConnectedClients.begin(); It != mConnectedClients.end();)
 	{
-		PcNetPeerClient& currentClient = *It;
+		PcNetPeerClient& currentClient = *It->get();
 		if(currentClient.is_processed())
 		{
 			CBYTEBUFFER bytesToSend = currentClient.mNetPacket.mPacketContent.get_buffer();
@@ -451,12 +656,14 @@ GENERIC PcNetServer::update()
 						++It;
 						continue;
 					}
-					// EXTEND THIS AREA
-					It = mConnectedClients.erase(It); // SELF-NOTE : do not erase here
+					currentClient._destroy_peer();
+					on_disconnect(*It);
+					It = mConnectedClients.erase(It);
 					continue;
 				}
 
 				currentClient.mNetPacket.mPacketContent.set_cursor_front();
+				currentClient.mNetPacket.mPacketSize = 0;
 				currentClient.mIsProcessed = false;
 				++It;
 				continue;
@@ -475,18 +682,52 @@ GENERIC PcNetServer::update()
 					++It;
 					continue;
 				}
-				on_disconnect(currentClient);
-				It = mConnectedClients.erase(It); // SELF-NOTE : do not erase here
+				currentClient._destroy_peer();
+				on_disconnect(*It);
+				It = mConnectedClients.erase(It);
 				continue;
 			}
 			else
 			{
 				currentClient.mIsReadReady = false;
 				currentClient.mIsProcessed = false;
-				on_data(currentClient, currentClient.mNetPacket.mPacketContent.get_buffer(), rResult);
+				currentClient.mNetPacket.mPacketSize = rResult;
+				on_data(*It, currentClient.mNetPacket.mPacketContent.get_buffer(), rResult);
 			}
 		}
 		++It;
+	}
+}
+
+PcNetUdpServer::PcNetUdpServer() : PcNetServer(), mReaderStream(gNetDefaultPacketSize)
+{
+}
+
+PcNetUdpServer::~PcNetUdpServer()
+{
+
+}
+
+GENERIC PcNetUdpServer::update()
+{
+
+}
+
+GENERIC PcNetUdpServer::update_t()
+{
+	if(is_listening())
+	{
+		struct sockaddr sckAddr;
+		I32 addrLen = sizeof(sckAddr);
+		I32 sResult = recvfrom(mRawSocket, mReaderStream.get_buffer(), gNetDefaultPacketSize, 0, &sckAddr, &addrLen);
+		if (sResult == SOCKET_ERROR)
+		{
+			I32 socketLastError = WSAGetLastError();
+			if (socketLastError == WSAEWOULDBLOCK || socketLastError == WSAEINPROGRESS)
+			{
+				
+			}
+		}
 	}
 }
 
@@ -562,7 +803,7 @@ PcNetManager::flags PcNetManager::create_server(const mbase::string& in_addr, I3
 	hints.ai_family = AF_INET;
 	hints.ai_protocol = IPPROTO_TCP;
 	hints.ai_socktype = SOCK_STREAM;
-	hints.ai_flags = AI_PASSIVE;
+	//hints.ai_flags = AI_PASSIVE;
 
 	mbase::string portString = mbase::string::from_format("%d", in_port);
 
@@ -595,6 +836,8 @@ PcNetManager::flags PcNetManager::create_server(const mbase::string& in_addr, I3
 	iResult = listen(serverSocket, SOMAXCONN);
 	if(iResult == SOCKET_ERROR)
 	{
+
+		printf("maxl isten %d", WSAGetLastError());
 		// TODO: ERROR CHECKING WILL BE IMPLEMENTED
 		closesocket(serverSocket);
 		return flags::NET_MNG_ERR_UNKNOWN;
@@ -605,12 +848,8 @@ PcNetManager::flags PcNetManager::create_server(const mbase::string& in_addr, I3
 	out_server.mRawSocket = serverSocket;
 	out_server.mAddr = in_addr;
 	out_server.mPort = in_port;
-	out_server.mIsListening = true;
-
-	out_server.on_listen();
 
 	return flags::NET_MNG_SUCCESS;
-
 }
 
 MBASE_END

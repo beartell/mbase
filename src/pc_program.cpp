@@ -92,7 +92,7 @@ bool PcProgram::update()
 	mTimerLoop.run_timers();
 	mConfig->update();
 	mIoManager->update();
-	mIoManager->update_io_loop();
+	mIoManager->update_t();
 	return false;
 }
 

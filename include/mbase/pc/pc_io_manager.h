@@ -56,7 +56,7 @@ public:
 	flags unregister_handler(PcIoHandler& in_handler);
 	flags add_handler(PcIoHandler& in_handler);
 	flags update(); // SHOULD BE CALLED ON LOGIC LOOP
-	flags update_io_loop(); // SHOULD BE CALLED ON FILE IO LOOP
+	flags update_t(); // SHOULD BE CALLED ON FILE IO LOOP
 
 private:
 	PcStreamManager mStreamManager;

@@ -243,7 +243,7 @@ PcIoManager::flags PcIoManager::update()
 	return flags::IO_MNG_SUCCESS;
 }
 
-PcIoManager::flags PcIoManager::update_io_loop()
+PcIoManager::flags PcIoManager::update_t()
 {
 	MBASE_IOMNG_RETURN_UNINITIALIZED;
 	mbase::lock_guard lg(mIoMutex);

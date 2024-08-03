@@ -8,7 +8,9 @@
 #include <mbase/list.h>
 #include <mbase/vector.h>
 #include <mbase/wsa_init.h>
+#include <mbase/synchronization.h>
 #include <mbase/framework/timers.h>
+#include <memory>
 
 MBASE_BEGIN
 
@@ -48,7 +50,7 @@ struct PcNetPacket {
 	mbase::deep_char_stream mPacketContent;
 };
 
-class PcNetPeerClient {
+class PcNetPeerClient : public non_copyable {
 public:
 	using size_type = SIZE_T;
 	using socket_handle = SOCKET;
@@ -56,6 +58,7 @@ public:
 	friend class PcNetServer;
 	friend class PcNetManager;
 	friend class PcNetClient;
+	friend class PcNetTcpServer;
 
 	enum class flags : U8 {
 		NET_PEER_SUCCCES,
@@ -63,23 +66,30 @@ public:
 		NET_PERR_ERR_INSUFFICENT_BUFFER_SIZE,
 		NET_PEER_ERR_UNAVAILABLE,
 		NET_PEER_ERR_DISCONNECTED,
-		NET_PEER_ERR_ALREADY_PROCESSED
+		NET_PEER_ERR_ALREADY_PROCESSED,
+		NET_PEER_ERR_DATA_IS_NOT_AVAILABLE,
+		NET_PEER_ERR_INVALID_SIZE
 	};
 
 	PcNetPeerClient();
 	PcNetPeerClient(PcNetPeerClient&& in_rhs) noexcept;
 	~PcNetPeerClient();
 
+	//PcNetPeerClient& operator=(PcNetPeerClient&& in_rhs);
+
 	MBASE_ND(MBASE_OBS_IGNORE) bool is_read_ready() const noexcept;
 	MBASE_ND(MBASE_OBS_IGNORE) bool is_processed() const noexcept;
 	MBASE_ND(MBASE_OBS_IGNORE) bool is_connected() const noexcept;
+	MBASE_ND(MBASE_OBS_IGNORE) bool is_available() const noexcept;
 	MBASE_ND(MBASE_OBS_IGNORE) bool is_awaiting_connection() const noexcept;
 	MBASE_ND(MBASE_OBS_IGNORE) mbase::string get_peer_addr() const noexcept;
 	MBASE_ND(MBASE_OBS_IGNORE) I32 get_peer_port() const noexcept;
 
-	flags write_data(CBYTEBUFFER in_data, size_type in_size);
+	flags write_data(CBYTEBUFFER in_data, size_type in_size); // TODO: CHECK NET PACKET OVERFLOW
+	flags read_data(IBYTEBUFFER& out_data, size_type& out_size);
 	flags finish();
 	flags finish_and_ready();
+	flags disconnect();
 
 	bool operator==(const PcNetPeerClient& in_rhs);
 	bool operator!=(const PcNetPeerClient& in_rhs);
@@ -93,6 +103,48 @@ private:
 	bool mIsReadReady;
 	bool mIsConnected;
 	bool mIsConnecting;
+	mbase::string mPeerAddr;
+	I32 mPeerPort;
+	PcNetPacket mNetPacket;
+};
+
+class PcNetPeerUdpClient : public non_copyable {
+public:
+	using size_type = SIZE_T;
+
+	enum class flags : U8 {
+		NET_PEER_UDP_SUCCCES,
+		NET_PEER_UDP_ERR_AWAITING_DATA,
+		NET_PERR_UDP_ERR_INSUFFICENT_BUFFER_SIZE,
+		NET_PEER_UDP_ERR_UNAVAILABLE,
+		NET_PEER_UDP_ERR_DISCONNECTED,
+		NET_PEER_UDP_ERR_ALREADY_PROCESSED,
+		NET_PEER_UDP_ERR_DATA_IS_NOT_AVAILABLE,
+		NET_PEER_UDP_ERR_INVALID_SIZE
+	};
+
+	PcNetPeerUdpClient();
+	PcNetPeerUdpClient(PcNetPeerUdpClient&& in_rhs) noexcept;
+	~PcNetPeerUdpClient();
+
+	MBASE_ND(MBASE_OBS_IGNORE) bool is_read_ready() const noexcept;
+	MBASE_ND(MBASE_OBS_IGNORE) bool is_processed() const noexcept;
+	MBASE_ND(MBASE_OBS_IGNORE) bool is_available() const noexcept;
+	MBASE_ND(MBASE_OBS_IGNORE) mbase::string get_peer_addr() const noexcept;
+	MBASE_ND(MBASE_OBS_IGNORE) I32 get_peer_port() const noexcept;
+
+	flags write_data(CBYTEBUFFER in_data, size_type in_size); // TODO: CHECK NET PACKET OVERFLOW
+	flags read_data(IBYTEBUFFER& out_data, size_type& out_size);
+	flags finish();
+	flags finish_and_ready();
+
+	bool operator==(const PcNetPeerUdpClient& in_rhs);
+	bool operator!=(const PcNetPeerUdpClient& in_rhs);
+
+private:
+	struct sockaddr_in mSockAddr;
+	bool mIsProcessed;
+	bool mIsReadReady;
 	mbase::string mPeerAddr;
 	I32 mPeerPort;
 	PcNetPacket mNetPacket;
@@ -124,46 +176,83 @@ private:
 	bool mIsReconnect;
 };
 
-class PcNetServer {
+class PcNetServer : public non_copymovable {
 public:
 	using size_type = SIZE_T;
 	using socket_handle = SOCKET;
-	using client_list = mbase::list<PcNetPeerClient>;
 
 	friend class PcNetManager;
 
 	enum class flags : U8 {
 		NET_SERVER_SUCCESS,
-		NET_SERVER_WARN_ALREADY_LISTENING,
+		NER_SERVER_ERR_SOCKET_NOT_SET,
+		NET_SERVER_WARN_ALREADY_LISTENING
 	};
 
 	PcNetServer();
 	~PcNetServer();
 
 	virtual GENERIC on_listen() = 0;
-	virtual GENERIC on_accept(PcNetPeerClient& out_peer) = 0;
-	virtual GENERIC on_data(PcNetPeerClient& out_peer, CBYTEBUFFER out_data, size_type out_size) = 0;
-	virtual GENERIC on_disconnect(PcNetPeerClient& out_peer) = 0;
 	virtual GENERIC on_stop() = 0;
 
 	MBASE_ND(MBASE_OBS_IGNORE) bool is_listening() const noexcept;
 	MBASE_ND(MBASE_OBS_IGNORE) mbase::string get_address() const noexcept;
 	MBASE_ND(MBASE_OBS_IGNORE) I32 get_port() const noexcept;
-	MBASE_ND(MBASE_OBS_IGNORE) const client_list& get_connected_peers() const noexcept;
 
 	flags listen() noexcept;
 	flags stop() noexcept;
-	flags broadcast_message();
 
-	GENERIC accept();
-	GENERIC update();
+	virtual GENERIC update() = 0;
+	virtual GENERIC update_t() = 0;
 
-private:
+protected:
 	bool mIsListening;
 	socket_handle mRawSocket;
-	client_list mConnectedClients;
 	mbase::string mAddr;
 	I32 mPort;
+};
+
+class PcNetTcpServer : public PcNetServer {
+public:
+	using client_list = mbase::list<std::shared_ptr<PcNetPeerClient>>;
+	using accept_clients = mbase::vector<std::shared_ptr<PcNetPeerClient>>;
+	using data_clients = mbase::vector<std::shared_ptr<PcNetPeerClient>>;
+
+	MBASE_ND(MBASE_OBS_IGNORE) const client_list& get_connected_peers() const noexcept;
+
+	virtual GENERIC on_accept(std::shared_ptr<PcNetPeerClient> out_peer) = 0;
+	virtual GENERIC on_data(std::shared_ptr<PcNetPeerClient> out_peer, CBYTEBUFFER out_data, size_type out_size) = 0;
+	virtual GENERIC on_disconnect(std::shared_ptr<PcNetPeerClient> out_peer) = 0;
+
+	GENERIC accept();
+	GENERIC update() override;
+	GENERIC update_t() override;
+
+private:
+	client_list mConnectedClients;
+	accept_clients mAcceptClients;
+	data_clients mDataClients;
+	mbase::mutex mAcceptMutex;
+};
+
+class PcNetUdpServer : public PcNetServer {
+public:
+	using client_list = mbase::vector<std::shared_ptr<PcNetPeerUdpClient>>;
+	using client_write_list = mbase::list<std::shared_ptr<PcNetPeerUdpClient>>;
+	using client_read_list = mbase::list<std::shared_ptr<PcNetPeerUdpClient>>;
+
+	PcNetUdpServer();
+	~PcNetUdpServer();
+
+	virtual GENERIC on_data(std::shared_ptr<PcNetPeerUdpClient> out_peer, CBYTEBUFFER out_data, size_type out_size) = 0;
+	GENERIC update() override;
+	GENERIC update_t() override;
+
+private:
+	client_list mActiveClients;
+	client_write_list mWriteClients;
+	client_read_list mReadClients;
+	mbase::deep_char_stream mReaderStream;
 };
 
 class PcNetManager : public mbase::singleton<PcNetManager> {
@@ -174,6 +263,11 @@ public:
 		NET_MNG_ERR_HOST_NOT_FOUND,
 		NET_MNG_ERR_AWAITING_PREVIOUS_CONNECTION,
 		NET_MNG_ERR_UNKNOWN
+	};
+
+	enum class protocol : U8 {
+		NET_MNG_PROTOCOL_TCP,
+		NET_MNG_PROTOCOL_UDP
 	};
 
 	PcNetManager() {}

@@ -108,6 +108,7 @@ public:
 	MBASE_INLINE_EXPR GENERIC set_cursor_front() noexcept;
 	MBASE_INLINE_EXPR GENERIC set_cursor_end() noexcept;
 	MBASE_INLINE_EXPR GENERIC zero_out_buffer() noexcept;
+	MBASE_INLINE_EXPR GENERIC zero_out_buffer(size_type in_length) noexcept;
 	MBASE_INLINE_EXPR GENERIC zero_out_buffern() noexcept;
 	MBASE_INLINE virtual GENERIC _destroy_self() noexcept;
 	/* ===== STATE-MODIFIER METHODS END ===== */
@@ -394,8 +395,20 @@ MBASE_INLINE_EXPR GENERIC char_stream::zero_out_buffer() noexcept
 {
 	size_type oldCursorPos = mStreamCursor;
 	set_cursor_front();
-	putcn(0);
-	set_cursor_pos(oldCursorPos);
+
+	//putcn('\0'); // IN CASE mStreamCursor is 0
+	for(size_type i = 0; i < oldCursorPos; ++i)
+	{
+		putcn('\0');
+	}
+}
+
+MBASE_INLINE_EXPR GENERIC char_stream::zero_out_buffer(size_type in_length) noexcept
+{
+	for(size_type i = 0; i < in_length; i++)
+	{
+		mSrcBuffer[i] = '\0';
+	}
 }
 
 MBASE_INLINE_EXPR GENERIC char_stream::zero_out_buffern() noexcept
