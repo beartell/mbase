@@ -175,6 +175,13 @@ public:
     MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE bool is_punctuation(const_iterator in_begin, const_iterator in_end) const noexcept;
     MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE bool is_punctuation(size_type in_from, size_type in_to) const noexcept;
     MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE bool is_punctuation() const noexcept;
+    MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE bool is_print(const_iterator in_begin, const_iterator in_end) const noexcept;
+    MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE bool is_print(size_type in_from, size_type in_to) const noexcept;
+    MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE bool is_print() const noexcept;
+    MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE bool is_digit(const_iterator in_begin, const_iterator in_end) const noexcept;
+    MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE bool is_digit(size_type in_from, size_type in_to) const noexcept;
+    MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE bool is_digit() const noexcept;
+
     MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE bool operator==(const character_sequence& in_rhs) noexcept;
     MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE bool operator!=(const character_sequence& in_rhs) noexcept;
     MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE bool operator<(const character_sequence& in_rhs) noexcept;
@@ -280,6 +287,75 @@ public:
     MBASE_ND(MBASE_OBS_IGNORE) static MBASE_INLINE bool is_control(const value_type& in_char) noexcept { return iscntrl(in_char); }
     MBASE_ND(MBASE_OBS_IGNORE) static MBASE_INLINE bool is_space(const value_type& in_char) noexcept { return isspace(in_char); }
     MBASE_ND(MBASE_OBS_IGNORE) static MBASE_INLINE bool is_punctuation(const value_type& in_char) noexcept { return ispunct(in_char); }
+    MBASE_ND(MBASE_OBS_IGNORE) static MBASE_INLINE bool is_print(const value_type& in_char) noexcept { return isprint(in_char); }
+    MBASE_ND(MBASE_OBS_IGNORE) static MBASE_INLINE bool is_digit(const value_type& in_char) noexcept { return isdigit(in_char); }
+    MBASE_ND(MBASE_OBS_IGNORE) static MBASE_INLINE bool is_integer(const_pointer in_string) noexcept 
+    { 
+        if (in_string == NULL || *in_string == '\0')
+        {
+            return 0;
+        }
+
+        if (*in_string == '-' || *in_string == '+') 
+        {
+            in_string++;
+        }
+
+        while (*in_string) 
+        {
+            if (!is_digit(*in_string)) 
+            {
+                return 0;
+            }
+            in_string++;
+        }
+        return 1;
+    }
+
+    MBASE_ND(MBASE_OBS_IGNORE) static MBASE_INLINE bool is_float(const_pointer in_string) noexcept
+    {
+        I32 tempDecimalControl = 0;
+        I32 tempDigitControl = 0;
+
+        if (in_string == NULL || *in_string == '\0') 
+        {
+            return 0;
+        }
+
+        if (*in_string == '-' || *in_string == '+') 
+        {
+            in_string++;
+        }
+
+        while (*in_string) 
+        {
+            if (*in_string == '.') 
+            {
+                if (tempDecimalControl) 
+                {
+                    return 0;
+                }
+                tempDecimalControl = 1;
+            }
+            else if (is_digit(*in_string)) 
+            {
+                tempDigitControl = 1;
+            }
+            else 
+            {
+                return 0;
+            }
+            in_string++;
+        }
+
+        if (!tempDigitControl) 
+        {
+            return 0;
+        }
+
+        return 1;
+    }
+
     template<typename ... Params>
     MBASE_ND(MBASE_RESULT_IGNORE) static MBASE_INLINE character_sequence from_format(const_pointer in_format, Params ... in_params) noexcept;
     /* ===== NON-MEMBER FUNCTIONS END ===== */
@@ -1248,6 +1324,72 @@ template<typename SeqType, typename SeqBase, typename Allocator>
 MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE bool character_sequence<SeqType, SeqBase, Allocator>::is_punctuation() const noexcept 
 {
     return is_punctuation(cbegin(), cend());
+}
+
+template<typename SeqType, typename SeqBase, typename Allocator>
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE bool character_sequence<SeqType, SeqBase, Allocator>::is_print(const_iterator in_begin, const_iterator in_end) const noexcept
+{
+    if (!size())
+    {
+        return false;
+    }
+
+    const_iterator It = in_begin;
+    const_iterator endIt = in_end;
+
+    for (It; It != endIt; It++)
+    {
+        if (!is_print(*It))
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
+template<typename SeqType, typename SeqBase, typename Allocator>
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE bool character_sequence<SeqType, SeqBase, Allocator>::is_print(size_type in_from, size_type in_to) const noexcept
+{
+    return is_print(cbegin() + in_from, cbegin() + in_to);
+}
+
+template<typename SeqType, typename SeqBase, typename Allocator>
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE bool character_sequence<SeqType, SeqBase, Allocator>::is_print() const noexcept
+{
+    return is_print(cbegin(), cend());
+}
+
+template<typename SeqType, typename SeqBase, typename Allocator>
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE bool character_sequence<SeqType, SeqBase, Allocator>::is_digit(const_iterator in_begin, const_iterator in_end) const noexcept
+{
+    if (!size())
+    {
+        return false;
+    }
+
+    const_iterator It = in_begin;
+    const_iterator endIt = in_end;
+
+    for (It; It != endIt; It++)
+    {
+        if (!is_digit(*It))
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
+template<typename SeqType, typename SeqBase, typename Allocator>
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE bool character_sequence<SeqType, SeqBase, Allocator>::is_digit(size_type in_from, size_type in_to) const noexcept
+{
+    return is_digit(cbegin() + in_from, cbegin() + in_to);
+}
+
+template<typename SeqType, typename SeqBase, typename Allocator>
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE bool character_sequence<SeqType, SeqBase, Allocator>::is_digit() const noexcept
+{
+    return is_digit(cbegin(), cend());
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>

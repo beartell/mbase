@@ -57,7 +57,6 @@ public:
 	}
 };
 
-
 class char_stream : protected type_sequence<IBYTE> {
 public:
 	using reference = IBYTE&;

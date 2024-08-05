@@ -28,6 +28,11 @@ public:
     using reverse_iterator = reverse_sequence_iterator<T>;
     using const_reverse_iterator = const_reverse_sequence_iterator<T>;
 
+    static MBASE_INLINE_EXPR pointer copy_bytes(pointer out_target, const_pointer in_source) noexcept
+    {
+        return strcpy(out_target, in_source);
+    }
+
     static MBASE_INLINE_EXPR pointer copy_bytes(pointer out_target, const_pointer in_source, size_type in_length) noexcept 
     {
         return static_cast<pointer>(memcpy(out_target, in_source, sizeof(value_type) * in_length));
