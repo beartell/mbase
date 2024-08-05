@@ -39,10 +39,31 @@ MBASE_STD_BEGIN
 	maip-protocol-message = maip-identification-line *message-description maip-end message-data
 */
 
-/*
-	ERROR CODES:
-
-*/
+enum class maip_generic_errors : U16 {
+	SUCCESS = 1000,
+	UNDEFINED_OP_TYPE,
+	UNDEFINED_OP_STRING,
+	OP_TYPE_TOO_LONG,
+	OP_TYPE_NON_ALPHA,
+	OP_STRING_TOO_LONG,
+	OP_STRING_NON_PRINTABLE,
+	OP_TIMED_OUT,
+	INVALID_IDENTIFICATION_ENDING,
+	INVALID_VERSION_MAJOR,
+	INVALID_PROTOCOL,
+	DATA_LENGTH_INCONSISTENCY,
+	MISSING_MANDATORY_KEYS,
+	MISSING_OP_TYPE,
+	MISSING_KEY,
+	MISSING_DATA,
+	PACKET_TOO_LARGE,
+	PACKET_TOO_SHORT,
+	PACKET_INCOMPLETE,
+	KEY_LENGTH_TOO_LARGE,
+	VALUE_LENGTH_TOO_LARGE,
+	INVALID_KVAL_FORMAT,
+	ENGINE_OVERLOADED
+};
 
 static const U32 gMaipVersionMinLength = 7;
 
@@ -72,13 +93,9 @@ struct maip_response_identification {
 
 struct maip_description_value {
 	maip_description_value() : mStringValue{0} {}
-	maip_description_value(const maip_description_value& in_rhs)
+	maip_description_value(const maip_description_value& in_rhs) : mStringValue{ 0 }
 	{
 		mValType = in_rhs.mValType;
-		if(*mStringValue != '\0')
-		{
-			maip_sequence_helper::fill(mStringValue, '\0', 128);
-		}
 		maip_sequence_helper::copy_bytes(mStringValue, in_rhs.mStringValue);
 	}
 	maip_description_value& operator=(const maip_description_value& in_rhs)
@@ -102,22 +119,251 @@ struct maip_description_value {
 };
 
 struct maip_description_kval {
-	IBYTE mKey[64] = {0};
+	maip_description_kval() : mKey{0} {}
+	maip_description_kval(const maip_description_kval& in_rhs) noexcept : mKey{0}
+	{
+		maip_sequence_helper::copy_bytes(mKey, in_rhs.mKey);
+		mValues = in_rhs.mValues;
+	}
+	maip_description_kval(maip_description_kval&& in_rhs) noexcept : mKey{0}
+	{
+		maip_sequence_helper::copy_bytes(mKey, in_rhs.mKey);
+		maip_sequence_helper::fill(in_rhs.mKey, '\0', 64);
+		mValues = std::move(in_rhs.mValues);
+	}
+
+	maip_description_kval& operator=(const maip_description_kval& in_rhs)
+	{
+		maip_sequence_helper::fill(mKey, '\0', 64);
+		maip_sequence_helper::copy_bytes(mKey, in_rhs.mKey);
+
+		mValues = in_rhs.mValues;
+		return *this;
+	}
+
+	maip_description_kval& operator=(maip_description_kval&& in_rhs) noexcept
+	{
+		maip_sequence_helper::fill(mKey, '\0', 64);
+		maip_sequence_helper::copy_bytes(mKey, in_rhs.mKey);
+		maip_sequence_helper::fill(in_rhs.mKey, '\0', 64);
+
+		mValues = std::move(in_rhs.mValues);
+		return *this;
+	}
+
+	IBYTE mKey[64];
 	mbase::vector<maip_description_value> mValues;
 };
 
-MBASE_INLINE I32 parse_version(mbase::char_stream& in_stream, maip_version& out_version) 
+// TODO: maip_packet_builder code is terrible here, come back later.
+class maip_packet_builder {
+public:
+	using kval_container = mbase::unordered_map<mbase::string, mbase::vector<maip_description_kval>>;
+
+	GENERIC set_version(U8 in_version_major, U8 in_version_minor)
+	{
+		mVersionString = mbase::string::from_format("MAIP%d.%d ", in_version_major, in_version_minor);
+	}
+
+	GENERIC set_request_message(const mbase::string& in_op_type, const mbase::string& in_op_string)
+	{
+		for(auto&n : in_op_type)
+		{
+			if(mbase::string::is_alpha(n))
+			{
+				mIdentificationLine += n;
+			}
+		}
+
+		mIdentificationLine += ' ';
+
+		for(auto&n : in_op_string)
+		{
+			if(n == ' ')
+			{
+				continue;
+			}
+			
+			if(mbase::string::is_print(n))
+			{
+				mIdentificationLine += n;
+			}
+		}
+
+		mIdentificationLine += "\n";
+	}
+
+	GENERIC set_response_message(U16 in_status_code)
+	{
+		if(in_status_code < 1000 || in_status_code > 9999)
+		{
+			// MUST BE BETWEEN 1000-9999
+			return;
+		}
+		mIdentificationLine = mbase::string::from_format(" %d\n", in_status_code);
+	}
+
+	GENERIC set_kval(const mbase::string& in_key, const mbase::string& in_value)
+	{
+
+	}
+
+private:
+	mbase::string mVersionString = "MAIP1.0 ";
+	mbase::string mIdentificationLine = " 1000\n";
+	kval_container mDescriptionKVals;
+};
+
+class maip_peer_request {
+public:
+	using kval_container = mbase::unordered_map<mbase::string, mbase::vector<maip_description_kval>>;
+	using iterator = typename kval_container::iterator;
+	using const_iterator = typename kval_container::const_iterator;
+
+	maip_peer_request() noexcept : mData{0}, mDataStream(mData, 16384){};
+
+	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE iterator begin() noexcept;
+	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE iterator end() noexcept;
+	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE const_iterator begin() const noexcept;
+	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE const_iterator end() const noexcept;
+	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE const_iterator cbegin() const noexcept;
+	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE const_iterator cend() const noexcept;
+
+	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) const maip_version& get_version() const noexcept { return mMaipVersion; }
+	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) I16 get_version_major() const noexcept { return mMaipVersion.mVersionMajor; }
+	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) I16 get_version_minor() const noexcept { return mMaipVersion.mVersionMinor; }
+	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) const maip_request_identification& get_identification() const noexcept { return mRequestIdentification; }
+	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) const mbase::unordered_map<mbase::string, mbase::vector<maip_description_kval>>& get_kvals() const noexcept { return mDescriptionKvals; }
+
+	MBASE_INLINE maip_generic_errors parse_request(mbase::char_stream& in_stream);
+	MBASE_INLINE maip_generic_errors parse_data(mbase::char_stream& in_stream, U32 in_length);
+
+private:
+	MBASE_INLINE maip_generic_errors _parse_version(mbase::char_stream& in_stream);
+	MBASE_INLINE maip_generic_errors _parse_req_identification_line(mbase::char_stream& in_stream);
+	MBASE_INLINE maip_generic_errors _parse_message_description(mbase::char_stream& in_stream, maip_description_kval& out_kval);
+	MBASE_INLINE maip_generic_errors _parse_end(mbase::char_stream& in_stream);
+	MBASE_INLINE maip_generic_errors _parse_message_data(mbase::char_stream& in_stream, IBYTEBUFFER* out_data, U64 out_size);
+
+	MBASE_INLINE GENERIC _clear_request() 
+	{
+		mMaipVersion.mVersionMajor = 0;
+		mMaipVersion.mVersionMinor = 0;
+		mRequestIdentification = maip_request_identification();
+		mDescriptionKvals.clear();
+	}
+
+	maip_version mMaipVersion;
+	maip_request_identification mRequestIdentification;
+	kval_container mDescriptionKvals;
+	IBYTE mData[16384];
+	mbase::char_stream mDataStream;
+};
+
+MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE typename maip_peer_request::iterator maip_peer_request::begin() noexcept
+{
+	return mDescriptionKvals.begin();
+}
+
+MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE typename maip_peer_request::iterator maip_peer_request::end() noexcept
+{
+	return mDescriptionKvals.end();
+}
+
+MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE typename maip_peer_request::const_iterator maip_peer_request::begin() const noexcept
+{
+	return mDescriptionKvals.begin();
+}
+
+MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE typename maip_peer_request::const_iterator maip_peer_request::end() const noexcept
+{
+	return mDescriptionKvals.end();
+}
+
+MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE typename maip_peer_request::const_iterator maip_peer_request::cbegin() const noexcept
+{
+	return mDescriptionKvals.cbegin();
+}
+
+MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE typename maip_peer_request::const_iterator maip_peer_request::cend() const noexcept
+{
+	return mDescriptionKvals.cend();
+}
+
+MBASE_INLINE maip_generic_errors maip_peer_request::parse_request(mbase::char_stream& in_stream)
+{
+	_clear_request();
+
+	maip_generic_errors parseResult = _parse_version(in_stream);
+	if (parseResult != maip_generic_errors::SUCCESS)
+	{
+		return parseResult;
+	}
+	parseResult = _parse_req_identification_line(in_stream);
+	if (parseResult != maip_generic_errors::SUCCESS)
+	{
+		return parseResult;
+	}
+
+	while (mDescriptionKvals.size() != 64) // max key values
+	{
+		maip_description_kval mdk;
+		parseResult = _parse_message_description(in_stream, mdk);
+		if (parseResult == maip_generic_errors::PACKET_INCOMPLETE)
+		{
+			break;
+		}
+		else if (parseResult == maip_generic_errors::SUCCESS)
+		{
+			mDescriptionKvals[mdk.mKey].push_back(std::move(mdk));
+		}
+		else
+		{
+			return parseResult;
+		}
+	}
+	return _parse_end(in_stream);
+}
+
+MBASE_INLINE maip_generic_errors maip_peer_request::parse_data(mbase::char_stream& in_stream, U32 in_length)
+{
+	mDataStream.set_cursor_front();
+
+	if(in_stream.get_pos() >= in_stream.buffer_length())
+	{
+		return maip_generic_errors::MISSING_DATA;
+	}
+
+	I32 processedBytes = 0;
+	try
+	{
+		for(U32 i = 0; i < in_length; i++)
+		{
+			mDataStream.putc(in_stream.getc());
+			++processedBytes;
+			in_stream.advance_safe();
+			mDataStream.advance_safe();
+		}
+	}
+	catch (const std::exception& out_except)
+	{
+		in_stream.reverse_safe(processedBytes);
+		return maip_generic_errors::DATA_LENGTH_INCONSISTENCY;
+	}
+
+	return maip_generic_errors::SUCCESS;
+}
+
+MBASE_INLINE maip_generic_errors maip_peer_request::_parse_version(mbase::char_stream& in_stream)
 {
 	if (in_stream.buffer_length() < gMaipVersionMinLength)
 	{
-		// INVALID INPUT LENGTH
-		return -1;
+		return maip_generic_errors::PACKET_TOO_SHORT;
 	}
 
 	if (maip_sequence_helper::compare_bytes(in_stream.get_buffer(), "MAIP", 4))
 	{
-		// INVALID PROTOCOL
-		return -1;
+		return maip_generic_errors::INVALID_PROTOCOL;
 	}
 
 	I32 processedBytes = 0;
@@ -140,7 +386,7 @@ MBASE_INLINE I32 parse_version(mbase::char_stream& in_stream, maip_version& out_
 				{
 					// missing version major
 					in_stream.reverse_safe(processedBytes);
-					return -1;
+					return maip_generic_errors::INVALID_VERSION_MAJOR;
 				}
 				// means version major is formed
 				++processedBytes;
@@ -153,7 +399,7 @@ MBASE_INLINE I32 parse_version(mbase::char_stream& in_stream, maip_version& out_
 			{
 				// means version major contains non digit
 				in_stream.reverse_safe(processedBytes);
-				return -1;
+				return maip_generic_errors::INVALID_VERSION_MAJOR;
 			}
 			versionMajor[versionMajorLength] = in_stream.getc();
 			++processedBytes;
@@ -164,7 +410,7 @@ MBASE_INLINE I32 parse_version(mbase::char_stream& in_stream, maip_version& out_
 		{
 			// INVALID FORMAT
 			in_stream.reverse_safe(processedBytes);
-			return -1;
+			return maip_generic_errors::INVALID_IDENTIFICATION_ENDING;
 		}
 
 		for (versionMinorLength; versionMinorLength < 4; versionMinorLength++)
@@ -181,27 +427,26 @@ MBASE_INLINE I32 parse_version(mbase::char_stream& in_stream, maip_version& out_
 
 		if(!versionMinorLength)
 		{
-			// invalid shit
 			in_stream.reverse_safe(processedBytes);
-			return -1;
+			return maip_generic_errors::INVALID_IDENTIFICATION_ENDING;
 		}
 		++processedBytes;
 		in_stream.advance_safe();
 
-		out_version.mVersionMajor = atoi(versionMajor);
-		out_version.mVersionMinor = atoi(versionMinor);
+		mMaipVersion.mVersionMajor = atoi(versionMajor);
+		mMaipVersion.mVersionMinor = atoi(versionMinor);
 	}
 	catch (const std::exception& out_except)
 	{
 		// MEANS, BUFFER IS OUT OF BOUNDS
 		in_stream.reverse_safe(processedBytes);
-		return -1;
+		return maip_generic_errors::PACKET_TOO_SHORT;
 	}
 
-	return 0;
+	return maip_generic_errors::SUCCESS;
 }
 
-MBASE_INLINE I32 parse_req_identification_line(mbase::char_stream& in_stream, maip_request_identification& out_identification) 
+MBASE_INLINE maip_generic_errors maip_peer_request::_parse_req_identification_line(mbase::char_stream& in_stream)
 {
 	I32 processedBytes = 0;
 	try
@@ -212,16 +457,14 @@ MBASE_INLINE I32 parse_req_identification_line(mbase::char_stream& in_stream, ma
 		{
 			if(i == opLengthMax)
 			{
-				// MEANS OP LENGTH IS TOO LONG
 				in_stream.reverse_safe(processedBytes);
-				return -1;
+				return maip_generic_errors::OP_TYPE_TOO_LONG;
 			}
 
 			if(!mbase::string::is_alnum(in_stream.getc()))
 			{
-				// contains non alpha numeric
 				in_stream.reverse_safe(processedBytes);
-				return -2;
+				return maip_generic_errors::OP_TYPE_NON_ALPHA;
 			}
 			opType += in_stream.getc();
 			++processedBytes;
@@ -230,9 +473,8 @@ MBASE_INLINE I32 parse_req_identification_line(mbase::char_stream& in_stream, ma
 
 		if(!opType.size())
 		{
-			// MISSING OP TYPE
 			in_stream.reverse_safe(processedBytes);
-			return -3;
+			return maip_generic_errors::MISSING_OP_TYPE;
 		}
 		++processedBytes;
 		in_stream.advance_safe();
@@ -246,14 +488,20 @@ MBASE_INLINE I32 parse_req_identification_line(mbase::char_stream& in_stream, ma
 			{
 				// OP LENGTH IS TOO LONG
 				in_stream.reverse_safe(processedBytes);
-				return -5;
+				return maip_generic_errors::OP_STRING_TOO_LONG;
+			}
+
+			if(in_stream.getc() == 32)
+			{
+				in_stream.reverse_safe(processedBytes);
+				return maip_generic_errors::OP_STRING_NON_PRINTABLE;
 			}
 
 			if (!mbase::string::is_print(in_stream.getc()))
 			{
 				// contains non alpha numeric
 				in_stream.reverse_safe(processedBytes);
-				return -6;
+				return maip_generic_errors::OP_STRING_NON_PRINTABLE;
 			}
 
 			opString += in_stream.getc();
@@ -266,22 +514,23 @@ MBASE_INLINE I32 parse_req_identification_line(mbase::char_stream& in_stream, ma
 		{
 			// ENDING IS INVALID
 			in_stream.reverse_safe(processedBytes);
-			return -7;
+			return maip_generic_errors::INVALID_IDENTIFICATION_ENDING;
 		}
-
-		out_identification.mOpType = std::move(opType);
-		out_identification.mOpString = std::move(opString);
+		++processedBytes;
+		in_stream.advance_safe();
+		mRequestIdentification.mOpType = std::move(opType);
+		mRequestIdentification.mOpString = std::move(opString);
 	}
 	catch (const std::exception& out_except)
 	{
 		// MEANS, BUFFER IS OUT OF BOUNDS
 		in_stream.reverse_safe(processedBytes);
-		return -1;
+		return maip_generic_errors::PACKET_TOO_SHORT;
 	}
-	return 0;
+	return maip_generic_errors::SUCCESS;
 }
 
-MBASE_INLINE I32 parse_message_description(mbase::char_stream& in_stream, maip_description_kval& out_kval)
+MBASE_INLINE maip_generic_errors maip_peer_request::_parse_message_description(mbase::char_stream& in_stream, maip_description_kval& out_kval)
 {
 	I32 processedBytes = 0;
 	try
@@ -290,10 +539,17 @@ MBASE_INLINE I32 parse_message_description(mbase::char_stream& in_stream, maip_d
 		mbase::char_stream keyBuffer(out_kval.mKey, 64);
 		for(I32 i = 0; in_stream.getc() != ':'; i++)
 		{
+			if(in_stream.getc() == '\n') 
+			{
+				// this is for understanding that we are reached the END LF
+				in_stream.reverse_safe(processedBytes);
+				return maip_generic_errors::PACKET_INCOMPLETE;
+			}
+
 			if(i == maxKeyLength)
 			{
 				in_stream.reverse_safe(processedBytes);
-				return -2;
+				return maip_generic_errors::KEY_LENGTH_TOO_LARGE;
 			}
 			keyBuffer.putc(in_stream.getc());
 			++processedBytes;
@@ -305,7 +561,7 @@ MBASE_INLINE I32 parse_message_description(mbase::char_stream& in_stream, maip_d
 		{
 			// MISSING KEY
 			in_stream.reverse_safe(processedBytes);
-			return -3;
+			return maip_generic_errors::MISSING_KEY;
 		}
 
 		I32 maxValueLength = 128;
@@ -320,7 +576,7 @@ MBASE_INLINE I32 parse_message_description(mbase::char_stream& in_stream, maip_d
 			{
 				// value too long
 				in_stream.reverse_safe(processedBytes);
-				return -4;
+				return maip_generic_errors::VALUE_LENGTH_TOO_LARGE;
 			}
 
 			if(in_stream.getc() == 32)
@@ -330,7 +586,7 @@ MBASE_INLINE I32 parse_message_description(mbase::char_stream& in_stream, maip_d
 				{
 					// invalid format
 					in_stream.reverse_safe(processedBytes);
-					return -5;
+					return maip_generic_errors::INVALID_KVAL_FORMAT;
 				}
 
 				++processedBytes;
@@ -343,7 +599,7 @@ MBASE_INLINE I32 parse_message_description(mbase::char_stream& in_stream, maip_d
 				{
 					// non printable characters
 					in_stream.reverse_safe(processedBytes);
-					return -6;
+					return maip_generic_errors::INVALID_KVAL_FORMAT;
 				}
 				
 				if(in_stream.getc() == ';')
@@ -399,31 +655,31 @@ MBASE_INLINE I32 parse_message_description(mbase::char_stream& in_stream, maip_d
 	{
 		// MEANS, BUFFER IS OUT OF BOUNDS
 		in_stream.reverse_safe(processedBytes);
-		return -1;
+		return maip_generic_errors::PACKET_TOO_SHORT;
 	}
-	return 0;
+	return maip_generic_errors::SUCCESS;
 }
 
-MBASE_INLINE I32 parse_end(mbase::char_stream& in_stream)
+MBASE_INLINE maip_generic_errors maip_peer_request::_parse_end(mbase::char_stream& in_stream)
 {
 	I32 bfLength = in_stream.buffer_length() - in_stream.get_pos();
 	if(bfLength < 4)
 	{
-		return -2;
+		return maip_generic_errors::PACKET_INCOMPLETE;
 	}
 
 	if (maip_sequence_helper::compare_bytes(in_stream.get_bufferc(), "END\n", 4))
 	{
 		// INVALID ENDING
-		return -1;
+		return maip_generic_errors::PACKET_INCOMPLETE;
 	}
 
-	return 0;
+	return maip_generic_errors::SUCCESS;
 }
 
-MBASE_INLINE I32 parse_message_data(mbase::char_stream& in_stream, IBYTEBUFFER* out_data, U64 out_size)
+MBASE_INLINE maip_generic_errors _parse_message_data(mbase::char_stream& in_stream, IBYTEBUFFER* out_data, U64 out_size)
 {
-	return 0;
+	return maip_generic_errors::SUCCESS;
 }
 
 class MaipRequest {

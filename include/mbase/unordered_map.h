@@ -69,6 +69,8 @@ public:
 	/* ===== ITERATOR METHODS BEGIN ===== */
 	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR iterator begin() noexcept;
 	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR iterator end() noexcept;
+	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR const_iterator begin() const noexcept;
+	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR const_iterator end() const noexcept;
 	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR const_iterator cbegin() const noexcept;
 	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR const_iterator cend() const noexcept;
 	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR local_iterator begin(size_type in_n) noexcept;
@@ -321,6 +323,18 @@ MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR typename unordered_map<Key, 
 		}
 	}
 	return iterator(this, 0, end(0));
+}
+
+template<typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator>
+MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR typename unordered_map<Key, Value, Hash, KeyEqual, Allocator>::const_iterator unordered_map<Key, Value, Hash, KeyEqual, Allocator>::begin() const noexcept
+{
+	return cbegin();
+}
+
+template<typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator>
+MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR typename unordered_map<Key, Value, Hash, KeyEqual, Allocator>::const_iterator unordered_map<Key, Value, Hash, KeyEqual, Allocator>::end() const noexcept
+{
+	return cend();
 }
 
 template<typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator>

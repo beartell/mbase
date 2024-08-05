@@ -82,11 +82,15 @@ public:
     /* ===== ITERATOR METHODS BEGIN ===== */
     MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE iterator begin() noexcept;
     MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE iterator end() noexcept;
+    MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE const_iterator begin() const noexcept;
+    MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE const_iterator end() const noexcept;
     MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE const_iterator cbegin() const noexcept;
     MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE const_iterator cend() const noexcept;
     MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE reverse_iterator rbegin() noexcept;
+    MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE const_reverse_iterator rbegin() const noexcept;
     MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE const_reverse_iterator crbegin() const noexcept;
     MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE reverse_iterator rend() noexcept;
+    MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE const_reverse_iterator rend() const noexcept;
     MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE const_reverse_iterator crend() const noexcept;
     /* ===== ITERATOR METHODS END ===== */
 
@@ -736,6 +740,18 @@ MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE typename character_sequence<SeqTy
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
+MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE typename character_sequence<SeqType, SeqBase, Allocator>::const_iterator character_sequence<SeqType, SeqBase, Allocator>::begin() const noexcept
+{
+    return const_iterator(mRawData);
+}
+
+template<typename SeqType, typename SeqBase, typename Allocator>
+MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE typename character_sequence<SeqType, SeqBase, Allocator>::const_iterator character_sequence<SeqType, SeqBase, Allocator>::end() const noexcept
+{
+    return const_iterator(mRawData + mSize);
+}
+
+template<typename SeqType, typename SeqBase, typename Allocator>
 MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE typename character_sequence<SeqType, SeqBase, Allocator>::const_iterator character_sequence<SeqType, SeqBase, Allocator>::cbegin() const noexcept 
 {
     return const_iterator(mRawData);
@@ -754,6 +770,12 @@ MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE typename character_sequence<SeqTy
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
+MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE typename character_sequence<SeqType, SeqBase, Allocator>::const_reverse_iterator character_sequence<SeqType, SeqBase, Allocator>::rbegin() const noexcept
+{
+    return const_reverse_iterator(mRawData + (mSize - 1));
+}
+
+template<typename SeqType, typename SeqBase, typename Allocator>
 MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE typename character_sequence<SeqType, SeqBase, Allocator>::const_reverse_iterator character_sequence<SeqType, SeqBase, Allocator>::crbegin() const noexcept 
 {
     return const_reverse_iterator(mRawData + (mSize - 1));
@@ -763,6 +785,12 @@ template<typename SeqType, typename SeqBase, typename Allocator>
 MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE typename character_sequence<SeqType, SeqBase, Allocator>::reverse_iterator character_sequence<SeqType, SeqBase, Allocator>::rend() noexcept 
 {
     return reverse_iterator(mRawData - 1);
+}
+
+template<typename SeqType, typename SeqBase, typename Allocator>
+MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE typename character_sequence<SeqType, SeqBase, Allocator>::const_reverse_iterator character_sequence<SeqType, SeqBase, Allocator>::rend() const noexcept
+{
+    return const_reverse_iterator(mRawData - 1);
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>

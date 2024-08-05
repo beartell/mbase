@@ -117,7 +117,7 @@ InfClient::flags InfClient::set_input(CBYTEBUFFER in_data, size_type in_size, in
 		mfrHostProcessor->get_processed_model()->get_sys_end(endString);
 		totalInput = roleString + lineString + endString;
 	}
-	
+	printf("%s\n", totalInput.c_str());
 	context_line tempContextLine{ in_role, std::move(totalInput), ++mMessageIndexer };
 	mChatHistory.insert(mbase::pair<U32, context_line>(mMessageIndexer, tempContextLine));
 	out_message_id = mMessageIndexer;
