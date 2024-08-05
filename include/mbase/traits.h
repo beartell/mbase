@@ -58,7 +58,6 @@ struct serialize_helper {
     /* ===== NON-MODIFIER METHODS BEGIN ===== */
     MBASE_INLINE value_type deserialize(IBYTEBUFFER in_src, SIZE_T in_length);
     /* ===== NON-MODIFIER METHODS END ===== */
-
 };
 
 template<typename T1, typename T2>
@@ -99,6 +98,128 @@ struct pair {
     MBASE_INLINE bool operator!=(const pair& in_rhs);
     /* ===== NON-MODIFIER METHODS END ===== */
 };
+
+template<typename ConvertedType, typename StringType = mbase::string>
+struct string_converter {
+    using value_type = ConvertedType;
+    using size_type = SIZE_T;
+	using pointer = std::add_pointer_t<ConvertedType>;
+    
+	pointer value;
+
+    MBASE_INLINE StringType to_string();
+};
+
+template<typename StringType>
+struct string_converter<I8, StringType> {
+    using value_type = I8;
+    using size_type = SIZE_T;
+	using pointer = std::add_pointer_t<I8>;
+    
+	pointer value;
+
+    MBASE_INLINE StringType to_string();
+};
+
+template<typename StringType>
+struct string_converter<I16, StringType> {
+    using value_type = I16;
+    using size_type = SIZE_T;
+	using pointer = std::add_pointer_t<I16>;
+    
+	pointer value;
+
+    MBASE_INLINE StringType to_string();
+};
+
+template<typename StringType>
+struct string_converter<I32, StringType> {
+    using value_type = I32;
+    using size_type = SIZE_T;
+	using pointer = std::add_pointer_t<I32>;
+    
+	pointer value;
+
+    MBASE_INLINE StringType to_string();
+};
+
+template<typename StringType>
+struct string_converter<I64, StringType> {
+    using value_type = I64;
+    using size_type = SIZE_T;
+	using pointer = std::add_pointer_t<I64>;
+    
+	pointer value;
+
+    MBASE_INLINE StringType to_string();
+};
+
+template<typename StringType>
+struct string_converter<U8, StringType> {
+    using value_type = U8;
+    using size_type = SIZE_T;
+	using pointer = std::add_pointer_t<U8>;
+    
+	pointer value;
+
+    MBASE_INLINE StringType to_string();
+};
+
+template<typename StringType>
+struct string_converter<U16, StringType> {
+    using value_type = U16;
+    using size_type = SIZE_T;
+	using pointer = std::add_pointer_t<U16>;
+    
+	pointer value;
+
+    MBASE_INLINE StringType to_string();
+};
+
+template<typename StringType>
+struct string_converter<U32, StringType> {
+    using value_type = U32;
+    using size_type = SIZE_T;
+	using pointer = std::add_pointer_t<U32>;
+    
+	pointer value;
+
+    MBASE_INLINE StringType to_string();
+};
+
+template<typename StringType>
+struct string_converter<U64, StringType> {
+    using value_type = U64;
+    using size_type = SIZE_T;
+	using pointer = std::add_pointer_t<U64>;
+    
+	pointer value;
+
+    MBASE_INLINE StringType to_string();
+};
+
+template<typename StringType>
+struct string_converter<F32, StringType> {
+    using value_type = F32;
+    using size_type = SIZE_T;
+	using pointer = std::add_pointer_t<F32>;
+    
+	pointer value;
+
+    MBASE_INLINE StringType to_string();
+};
+
+template<typename StringType>
+struct string_converter<F64, StringType> {
+    using value_type = F64;
+    using size_type = SIZE_T;
+	using pointer = std::add_pointer_t<F64>;
+    
+	pointer value;
+
+    MBASE_INLINE StringType to_string();
+};
+
 
 struct i32_represent_f32 {
     using int_type = I32;
@@ -390,6 +511,92 @@ MBASE_INLINE typename serialize_helper<F64>::value_type serialize_helper<F64>::d
     return if64.mFloat;
 }
 
+template<typename ConvertedType, typename StringType>
+MBASE_INLINE StringType string_converter<ConvertedType, StringType>::to_string()
+{
+    return value->to_string();
+}
+
+template<typename StringType>
+MBASE_INLINE StringType string_converter<I8, StringType>::to_string()
+{
+    IBYTE emptyString[4] = {0};
+    sprintf(emptyString, "%d", *value);
+    return StringType(emptyString);
+}
+
+template<typename StringType>
+MBASE_INLINE StringType string_converter<I16, StringType>::to_string()
+{
+    IBYTE emptyString[6] = {0};
+    sprintf(emptyString, "%d", *value);
+    return StringType(emptyString);
+}
+
+template<typename StringType>
+MBASE_INLINE StringType string_converter<I32, StringType>::to_string()
+{
+    IBYTE emptyString[12] = {0};
+    sprintf(emptyString, "%d", *value);
+    return StringType(emptyString);
+}
+
+template<typename StringType>
+MBASE_INLINE StringType string_converter<I64, StringType>::to_string()
+{
+    IBYTE emptyString[24] = {0};
+    sprintf(emptyString, "%d", *value);
+    return StringType(emptyString);
+}
+
+template<typename StringType>
+MBASE_INLINE StringType string_converter<U8, StringType>::to_string()
+{
+    IBYTE emptyString[4] = {0};
+    sprintf(emptyString, "%u", *value);
+    return StringType(emptyString);
+}
+
+template<typename StringType>
+MBASE_INLINE StringType string_converter<U16, StringType>::to_string()
+{
+    IBYTE emptyString[6] = {0};
+    sprintf(emptyString, "%u", *value);
+    return StringType(emptyString);
+}
+
+template<typename StringType>
+MBASE_INLINE StringType string_converter<U32, StringType>::to_string()
+{
+    IBYTE emptyString[12] = {0};
+    sprintf(emptyString, "%u", *value);
+    return StringType(emptyString);
+}
+
+template<typename StringType>
+MBASE_INLINE StringType string_converter<U64, StringType>::to_string()
+{
+    IBYTE emptyString[24] = {0};
+    sprintf(emptyString, "%u", *value);
+    return StringType(emptyString);
+}
+
+template<typename StringType>
+MBASE_INLINE StringType string_converter<F32, StringType>::to_string()
+{
+    IBYTE emptyString[24] = {0};
+    sprintf(emptyString, "%f", *value);
+    return StringType(emptyString);
+}
+
+template<typename StringType>
+MBASE_INLINE StringType string_converter<F64, StringType>::to_string()
+{
+    IBYTE emptyString[24] = {0};
+    sprintf(emptyString, "%lf", *value);
+    return StringType(emptyString);
+}
+
 MBASE_INLINE SIZE_T get_serialized_size() noexcept
 {
     return 0;
@@ -521,6 +728,14 @@ template<typename T1, typename T2>
 MBASE_INLINE bool pair<T1, T2>::operator!=(const pair& in_rhs)
 {
     return (first != in_rhs.first ? true : false) && (second != in_rhs.second ? true : false);
+}
+
+template<typename ConvertedType, typename StringType = mbase::string>
+MBASE_INLINE StringType to_string(const ConvertedType& in_type)
+{
+    string_converter<ConvertedType, StringType> tempConverter;
+    tempConverter.value = &in_type;
+    return tempConverter.to_string();
 }
 
 MBASE_STD_END

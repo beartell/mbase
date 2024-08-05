@@ -158,6 +158,15 @@ struct maip_description_kval {
 // TODO: maip_packet_builder code is terrible here, come back later.
 class maip_packet_builder {
 public:
+	enum class flags : U8 {
+		PACKET_BUILDER_SUCCESS,
+		PACKET_BUILDER_ERR_INVALID_OP_TYPE_FORMAT,
+		PACKET_BUILDER_ERR_OP_TYPE_TOO_LONG,
+		PACKET_BUILDER_ERR_INVALID_OP_STRING_FORMAT,
+		PACKET_BUILDER_ERR_OP_STRING_TOO_LONG,
+		PACKET_BUILDER_ERR_INVALID_RESPONSE_CODE_RANGE
+	};
+
 	using kval_container = mbase::unordered_map<mbase::string, mbase::vector<maip_description_kval>>;
 
 	GENERIC set_version(U8 in_version_major, U8 in_version_minor)
@@ -165,17 +174,31 @@ public:
 		mVersionString = mbase::string::from_format("MAIP%d.%d ", in_version_major, in_version_minor);
 	}
 
-	GENERIC set_request_message(const mbase::string& in_op_type, const mbase::string& in_op_string)
+	flags set_request_message(const mbase::string& in_op_type, const mbase::string& in_op_string)
 	{
+		I32 lengthCounter = 0;
 		for(auto&n : in_op_type)
 		{
 			if(mbase::string::is_alpha(n))
 			{
-				mIdentificationLine += n;
+				if(lengthCounter == 32)
+				{
+					mIdentificationLine = "";
+					return flags::PACKET_BUILDER_ERR_OP_TYPE_TOO_LONG;
+				}
+				++lengthCounter;
+				mIdentificationLine.push_back(n);
 			}
 		}
 
-		mIdentificationLine += ' ';
+		if(!mIdentificationLine.size())
+		{
+			mIdentificationLine = "";
+			return flags::PACKET_BUILDER_ERR_INVALID_OP_TYPE_FORMAT;
+		}
+
+		mIdentificationLine.push_back(' ');
+		lengthCounter = 0;
 
 		for(auto&n : in_op_string)
 		{
@@ -186,26 +209,40 @@ public:
 			
 			if(mbase::string::is_print(n))
 			{
-				mIdentificationLine += n;
+				if(lengthCounter == 64)
+				{
+					mIdentificationLine = "";
+					return flags::PACKET_BUILDER_ERR_OP_STRING_TOO_LONG;	
+				}
+				++lengthCounter;
+				mIdentificationLine.push_back(n);
 			}
 		}
 
-		mIdentificationLine += "\n";
+		if(!lengthCounter)
+		{
+			mIdentificationLine = "";
+			return flags::PACKET_BUILDER_ERR_INVALID_OP_STRING_FORMAT;
+		}
+
+		mIdentificationLine.push_back('\n');
+		return flags::PACKET_BUILDER_SUCCESS;
 	}
 
-	GENERIC set_response_message(U16 in_status_code)
+	flags set_response_message(U16 in_status_code)
 	{
 		if(in_status_code < 1000 || in_status_code > 9999)
 		{
 			// MUST BE BETWEEN 1000-9999
-			return;
+			return flags::PACKET_BUILDER_ERR_INVALID_RESPONSE_CODE_RANGE;
 		}
 		mIdentificationLine = mbase::string::from_format(" %d\n", in_status_code);
+		return flags::PACKET_BUILDER_SUCCESS;
 	}
 
-	GENERIC set_kval(const mbase::string& in_key, const mbase::string& in_value)
+	flags set_kval(const mbase::string& in_key, const mbase::string& in_value)
 	{
-
+		return flags::PACKET_BUILDER_SUCCESS;
 	}
 
 private:
