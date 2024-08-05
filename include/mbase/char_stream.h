@@ -3,6 +3,7 @@
 
 #include <mbase/common.h>
 #include <mbase/type_sequence.h>
+#include <exception>
 //#include <mbase/string.h> // mbase::string
 
 MBASE_STD_BEGIN
@@ -49,6 +50,14 @@ Both char_stream and deep_char_stream should be used with utmost care.
 
 */
 
+class stream_cursor_out_of_bounds : public std::exception {
+public:
+	MSTRING what() const {
+		return "cursor is out of bounds";
+	}
+};
+
+
 class char_stream : protected type_sequence<IBYTE> {
 public:
 	using reference = IBYTE&;
@@ -89,9 +98,15 @@ public:
 	/* ===== OPERATOR OBSERVATION METHODS BEGIN ===== */
 	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE IBYTEBUFFER operator*() noexcept;
 	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE CBYTEBUFFER operator*() const noexcept;
+	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE reference operator[](size_type in_rhs) noexcept;
+	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE const reference operator[](size_type in_rhs) const noexcept;
 	/* ===== OPERATOR OBSERVATION METHODS END ===== */
 
 	/* ===== STATE-MODIFIER METHODS BEGIN ===== */
+	MBASE_INLINE GENERIC advance_safe();
+	MBASE_INLINE GENERIC advance_safe(size_type in_length);
+	MBASE_INLINE GENERIC reverse_safe();
+	MBASE_INLINE GENERIC reverse_safe(size_type in_length);
 	MBASE_INLINE_EXPR GENERIC advance() noexcept;
 	MBASE_INLINE_EXPR GENERIC advance(size_type in_length) noexcept;
 	MBASE_INLINE_EXPR GENERIC reverse() noexcept;
@@ -218,6 +233,16 @@ MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE CBYTEBUFFER char_stream::operator
 	return mSrcBuffer + mStreamCursor;
 }
 
+MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE typename char_stream::reference char_stream::operator[](size_type in_rhs) noexcept
+{
+	return mSrcBuffer[in_rhs];
+}
+
+MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE const typename char_stream::reference char_stream::operator[](size_type in_rhs) const noexcept
+{
+	return mSrcBuffer[in_rhs];
+}
+
 MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR typename char_stream::reference char_stream::front() noexcept
 {
 	return *mSrcBuffer;
@@ -268,11 +293,13 @@ MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR const T& char_stream::get_data() co
 {
 	return *(reinterpret_cast<T*>(mSrcBuffer));
 }
+
 template<typename T>
 MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR T& char_stream::get_data() noexcept
 {
 	return *(reinterpret_cast<T*>(mSrcBuffer));
 }
+
 template<typename T>
 MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR T& char_stream::get_datan(size_type in_length) noexcept
 {
@@ -309,6 +336,44 @@ MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR CBYTEBUFFER char_stream::get
 MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR CBYTEBUFFER char_stream::data() const noexcept
 {
 	return mSrcBuffer;
+}
+
+MBASE_INLINE GENERIC char_stream::advance_safe()
+{
+	if(mStreamCursor >= mBufferLength)
+	{
+		throw stream_cursor_out_of_bounds();
+	}
+	++mStreamCursor;
+}
+
+MBASE_INLINE GENERIC char_stream::advance_safe(size_type in_length)
+{
+	if((mStreamCursor + in_length) >= mBufferLength)
+	{
+		throw stream_cursor_out_of_bounds();
+	}
+	mStreamCursor += in_length;
+}
+
+MBASE_INLINE GENERIC char_stream::reverse_safe()
+{
+	if(!mStreamCursor)
+	{
+		throw stream_cursor_out_of_bounds();
+	}
+	--mStreamCursor;
+}
+
+MBASE_INLINE GENERIC char_stream::reverse_safe(size_type in_length)
+{
+	I32 cursorLoc = mStreamCursor;
+	cursorLoc -= in_length;
+	if (cursorLoc < 0)
+	{
+		throw stream_cursor_out_of_bounds();
+	}
+	mStreamCursor -= in_length;
 }
 
 MBASE_INLINE_EXPR GENERIC char_stream::advance() noexcept 
