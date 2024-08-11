@@ -23,10 +23,7 @@ InfModel::InfModel() :
 
 InfModel::~InfModel()
 {
-	if(this->is_initialized())
-	{
-		this->unload_model();
-	}
+	this->unload_model();
 }
 
 bool InfModel::is_initialized() const
@@ -252,8 +249,7 @@ InfModel::flags InfModel::initialize(const mbase::string& in_model_path, const I
 	
 	if(!tokenList.size())
 	{
-		// MEANS THIS IS NOT A INSTRUCT MODEL
-		printf("EOT Token not found.\n");
+		// MEANS THIS IS NOT AN INSTRUCT MODEL
 	}
 
 	mEndOfToken = tokenList.front();
@@ -333,8 +329,24 @@ InfModel::flags InfModel::unload_model()
 	MBASE_INF_MODEL_RETURN_UNINITIALIZED;
 	// TODO: UNREGISTER ALL PROCESSORS GRACEFULLY
 
+	for(processor_list::iterator It = mRegisteredProcessors.begin(); It != mRegisteredProcessors.end();)
+	{
+		InfProcessor* tempProcessor = *It;
+		if(tempProcessor->mProcessedModel == this)
+		{
+			tempProcessor->destroy();
+		}
+		It = mRegisteredProcessors.erase(It);
+	}
+
 	llama_free_model(mModel);
 	mModel = NULL;
+	mModelKvals.clear();
+	mModelName = "";
+	mEndOfTokenString = "";
+	mUsrStart = "";
+	mSystemStart = "";
+	mEndOfToken = 0;
 
 	return flags::INF_MODEL_SUCCESS;
 }
@@ -403,6 +415,7 @@ InfModel::flags InfModel::unregister_processor(InfProcessor& in_processor)
 
 	if(!tempProcessor->is_registered())
 	{
+		mRegisteredProcessors.erase(It);
 		return flags::INF_MODEL_SUCCESS;
 	}
 

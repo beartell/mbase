@@ -86,8 +86,8 @@ InfProcessor::flags InfProcessor::destroy()
 		InfClient* myClient = *It;
 		unregister_client(*myClient);
 	}
-	mClientsMutex.release();
 	update_t();
+	mClientsMutex.release();
 	update();
 
 	mProcessedHandlers.clear();
