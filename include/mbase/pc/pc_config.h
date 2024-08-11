@@ -13,7 +13,7 @@ MBASE_BEGIN
 
 class PcConfig;
 
-class PcConfigFileHandler : public PcIoHandler {
+class MBASE_API PcConfigFileHandler : public PcIoHandler {
 public:
 	PcConfigFileHandler(PcConfig& in_self);
 
@@ -26,7 +26,7 @@ private:
 	PcConfig* configSelf;
 };
 
-class PcConfig : public mbase::singleton<PcConfig> {
+class MBASE_API PcConfig : public mbase::singleton<PcConfig> {
 public:
 	using config_map = mbase::unordered_map<mbase::string, mbase::string>;
 

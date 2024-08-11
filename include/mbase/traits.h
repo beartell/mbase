@@ -111,10 +111,10 @@ struct string_converter {
 };
 
 template<typename StringType>
-struct string_converter<I8, StringType> {
-    using value_type = I8;
+struct string_converter<const I8, StringType> {
+    using value_type = const I8;
     using size_type = SIZE_T;
-	using pointer = std::add_pointer_t<I8>;
+	using pointer = std::add_pointer_t<value_type>;
     
 	pointer value;
 
@@ -122,10 +122,10 @@ struct string_converter<I8, StringType> {
 };
 
 template<typename StringType>
-struct string_converter<I16, StringType> {
-    using value_type = I16;
+struct string_converter<const I16, StringType> {
+    using value_type = const I16;
     using size_type = SIZE_T;
-	using pointer = std::add_pointer_t<I16>;
+	using pointer = std::add_pointer_t<value_type>;
     
 	pointer value;
 
@@ -133,10 +133,10 @@ struct string_converter<I16, StringType> {
 };
 
 template<typename StringType>
-struct string_converter<I32, StringType> {
-    using value_type = I32;
+struct string_converter<const I32, StringType> {
+    using value_type = const I32;
     using size_type = SIZE_T;
-	using pointer = std::add_pointer_t<I32>;
+	using pointer = std::add_pointer_t<value_type>;
     
 	pointer value;
 
@@ -144,10 +144,10 @@ struct string_converter<I32, StringType> {
 };
 
 template<typename StringType>
-struct string_converter<I64, StringType> {
-    using value_type = I64;
+struct string_converter<const I64, StringType> {
+    using value_type = const I64;
     using size_type = SIZE_T;
-	using pointer = std::add_pointer_t<I64>;
+	using pointer = std::add_pointer_t<const I64>;
     
 	pointer value;
 
@@ -155,10 +155,10 @@ struct string_converter<I64, StringType> {
 };
 
 template<typename StringType>
-struct string_converter<U8, StringType> {
-    using value_type = U8;
+struct string_converter<const U8, StringType> {
+    using value_type = const U8;
     using size_type = SIZE_T;
-	using pointer = std::add_pointer_t<U8>;
+	using pointer = std::add_pointer_t<value_type>;
     
 	pointer value;
 
@@ -166,10 +166,10 @@ struct string_converter<U8, StringType> {
 };
 
 template<typename StringType>
-struct string_converter<U16, StringType> {
-    using value_type = U16;
+struct string_converter<const U16, StringType> {
+    using value_type = const U16;
     using size_type = SIZE_T;
-	using pointer = std::add_pointer_t<U16>;
+	using pointer = std::add_pointer_t<value_type>;
     
 	pointer value;
 
@@ -177,10 +177,10 @@ struct string_converter<U16, StringType> {
 };
 
 template<typename StringType>
-struct string_converter<U32, StringType> {
-    using value_type = U32;
+struct string_converter<const U32, StringType> {
+    using value_type = const U32;
     using size_type = SIZE_T;
-	using pointer = std::add_pointer_t<U32>;
+	using pointer = std::add_pointer_t<value_type>;
     
 	pointer value;
 
@@ -188,10 +188,10 @@ struct string_converter<U32, StringType> {
 };
 
 template<typename StringType>
-struct string_converter<U64, StringType> {
-    using value_type = U64;
+struct string_converter<const U64, StringType> {
+    using value_type = const U64;
     using size_type = SIZE_T;
-	using pointer = std::add_pointer_t<U64>;
+	using pointer = std::add_pointer_t<value_type>;
     
 	pointer value;
 
@@ -199,10 +199,10 @@ struct string_converter<U64, StringType> {
 };
 
 template<typename StringType>
-struct string_converter<F32, StringType> {
-    using value_type = F32;
+struct string_converter<const F32, StringType> {
+    using value_type = const F32;
     using size_type = SIZE_T;
-	using pointer = std::add_pointer_t<F32>;
+	using pointer = std::add_pointer_t<value_type>;
     
 	pointer value;
 
@@ -210,16 +210,15 @@ struct string_converter<F32, StringType> {
 };
 
 template<typename StringType>
-struct string_converter<F64, StringType> {
-    using value_type = F64;
+struct string_converter<const F64, StringType> {
+    using value_type = const F64;
     using size_type = SIZE_T;
-	using pointer = std::add_pointer_t<F64>;
+	using pointer = std::add_pointer_t<value_type>;
     
 	pointer value;
 
     MBASE_INLINE StringType to_string();
 };
-
 
 struct i32_represent_f32 {
     using int_type = I32;
@@ -448,7 +447,6 @@ MBASE_INLINE typename serialize_helper<U64>::value_type serialize_helper<U64>::d
 template<>
 MBASE_INLINE typename serialize_helper<F32>::size_type serialize_helper<F32>::get_serialized_size() const noexcept
 {
-
     return sizeof(typename i32_represent_f32::int_type);
 }
 
@@ -518,7 +516,7 @@ MBASE_INLINE StringType string_converter<ConvertedType, StringType>::to_string()
 }
 
 template<typename StringType>
-MBASE_INLINE StringType string_converter<I8, StringType>::to_string()
+MBASE_INLINE StringType string_converter<const I8, StringType>::to_string()
 {
     IBYTE emptyString[4] = {0};
     sprintf(emptyString, "%d", *value);
@@ -526,7 +524,7 @@ MBASE_INLINE StringType string_converter<I8, StringType>::to_string()
 }
 
 template<typename StringType>
-MBASE_INLINE StringType string_converter<I16, StringType>::to_string()
+MBASE_INLINE StringType string_converter<const I16, StringType>::to_string()
 {
     IBYTE emptyString[6] = {0};
     sprintf(emptyString, "%d", *value);
@@ -534,7 +532,7 @@ MBASE_INLINE StringType string_converter<I16, StringType>::to_string()
 }
 
 template<typename StringType>
-MBASE_INLINE StringType string_converter<I32, StringType>::to_string()
+MBASE_INLINE StringType string_converter<const I32, StringType>::to_string()
 {
     IBYTE emptyString[12] = {0};
     sprintf(emptyString, "%d", *value);
@@ -542,7 +540,7 @@ MBASE_INLINE StringType string_converter<I32, StringType>::to_string()
 }
 
 template<typename StringType>
-MBASE_INLINE StringType string_converter<I64, StringType>::to_string()
+MBASE_INLINE StringType string_converter<const I64, StringType>::to_string()
 {
     IBYTE emptyString[24] = {0};
     sprintf(emptyString, "%d", *value);
@@ -550,7 +548,7 @@ MBASE_INLINE StringType string_converter<I64, StringType>::to_string()
 }
 
 template<typename StringType>
-MBASE_INLINE StringType string_converter<U8, StringType>::to_string()
+MBASE_INLINE StringType string_converter<const U8, StringType>::to_string()
 {
     IBYTE emptyString[4] = {0};
     sprintf(emptyString, "%u", *value);
@@ -558,7 +556,7 @@ MBASE_INLINE StringType string_converter<U8, StringType>::to_string()
 }
 
 template<typename StringType>
-MBASE_INLINE StringType string_converter<U16, StringType>::to_string()
+MBASE_INLINE StringType string_converter<const U16, StringType>::to_string()
 {
     IBYTE emptyString[6] = {0};
     sprintf(emptyString, "%u", *value);
@@ -566,7 +564,7 @@ MBASE_INLINE StringType string_converter<U16, StringType>::to_string()
 }
 
 template<typename StringType>
-MBASE_INLINE StringType string_converter<U32, StringType>::to_string()
+MBASE_INLINE StringType string_converter<const U32, StringType>::to_string()
 {
     IBYTE emptyString[12] = {0};
     sprintf(emptyString, "%u", *value);
@@ -574,7 +572,7 @@ MBASE_INLINE StringType string_converter<U32, StringType>::to_string()
 }
 
 template<typename StringType>
-MBASE_INLINE StringType string_converter<U64, StringType>::to_string()
+MBASE_INLINE StringType string_converter<const U64, StringType>::to_string()
 {
     IBYTE emptyString[24] = {0};
     sprintf(emptyString, "%u", *value);
@@ -582,7 +580,7 @@ MBASE_INLINE StringType string_converter<U64, StringType>::to_string()
 }
 
 template<typename StringType>
-MBASE_INLINE StringType string_converter<F32, StringType>::to_string()
+MBASE_INLINE StringType string_converter<const F32, StringType>::to_string()
 {
     IBYTE emptyString[24] = {0};
     sprintf(emptyString, "%f", *value);
@@ -590,7 +588,7 @@ MBASE_INLINE StringType string_converter<F32, StringType>::to_string()
 }
 
 template<typename StringType>
-MBASE_INLINE StringType string_converter<F64, StringType>::to_string()
+MBASE_INLINE StringType string_converter<const F64, StringType>::to_string()
 {
     IBYTE emptyString[24] = {0};
     sprintf(emptyString, "%lf", *value);
@@ -733,7 +731,7 @@ MBASE_INLINE bool pair<T1, T2>::operator!=(const pair& in_rhs)
 template<typename ConvertedType, typename StringType = mbase::string>
 MBASE_INLINE StringType to_string(const ConvertedType& in_type)
 {
-    string_converter<ConvertedType, StringType> tempConverter;
+    string_converter<const ConvertedType, StringType> tempConverter;
     tempConverter.value = &in_type;
     return tempConverter.to_string();
 }

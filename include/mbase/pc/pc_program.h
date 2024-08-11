@@ -27,7 +27,7 @@ class PcDiagnostics;
 class PcIoManager;
 class PcNetManager;
 
-struct PcProgramInfo {
+struct MBASE_API PcProgramInfo {
 	mbase::string mProgramName;
 	mbase::string mProgramVersion;
 	mbase::string mMbaseVersion;
@@ -37,7 +37,7 @@ struct PcProgramInfo {
 	I32 mProgramVersionInt;
 };
 
-class PcProgram : public mbase::singleton<PcProgram> {
+class MBASE_API PcProgram : public mbase::singleton<PcProgram> {
 public:
 	using MBDate = U32; // placeholder: not a real date
 	using size_type = SIZE_T;

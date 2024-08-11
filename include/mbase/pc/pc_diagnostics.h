@@ -10,7 +10,7 @@
 
 MBASE_BEGIN
 
-class PcDiagnostics : public mbase::singleton<PcDiagnostics> {
+class MBASE_API PcDiagnostics : public mbase::singleton<PcDiagnostics> {
 public:
 	using log_list = mbase::vector<mbase::string>;
 

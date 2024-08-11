@@ -14,7 +14,7 @@ MBASE_BEGIN
 static const U32 gDefaultStreamCount = 32;
 static const U32 gDefaultStreamSize = 0xfffff; // 1MB
 
-class PcStreamManager : public non_copymovable {
+class MBASE_API PcStreamManager : public non_copymovable {
 public:
 
 	using stream_handle = I32;

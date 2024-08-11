@@ -7,6 +7,8 @@
 #include <mbase/string.h>
 #include <mbase/synchronization.h>
 #include <mbase/behaviors.h>
+#include <mbase/framework/timer_loop.h>
+#include <mbase/framework/timers.h>
 #include <mutex>
 #include <llama.h>
 
@@ -16,8 +18,9 @@ static const U32 gProcessorMinimumTokenCount = 32;
 
 class InfModel;
 class InfClient;
+class InfProcessor;
 
-class InfProcessor : public mbase::non_copyable {
+class MBASE_API InfProcessor : public mbase::non_copyable {
 public:
 	using inf_token = llama_token;
 	using size_type = SIZE_T;
@@ -46,6 +49,7 @@ public:
 	~InfProcessor();
 
 	bool is_registered() const;
+	flags get_context_size(I32& out_size);
 	flags get_client_count(I32& out_size);
 	flags get_max_clients(I32& out_size);
 	flags get_process_thread_count(I32& out_count);
@@ -64,7 +68,6 @@ public:
 
 private:
 	logic_handlers mProcessedHandlers;
-	mbase::deep_char_stream mGeneratedToken;
 	client_list mRegisteredClients;
 	mbase::vector<llama_token_data> mPresetCandidates;
 	InfModel* mProcessedModel;
@@ -72,6 +75,7 @@ private:
 	U32 mProcessorId;
 	U32 mContextIdCounter;
 	U32 mMaxClients;
+	U32 mGeneratedTokenCount;
 	mbase::mutex mClientsMutex;
 	mbase::mutex mProcHandlerMutex;
 

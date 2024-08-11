@@ -8,7 +8,7 @@
 
 MBASE_BEGIN
 
-class PcState : public mbase::non_copyable {
+class MBASE_API PcState : public mbase::non_copyable {
 public:
 	using key_val_map = mbase::unordered_map<mbase::string, mbase::deep_char_stream>;
 

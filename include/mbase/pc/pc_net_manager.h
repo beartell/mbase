@@ -20,7 +20,7 @@ class PcNetClient;
 class PcNetServer;
 class PcNetPeerClient;
 
-class PcNetReconnectTimerHandle : public mbase::time_interval {
+class MBASE_API PcNetReconnectTimerHandle : public mbase::time_interval {
 public:
 	PcNetReconnectTimerHandle(PcNetClient& in_client);
 	~PcNetReconnectTimerHandle() = default;
@@ -36,7 +36,7 @@ private:
 	U32 mAttemptCount;
 };
 
-struct PcNetPacket {
+struct MBASE_API PcNetPacket {
 	PcNetPacket(U16 in_min_packet_size = 32768) noexcept;
 	PcNetPacket(const PcNetPacket& in_rhs) noexcept;
 	PcNetPacket(PcNetPacket&& in_rhs) noexcept;
@@ -50,7 +50,7 @@ struct PcNetPacket {
 	mbase::deep_char_stream mPacketContent;
 };
 
-class PcNetPeerClient : public non_copyable {
+class MBASE_API PcNetPeerClient : public non_copyable {
 public:
 	using size_type = SIZE_T;
 	using socket_handle = SOCKET;
@@ -108,7 +108,7 @@ private:
 	PcNetPacket mNetPacket;
 };
 
-class PcNetPeerUdpClient : public non_copyable {
+class MBASE_API PcNetPeerUdpClient : public non_copyable { // UNFINISHED IMPLEMENTATION, UNSAFE TO USE
 public:
 	using size_type = SIZE_T;
 
@@ -150,7 +150,7 @@ private:
 	PcNetPacket mNetPacket;
 };
 
-class PcNetClient {
+class MBASE_API PcNetClient {
 public:
 	using size_type = SIZE_T;
 	using socket_handle = SOCKET;
@@ -176,7 +176,7 @@ private:
 	bool mIsReconnect;
 };
 
-class PcNetServer : public non_copymovable {
+class MBASE_API PcNetServer : public non_copymovable {
 public:
 	using size_type = SIZE_T;
 	using socket_handle = SOCKET;
@@ -212,7 +212,7 @@ protected:
 	I32 mPort;
 };
 
-class PcNetTcpServer : public PcNetServer {
+class MBASE_API PcNetTcpServer : public PcNetServer {
 public:
 	using client_list = mbase::list<std::shared_ptr<PcNetPeerClient>>;
 	using accept_clients = mbase::vector<std::shared_ptr<PcNetPeerClient>>;
@@ -235,7 +235,7 @@ private:
 	mbase::mutex mAcceptMutex;
 };
 
-class PcNetUdpServer : public PcNetServer {
+class MBASE_API PcNetUdpServer : public PcNetServer {
 public:
 	using client_list = mbase::vector<std::shared_ptr<PcNetPeerUdpClient>>;
 	using client_write_list = mbase::list<std::shared_ptr<PcNetPeerUdpClient>>;
@@ -255,7 +255,7 @@ private:
 	mbase::deep_char_stream mReaderStream;
 };
 
-class PcNetManager : public mbase::singleton<PcNetManager> {
+class MBASE_API PcNetManager : public mbase::singleton<PcNetManager> {
 public:
 	enum class flags : U8 {
 		NET_MNG_SUCCESS,

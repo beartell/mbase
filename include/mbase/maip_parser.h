@@ -27,7 +27,7 @@ MBASE_STD_BEGIN
 	maip-resp-status-code = 4*4DIGIT
 	maip-resp-identification-line  = maip-version SP maip-resp-status-code
 
-	maip-identification-line = maip-req-identification-line / maip-resp-identification-line LF
+	maip-identification-line = maip-req-identification-line / maip-resp-identification-line SP LF
 
 	message-description-key = ALPHA *64(VCHAR)
 	message-description-value = *WSP 1*128(VCHAR)
@@ -155,6 +155,26 @@ struct maip_description_kval {
 	mbase::vector<maip_description_value> mValues;
 };
 
+template<typename T>
+struct to_string_ifnot_string {
+	using pointer = const T*;
+	pointer value;
+	mbase::string get_value()
+	{
+		return mbase::to_string(*value);
+	}
+};
+
+template<>
+struct to_string_ifnot_string<mbase::string> {
+	using pointer = const mbase::string*;
+	pointer value;
+	const mbase::string& get_value() 
+	{
+		return *value;
+	}
+};
+
 // TODO: maip_packet_builder code is terrible here, come back later.
 class maip_packet_builder {
 public:
@@ -167,87 +187,21 @@ public:
 		PACKET_BUILDER_ERR_INVALID_RESPONSE_CODE_RANGE
 	};
 
-	using kval_container = mbase::unordered_map<mbase::string, mbase::vector<maip_description_kval>>;
+	using kval_container = mbase::unordered_map<mbase::string, mbase::vector<mbase::string>>;
+	using size_type = SIZE_T;
 
-	GENERIC set_version(U8 in_version_major, U8 in_version_minor)
-	{
-		mVersionString = mbase::string::from_format("MAIP%d.%d ", in_version_major, in_version_minor);
-	}
-
-	flags set_request_message(const mbase::string& in_op_type, const mbase::string& in_op_string)
-	{
-		I32 lengthCounter = 0;
-		for(auto&n : in_op_type)
-		{
-			if(mbase::string::is_alpha(n))
-			{
-				if(lengthCounter == 32)
-				{
-					mIdentificationLine = "";
-					return flags::PACKET_BUILDER_ERR_OP_TYPE_TOO_LONG;
-				}
-				++lengthCounter;
-				mIdentificationLine.push_back(n);
-			}
-		}
-
-		if(!mIdentificationLine.size())
-		{
-			mIdentificationLine = "";
-			return flags::PACKET_BUILDER_ERR_INVALID_OP_TYPE_FORMAT;
-		}
-
-		mIdentificationLine.push_back(' ');
-		lengthCounter = 0;
-
-		for(auto&n : in_op_string)
-		{
-			if(n == ' ')
-			{
-				continue;
-			}
-			
-			if(mbase::string::is_print(n))
-			{
-				if(lengthCounter == 64)
-				{
-					mIdentificationLine = "";
-					return flags::PACKET_BUILDER_ERR_OP_STRING_TOO_LONG;	
-				}
-				++lengthCounter;
-				mIdentificationLine.push_back(n);
-			}
-		}
-
-		if(!lengthCounter)
-		{
-			mIdentificationLine = "";
-			return flags::PACKET_BUILDER_ERR_INVALID_OP_STRING_FORMAT;
-		}
-
-		mIdentificationLine.push_back('\n');
-		return flags::PACKET_BUILDER_SUCCESS;
-	}
-
-	flags set_response_message(U16 in_status_code)
-	{
-		if(in_status_code < 1000 || in_status_code > 9999)
-		{
-			// MUST BE BETWEEN 1000-9999
-			return flags::PACKET_BUILDER_ERR_INVALID_RESPONSE_CODE_RANGE;
-		}
-		mIdentificationLine = mbase::string::from_format(" %d\n", in_status_code);
-		return flags::PACKET_BUILDER_SUCCESS;
-	}
-
-	flags set_kval(const mbase::string& in_key, const mbase::string& in_value)
-	{
-		return flags::PACKET_BUILDER_SUCCESS;
-	}
+	GENERIC set_version(U8 in_version_major, U8 in_version_minor);
+	flags set_request_message(const mbase::string& in_op_type, const mbase::string& in_op_string);
+	flags set_response_message(U16 in_status_code);
+	template<typename Value>
+	flags set_kval(const mbase::string& in_key, const Value& in_value);
+	size_type generate_payload(mbase::string& out_payload);
+	size_type generate_payload(mbase::string& out_payload, mbase::char_stream& in_stream);
+	size_type generate_payload(mbase::string& out_payload, mbase::string in_string);
 
 private:
 	mbase::string mVersionString = "MAIP1.0 ";
-	mbase::string mIdentificationLine = " 1000\n";
+	mbase::string mIdentificationLine = "1000 \n";
 	kval_container mDescriptionKVals;
 };
 
@@ -271,6 +225,20 @@ public:
 	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) I16 get_version_minor() const noexcept { return mMaipVersion.mVersionMinor; }
 	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) const maip_request_identification& get_identification() const noexcept { return mRequestIdentification; }
 	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) const mbase::unordered_map<mbase::string, mbase::vector<maip_description_kval>>& get_kvals() const noexcept { return mDescriptionKvals; }
+	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) U32 get_content_length() noexcept
+	{
+		mbase::string myString = "LENGTH";
+		if(mDescriptionKvals.find("LENGTH") == mDescriptionKvals.end())
+		{
+			return 0;
+		}
+		mbase::vector<maip_description_value>& tempVals = mDescriptionKvals["LENGTH"].front().mValues;
+		if(tempVals[0].mValType == maip_value_type::MAIP_VALTYPE_INT)
+		{
+			return mDescriptionKvals["LENGTH"].front().mValues[0].mIntValue;
+		}
+		return 0;
+	}
 
 	MBASE_INLINE maip_generic_errors parse_request(mbase::char_stream& in_stream);
 	MBASE_INLINE maip_generic_errors parse_data(mbase::char_stream& in_stream, U32 in_length);
@@ -296,6 +264,138 @@ private:
 	IBYTE mData[16384];
 	mbase::char_stream mDataStream;
 };
+
+GENERIC maip_packet_builder::set_version(U8 in_version_major, U8 in_version_minor)
+{
+	mVersionString = mbase::string::from_format("MAIP%d.%d ", in_version_major, in_version_minor);
+}
+
+maip_packet_builder::flags maip_packet_builder::set_request_message(const mbase::string& in_op_type, const mbase::string& in_op_string)
+{
+	I32 lengthCounter = 0;
+	mIdentificationLine = "";
+	for (auto& n : in_op_type)
+	{
+		if (mbase::string::is_alpha(n))
+		{
+			if (lengthCounter == 32)
+			{
+				mIdentificationLine = "1000 \n";
+				return flags::PACKET_BUILDER_ERR_OP_TYPE_TOO_LONG;
+			}
+			++lengthCounter;
+			mIdentificationLine.push_back(n);
+		}
+	}
+
+	if (!mIdentificationLine.size())
+	{
+		mIdentificationLine = "1000 \n";
+		return flags::PACKET_BUILDER_ERR_INVALID_OP_TYPE_FORMAT;
+	}
+
+	mIdentificationLine.push_back(' ');
+	lengthCounter = 0;
+
+	for (auto& n : in_op_string)
+	{
+		if (n == ' ')
+		{
+			continue;
+		}
+
+		if (mbase::string::is_print(n))
+		{
+			if (lengthCounter == 64)
+			{
+				mIdentificationLine = "1000 \n";
+				return flags::PACKET_BUILDER_ERR_OP_STRING_TOO_LONG;
+			}
+			++lengthCounter;
+			mIdentificationLine.push_back(n);
+		}
+	}
+
+	if (!lengthCounter)
+	{
+		mIdentificationLine = "1000 \n";
+		return flags::PACKET_BUILDER_ERR_INVALID_OP_STRING_FORMAT;
+	}
+	mIdentificationLine.push_back(' ');
+	mIdentificationLine.push_back('\n');
+	return flags::PACKET_BUILDER_SUCCESS;
+}
+
+maip_packet_builder::flags maip_packet_builder::set_response_message(U16 in_status_code)
+{
+	if (in_status_code < 1000 || in_status_code > 9999)
+	{
+		// MUST BE BETWEEN 1000-9999
+		return flags::PACKET_BUILDER_ERR_INVALID_RESPONSE_CODE_RANGE;
+	}
+	mIdentificationLine = mbase::string::from_format("%d \n", in_status_code);
+	return flags::PACKET_BUILDER_SUCCESS;
+}
+
+template<typename Value>
+maip_packet_builder::flags maip_packet_builder::set_kval(const mbase::string& in_key, const Value& in_value)
+{
+	to_string_ifnot_string<Value> tss;
+	tss.value = &in_value;
+
+	mDescriptionKVals[in_key].push_back(tss.get_value());
+	return flags::PACKET_BUILDER_SUCCESS;
+}
+
+typename maip_packet_builder::size_type maip_packet_builder::generate_payload(mbase::string& out_payload)
+{
+	mbase::string totalPayload = mVersionString + mIdentificationLine;
+	for (auto& n : mDescriptionKVals)
+	{
+		totalPayload += n.first + ':';
+		if (n.second.size() == 1)
+		{
+			totalPayload += n.second.front();
+		}
+		else
+		{
+			for (auto& m : n.second)
+			{
+				totalPayload += m + ';';
+			}
+			totalPayload.pop_back(); // remove the last semicolon
+		}
+		totalPayload += '\n';
+	}
+	totalPayload += "END\n";
+	out_payload = std::move(totalPayload);
+	return totalPayload.size(); // returns byte size
+}
+
+typename maip_packet_builder::size_type maip_packet_builder::generate_payload(mbase::string& out_payload, mbase::char_stream& in_stream)
+{
+	size_type streamLength = in_stream.buffer_length() - in_stream.get_pos();
+	if (streamLength <= 0)
+	{
+		return generate_payload(out_payload); // returns byte size
+	}
+	set_kval("LENGTH", streamLength);
+	mbase::string temporaryPayload;
+	generate_payload(temporaryPayload);
+	for (size_type i = 0; i < streamLength; i++)
+	{
+		temporaryPayload += in_stream.getc();
+		in_stream.advance();
+	}
+	out_payload = std::move(temporaryPayload);
+	return out_payload.size();
+}
+
+typename maip_packet_builder::size_type maip_packet_builder::generate_payload(mbase::string& out_payload, mbase::string in_string)
+{
+	mbase::char_stream cs(in_string.data(), in_string.size());
+	return generate_payload(out_payload, cs);
+}
 
 MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE typename maip_peer_request::iterator maip_peer_request::begin() noexcept
 {

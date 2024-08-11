@@ -402,24 +402,10 @@ public:
         return character_sequence(new_data, totalSize, totalCapacity);
     }
     MBASE_INLINE_EXPR friend character_sequence operator+(const character_sequence& in_lhs, value_type in_rhs) noexcept {
-        size_type rhsSize = SeqBase::length(in_rhs);
-        if (!rhsSize)
-        {
-            return character_sequence(in_lhs);
-        }
-        size_type totalSize = in_lhs.mSize + SeqBase::length(in_rhs);
-        size_type totalCapacity = in_lhs.mCapacity;
-        while (totalSize >= totalCapacity)
-        {
-            totalCapacity *= 2;
-        }
-        allocator alc;
-        pointer new_data = alc.allocate(totalCapacity, true);
+        character_sequence cs = in_lhs;
+        cs.push_back(in_rhs);
 
-        SeqBase::concat(new_data, in_lhs.mRawData, in_lhs.mSize);
-        SeqBase::concat(new_data + in_lhs.mSize, in_rhs, rhsSize);
-
-        return character_sequence(new_data, totalSize, totalCapacity);
+        return cs;
     }
     MBASE_INLINE_EXPR friend character_sequence operator+(const_pointer in_lhs, const character_sequence& in_rhs) {
         return character_sequence(in_lhs) + in_rhs;

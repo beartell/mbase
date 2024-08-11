@@ -9,7 +9,7 @@
 
 MBASE_BEGIN
 
-class InfClient : public mbase::non_copyable {
+class MBASE_API InfClient : public mbase::non_copyable {
 public:
 	enum class flags : U8 {
 		INF_CLIENT_SUCCESS,
@@ -19,7 +19,8 @@ public:
 		INF_CLIENT_ERR_MISSING_CHAT,
 		INF_CLIENT_ERR_TOKENIZATION_FAILED,
 		INF_CLIENT_ERR_TOKEN_LIMIT_EXCEEDED,
-		INF_CLIENT_ERR_UNKNOWN
+		INF_CLIENT_ERR_UNKNOWN,
+		INF_CLIENT_ERR_UNREGISTERATION_IN_PROGRESS
 	};
 
 	enum class finish_state : U8 {
@@ -53,6 +54,7 @@ public:
 
 	bool is_processing() const;
 	bool is_registered() const;
+	bool is_unregistering() const;
 	bool is_data_set() const;
 	bool is_logic_processed() const;
 	flags get_generated_token_count(size_type& out_token_count);
@@ -77,6 +79,7 @@ protected:
 	InfProcessor* mfrHostProcessor;
 	inf_proc_iter mfrSelfIter;
 	bool mIsProcessing;
+	bool mIsUnregistering;
 	bool mIsLogicProcessed;
 	bool mIsDataSet;
 	mbase::vector<InfProcessor::inf_token> mParsedTokens;
