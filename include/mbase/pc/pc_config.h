@@ -50,7 +50,7 @@ public:
 	const config_map& get_config_map() const noexcept;
 	bool is_initialized() const noexcept;
 
-	bool initialize(mbase::string in_temp_path = "", mbase::string in_root_path = "", mbase::string in_config_path = "");
+	bool initialize(const mbase::string& in_temp_path = "", const mbase::string& in_root_path = "", const mbase::string& in_config_path = "");
 	flags set_temp_path(const mbase::string& in_path) noexcept;
 	flags set_root_path(const mbase::string& in_path) noexcept;
 	flags set_config_path(const mbase::string& in_path) noexcept;

@@ -72,6 +72,7 @@ public:
 	flags remove_messages(const mbase::vector<U32>& in_msg_ids = mbase::vector<U32>());
 	GENERIC next();
 	GENERIC abandon();
+	GENERIC clear_chat_history(); // clears the chat map
 
 protected:
 	GENERIC _reset_client();
@@ -82,6 +83,7 @@ protected:
 	bool mIsUnregistering;
 	bool mIsLogicProcessed;
 	bool mIsDataSet;
+	bool mFrAbandonedClient;
 	mbase::vector<InfProcessor::inf_token> mParsedTokens;
 	mbase::unordered_map<U32, context_line> mChatHistory;
 	U32 mSequenceId;

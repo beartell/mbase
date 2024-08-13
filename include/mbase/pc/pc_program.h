@@ -8,6 +8,7 @@
 #include <mbase/framework/timer_loop.h>
 #include <mbase/pc/pc_state.h>
 #include <mbase/pc/pc_termination_handler.h>
+#include <mbase/pc/pc_diagnostics.h>
 
 #define MBASE_PROGRAM_INVOKE_EVENT(in_event_name) mbase::PcProgram::get_instance().get_event_manager()->dispatch_event(in_event_name, nullptr)
 #define MBASE_PROGRAM_INVOKE_EVENT_WDATA(in_event_name, in_data) mbase::PcProgram::get_instance().get_event_manager()->dispatch_event(in_event_name, (mbase::event_manager::user_data)in_data)
@@ -23,7 +24,6 @@
 MBASE_BEGIN
 
 class PcConfig;
-class PcDiagnostics;
 class PcIoManager;
 class PcNetManager;
 
@@ -66,7 +66,7 @@ public:
 
 private:
 	PcConfig* mConfig;
-	PcDiagnostics* mDiagnostics;
+	PcDiagnostics mDiagnostics;
 	PcIoManager* mIoManager;
 	PcNetManager* mNetManager;
 	PcProgramInfo mProgramInfo;

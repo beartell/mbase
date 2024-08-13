@@ -88,7 +88,7 @@ bool PcConfig::is_initialized() const noexcept
 	return mIsInitialized;
 }
 
-bool PcConfig::initialize(mbase::string in_temp_path, mbase::string in_root_path, mbase::string in_config_path)
+bool PcConfig::initialize(const mbase::string& in_temp_path, const mbase::string& in_root_path, const mbase::string& in_config_path)
 {
 	// TODO, READ THE mbconfig.txt CONFIG FILE AT INITIALIZATION
 
@@ -97,8 +97,8 @@ bool PcConfig::initialize(mbase::string in_temp_path, mbase::string in_root_path
 		return true;
 	}
 
-	PcDiagnostics& pcDiag = PcDiagnostics::get_instance();
-	pcDiag.log(mbase::PcDiagnostics::flags::LOGTYPE_INFO, mbase::PcDiagnostics::flags::LOGIMPORTANCE_LOW, "Initializing program config.");
+	PcDiagnostics* pcDiag = MBASE_PROGRAM_DIAGNOSTICS_MANAGER();
+	pcDiag->log(mbase::PcDiagnostics::flags::LOGTYPE_INFO, mbase::PcDiagnostics::flags::LOGIMPORTANCE_LOW, "Initializing program config.");
 
 	mTempPath = in_temp_path;
 	mRootPath = in_root_path;
@@ -119,8 +119,8 @@ bool PcConfig::initialize(mbase::string in_temp_path, mbase::string in_root_path
 		mConfigPath = std::move(mbase::get_current_path());
 	}
 
-	pcDiag.log(mbase::PcDiagnostics::flags::LOGTYPE_INFO, mbase::PcDiagnostics::flags::LOGIMPORTANCE_LOW, "Program temporary path: " + mTempPath);
-	pcDiag.log(mbase::PcDiagnostics::flags::LOGTYPE_INFO, mbase::PcDiagnostics::flags::LOGIMPORTANCE_LOW, "Program root path: " + mRootPath);
+	pcDiag->log(mbase::PcDiagnostics::flags::LOGTYPE_INFO, mbase::PcDiagnostics::flags::LOGIMPORTANCE_LOW, "Program temporary path: " + mTempPath);
+	pcDiag->log(mbase::PcDiagnostics::flags::LOGTYPE_INFO, mbase::PcDiagnostics::flags::LOGIMPORTANCE_LOW, "Program root path: " + mRootPath);
 
 	mConfigMap.insert({ mbase::string("tmp_path"), mTempPath });
 	mConfigMap.insert({ mbase::string("root_path"), mRootPath });
@@ -134,8 +134,8 @@ bool PcConfig::initialize(mbase::string in_temp_path, mbase::string in_root_path
 	{
 		if (It->fileName == "config")
 		{
-			pcDiag.log(mbase::PcDiagnostics::flags::LOGTYPE_INFO, mbase::PcDiagnostics::flags::LOGIMPORTANCE_MID, "'config' folder found and set");
-			pcDiag.log(mbase::PcDiagnostics::flags::LOGTYPE_SUCCESS, mbase::PcDiagnostics::flags::LOGIMPORTANCE_LOW, "Config object initialized.");
+			pcDiag->log(mbase::PcDiagnostics::flags::LOGTYPE_INFO, mbase::PcDiagnostics::flags::LOGIMPORTANCE_MID, "'config' folder found and set");
+			pcDiag->log(mbase::PcDiagnostics::flags::LOGTYPE_SUCCESS, mbase::PcDiagnostics::flags::LOGIMPORTANCE_LOW, "Config object initialized.");
 			mIsInitialized = true;
 			
 			ioMng->register_handler(mConfigPath + "config.txt", mConfigFileHandler);
@@ -145,14 +145,14 @@ bool PcConfig::initialize(mbase::string in_temp_path, mbase::string in_root_path
 		}
 	}
 
-	pcDiag.log(mbase::PcDiagnostics::flags::LOGTYPE_INFO, mbase::PcDiagnostics::flags::LOGIMPORTANCE_LOW, "Creating 'config' folder under root.");
+	pcDiag->log(mbase::PcDiagnostics::flags::LOGTYPE_INFO, mbase::PcDiagnostics::flags::LOGIMPORTANCE_LOW, "Creating 'config' folder under root.");
 	if (mbase::create_directory(mConfigPath) != mbase::FS_ERROR::FS_SUCCESS)
 	{
-		pcDiag.log(mbase::PcDiagnostics::flags::LOGTYPE_ERROR, mbase::PcDiagnostics::flags::LOGIMPORTANCE_FATAL, "Unable to create 'config' folder under directory: " + mConfigPath);
+		pcDiag->log(mbase::PcDiagnostics::flags::LOGTYPE_ERROR, mbase::PcDiagnostics::flags::LOGIMPORTANCE_FATAL, "Unable to create 'config' folder under directory: " + mConfigPath);
 		return false;
 	}
 	ioMng->register_handler(mConfigPath + "config.txt", mConfigFileHandler);
-	pcDiag.log(mbase::PcDiagnostics::flags::LOGTYPE_SUCCESS, mbase::PcDiagnostics::flags::LOGIMPORTANCE_LOW, "Config object initialized.");
+	pcDiag->log(mbase::PcDiagnostics::flags::LOGTYPE_SUCCESS, mbase::PcDiagnostics::flags::LOGIMPORTANCE_LOW, "Config object initialized.");
 	MBASE_PROGRAM_INVOKE_EVENT_WDATA("config_init", this);
 	mIsInitialized = true;
 	return true;
@@ -162,8 +162,8 @@ PcConfig::flags PcConfig::set_temp_path(const mbase::string& in_path) noexcept
 {
 	MBASE_CONFIG_RETURN_UNINITIALIZED;
 
-	PcDiagnostics& pcDiag = PcDiagnostics::get_instance();
-	pcDiag.log(mbase::PcDiagnostics::flags::LOGTYPE_INFO, mbase::PcDiagnostics::flags::LOGIMPORTANCE_LOW, "Changing temp path: " + in_path);
+	PcDiagnostics* pcDiag = MBASE_PROGRAM_DIAGNOSTICS_MANAGER();
+	pcDiag->log(mbase::PcDiagnostics::flags::LOGTYPE_INFO, mbase::PcDiagnostics::flags::LOGIMPORTANCE_LOW, "Changing temp path: " + in_path);
 
 	if (!in_path.size())
 	{
@@ -180,8 +180,8 @@ PcConfig::flags PcConfig::set_root_path(const mbase::string& in_path) noexcept
 {
 	MBASE_CONFIG_RETURN_UNINITIALIZED;
 
-	PcDiagnostics& pcDiag = PcDiagnostics::get_instance();
-	pcDiag.log(mbase::PcDiagnostics::flags::LOGTYPE_INFO, mbase::PcDiagnostics::flags::LOGIMPORTANCE_LOW, "Changing root path: " + in_path);
+	PcDiagnostics* pcDiag = MBASE_PROGRAM_DIAGNOSTICS_MANAGER();
+	pcDiag->log(mbase::PcDiagnostics::flags::LOGTYPE_INFO, mbase::PcDiagnostics::flags::LOGIMPORTANCE_LOW, "Changing root path: " + in_path);
 
 	if (!in_path.size())
 	{
@@ -198,8 +198,8 @@ PcConfig::flags PcConfig::set_config_path(const mbase::string& in_path) noexcept
 {
 	MBASE_CONFIG_RETURN_UNINITIALIZED;
 
-	PcDiagnostics& pcDiag = PcDiagnostics::get_instance();
-	pcDiag.log(mbase::PcDiagnostics::flags::LOGTYPE_INFO, mbase::PcDiagnostics::flags::LOGIMPORTANCE_LOW, "Changing config path: " + in_path);
+	PcDiagnostics* pcDiag = MBASE_PROGRAM_DIAGNOSTICS_MANAGER();
+	pcDiag->log(mbase::PcDiagnostics::flags::LOGTYPE_INFO, mbase::PcDiagnostics::flags::LOGIMPORTANCE_LOW, "Changing config path: " + in_path);
 
 	if (!in_path.size())
 	{
@@ -217,7 +217,7 @@ PcConfig::flags PcConfig::load_config_file(const mbase::string& in_file, config_
 	// TODO, IMPLEMENT AFTER IMPLEMENTING THE IO MANAGER
 	MBASE_CONFIG_RETURN_UNINITIALIZED;
 
-	PcDiagnostics& pcDiag = PcDiagnostics::get_instance();
+	PcDiagnostics* pcDiag = MBASE_PROGRAM_DIAGNOSTICS_MANAGER();
 	return flags::CONFIG_SUCCESS;
 }
 
@@ -249,14 +249,14 @@ PcConfig::flags PcConfig::update() noexcept
 PcConfig::flags PcConfig::update(config_map& in_cmap) noexcept
 {
 	MBASE_CONFIG_RETURN_UNINITIALIZED;
-	PcDiagnostics& pcDiag = PcDiagnostics::get_instance();
-	pcDiag.log(mbase::PcDiagnostics::flags::LOGTYPE_INFO, mbase::PcDiagnostics::flags::LOGIMPORTANCE_MID, "Loading new config map");
+	PcDiagnostics* pcDiag = MBASE_PROGRAM_DIAGNOSTICS_MANAGER();
+	pcDiag->log(mbase::PcDiagnostics::flags::LOGTYPE_INFO, mbase::PcDiagnostics::flags::LOGIMPORTANCE_MID, "Loading new config map");
 
 	mbase::lock_guard lg(mConfigSync);
 
 	mConfigMap = in_cmap;
 	mIsUpdated = true;
-	pcDiag.log(mbase::PcDiagnostics::flags::LOGTYPE_INFO, mbase::PcDiagnostics::flags::LOGIMPORTANCE_MID, "New config map loaded");
+	pcDiag->log(mbase::PcDiagnostics::flags::LOGTYPE_INFO, mbase::PcDiagnostics::flags::LOGIMPORTANCE_MID, "New config map loaded");
 	return flags::CONFIG_SUCCESS;
 }
 
@@ -264,15 +264,15 @@ PcConfig::flags PcConfig::set_config_param(const mbase::string& in_key, const mb
 {
 	MBASE_CONFIG_RETURN_UNINITIALIZED;
 
-	PcDiagnostics& pcDiag = PcDiagnostics::get_instance();
+	PcDiagnostics* pcDiag = MBASE_PROGRAM_DIAGNOSTICS_MANAGER();
 	flags returnCode = flags::CONFIG_SUCCESS;
 
-	pcDiag.log(mbase::PcDiagnostics::flags::LOGTYPE_INFO, mbase::PcDiagnostics::flags::LOGIMPORTANCE_MID, mbase::string::from_format("Setting up config key: %s=%s", in_key.c_str(), in_param.c_str()));
+	pcDiag->log(mbase::PcDiagnostics::flags::LOGTYPE_INFO, mbase::PcDiagnostics::flags::LOGIMPORTANCE_MID, mbase::string::from_format("Setting up config key: %s=%s", in_key.c_str(), in_param.c_str()));
 
 	if (!in_key.size())
 	{
 		returnCode = flags::CONFIG_ERR_MISSING_KEY;
-		pcDiag.log(mbase::PcDiagnostics::flags::LOGTYPE_ERROR, mbase::PcDiagnostics::flags::LOGIMPORTANCE_MID, "Missing config key");
+		pcDiag->log(mbase::PcDiagnostics::flags::LOGTYPE_ERROR, mbase::PcDiagnostics::flags::LOGIMPORTANCE_MID, "Missing config key");
 		return returnCode;
 	}
 
@@ -280,12 +280,12 @@ PcConfig::flags PcConfig::set_config_param(const mbase::string& in_key, const mb
 
 	if (mConfigMap.find(in_key) != mConfigMap.end())
 	{
-		pcDiag.log(mbase::PcDiagnostics::flags::LOGTYPE_WARNING, mbase::PcDiagnostics::flags::LOGIMPORTANCE_MID, mbase::string::from_format("Config key: %s=%s, overwritten by value: %s", in_key.c_str(), mConfigMap[in_key].c_str(), in_param.c_str()));
+		pcDiag->log(mbase::PcDiagnostics::flags::LOGTYPE_WARNING, mbase::PcDiagnostics::flags::LOGIMPORTANCE_MID, mbase::string::from_format("Config key: %s=%s, overwritten by value: %s", in_key.c_str(), mConfigMap[in_key].c_str(), in_param.c_str()));
 		returnCode = flags::CONFIG_WARN_KEY_OVERWRITTEN;
 	}
 	mIsUpdated = true;
 
-	pcDiag.log(mbase::PcDiagnostics::flags::LOGTYPE_SUCCESS, mbase::PcDiagnostics::flags::LOGIMPORTANCE_MID, mbase::string::from_format("Config key set: %s=%s", in_key.c_str(), in_param.c_str()));
+	pcDiag->log(mbase::PcDiagnostics::flags::LOGTYPE_SUCCESS, mbase::PcDiagnostics::flags::LOGIMPORTANCE_MID, mbase::string::from_format("Config key set: %s=%s", in_key.c_str(), in_param.c_str()));
 	mConfigMap.insert(mbase::pair(in_key, in_param));
 	return returnCode;
 }
@@ -294,15 +294,15 @@ PcConfig::flags PcConfig::dump_to_string(mbase::string& out_config_string) noexc
 {
 	MBASE_CONFIG_RETURN_UNINITIALIZED;
 
-	PcDiagnostics& pcDiag = PcDiagnostics::get_instance();
-	pcDiag.log(mbase::PcDiagnostics::flags::LOGTYPE_INFO, mbase::PcDiagnostics::flags::LOGIMPORTANCE_MID, "Dumping config map to string");
+	PcDiagnostics* pcDiag = MBASE_PROGRAM_DIAGNOSTICS_MANAGER();
+	pcDiag->log(mbase::PcDiagnostics::flags::LOGTYPE_INFO, mbase::PcDiagnostics::flags::LOGIMPORTANCE_MID, "Dumping config map to string");
 
 	mbase::lock_guard lg(mConfigSync);
 	for(config_map::iterator It = mConfigMap.begin(); It != mConfigMap.end(); ++It)
 	{
 		out_config_string += It->first + "=" + It->second + MBASE_PLATFORM_NEWLINE;
 	}
-	pcDiag.log(mbase::PcDiagnostics::flags::LOGTYPE_SUCCESS, mbase::PcDiagnostics::flags::LOGIMPORTANCE_MID, "Dump complete");
+	pcDiag->log(mbase::PcDiagnostics::flags::LOGTYPE_SUCCESS, mbase::PcDiagnostics::flags::LOGIMPORTANCE_MID, "Dump complete");
 	return flags::CONFIG_SUCCESS;
 }
 

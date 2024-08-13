@@ -23,7 +23,7 @@ InfProcessor::InfProcessor() :
 	mContextIdCounter(0),
 	mClientsMutex(),
 	mMaxClients(gInfProcessorDefaultMaxSeq),
-	mGeneratedTokenCount(0)
+	mRegisteredBatchSize(0)
 {
 }
 
@@ -37,35 +37,35 @@ bool InfProcessor::is_registered() const
 	return (mModelContext != NULL);
 }
 
-InfProcessor::flags InfProcessor::get_context_size(I32& out_size)
+InfProcessor::flags InfProcessor::get_context_size(U32& out_size)
 {
 	MBASE_INF_PROC_RETURN_UNREGISTERED;
 	out_size = llama_n_ctx(mModelContext);
 	return flags::INF_PROC_SUCCESS;
 }
 
-InfProcessor::flags InfProcessor::get_client_count(I32& out_size)
+InfProcessor::flags InfProcessor::get_client_count(U32& out_size)
 {
 	MBASE_INF_PROC_RETURN_UNREGISTERED;
 	out_size = mRegisteredClients.size();
 	return flags::INF_PROC_SUCCESS;
 }
 
-InfProcessor::flags InfProcessor::get_max_clients(I32& out_size) 
+InfProcessor::flags InfProcessor::get_max_clients(U32& out_size) 
 {
 	MBASE_INF_PROC_RETURN_UNREGISTERED;
 	out_size = mMaxClients;
 	return flags::INF_PROC_SUCCESS;
 }
 
-InfProcessor::flags InfProcessor::get_process_thread_count(I32& out_count)
+InfProcessor::flags InfProcessor::get_process_thread_count(U32& out_count)
 {
 	MBASE_INF_PROC_RETURN_UNREGISTERED;
 	out_count = llama_n_threads(mModelContext);
 	return flags::INF_PROC_SUCCESS;
 }
 
-InfProcessor::flags InfProcessor::get_batch_size(I32& out_size)
+InfProcessor::flags InfProcessor::get_max_batch_size(U32& out_size)
 {
 	MBASE_INF_PROC_RETURN_UNREGISTERED;
 	out_size = llama_n_batch(mModelContext);
@@ -90,6 +90,7 @@ InfProcessor::flags InfProcessor::destroy()
 	mClientsMutex.release();
 	update();
 
+	// CLEANING PROCESSOR
 	mProcessedHandlers.clear();
 	mProcessedModel = NULL;
 	mPresetCandidates.clear();
@@ -98,7 +99,8 @@ InfProcessor::flags InfProcessor::destroy()
 	mProcessorId = 0;
 	mContextIdCounter = 0;
 	mMaxClients = gInfProcessorDefaultMaxSeq;
-	mGeneratedTokenCount = 0;
+	mRegisteredBatchSize = 0;
+	// CLEANING PROCESSOR
 
 	return flags::INF_PROC_SUCCESS;
 }
@@ -143,16 +145,19 @@ InfProcessor::flags InfProcessor::register_client(const mbase::vector<inf_token>
 		return flags::INF_PROC_ERR_TOKEN_LIMIT_IS_TOO_LOW;
 	}
 
-	U32 contextBatchSize = llama_n_batch(mModelContext);
+	U32 contextBatchSize = 0;
+	U32 totalContextSize = 0;
+	get_max_batch_size(contextBatchSize);
+	get_context_size(totalContextSize);
 
-	if(contextBatchSize < in_token_limit)
+	if(in_token_limit > contextBatchSize || in_data.size() > in_token_limit)
 	{
 		return flags::INF_PROC_ERR_EXCEED_TOKEN_LIMIT;
 	}
 
-	if(in_data.size() > in_token_limit)
+	if(mRegisteredBatchSize + in_token_limit > totalContextSize)
 	{
-		return flags::INF_PROC_ERR_EXCEED_TOKEN_LIMIT;
+		return flags::INF_PROC_ERR_CONTEXT_IS_FULL;
 	}
 
 	if (in_data.size())
@@ -166,8 +171,9 @@ InfProcessor::flags InfProcessor::register_client(const mbase::vector<inf_token>
 	out_client.mfrMaxTokenCount = in_token_limit;
 	out_client.mSequenceId = this->mContextIdCounter++;
 	out_client.mFs = InfClient::finish_state::INF_FINISH_STATE_SUCCESS;
-	out_client.mfrBatch = llama_batch_init(contextBatchSize, 0, 1);
+	out_client.mfrBatch = llama_batch_init(in_token_limit, 0, 1);
 
+	mRegisteredBatchSize += out_client.mfrMaxTokenCount;
 	mRegisteredClients.push_back(&out_client);
 	out_client.mfrSelfIter = mRegisteredClients.end_node();
 
@@ -207,11 +213,19 @@ InfProcessor::flags InfProcessor::register_client(InfClient& out_client, U32 in_
 		return flags::INF_PROC_ERR_CLIENT_LIMIT_REACHED;
 	}
 
-	U32 contextBatchSize = llama_n_batch(mModelContext);
+	U32 contextBatchSize = 0;
+	U32 totalContextSize = 0;
+	get_max_batch_size(contextBatchSize);
+	get_context_size(totalContextSize);
 
 	if(in_token_limit > contextBatchSize)
 	{
 		return flags::INF_PROC_ERR_EXCEED_TOKEN_LIMIT;
+	}
+
+	if(mRegisteredBatchSize + in_token_limit > totalContextSize)
+	{
+		return flags::INF_PROC_ERR_CONTEXT_IS_FULL;
 	}
 
 	out_client.mfrBatchCursor = 0;
@@ -219,8 +233,9 @@ InfProcessor::flags InfProcessor::register_client(InfClient& out_client, U32 in_
 	out_client.mSequenceId = ++this->mContextIdCounter;
 	out_client.mfrMaxTokenCount = in_token_limit;
 	out_client.mFs = InfClient::finish_state::INF_FINISH_STATE_SUCCESS;
-	out_client.mfrBatch = llama_batch_init(contextBatchSize, 0, 1);
+	out_client.mfrBatch = llama_batch_init(in_token_limit, 0, 1);
 
+	mRegisteredBatchSize += out_client.mfrMaxTokenCount;
 	mRegisteredClients.push_back(&out_client);
 	out_client.mfrSelfIter = mRegisteredClients.end_node();
 
@@ -265,6 +280,7 @@ GENERIC InfProcessor::update()
 		mbase::char_stream& myCharacterStream = myClient->mfrGeneratedToken;
 		if(!myClient->is_registered())
 		{
+			mRegisteredBatchSize -= myClient->mfrMaxTokenCount;
 			myClient->_reset_client();
 			if(myClient->mFs == mbase::InfClient::finish_state::INF_FINISH_STATE_ABANDONED)
 			{
@@ -272,12 +288,12 @@ GENERIC InfProcessor::update()
 				myClient->on_finish(myClient->mfrBatchCursor);
 				myClient->on_unregister();
 			}
+			continue;
 		}
 
 		if(!myClient->is_processing())
 		{
 			myClient->mFs = mbase::InfClient::finish_state::INF_FINISH_STATE_SUCCESS;
-			myClient->mParsedTokens.clear();
 			myClient->on_write(myCharacterStream.get_buffer(), myCharacterStream.get_pos());
 			myCharacterStream.set_cursor_front();
 			myClient->on_finish(myClient->mfrBatchCursor);
@@ -288,7 +304,6 @@ GENERIC InfProcessor::update()
 		{
 			// means token limit reached
 			myClient->mIsProcessing = false;
-			myClient->mParsedTokens.clear();
 			myCharacterStream.set_cursor_front();
 			myClient->on_finish(myClient->mfrBatchCursor);
 			continue;
@@ -306,9 +321,10 @@ GENERIC InfProcessor::update_t()
 	{
 		return;
 	}
-	mClientsMutex.acquire();
+	
 	for (client_list::iterator It = mRegisteredClients.begin(); It != mRegisteredClients.end(); ++It)
 	{
+		mbase::lock_guard lgClient(mClientsMutex);
 		InfClient* myClient = *It;
 
 		if(myClient->is_unregistering())
@@ -319,7 +335,6 @@ GENERIC InfProcessor::update_t()
 				myClient->mFs = InfClient::finish_state::INF_FINISH_STATE_ABANDONED;
 			}
 			llama_kv_cache_seq_rm(mModelContext, myClient->mSequenceId, -1, -1);
-			mGeneratedTokenCount -= myClient->mfrGeneratedToken.get_pos();
 			myClient->mfrHostProcessor = NULL;
 			It = mRegisteredClients.erase(It);
 			mProcessedHandlers.push_back(myClient);
@@ -343,8 +358,8 @@ GENERIC InfProcessor::update_t()
 		if(!myClient->is_processing())
 		{
 			mbase::vector<InfProcessor::inf_token>& generatedTokens = myClient->mParsedTokens;
-
-			if (!generatedTokens.size())
+			U32 parsedTokenSize = generatedTokens.size();
+			if (!parsedTokenSize)
 			{
 				continue;
 			}
@@ -354,26 +369,38 @@ GENERIC InfProcessor::update_t()
 				I32 seqId = myClient->mSequenceId;
 				llama_batch_add(myClient->mfrBatch, generatedTokens[i], i, { seqId }, false);
 			}
+
+			generatedTokens.clear();
 			myClient->mfrBatch.logits[myClient->mfrBatch.n_tokens - 1] = true;
 			myClient->mIsProcessing = true;
 			myClient->mfrBatchCursor = myClient->mfrBatch.n_tokens;
+			++myClient->mMessageIndexer;
+
+			mbase::InfClient::context_line ctxLine;
+			ctxLine.mMessageIndex = myClient->mMessageIndexer;
+			myClient->mChatHistory.insert(mbase::pair(myClient->mMessageIndexer, ctxLine));
 		}
 		else
 		{
 			if(myClient->mfrBatchCursor >= myClient->mfrMaxTokenCount)
 			{
+				if(!myClient->mChatHistory[myClient->mMessageIndexer].mInput.size()) // if the message map is empty, do not store the chat
+				{
+					myClient->mChatHistory.erase(myClient->mMessageIndexer);
+					--myClient->mMessageIndexer;
+				}
+
 				myClient->mIsDataSet = false;
 				myClient->mFs = InfClient::finish_state::INF_FINISH_STATE_TOKEN_LIMIT_REACHED;
 				llama_batch_clear(myClient->mfrBatch);
 				llama_kv_cache_seq_rm(mModelContext, myClient->mSequenceId, -1, -1);
-				mClientsMutex.release();
+				//mClientsMutex.release();
 				mbase::lock_guard procMutex(mProcHandlerMutex);
 				mProcessedHandlers.push_back(myClient);
 				continue;
 			}
 
 			llama_decode(mModelContext, myClient->mfrBatch);
-			++mGeneratedTokenCount;
 			I32 modelVocab = 0;
 			I32 seqId = myClient->mSequenceId;
 			get_processed_model()->get_vocab_count(modelVocab);
@@ -393,6 +420,8 @@ GENERIC InfProcessor::update_t()
 			if (llama_token_is_eog(get_processed_model()->get_raw_model(), generatedToken)) // || batch_cursor >= predictMax
 			{
 				I32 resultLength = llama_token_to_piece(get_processed_model()->get_raw_model(), generatedToken, myClient->mfrGeneratedToken.get_buffer(), 128, 0, true);
+				mbase::string strGeneratedToken(myClient->mfrGeneratedToken.get_buffer(), resultLength);
+				myClient->mChatHistory[myClient->mMessageIndexer].mInput += strGeneratedToken;
 				myClient->mfrGeneratedToken.set_cursor_pos(resultLength);
 				myClient->mIsDataSet = false;
 				myClient->mIsProcessing = false;
@@ -400,7 +429,7 @@ GENERIC InfProcessor::update_t()
 				llama_batch_clear(myClient->mfrBatch);
 				mPresetCandidates.clear();
 				llama_kv_cache_seq_rm(mModelContext, myClient->mSequenceId, -1, -1);
-				mClientsMutex.release();
+				//mClientsMutex.release();
 				mbase::lock_guard procMutex(mProcHandlerMutex);
 				mProcessedHandlers.push_back(myClient);
 				continue;
@@ -409,19 +438,21 @@ GENERIC InfProcessor::update_t()
 			I32 resultLength = llama_token_to_piece(get_processed_model()->get_raw_model(), generatedToken, myClient->mfrGeneratedToken.get_buffer(), 128, 0, true);
 			llama_batch_clear(myClient->mfrBatch);
 			llama_batch_add(myClient->mfrBatch, generatedToken, myClient->mfrBatchCursor, { seqId }, true);
+			mbase::string strGeneratedToken(myClient->mfrGeneratedToken.get_buffer(), resultLength);
+			// TODO: CHECK IF THE GENERATED TOKEN IS SPECIAL
+			myClient->mChatHistory[myClient->mMessageIndexer].mInput += strGeneratedToken;
 			myClient->mfrGeneratedToken.set_cursor_pos(resultLength);
 
 			myClient->mfrBatchCursor++;
 			mPresetCandidates.clear();
 			myClient->mIsLogicProcessed = false;
-			mClientsMutex.release();
+			//mClientsMutex.release();
 
 			mbase::lock_guard procMutex(mProcHandlerMutex);
 			mProcessedHandlers.push_back(myClient);
 			
 		}
 	}
-	mClientsMutex.release();
 }
 
 MBASE_END

@@ -30,7 +30,7 @@ struct MBASE_API InfProcInitParams {
 	U32 mThreadCount = gInfProcessorDefaultThreadCount;
 };
 
-class MBASE_API InfModel {
+class MBASE_API InfModel : public non_copyable {
 public:
 	using inf_token = llama_token;
 	using processor_list = mbase::list<InfProcessor*>;

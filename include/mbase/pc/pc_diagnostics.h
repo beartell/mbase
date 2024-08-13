@@ -10,7 +10,7 @@
 
 MBASE_BEGIN
 
-class MBASE_API PcDiagnostics : public mbase::singleton<PcDiagnostics> {
+class MBASE_API PcDiagnostics {
 public:
 	using log_list = mbase::vector<mbase::string>;
 
@@ -47,8 +47,6 @@ private:
 	log_list mLogList;
 	mbase::mutex mLogMutex;
 };
-
-
 
 MBASE_END
 

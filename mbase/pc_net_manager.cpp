@@ -832,17 +832,16 @@ PcNetManager::flags PcNetManager::create_server(const mbase::string& in_addr, I3
 	}
 
 	freeaddrinfo(result);
-
-	iResult = listen(serverSocket, SOMAXCONN);
+	
+	iResult = ::listen(serverSocket, SOMAXCONN);
 	if(iResult == SOCKET_ERROR)
 	{
-
-		printf("maxl isten %d", WSAGetLastError());
 		// TODO: ERROR CHECKING WILL BE IMPLEMENTED
 		closesocket(serverSocket);
 		return flags::NET_MNG_ERR_UNKNOWN;
 	}
 	u_long ctlMode = 1;
+	
 	ioctlsocket(serverSocket, FIONBIO, &ctlMode);
 
 	out_server.mRawSocket = serverSocket;

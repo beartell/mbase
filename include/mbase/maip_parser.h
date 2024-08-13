@@ -30,7 +30,7 @@ MBASE_STD_BEGIN
 	maip-identification-line = maip-req-identification-line / maip-resp-identification-line SP LF
 
 	message-description-key = ALPHA *64(VCHAR)
-	message-description-value = *WSP 1*128(VCHAR)
+	message-description-value = *WSP 1*256(VCHAR)
 	message-description = message-description-key ":" message-description-value LF
 
 	maip-end = "END" LF
@@ -66,6 +66,11 @@ enum class maip_generic_errors : U16 {
 };
 
 static const U32 gMaipVersionMinLength = 7;
+static const U32 gMaipDescriptionKeyLength = 64;
+static const U32 gMaipDescriptionValueLength = 256;
+static const U32 gMaipOpTypeLength = 32;
+static const U32 gMaipOpStringLength = 64;
+static const U32 gMaipMaxKvalCount = 64;
 
 using maip_sequence_helper = mbase::type_sequence<IBYTE>;
 
@@ -103,7 +108,7 @@ struct maip_description_value {
 		mValType = in_rhs.mValType;
 		if (*mStringValue != '\0')
 		{
-			maip_sequence_helper::fill(mStringValue, '\0', 128);
+			maip_sequence_helper::fill(mStringValue, '\0', gMaipDescriptionValueLength);
 		}
 		maip_sequence_helper::copy_bytes(mStringValue, in_rhs.mStringValue);
 		return *this;
@@ -111,7 +116,7 @@ struct maip_description_value {
 
 	maip_value_type mValType = maip_value_type::MAIP_VALTPYE_STRING;
 	union {
-		IBYTE mStringValue[128];
+		IBYTE mStringValue[gMaipDescriptionValueLength];
 		I64 mIntValue;
 		F64 mFloatValue;
 		bool mBoolValue;
@@ -128,13 +133,13 @@ struct maip_description_kval {
 	maip_description_kval(maip_description_kval&& in_rhs) noexcept : mKey{0}
 	{
 		maip_sequence_helper::copy_bytes(mKey, in_rhs.mKey);
-		maip_sequence_helper::fill(in_rhs.mKey, '\0', 64);
+		maip_sequence_helper::fill(in_rhs.mKey, '\0', gMaipDescriptionKeyLength);
 		mValues = std::move(in_rhs.mValues);
 	}
 
 	maip_description_kval& operator=(const maip_description_kval& in_rhs)
 	{
-		maip_sequence_helper::fill(mKey, '\0', 64);
+		maip_sequence_helper::fill(mKey, '\0', gMaipDescriptionKeyLength);
 		maip_sequence_helper::copy_bytes(mKey, in_rhs.mKey);
 
 		mValues = in_rhs.mValues;
@@ -143,15 +148,15 @@ struct maip_description_kval {
 
 	maip_description_kval& operator=(maip_description_kval&& in_rhs) noexcept
 	{
-		maip_sequence_helper::fill(mKey, '\0', 64);
+		maip_sequence_helper::fill(mKey, '\0', gMaipDescriptionKeyLength);
 		maip_sequence_helper::copy_bytes(mKey, in_rhs.mKey);
-		maip_sequence_helper::fill(in_rhs.mKey, '\0', 64);
+		maip_sequence_helper::fill(in_rhs.mKey, '\0', gMaipDescriptionKeyLength);
 
 		mValues = std::move(in_rhs.mValues);
 		return *this;
 	}
 
-	IBYTE mKey[64];
+	IBYTE mKey[gMaipDescriptionKeyLength];
 	mbase::vector<maip_description_value> mValues;
 };
 
@@ -278,7 +283,7 @@ maip_packet_builder::flags maip_packet_builder::set_request_message(const mbase:
 	{
 		if (mbase::string::is_alpha(n))
 		{
-			if (lengthCounter == 32)
+			if (lengthCounter == gMaipOpTypeLength)
 			{
 				mIdentificationLine = "1000 \n";
 				return flags::PACKET_BUILDER_ERR_OP_TYPE_TOO_LONG;
@@ -306,7 +311,7 @@ maip_packet_builder::flags maip_packet_builder::set_request_message(const mbase:
 
 		if (mbase::string::is_print(n))
 		{
-			if (lengthCounter == 64)
+			if (lengthCounter == gMaipOpStringLength)
 			{
 				mIdentificationLine = "1000 \n";
 				return flags::PACKET_BUILDER_ERR_OP_STRING_TOO_LONG;
@@ -442,7 +447,7 @@ MBASE_INLINE maip_generic_errors maip_peer_request::parse_request(mbase::char_st
 		return parseResult;
 	}
 
-	while (mDescriptionKvals.size() != 64) // max key values
+	while (mDescriptionKvals.size() != gMaipMaxKvalCount) // max key values
 	{
 		maip_description_kval mdk;
 		parseResult = _parse_message_description(in_stream, mdk);
@@ -617,7 +622,7 @@ MBASE_INLINE maip_generic_errors maip_peer_request::_parse_req_identification_li
 		in_stream.advance_safe();
 
 		mbase::string opString;
-		opLengthMax = 64;
+		opLengthMax = gMaipOpStringLength;
 
 		for(I32 i = 0; in_stream.getc() != 32; i++)
 		{
@@ -672,8 +677,8 @@ MBASE_INLINE maip_generic_errors maip_peer_request::_parse_message_description(m
 	I32 processedBytes = 0;
 	try
 	{
-		I32 maxKeyLength = 63;
-		mbase::char_stream keyBuffer(out_kval.mKey, 64);
+		I32 maxKeyLength = gMaipDescriptionKeyLength - 1;
+		mbase::char_stream keyBuffer(out_kval.mKey, gMaipDescriptionKeyLength);
 		for(I32 i = 0; in_stream.getc() != ':'; i++)
 		{
 			if(in_stream.getc() == '\n') 
@@ -701,7 +706,7 @@ MBASE_INLINE maip_generic_errors maip_peer_request::_parse_message_description(m
 			return maip_generic_errors::MISSING_KEY;
 		}
 
-		I32 maxValueLength = 128;
+		I32 maxValueLength = gMaipDescriptionValueLength;
 		I32	countValueLength = 0;
 
 		++processedBytes;
@@ -709,7 +714,7 @@ MBASE_INLINE maip_generic_errors maip_peer_request::_parse_message_description(m
 		maip_description_value mdv;
 		for(I32 i = 0; in_stream.getc() != '\n' && i != 8192; i++)
 		{
-			if(countValueLength == 128)
+			if(countValueLength == gMaipDescriptionValueLength)
 			{
 				// value too long
 				in_stream.reverse_safe(processedBytes);

@@ -41,6 +41,7 @@ public:
 		INF_PROC_ERR_BELONGS_TO_ANOTHER_PROCESSOR,
 		INF_PROC_ERR_CLIENT_LIMIT_REACHED,
 		INF_PROC_ERR_EXCEED_TOKEN_LIMIT,
+		INF_PROC_ERR_CONTEXT_IS_FULL,
 		INF_PROC_ERR_TOKEN_LIMIT_IS_TOO_LOW,
 		INF_PROC_WARN_UNABLE_TO_TOKENIZE_INPUT
 	};
@@ -49,11 +50,11 @@ public:
 	~InfProcessor();
 
 	bool is_registered() const;
-	flags get_context_size(I32& out_size);
-	flags get_client_count(I32& out_size);
-	flags get_max_clients(I32& out_size);
-	flags get_process_thread_count(I32& out_count);
-	flags get_batch_size(I32& out_size);
+	flags get_context_size(U32& out_size);
+	flags get_client_count(U32& out_size);
+	flags get_max_clients(U32& out_size);
+	flags get_process_thread_count(U32& out_count);
+	flags get_max_batch_size(U32& out_size);
 	InfModel* get_processed_model();
 	flags destroy();
 	flags tokenize_input(CBYTEBUFFER in_data, size_type in_size, mbase::vector<inf_token>& out_tokens);
@@ -66,7 +67,7 @@ public:
 	GENERIC update();
 	GENERIC update_t();
 
-private:
+protected:
 	logic_handlers mProcessedHandlers;
 	client_list mRegisteredClients;
 	mbase::vector<llama_token_data> mPresetCandidates;
@@ -75,7 +76,7 @@ private:
 	U32 mProcessorId;
 	U32 mContextIdCounter;
 	U32 mMaxClients;
-	U32 mGeneratedTokenCount;
+	U32 mRegisteredBatchSize;
 	mbase::mutex mClientsMutex;
 	mbase::mutex mProcHandlerMutex;
 

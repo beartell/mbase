@@ -184,7 +184,7 @@ InfClient::flags InfClient::execute_prompt(const mbase::vector<U32>& in_msg_ids)
 		return flags::INF_CLIENT_ERR_TOKENIZATION_FAILED;
 	}
 
-	if(mParsedTokens.size() > mfrMaxTokenCount)
+	if(mParsedTokens.size() >= mfrMaxTokenCount)
 	{
 		return flags::INF_CLIENT_ERR_TOKEN_LIMIT_EXCEEDED;
 	}
@@ -220,6 +220,12 @@ GENERIC InfClient::abandon()
 	mIsDataSet = false;
 }
 
+GENERIC InfClient::clear_chat_history()
+{
+	mChatHistory.clear();
+	mMessageIndexer = 0;
+}
+
 GENERIC InfClient::_reset_client()
 {
 	if(!this->is_registered())
@@ -234,8 +240,6 @@ GENERIC InfClient::_reset_client()
 	mIsLogicProcessed = true;
 	mIsDataSet = false;
 	mParsedTokens.clear();
-	mChatHistory.clear();
-	mMessageIndexer = 0;
 	mSequenceId = 0;
 }
 

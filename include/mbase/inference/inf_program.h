@@ -5,20 +5,48 @@
 #include <mbase/vector.h>
 #include <mbase/string.h>
 #include <mbase/list.h>
+#include <mbase/unordered_map.h>
+#include <mbase/pc/pc_net_manager.h>
+#include <mbase/inference/inf_model.h>
+#include <mbase/inference/inf_client.h>
 
 MBASE_BEGIN
 
-class MBASE_API InfAcceptedClient {
-public:
+#define MAIP_INF_ERR_UNAUTHORIZED_ACCESS 2003
 
-private:
-	mbase::string mToModel;
+#define MBASE_MAIP_CL_AUTH \
+const U64& in_csid, const mbase::string& in_clid\
+
+struct MBASE_API InfAcceptedClient {
+	InfAcceptedClient();
+	InfAcceptedClient(const InfAcceptedClient& in_rhs);
+	~InfAcceptedClient();
+
+	std::shared_ptr<mbase::PcNetPeerClient> mPeer;
+	mbase::vector<mbase::string> mAcceptedModels;
+	mbase::unordered_map<mbase::string, InfClient> mChatSessions;
+	mbase::string mClid;
+	U64 mCsId;
 };
 
 class MBASE_API InfProgram {
 public:
+	enum class flags : U8 {
+		INF_PROGRAM_SUCCESS,
+		INF_PROGRAM_ERR_MODEL_ALREADY_BEING_HOSTED
+	};
 
-	enum class flags : U16 {
+	enum class maip_err_code : U16 {
+		INF_SUCCESS,
+		INF_MAXIMUM_CLIENTS,
+		INF_CLIENT_ID_MISMATCH,
+		INF_UNAUTHORIZED_ACCESS,
+		INF_MISSING_MODEL,
+		INF_CONTEXT_ID_MISMATCH,
+		INF_CONTEXT_LIMIT_REACHED
+	};
+
+	/*enum class flags : U16 {
 		SUCCESS = 2000,
 		MAXIMUM_CLIENTS,
 		MISSING_CLIENT,
@@ -27,12 +55,34 @@ public:
 		CLIENT_TOKEN_MISMATCH,
 		MISSING_CONTEXT,
 		CONTEXT_LIMIT_REACHED
-	};
+	};*/
 
-	flags accept_client(const mbase::string& in_model_name);
+	bool is_session_match(MBASE_MAIP_CL_AUTH);
+
+	maip_err_code inf_create_session(const mbase::string& in_clid = mbase::string(), U64& out_csid);
+	maip_err_code inf_accept_client(const U64& in_csid, const mbase::vector<mbase::string>& in_models, mbase::string& out_clid); // CSID : Client session id, CLID: Client id
+	maip_err_code inf_destroy_client(MBASE_MAIP_CL_AUTH);
+	maip_err_code inf_get_acquired_models(MBASE_MAIP_CL_AUTH, mbase::vector<mbase::string>& out_models);
+	maip_err_code inf_get_created_context_ids(MBASE_MAIP_CL_AUTH, mbase::vector<mbase::string>& out_contexts);
+	maip_err_code inf_create_context(MBASE_MAIP_CL_AUTH, const mbase::string& in_model, const U32& in_ctsize); // CTSIZE : Context size
+	maip_err_code inf_destroy_context(MBASE_MAIP_CL_AUTH, const mbase::string& in_ctxId);
+	// get_context_params
+	maip_err_code inf_acquire_model(MBASE_MAIP_CL_AUTH, const mbase::string& in_model);
+	maip_err_code inf_release_model(MBASE_MAIP_CL_AUTH, const mbase::string& in_model);
+	maip_err_code inf_get_models(MBASE_MAIP_CL_AUTH, mbase::vector<mbase::string>& out_models);
+	maip_err_code inf_get_model_params(MBASE_MAIP_CL_AUTH, const mbase::string& in_model);
+
+	maip_err_code exec_set_input(MBASE_MAIP_CL_AUTH, const mbase::string& in_ctxId, InfClient::input_role in_role, const mbase::string& in_input, U32& out_msgid);
+	maip_err_code exec_execute_input(MBASE_MAIP_CL_AUTH, const mbase::string& in_ctxId, const U32& in_msgid);
+	maip_err_code exec_next(MBASE_MAIP_CL_AUTH, const mbase::string& in_ctxId, mbase::string& out_message);
+	maip_err_code exec_terminate_generation(MBASE_MAIP_CL_AUTH, const mbase::string& in_ctxId);
+
+	GENERIC host_model(InfModel& in_model);
 
 private:
-	
+	mbase::unordered_map<U64, InfAcceptedClient> mActiveClients;
+	mbase::unordered_map<mbase::string, InfModel*> mHostedModels;
+	U64 mClientSessionIdCounter;
 };
 
 MBASE_END

@@ -21,7 +21,6 @@ else\
 	}\
 }
 
-
 PcIoManager::~PcIoManager() 
 {
 	if(is_initialized())
@@ -266,7 +265,7 @@ PcIoManager::flags PcIoManager::update_t()
 			DWORD lastError = GetLastError();
 			if (lastError != ERROR_IO_PENDING)
 			{
-				// THERE IS A PROBLEM HERE
+				// THERE IS A PROBLEM HERE, handle this
 			}
 		}
 
@@ -276,7 +275,6 @@ PcIoManager::flags PcIoManager::update_t()
 
 	return flags::IO_MNG_SUCCESS;
 }
-
 
 PcIoHandler::PcIoHandler() :
 	mIsRegistered(false),

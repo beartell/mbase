@@ -8,7 +8,7 @@ MBASE_BEGIN
 
 PcProgram::PcProgram() :
 	mConfig(NULL),
-	mDiagnostics(NULL),
+	mDiagnostics(),
 	mIoManager(NULL),
 	mNetManager(NULL),
 	mIsRunning(false),
@@ -32,7 +32,7 @@ PcConfig* PcProgram::get_config() noexcept
 
 PcDiagnostics* PcProgram::get_diagnostics_manager() noexcept
 {
-	return mDiagnostics;
+	return &mDiagnostics;
 }
 
 PcIoManager* PcProgram::get_io_manager() noexcept
@@ -72,13 +72,12 @@ bool PcProgram::is_initialized() const noexcept
 
 GENERIC PcProgram::initialize()
 {
-	mDiagnostics = &PcDiagnostics::get_instance();
 	mConfig = &PcConfig::get_instance();
 	mIoManager = &PcIoManager::get_instance();
 	mNetManager = &PcNetManager::get_instance();
 
 	mIoManager->initialize();
-	mDiagnostics->initialize();
+	mDiagnostics.initialize();
 	mConfig->initialize();
 }
 
