@@ -35,6 +35,10 @@ public:
 	using inf_token = llama_token;
 	using processor_list = mbase::list<InfProcessor*>;
 	using size_type = SIZE_T;
+	using iterator = typename processor_list::iterator;
+	using const_iterator = typename processor_list::const_iterator;
+	using reverse_iterator = typename processor_list::reverse_iterator;
+	using const_reverse_iterator = typename processor_list::const_reverse_iterator;
 
 	enum class flags : U8 {
 		INF_MODEL_SUCCESS,
@@ -50,6 +54,17 @@ public:
 
 	InfModel();
 	~InfModel();
+
+	iterator begin() noexcept;
+	iterator end() noexcept;
+	const_iterator begin() const noexcept;
+	const_iterator end() const noexcept;
+	const_iterator cbegin() const noexcept;
+	const_iterator cend() const noexcept;
+	reverse_iterator rbegin() noexcept;
+	reverse_iterator rend() noexcept;
+	const_reverse_iterator crbegin() const noexcept;
+	const_reverse_iterator crend() const noexcept;
 
 	bool is_initialized() const;
 	llama_model* get_raw_model();

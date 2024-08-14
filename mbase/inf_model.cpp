@@ -26,6 +26,56 @@ InfModel::~InfModel()
 	this->unload_model();
 }
 
+typename InfModel::iterator InfModel::begin() noexcept
+{
+	return mRegisteredProcessors.begin();
+}
+
+typename InfModel::iterator InfModel::end() noexcept
+{
+	return mRegisteredProcessors.end();
+}
+
+typename InfModel::const_iterator InfModel::begin() const noexcept
+{
+	return mRegisteredProcessors.begin();
+}
+
+typename InfModel::const_iterator InfModel::end() const noexcept
+{
+	return mRegisteredProcessors.end();
+}
+
+typename InfModel::const_iterator InfModel::cbegin() const noexcept
+{
+	return mRegisteredProcessors.cbegin();
+}
+
+typename InfModel::const_iterator InfModel::cend() const noexcept
+{
+	return mRegisteredProcessors.cend();
+}
+
+typename InfModel::reverse_iterator InfModel::rbegin() noexcept
+{
+	return mRegisteredProcessors.rbegin();
+}
+
+typename InfModel::reverse_iterator InfModel::rend() noexcept
+{
+	return mRegisteredProcessors.rend();
+}
+
+typename InfModel::const_reverse_iterator InfModel::crbegin() const noexcept
+{
+	return mRegisteredProcessors.crbegin();
+}
+
+typename InfModel::const_reverse_iterator InfModel::crend() const noexcept
+{
+	return mRegisteredProcessors.crend();
+}
+
 bool InfModel::is_initialized() const
 {
 	return (mModel != NULL);

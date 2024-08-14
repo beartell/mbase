@@ -39,6 +39,32 @@ InfClient::InfClient() :
 {
 }
 
+InfClient::InfClient(const InfClient& in_rhs):
+	mfrHostProcessor(NULL),
+	mfrSelfIter(NULL),
+	mIsProcessing(false),
+	mIsUnregistering(false),
+	mIsLogicProcessed(true),
+	mIsDataSet(false),
+	mParsedTokens(),
+	mChatHistory(in_rhs.mChatHistory),
+	mSequenceId(0),
+	mfrBatchCursor(0),
+	mMessageIndexer(0),
+	mfrMaxTokenCount(0),
+	mfrBatch(),
+	mfrGeneratedToken(128),
+	mFs(finish_state::INF_FINISH_STATE_CONTINUE)
+{
+
+}
+
+InfClient& InfClient::operator=(const InfClient& in_rhs)
+{
+	mChatHistory = in_rhs.mChatHistory;
+	return *this;
+}
+
 InfClient::~InfClient()
 {
 	if(this->is_registered())
@@ -115,6 +141,20 @@ InfClient::flags InfClient::get_message_context(U32 in_msg_id, context_line& out
 
 	out_context_line = foundLine->second;
 
+	return flags::INF_CLIENT_SUCCESS;
+}
+
+InfClient::flags InfClient::get_host_processor(InfProcessor*& out_processor)
+{
+	if(is_unregistering())
+	{
+		return flags::INF_CLIENT_ERR_UNREGISTERATION_IN_PROGRESS;
+	}
+	if(!is_registered())
+	{
+		return flags::INF_CLIENT_ERR_NOT_REGISTERED;
+	}
+	out_processor = mfrHostProcessor;
 	return flags::INF_CLIENT_SUCCESS;
 }
 
@@ -239,6 +279,7 @@ GENERIC InfClient::_reset_client()
 	mIsUnregistering = false;
 	mIsLogicProcessed = true;
 	mIsDataSet = false;
+	mFs = finish_state::INF_FINISH_STATE_CONTINUE;
 	mParsedTokens.clear();
 	mSequenceId = 0;
 }

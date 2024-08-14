@@ -9,7 +9,7 @@
 
 MBASE_BEGIN
 
-class MBASE_API InfClient : public mbase::non_copyable {
+class MBASE_API InfClient : public mbase::non_movable {
 public:
 	enum class flags : U8 {
 		INF_CLIENT_SUCCESS,
@@ -20,7 +20,8 @@ public:
 		INF_CLIENT_ERR_TOKENIZATION_FAILED,
 		INF_CLIENT_ERR_TOKEN_LIMIT_EXCEEDED,
 		INF_CLIENT_ERR_UNKNOWN,
-		INF_CLIENT_ERR_UNREGISTERATION_IN_PROGRESS
+		INF_CLIENT_ERR_UNREGISTERATION_IN_PROGRESS,
+		INF_CLIENT_ERR_MISSING_PROCESSOR
 	};
 
 	enum class finish_state : U8 {
@@ -50,7 +51,10 @@ public:
 	friend class InfProcessor;
 
 	InfClient();
+	InfClient(const InfClient& in_rhs);
 	~InfClient();
+
+	InfClient& operator=(const InfClient& in_rhs);
 
 	bool is_processing() const;
 	bool is_registered() const;
@@ -60,6 +64,7 @@ public:
 	flags get_generated_token_count(size_type& out_token_count);
 	flags get_context_id(U32& out_context_id);
 	flags get_message_context(U32 in_msg_id, context_line& out_context_line);
+	flags get_host_processor(InfProcessor*& out_processor);
 
 	virtual GENERIC on_register() = 0;
 	virtual GENERIC on_write(CBYTEBUFFER out_data, size_type out_size) = 0;
@@ -83,7 +88,6 @@ protected:
 	bool mIsUnregistering;
 	bool mIsLogicProcessed;
 	bool mIsDataSet;
-	bool mFrAbandonedClient;
 	mbase::vector<InfProcessor::inf_token> mParsedTokens;
 	mbase::unordered_map<U32, context_line> mChatHistory;
 	U32 mSequenceId;

@@ -170,7 +170,7 @@ InfProcessor::flags InfProcessor::register_client(const mbase::vector<inf_token>
 	out_client.mfrHostProcessor = this;
 	out_client.mfrMaxTokenCount = in_token_limit;
 	out_client.mSequenceId = this->mContextIdCounter++;
-	out_client.mFs = InfClient::finish_state::INF_FINISH_STATE_SUCCESS;
+	out_client.mFs = InfClient::finish_state::INF_FINISH_STATE_CONTINUE;
 	out_client.mfrBatch = llama_batch_init(in_token_limit, 0, 1);
 
 	mRegisteredBatchSize += out_client.mfrMaxTokenCount;
@@ -232,7 +232,7 @@ InfProcessor::flags InfProcessor::register_client(InfClient& out_client, U32 in_
 	out_client.mfrHostProcessor = this;
 	out_client.mSequenceId = ++this->mContextIdCounter;
 	out_client.mfrMaxTokenCount = in_token_limit;
-	out_client.mFs = InfClient::finish_state::INF_FINISH_STATE_SUCCESS;
+	out_client.mFs = InfClient::finish_state::INF_FINISH_STATE_CONTINUE;
 	out_client.mfrBatch = llama_batch_init(in_token_limit, 0, 1);
 
 	mRegisteredBatchSize += out_client.mfrMaxTokenCount;
