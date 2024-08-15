@@ -255,8 +255,8 @@ InfProcessor::flags InfProcessor::unregister_client(InfClient& in_client)
 	if(in_client.mfrHostProcessor != this)
 	{
 		return flags::INF_PROC_ERR_BELONGS_TO_ANOTHER_PROCESSOR;
-	}
-	
+	}	
+
 	in_client.mIsUnregistering = true;
 	return flags::INF_PROC_SUCCESS;
 }

@@ -6,7 +6,7 @@
 
 MBASE_BEGIN
 
-class MBASE_API InfMaipServer : public mbase::PcNetTcpServer {
+class MBASE_API InfMaipServerBase : public mbase::PcNetTcpServer {
 public:
 	GENERIC on_accept(std::shared_ptr<PcNetPeerClient> out_peer) override;
 	GENERIC on_data(std::shared_ptr<PcNetPeerClient> out_peer, CBYTEBUFFER out_data, size_type out_size) override;

@@ -6,6 +6,7 @@
 #include <mbase/list.h>
 #include <mbase/vector.h>
 #include <mbase/unordered_map.h>
+#include <mbase/behaviors.h>
 #include <llama.h>
 
 MBASE_BEGIN

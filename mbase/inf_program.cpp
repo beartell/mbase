@@ -1,4 +1,5 @@
 #include <mbase/inference/inf_program.h>
+#include <mbase/maip_parser.h>
 #include <random>
 
 MBASE_BEGIN
@@ -10,7 +11,12 @@ if(!this->is_session_match(in_csid, in_clid))\
 }\
 InfAcceptedClient& mAccClient = mActiveClients[in_csid];
 
-InfMaipTunedClient::InfMaipTunedClient(InfAcceptedClient & in_client) : mManagerClient(&in_client)
+InfMaipTunedClient::InfMaipTunedClient() : mManagerClient(NULL)
+{
+
+}
+
+InfMaipTunedClient::InfMaipTunedClient(InfAcceptedClient& in_client) : mManagerClient(&in_client)
 {
 }
 
@@ -21,11 +27,7 @@ GENERIC InfMaipTunedClient::on_register()
 
 GENERIC InfMaipTunedClient::on_write(CBYTEBUFFER out_data, size_type out_size) 
 {
-	if(mManagerClient->mPeer->is_connected())
-	{
-		mManagerClient->mPeer->write_data(out_data, out_size);
-		mManagerClient->mPeer->finish_and_ready();
-	}
+
 }
 
 GENERIC InfMaipTunedClient::on_finish(size_type out_total_token_size) 
@@ -53,7 +55,7 @@ bool InfProgram::is_session_match(MBASE_MAIP_CL_AUTH)
 	return true;
 }
 
-InfProgram::maip_err_code InfProgram::inf_create_session(const mbase::string& in_clid = mbase::string(), U64& out_csid, mbase::string& out_clid)
+InfProgram::maip_err_code InfProgram::inf_create_session(const mbase::string& in_clid, U64& out_csid, mbase::string& out_clid)
 {
 	if(in_clid.size())
 	{
@@ -93,8 +95,16 @@ InfProgram::maip_err_code InfProgram::inf_create_session(const mbase::string& in
 InfProgram::maip_err_code InfProgram::inf_destroy_client(MBASE_MAIP_CL_AUTH)
 {
 	MBASE_SESSION_CONTROL;
-
-	return 0;
+	for(auto& activeProcessorMap : mAccClient.mChatSessions)
+	{
+		InfProcessor* tmpProc = NULL;
+		activeProcessorMap.second.get_host_processor(tmpProc);
+		if(tmpProc)
+		{
+			tmpProc->unregister_client(activeProcessorMap.second);
+		}
+	}
+	return maip_err_code::INF_SUCCESS;
 }
 
 InfProgram::maip_err_code InfProgram::inf_get_acquired_models(MBASE_MAIP_CL_AUTH, mbase::vector<mbase::string>& out_models)
@@ -112,7 +122,7 @@ InfProgram::maip_err_code InfProgram::inf_get_created_context_ids(MBASE_MAIP_CL_
 {
 	MBASE_SESSION_CONTROL;
 
-	return 0;
+	return maip_err_code::INF_SUCCESS;
 }
 
 InfProgram::maip_err_code InfProgram::inf_create_context(MBASE_MAIP_CL_AUTH, const mbase::string& in_model, const U32& in_ctsize)
@@ -124,9 +134,14 @@ InfProgram::maip_err_code InfProgram::inf_create_context(MBASE_MAIP_CL_AUTH, con
 		return maip_err_code::INF_MODEL_NAME_MISMATCH;
 	}
 
-	InfModel& tempModel = mAccClient.mAcceptedModels[in_model];
+	if(mRegisteredModels.find(in_model) == mRegisteredModels.end())
+	{
+		return maip_err_code::INF_MODEL_NAME_MISMATCH;
+	}
+
+	InfModel* tempModel = mRegisteredModels[in_model];
 	InfProcessor::flags procErr;
-	for (auto& tmpProc : tempModel)
+	for (auto& tmpProc : *tempModel)
 	{
 		procErr = tmpProc->register_client(mAccClient.mChatSessions[mClientSessionIdCounter], in_ctsize);
 		if(procErr == InfProcessor::flags::INF_PROC_SUCCESS)
@@ -156,21 +171,14 @@ InfProgram::maip_err_code InfProgram::inf_destroy_context(MBASE_MAIP_CL_AUTH, co
 		return client_err_to_maip(clientResultFlag);
 	}
 
-	clientResultFlag = myProcessor->unregister_client(mySession);
-
-	if (clientResultFlag != InfClient::flags::INF_CLIENT_SUCCESS)
-	{
-		return client_err_to_maip(clientResultFlag);
-	}
-
-	return maip_err_code::INF_SUCCESS;
+	return proc_err_to_maip(myProcessor->unregister_client(mySession));
 }
 
 InfProgram::maip_err_code InfProgram::inf_acquire_model(MBASE_MAIP_CL_AUTH, const mbase::string& in_model)
 {
 	MBASE_SESSION_CONTROL;
 
-	if (mHostedModels.find(in_model) == mHostedModels.end())
+	if (mRegisteredModels.find(in_model) == mRegisteredModels.end())
 	{
 		return maip_err_code::INF_MODEL_NAME_MISMATCH;
 	}
@@ -201,47 +209,106 @@ InfProgram::maip_err_code InfProgram::inf_get_models(MBASE_MAIP_CL_AUTH, mbase::
 {
 	MBASE_SESSION_CONTROL;
 	out_models = mAccClient.mAcceptedModels;
-	return 0;
+	return maip_err_code::INF_SUCCESS;
 }
 
 InfProgram::maip_err_code InfProgram::inf_get_model_params(MBASE_MAIP_CL_AUTH, const mbase::string& in_model)
 {
 	MBASE_SESSION_CONTROL;
 
-	return 0;
+	return maip_err_code::INF_SUCCESS;
 }
 
 InfProgram::maip_err_code InfProgram::exec_set_input(MBASE_MAIP_CL_AUTH, const U64& in_ctxId, InfClient::input_role in_role, const mbase::string& in_input, U32& out_msgid)
 {
 	MBASE_SESSION_CONTROL;
 
-	return 0;
+	if(mAccClient.mChatSessions.find(in_ctxId) == mAccClient.mChatSessions.end())
+	{
+		return maip_err_code::INF_CONTEXT_ID_MISMATCH;
+	}
+
+	InfMaipTunedClient& mySession = mAccClient.mChatSessions[in_ctxId];
+	InfClient::flags errCode = mySession.set_input(in_input, in_role, out_msgid);
+	if(errCode != InfClient::flags::INF_CLIENT_SUCCESS)
+	{
+		return client_err_to_maip(errCode);
+	}
+
+	return maip_err_code::INF_SUCCESS;
 }
 
-InfProgram::maip_err_code InfProgram::exec_execute_input(MBASE_MAIP_CL_AUTH, const U64& in_ctxId, const U32& in_msgid)
+InfProgram::maip_err_code InfProgram::exec_execute_input(MBASE_MAIP_CL_AUTH, const U64& in_ctxId, const mbase::vector<U32>& in_msgid)
+{
+	MBASE_SESSION_CONTROL;
+	if (mAccClient.mChatSessions.find(in_ctxId) == mAccClient.mChatSessions.end())
+	{
+		return maip_err_code::INF_CONTEXT_ID_MISMATCH;
+	}
+
+	InfMaipTunedClient& mySession = mAccClient.mChatSessions[in_ctxId];
+	InfClient::flags errCode = mySession.execute_prompt(in_msgid);
+
+	return client_err_to_maip(errCode);
+}
+
+InfProgram::maip_err_code InfProgram::exec_next(MBASE_MAIP_CL_AUTH, const U64& in_ctxId)
 {
 	MBASE_SESSION_CONTROL;
 
-	return 0;
-}
+	if (mAccClient.mChatSessions.find(in_ctxId) == mAccClient.mChatSessions.end())
+	{
+		return maip_err_code::INF_CONTEXT_ID_MISMATCH;
+	}
 
-InfProgram::maip_err_code InfProgram::exec_next(MBASE_MAIP_CL_AUTH, const U64& in_ctxId, mbase::string& out_message)
-{
-	MBASE_SESSION_CONTROL;
+	InfMaipTunedClient& mySession = mAccClient.mChatSessions[in_ctxId];
+	if(!mySession.is_registered())
+	{
+		// TODO: re-register to a processor
+	}
 
-	return 0;
+	mySession.next();
+
+	return maip_err_code::INF_SUCCESS;
 }
 
 InfProgram::maip_err_code InfProgram::exec_terminate_generation(MBASE_MAIP_CL_AUTH, const U64& in_ctxId)
 {
 	MBASE_SESSION_CONTROL;
 
-	return 0;
+	return maip_err_code::INF_SUCCESS;
 }
 
-GENERIC InfProgram::host_model(InfModel& in_model)
+InfProgram::flags InfProgram::host_model(InfModel& in_model)
 {
+	if(!in_model.is_initialized())
+	{
+		return flags::INF_PROGRAM_ERR_MODEL_IS_NOT_INITIALIZED;
+	}
 
+	mbase::string currentModelName;
+	in_model.get_model_name(currentModelName); // 100% success
+
+	for (auto& tmpModels : mRegisteredModels) 
+	{
+		if(tmpModels.first == currentModelName)
+		{
+			return flags::INF_PROGRAM_ERR_MODEL_ALREADY_BEING_HOSTED;
+		}
+	}
+
+	mRegisteredModels[currentModelName] = &in_model;
+	return flags::INF_PROGRAM_SUCCESS;
+}
+
+InfProgram::flags InfProgram::release_model(const mbase::string& in_model_name)
+{
+	if(mRegisteredModels.find(in_model_name) == mRegisteredModels.end())
+	{
+		return flags::INF_PROGRAM_ERR_MODEL_NAME_MISMATCH;
+	}
+	mRegisteredModels.erase(in_model_name);
+	return flags::INF_PROGRAM_SUCCESS;
 }
 
 InfProgram::maip_err_code InfProgram::proc_err_to_maip(InfProcessor::flags in_flag)
@@ -280,6 +347,42 @@ InfProgram::maip_err_code InfProgram::proc_err_to_maip(InfProcessor::flags in_fl
 
 InfProgram::maip_err_code InfProgram::client_err_to_maip(InfClient::flags in_flag)
 {
+	switch (in_flag)
+	{
+	case mbase::InfClient::flags::INF_CLIENT_SUCCESS:
+		return maip_err_code::INF_SUCCESS;
+		break;
+	case mbase::InfClient::flags::INF_CLIENT_ERR_NOT_REGISTERED:
+		return maip_err_code::INF_CLIENT_NOT_REGISTERED;
+		break;
+	case mbase::InfClient::flags::INF_CLIENT_ERR_PROCESSING:
+		return maip_err_code::EXEC_PROCESSING;
+		break;
+	case mbase::InfClient::flags::INF_CLIENT_ERR_MSG_ID_MISMATCH:
+		return maip_err_code::EXEC_MESSAGE_ID_MISMATCH;
+		break;
+	case mbase::InfClient::flags::INF_CLIENT_ERR_MISSING_CHAT:
+		return maip_err_code::EXEC_MISSING_MESSAGE;
+		break;
+	case mbase::InfClient::flags::INF_CLIENT_ERR_TOKENIZATION_FAILED:
+		return maip_err_code::EXEC_TOKENIZATION_FAILED;
+		break;
+	case mbase::InfClient::flags::INF_CLIENT_ERR_TOKEN_LIMIT_EXCEEDED:
+		return maip_err_code::EXEC_TOKEN_LIMIT_EXCEEDED;
+		break;
+	case mbase::InfClient::flags::INF_CLIENT_ERR_UNKNOWN:
+		return maip_err_code::INF_UNKNOWN_STATUS;
+		break;
+	case mbase::InfClient::flags::INF_CLIENT_ERR_UNREGISTERATION_IN_PROGRESS:
+		return maip_err_code::INF_CLIENT_UNREGISTERING;
+		break;
+	case mbase::InfClient::flags::INF_CLIENT_ERR_MISSING_PROCESSOR:
+		return maip_err_code::INF_UNABLE_TO_FIND_SUITABLE_PROCESSOR;
+		break;
+	default:
+		return maip_err_code::INF_UNKNOWN_STATUS;
+		break;
+	}
 	return maip_err_code::INF_SUCCESS;
 }
 

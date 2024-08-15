@@ -5,6 +5,7 @@
 #include <mbase/type_sequence.h> // mbase::type_sequence
 #include <mbase/safe_buffer.h> // mbase::safe_buffer
 #include <stdexcept>
+#include <ctype.h>
 
 MBASE_STD_BEGIN
 

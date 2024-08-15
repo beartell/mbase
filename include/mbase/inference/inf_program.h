@@ -6,21 +6,21 @@
 #include <mbase/string.h>
 #include <mbase/list.h>
 #include <mbase/unordered_map.h>
+#include <mbase/traits.h>
 #include <mbase/pc/pc_net_manager.h>
 #include <mbase/inference/inf_model.h>
 #include <mbase/inference/inf_client.h>
 
 MBASE_BEGIN
 
-#define MAIP_INF_ERR_UNAUTHORIZED_ACCESS 2003
-
 #define MBASE_MAIP_CL_AUTH \
 const U64& in_csid, const mbase::string& in_clid\
 
 struct InfAcceptedClient;
 
-class InfMaipTunedClient : public mbase::InfClient {
+class MBASE_API InfMaipTunedClient : public mbase::InfClient {
 public:
+	InfMaipTunedClient();
 	InfMaipTunedClient(InfAcceptedClient& in_client);
 
 	GENERIC on_register() override;
@@ -44,11 +44,13 @@ class MBASE_API InfProgram {
 public:
 	enum class flags : U8 {
 		INF_PROGRAM_SUCCESS,
-		INF_PROGRAM_ERR_MODEL_ALREADY_BEING_HOSTED
+		INF_PROGRAM_ERR_MODEL_ALREADY_BEING_HOSTED,
+		INF_PROGRAM_ERR_MODEL_IS_NOT_INITIALIZED,
+		INF_PROGRAM_ERR_MODEL_NAME_MISMATCH
 	};
 
 	enum class maip_err_code : U16 {
-		INF_SUCCESS,
+		INF_SUCCESS = 2000,
 		INF_MAXIMUM_CLIENTS,
 		INF_CLIENT_ID_MISMATCH,
 		INF_UNAUTHORIZED_ACCESS,
@@ -56,23 +58,22 @@ public:
 		INF_CONTEXT_ID_MISMATCH,
 		INF_CONTEXT_LIMIT_REACHED,
 		INF_UNABLE_TO_FIND_SUITABLE_PROCESSOR,
-		INF_UNKNOWN_STATUS
+		INF_UNKNOWN_STATUS,
+		INF_CLIENT_UNREGISTERING,
+		INF_CLIENT_NOT_REGISTERED,
+		EXEC_SUCCESS = 3000,
+		EXEC_PROCESSING,
+		EXEC_MESSAGE_ID_MISMATCH,
+		EXEC_MISSING_MESSAGE,
+		EXEC_TOKENIZATION_FAILED,
+		EXEC_TOKEN_LIMIT_EXCEEDED,
+		EXEC_MESSAGE_CONTINUE,
+		EXEC_MESSAGE_FINISH
 	};
-
-	/*enum class flags : U16 {
-		SUCCESS = 2000,
-		MAXIMUM_CLIENTS,
-		MISSING_CLIENT,
-		UNAUTHORIZED_ACCESS,
-		MISSING_MODEL,
-		CLIENT_TOKEN_MISMATCH,
-		MISSING_CONTEXT,
-		CONTEXT_LIMIT_REACHED
-	};*/
 
 	bool is_session_match(MBASE_MAIP_CL_AUTH);
 
-	maip_err_code inf_create_session(const mbase::string& in_clid = mbase::string(), U64& out_csid, mbase::string& out_clid);
+	maip_err_code inf_create_session(const mbase::string& in_clid, U64& out_csid, mbase::string& out_clid);
 	maip_err_code inf_destroy_client(MBASE_MAIP_CL_AUTH);
 	maip_err_code inf_get_acquired_models(MBASE_MAIP_CL_AUTH, mbase::vector<mbase::string>& out_models);
 	maip_err_code inf_get_created_context_ids(MBASE_MAIP_CL_AUTH, mbase::vector<mbase::string>& out_contexts);
@@ -85,18 +86,19 @@ public:
 	maip_err_code inf_get_model_params(MBASE_MAIP_CL_AUTH, const mbase::string& in_model);
 
 	maip_err_code exec_set_input(MBASE_MAIP_CL_AUTH, const U64& in_ctxId, InfClient::input_role in_role, const mbase::string& in_input, U32& out_msgid);
-	maip_err_code exec_execute_input(MBASE_MAIP_CL_AUTH, const U64& in_ctxId, const U32& in_msgid);
-	maip_err_code exec_next(MBASE_MAIP_CL_AUTH, const U64& in_ctxId, mbase::string& out_message);
+	maip_err_code exec_execute_input(MBASE_MAIP_CL_AUTH, const U64& in_ctxId, const mbase::vector<U32>& in_msgid);
+	maip_err_code exec_next(MBASE_MAIP_CL_AUTH, const U64& in_ctxId);
 	maip_err_code exec_terminate_generation(MBASE_MAIP_CL_AUTH, const U64& in_ctxId);
 
-	GENERIC host_model(InfModel& in_model);
+	flags host_model(InfModel& in_model);
+	flags release_model(const mbase::string& in_model_name);
 
 	static maip_err_code proc_err_to_maip(InfProcessor::flags in_flag);
 	static maip_err_code client_err_to_maip(InfClient::flags in_flag);
 
 private:
 	mbase::unordered_map<U64, InfAcceptedClient> mActiveClients;
-	mbase::unordered_map<mbase::string, InfModel*> mHostedModels;
+	mbase::unordered_map<mbase::string, InfModel*> mRegisteredModels;
 	U64 mClientSessionIdCounter;
 };
 
