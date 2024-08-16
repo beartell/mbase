@@ -90,6 +90,7 @@ public:
 	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR key_equal key_eq() const noexcept;
 	MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE_EXPR size_type bucket_size(size_type in_bucket) const noexcept;
 	MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE_EXPR size_type bucket(const Key& in_key);
+	MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE_EXPR size_type bucket(const Key& in_key) const;
 	MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE_EXPR Value& at(const Key& in_key);
 	MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE_EXPR const Value& at(const Key& in_key) const;
 	MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE_EXPR size_type count(const Key& in_key) const;
@@ -97,8 +98,8 @@ public:
 	MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE_EXPR iterator find(const Key& in_key);
 	MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE_EXPR const_iterator find(const Key& in_key) const;
 	MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE_EXPR bool contains(const Key& in_key) const;
-	MBASE_ND(MBASE_RESULT_IGNORE) Value& operator[](const Key& in_key);
-	MBASE_ND(MBASE_RESULT_IGNORE) Value& operator[](Key&& in_key);
+	MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE_EXPR Value& operator[](const Key& in_key);
+	MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE_EXPR Value& operator[](Key&& in_key);
 	/* ===== OBSERVATION METHODS END ===== */
 
 	MBASE_INLINE_EXPR GENERIC clear() noexcept;
@@ -477,6 +478,13 @@ MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE_EXPR typename unordered_map<Key, Valu
 }
 
 template<typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator>
+MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE_EXPR typename unordered_map<Key, Value, Hash, KeyEqual, Allocator>::size_type unordered_map<Key, Value, Hash, KeyEqual, Allocator>::bucket(const Key& in_key) const
+{
+	size_type bucketIndex = mHash(in_key) % mBucketCount;
+	return bucketIndex;
+}
+
+template<typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator>
 MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE_EXPR Value& unordered_map<Key, Value, Hash, KeyEqual, Allocator>::at(const Key& in_key)
 {
 	iterator foundKey = find(in_key);
@@ -559,7 +567,7 @@ MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE_EXPR bool unordered_map<Key, Value, H
 }
 
 template<typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator>
-MBASE_ND(MBASE_RESULT_IGNORE) Value& unordered_map<Key, Value, Hash, KeyEqual, Allocator>::operator[](const Key& in_key)
+MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE_EXPR Value& unordered_map<Key, Value, Hash, KeyEqual, Allocator>::operator[](const Key& in_key)
 {
 	if(find(in_key) == end())
 	{
@@ -569,7 +577,7 @@ MBASE_ND(MBASE_RESULT_IGNORE) Value& unordered_map<Key, Value, Hash, KeyEqual, A
 }
 
 template<typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator>
-MBASE_ND(MBASE_RESULT_IGNORE) Value& unordered_map<Key, Value, Hash, KeyEqual, Allocator>::operator[](Key&& in_key)
+MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE_EXPR Value& unordered_map<Key, Value, Hash, KeyEqual, Allocator>::operator[](Key&& in_key)
 {
 	if (find(in_key) == end())
 	{

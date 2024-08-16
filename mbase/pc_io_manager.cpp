@@ -395,6 +395,8 @@ PcIoHandler::flags PcIoHandler::clear_file()
 
 	mOvp.Offset = 0;
 	mIoBase.clear_file();
+
+	return flags::IO_HANDLER_SUCCESS;
 }
 
 GENERIC PcIoHandler::on_registered()

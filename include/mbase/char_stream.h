@@ -264,7 +264,7 @@ MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR typename char_stream::const_referen
 
 MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR bool char_stream::is_cursor_end() const noexcept
 {
-	return mStreamCursor == mBufferLength;
+	return mStreamCursor == mBufferLength - 1;
 }
 
 MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR char_stream::size_type char_stream::buffer_length() const noexcept 

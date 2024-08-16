@@ -421,12 +421,12 @@ public:
     MBASE_INLINE_EXPR friend character_sequence operator+(const character_sequence& in_lhs, character_sequence&& in_rhs) { return std::move(in_lhs + in_rhs); }
     MBASE_INLINE_EXPR friend character_sequence operator+(const_pointer in_lhs, character_sequence&& in_rhs) { return std::move(in_lhs + in_rhs); }
     MBASE_INLINE_EXPR friend character_sequence operator+(value_type in_lhs, character_sequence&& in_rhs) { return std::move(character_sequence(1, in_lhs) + in_rhs); }
-    MBASE_INLINE_EXPR friend bool operator==(const character_sequence& in_lhs, const character_sequence& in_rhs) noexcept { return in_lhs == in_rhs; }
-    MBASE_INLINE_EXPR friend bool operator!=(const character_sequence& in_lhs, const character_sequence& in_rhs) noexcept { return in_lhs != in_rhs; }
-    MBASE_INLINE_EXPR friend bool operator<(const character_sequence& in_lhs, const character_sequence& in_rhs) noexcept { return in_lhs < in_rhs; }
-    MBASE_INLINE_EXPR friend bool operator<=(const character_sequence& in_lhs, const character_sequence& in_rhs) noexcept { return in_lhs <= in_rhs; }
-    MBASE_INLINE_EXPR friend bool operator>(const character_sequence& in_lhs, const character_sequence& in_rhs) noexcept { return in_lhs > in_rhs; }
-    MBASE_INLINE_EXPR friend bool operator>=(const character_sequence& in_lhs, const character_sequence& in_rhs) noexcept { return in_lhs >= in_rhs; }
+    MBASE_INLINE_EXPR friend bool operator==(const character_sequence& in_lhs, const character_sequence& in_rhs) noexcept { return traits_type::is_equal(in_lhs.mRawData, in_rhs.mRawData); }
+    MBASE_INLINE_EXPR friend bool operator!=(const character_sequence& in_lhs, const character_sequence& in_rhs) noexcept { return !traits_type::is_equal(in_lhs.mRawData, in_rhs.mRawData); }
+    MBASE_INLINE_EXPR friend bool operator<(const character_sequence& in_lhs, const character_sequence& in_rhs) noexcept { return std::lexicographical_compare(in_lhs.cbegin(), in_lhs.cend(), in_rhs.cbegin(), in_rhs.cend()); }
+    MBASE_INLINE_EXPR friend bool operator<=(const character_sequence& in_lhs, const character_sequence& in_rhs) noexcept { return std::lexicographical_compare(in_lhs.cbegin(), in_lhs.cend(), in_rhs.cbegin(), in_rhs.cend()) || in_lhs.is_equal(mRawData, in_rhs.mRawData); }
+    MBASE_INLINE_EXPR friend bool operator>(const character_sequence& in_lhs, const character_sequence& in_rhs) noexcept { return std::lexicographical_compare(in_rhs.cbegin(), in_rhs.cend(), in_lhs.cbegin(), in_lhs.cend()); }
+    MBASE_INLINE_EXPR friend bool operator>=(const character_sequence& in_lhs, const character_sequence& in_rhs) noexcept { return std::lexicographical_compare(in_rhs.cbegin(), in_rhs.cend(), in_lhs.cbegin(), in_lhs.cend()) || in_lhs.is_equal(mRawData, in_rhs.mRawData); }
 #if MBASE_CPP_VERSION >= 20
     MBASE_INLINE_EXPR friend bool operator<=>(const character_sequence& in_lhs, const character_sequence& in_rhs) noexcept; // IMPL
 #endif // MBASE_CPP_VERSION >= 20
