@@ -89,6 +89,8 @@ InfProgram::maip_err_code InfProgram::inf_create_session(const mbase::string& in
 	mActiveClients[out_csid] = iac;
 	++mClientSessionIdCounter;
 
+	out_clid = iac.mClid;
+
 	return maip_err_code::INF_SUCCESS;
 }
 
@@ -110,6 +112,7 @@ InfProgram::maip_err_code InfProgram::inf_destroy_client(MBASE_MAIP_CL_AUTH)
 InfProgram::maip_err_code InfProgram::inf_get_acquired_models(MBASE_MAIP_CL_AUTH, mbase::vector<mbase::string>& out_models)
 {
 	MBASE_SESSION_CONTROL;
+	out_models.clear();
 	for(auto& tempModel : mAccClient.mAcceptedModels)
 	{
 		out_models.push_back(tempModel);
@@ -208,6 +211,7 @@ InfProgram::maip_err_code InfProgram::inf_release_model(MBASE_MAIP_CL_AUTH, cons
 InfProgram::maip_err_code InfProgram::inf_get_models(MBASE_MAIP_CL_AUTH, mbase::vector<mbase::string>& out_models)
 {
 	MBASE_SESSION_CONTROL;
+	out_models.clear();
 	out_models = mAccClient.mAcceptedModels;
 	return maip_err_code::INF_SUCCESS;
 }
