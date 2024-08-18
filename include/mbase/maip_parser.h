@@ -30,7 +30,7 @@ MBASE_STD_BEGIN
 	maip-identification-line = maip-req-identification-line / maip-resp-identification-line SP LF
 
 	message-description-key = ALPHA *64(VCHAR)
-	message-description-value = *WSP 1*256(VCHAR / SP)
+	message-description-value = 1*256(VCHAR / WSP)
 	message-description = message-description-key ":" message-description-value LF
 
 	maip-end = "END" LF
@@ -882,7 +882,6 @@ MBASE_INLINE maip_generic_errors maip_peer_request::_parse_resp_identification_l
 	return maip_generic_errors::SUCCESS;
 }
 
-
 MBASE_INLINE maip_generic_errors maip_peer_request::_parse_message_description(mbase::char_stream& in_stream, maip_description_kval& out_kval)
 {
 	I32 processedBytes = 0;
@@ -932,48 +931,47 @@ MBASE_INLINE maip_generic_errors maip_peer_request::_parse_message_description(m
 				return maip_generic_errors::VALUE_LENGTH_TOO_LARGE;
 			}
 
-			if(in_stream.getc() == 32)
-			{
-				// IGNORE SP | WSP
-				if(countValueLength)
-				{
-					// invalid format
-					in_stream.reverse_safe(processedBytes);
-					return maip_generic_errors::INVALID_KVAL_FORMAT;
-				}
+			//if(in_stream.getc() == 32)
+			//{
+			//	// IGNORE SP | WSP
+			//	if(countValueLength)
+			//	{
+			//		// invalid format
+			//		in_stream.reverse_safe(processedBytes);
+			//		return maip_generic_errors::INVALID_KVAL_FORMAT;
+			//	}
 
-				++processedBytes;
-				in_stream.advance_safe();
-				continue;
-			}
-			else
+			//	++processedBytes;
+			//	in_stream.advance_safe();
+			//	continue;
+			//}
+			
+			if(!mbase::string::is_print(in_stream.getc()))
 			{
-				if(!mbase::string::is_print(in_stream.getc()))
+				// non printable characters
+				in_stream.reverse_safe(processedBytes);
+				return maip_generic_errors::INVALID_KVAL_FORMAT;
+			}
+			
+			if(in_stream.getc() == ';')
+			{
+				if(!countValueLength)
 				{
-					// non printable characters
-					in_stream.reverse_safe(processedBytes);
-					return maip_generic_errors::INVALID_KVAL_FORMAT;
-				}
-				
-				if(in_stream.getc() == ';')
-				{
-					if(!countValueLength)
-					{
-						// do nothing
-					}
-					else
-					{
-						out_kval.mValues.push_back(mdv);
-						maip_sequence_helper::fill(mdv.mStringValue, '\0', countValueLength);
-						countValueLength = 0;
-					}
+					// do nothing
 				}
 				else
 				{
-					mdv.mStringValue[countValueLength] = in_stream.getc();
-					++countValueLength;
+					out_kval.mValues.push_back(mdv);
+					maip_sequence_helper::fill(mdv.mStringValue, '\0', countValueLength);
+					countValueLength = 0;
 				}
 			}
+			else
+			{
+				mdv.mStringValue[countValueLength] = in_stream.getc();
+				++countValueLength;
+			}
+			
 			++processedBytes;
 			in_stream.advance_safe();
 		}
