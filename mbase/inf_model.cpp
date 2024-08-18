@@ -16,6 +16,8 @@ InfModel::InfModel() :
 	mModelName(),
 	mEndOfTokenString(),
 	mUsrStart(),
+	mSystemStart(),
+	mAssistantStart(),
 	mEndOfToken(0)
 {
 
@@ -178,7 +180,7 @@ InfModel::flags InfModel::get_sys_start(mbase::string& out_start)
 InfModel::flags InfModel::get_assistant_start(mbase::string& out_start)
 {
 	MBASE_INF_MODEL_RETURN_UNINITIALIZED;
-	out_start = mSystemStart;
+	out_start = mAssistantStart;
 	return flags::INF_MODEL_SUCCESS;
 }
 
@@ -308,7 +310,6 @@ InfModel::flags InfModel::initialize(const mbase::string& in_model_path, const I
 	}
 
 	mbase::string& modelName = mModelKvals["general.basename"];
-	modelName.erase(std::remove_if(modelName.begin(), modelName.end(), isspace), modelName.end());
 
 	mbase::vector<inf_token> tokenList;
 	if(llama_token_eot(mModel) != -1)
@@ -337,9 +338,9 @@ InfModel::flags InfModel::initialize(const mbase::string& in_model_path, const I
 	// <|assistant|>
 	// <|system|>
 	// <|user|>
-	mSystemStart = "System: ";
-	mAssistantStart = "Assistant: ";
-	mUsrStart = "User: ";
+	mSystemStart = "SYSTEM: ";
+	mAssistantStart = "ASSISTANT: ";
+	mUsrStart = "USER: ";
 	if (mModelKvals.find("tokenizer.chat_template") == mModelKvals.end())
 	{
 		// CHAT TEMPLATE NOT FOUND
@@ -413,11 +414,14 @@ InfModel::flags InfModel::unload_model()
 	for(processor_list::iterator It = mRegisteredProcessors.begin(); It != mRegisteredProcessors.end();)
 	{
 		InfProcessor* tempProcessor = *It;
-		if(tempProcessor->mProcessedModel == this)
+		if(tempProcessor->mProcessedModel != this)
 		{
-			tempProcessor->destroy();
+			It = mRegisteredProcessors.erase(It);
 		}
-		It = mRegisteredProcessors.erase(It);
+		else
+		{
+			tempProcessor->_destroy(It);
+		}
 	}
 
 	llama_free_model(mModel);
@@ -486,28 +490,35 @@ InfModel::flags InfModel::unregister_processor(InfProcessor& in_processor)
 {
 	MBASE_INF_MODEL_RETURN_UNINITIALIZED;
 	
-	processor_list::iterator It = std::find(mRegisteredProcessors.begin(), mRegisteredProcessors.end(), &in_processor);
-	if(It == mRegisteredProcessors.end())
+	in_processor.destroy();
+
+	return flags::INF_MODEL_SUCCESS;
+}
+
+InfModel::flags InfModel::_unregister_processor(InfProcessor& in_processor, iterator& _out_it)
+{
+	MBASE_INF_MODEL_RETURN_UNINITIALIZED;
+	_out_it = std::find(mRegisteredProcessors.begin(), mRegisteredProcessors.end(), &in_processor);
+	if (_out_it == mRegisteredProcessors.end())
 	{
 		return flags::INF_MODEL_ERR_PROCESSOR_NOT_FOUND;
 	}
 
-	InfProcessor* tempProcessor = *It;
+	InfProcessor* tempProcessor = *_out_it;
 
-	if(!tempProcessor->is_registered())
+	if (!tempProcessor->is_registered())
 	{
-		mRegisteredProcessors.erase(It);
+		_out_it = mRegisteredProcessors.erase(_out_it);
 		return flags::INF_MODEL_SUCCESS;
 	}
 
-	if(tempProcessor->mProcessedModel != this)
+	if (tempProcessor->mProcessedModel != this)
 	{
-		mRegisteredProcessors.erase(It);
+		_out_it = mRegisteredProcessors.erase(_out_it);
 		return flags::INF_MODEL_ERR_PROCESSOR_BELONGS_TO_ANOTHER_MODEL;
 	}
 
-	tempProcessor->destroy();
-	mRegisteredProcessors.erase(It);
+	_out_it = mRegisteredProcessors.erase(_out_it);
 
 	return flags::INF_MODEL_SUCCESS;
 }

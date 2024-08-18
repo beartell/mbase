@@ -33,6 +33,7 @@ InfClient::InfClient() :
 	mfrBatchCursor(0),
 	mMessageIndexer(0),
 	mfrMaxTokenCount(0),
+	mInactivityCounter(0),
 	mfrBatch(),
 	mfrGeneratedToken(128),
 	mFs(finish_state::INF_FINISH_STATE_CONTINUE)
@@ -289,6 +290,7 @@ GENERIC InfClient::_reset_client()
 	mFs = finish_state::INF_FINISH_STATE_CONTINUE;
 	mParsedTokens.clear();
 	mSequenceId = 0;
+	mInactivityCounter = 0;
 }
 
 MBASE_END

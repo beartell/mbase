@@ -95,6 +95,7 @@ protected:
 	U32 mfrBatchCursor;
 	U32 mMessageIndexer;
 	U32 mfrMaxTokenCount;
+	U32 mInactivityCounter;
 	llama_batch mfrBatch;
 	mbase::deep_char_stream mfrGeneratedToken;
 	finish_state mFs;

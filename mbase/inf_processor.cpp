@@ -81,6 +81,36 @@ InfProcessor::flags InfProcessor::destroy()
 {
 	MBASE_INF_PROC_RETURN_UNREGISTERED;
 	mClientsMutex.acquire();
+	for (client_list::iterator It = mRegisteredClients.begin(); It != mRegisteredClients.end(); ++It)
+	{
+		InfClient* myClient = *It;
+		unregister_client(*myClient);
+	}
+	update_t();
+	mClientsMutex.release();
+	update();
+
+	// CLEANING PROCESSOR
+	mProcessedHandlers.clear();
+	mPresetCandidates.clear();
+	llama_free(mModelContext);
+	mModelContext = NULL;
+	mProcessorId = 0;
+	mContextIdCounter = 0;
+	mMaxClients = gInfProcessorDefaultMaxSeq;
+	mRegisteredBatchSize = 0;
+	InfModel::iterator tmpIt;
+	mProcessedModel->_unregister_processor(*this, tmpIt);
+	mProcessedModel = NULL;
+	// CLEANING PROCESSOR
+
+	return flags::INF_PROC_SUCCESS;
+}
+
+InfProcessor::flags InfProcessor::_destroy(InfModel::iterator& _out_it)
+{
+	MBASE_INF_PROC_RETURN_UNREGISTERED;
+	mClientsMutex.acquire();
 	for(client_list::iterator It = mRegisteredClients.begin(); It != mRegisteredClients.end(); ++It)
 	{
 		InfClient* myClient = *It;
@@ -92,7 +122,6 @@ InfProcessor::flags InfProcessor::destroy()
 
 	// CLEANING PROCESSOR
 	mProcessedHandlers.clear();
-	mProcessedModel = NULL;
 	mPresetCandidates.clear();
 	llama_free(mModelContext);
 	mModelContext = NULL;
@@ -100,6 +129,9 @@ InfProcessor::flags InfProcessor::destroy()
 	mContextIdCounter = 0;
 	mMaxClients = gInfProcessorDefaultMaxSeq;
 	mRegisteredBatchSize = 0;
+	InfModel::iterator tmpIt;
+	mProcessedModel->_unregister_processor(*this, _out_it);
+	mProcessedModel = NULL;
 	// CLEANING PROCESSOR
 
 	return flags::INF_PROC_SUCCESS;

@@ -9,14 +9,15 @@
 #include <mbase/behaviors.h>
 #include <mbase/framework/timer_loop.h>
 #include <mbase/framework/timers.h>
+#include <mbase/inference/inf_model.h>
 #include <mutex>
 #include <llama.h>
 
 MBASE_BEGIN
 
 static const U32 gProcessorMinimumTokenCount = 32;
+static const U32 gProcessorMinimumInactivityThreshold = 32; // in seconds
 
-class InfModel;
 class InfClient;
 class InfProcessor;
 
@@ -57,6 +58,7 @@ public:
 	flags get_max_batch_size(U32& out_size);
 	InfModel* get_processed_model();
 	flags destroy();
+	flags _destroy(InfModel::iterator& _out_it);
 	flags tokenize_input(CBYTEBUFFER in_data, size_type in_size, mbase::vector<inf_token>& out_tokens);
 	flags register_client(CBYTEBUFFER in_data, size_type in_size, InfClient& out_client, U32 in_token_limit = 256);
 	flags register_client(const mbase::string& in_string, InfClient& out_client, U32 in_token_limit = 256);
@@ -64,6 +66,7 @@ public:
 	flags register_client(InfClient& out_client, U32 in_token_limit = 256);
 	flags unregister_client(InfClient& in_client);
 	GENERIC set_max_client_count(U32 in_max_clients);
+	GENERIC set_inactivity_threshold(U32 in_threshold);
 	GENERIC update();
 	GENERIC update_t();
 

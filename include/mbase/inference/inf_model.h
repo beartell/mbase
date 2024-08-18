@@ -97,6 +97,7 @@ public:
 	flags unload_model();
 	flags register_processor(InfProcessor& out_processor, InfProcInitParams in_params = InfProcInitParams());
 	flags unregister_processor(InfProcessor& in_processor);
+	flags _unregister_processor(InfProcessor& in_processor, iterator& _out_it);
 
 private:
 	llama_model* mModel;
