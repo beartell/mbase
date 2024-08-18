@@ -30,7 +30,7 @@ MBASE_STD_BEGIN
 	maip-identification-line = maip-req-identification-line / maip-resp-identification-line SP LF
 
 	message-description-key = ALPHA *64(VCHAR)
-	message-description-value = *WSP 1*256(VCHAR)
+	message-description-value = *WSP 1*256(VCHAR / SP)
 	message-description = message-description-key ":" message-description-value LF
 
 	maip-end = "END" LF
@@ -236,11 +236,13 @@ public:
 	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE T get_kval(const mbase::string& in_key) const;
 
 	MBASE_INLINE maip_generic_errors parse_request(mbase::char_stream& in_stream);
+	MBASE_INLINE maip_generic_errors parse_result(mbase::char_stream& in_stream);
 	MBASE_INLINE maip_generic_errors parse_data(mbase::char_stream& in_stream, U32 in_length);
 
 private:
 	MBASE_INLINE maip_generic_errors _parse_version(mbase::char_stream& in_stream);
 	MBASE_INLINE maip_generic_errors _parse_req_identification_line(mbase::char_stream& in_stream);
+	MBASE_INLINE maip_generic_errors _parse_resp_identification_line(mbase::char_stream& in_stream);
 	MBASE_INLINE maip_generic_errors _parse_message_description(mbase::char_stream& in_stream, maip_description_kval& out_kval);
 	MBASE_INLINE maip_generic_errors _parse_end(mbase::char_stream& in_stream);
 	MBASE_INLINE maip_generic_errors _parse_message_data(mbase::char_stream& in_stream, IBYTEBUFFER* out_data, U64 out_size);
@@ -260,21 +262,18 @@ private:
 };
 
 template<typename T>
-struct kval_converter {};
-
-template<>
-struct kval_converter<I64> {
-	static I64 get_key(const mbase::string& in_key, maip_peer_request::kval_container_const_reference in_kval_container) 
+struct kval_converter {
+	static T get_key(const mbase::string& in_key, maip_peer_request::kval_container_const_reference in_kval_container)
 	{
 		try
 		{
 			const mbase::vector<maip_description_kval>& mKval = in_kval_container.at(in_key);
-			if(mKval.size())
+			if (mKval.size())
 			{
 				const maip_description_kval& tempKval = mKval.front();
-				if(tempKval.mValues.size())
+				if (tempKval.mValues.size())
 				{
-					if(tempKval.mValues.front().mValType == mbase::maip_value_type::MAIP_VALTYPE_INT)
+					if (tempKval.mValues.front().mValType == mbase::maip_value_type::MAIP_VALTYPE_INT)
 					{
 						return tempKval.mValues.front().mIntValue;
 					}
@@ -598,6 +597,42 @@ MBASE_INLINE maip_generic_errors maip_peer_request::parse_request(mbase::char_st
 	return _parse_end(in_stream);
 }
 
+MBASE_INLINE maip_generic_errors maip_peer_request::parse_result(mbase::char_stream& in_stream)
+{
+	_clear_request();
+
+	maip_generic_errors parseResult = _parse_version(in_stream);
+	if (parseResult != maip_generic_errors::SUCCESS)
+	{
+		return parseResult;
+	}
+	parseResult = _parse_resp_identification_line(in_stream);
+	if (parseResult != maip_generic_errors::SUCCESS)
+	{
+		return parseResult;
+	}
+
+	while (mDescriptionKvals.size() != gMaipMaxKvalCount) // max key values
+	{
+		maip_description_kval mdk;
+		parseResult = _parse_message_description(in_stream, mdk);
+		if (parseResult == maip_generic_errors::PACKET_INCOMPLETE)
+		{
+			break;
+		}
+		else if (parseResult == maip_generic_errors::SUCCESS)
+		{
+			mDescriptionKvals[mdk.mKey].push_back(std::move(mdk));
+		}
+		else
+		{
+			return parseResult;
+		}
+	}
+	return _parse_end(in_stream);
+}
+
+
 MBASE_INLINE maip_generic_errors maip_peer_request::parse_data(mbase::char_stream& in_stream, U32 in_length)
 {
 	mDataStream.set_cursor_front();
@@ -803,6 +838,51 @@ MBASE_INLINE maip_generic_errors maip_peer_request::_parse_req_identification_li
 	return maip_generic_errors::SUCCESS;
 }
 
+MBASE_INLINE maip_generic_errors maip_peer_request::_parse_resp_identification_line(mbase::char_stream& in_stream)
+{
+	if (in_stream.is_cursor_end())
+	{
+		return maip_generic_errors::PACKET_TOO_SHORT;
+	}
+
+	I32 processedBytes = 0;
+	try
+	{
+		for (I32 i = 0; in_stream.getc() != 32; i++)
+		{
+			if (i == 4)
+			{
+				return maip_generic_errors::INVALID_IDENTIFICATION_ENDING;
+			}
+			++processedBytes;
+			in_stream.advance_safe();
+		}
+
+		if (processedBytes > 4)
+		{
+			return maip_generic_errors::INVALID_IDENTIFICATION_ENDING;
+		}
+
+		++processedBytes;
+		in_stream.advance_safe();
+
+		if (in_stream.getc() != '\n')
+		{
+			in_stream.reverse_safe(processedBytes);
+			return maip_generic_errors::INVALID_IDENTIFICATION_ENDING;
+		}
+		++processedBytes;
+		in_stream.advance_safe();
+	}
+	catch (const std::exception& out_except)
+	{
+		in_stream.reverse_safe(processedBytes);
+		return maip_generic_errors::PACKET_TOO_SHORT;
+	}
+	return maip_generic_errors::SUCCESS;
+}
+
+
 MBASE_INLINE maip_generic_errors maip_peer_request::_parse_message_description(mbase::char_stream& in_stream, maip_description_kval& out_kval)
 {
 	I32 processedBytes = 0;
@@ -910,7 +990,7 @@ MBASE_INLINE maip_generic_errors maip_peer_request::_parse_message_description(m
 			if(mbase::string::is_integer(n.mStringValue))
 			{
 				n.mValType = maip_value_type::MAIP_VALTYPE_INT;
-				n.mIntValue = atoi(n.mStringValue);
+				n.mIntValue = _atoi64(n.mStringValue);
 			}
 			else if(mbase::string::is_float(n.mStringValue))
 			{

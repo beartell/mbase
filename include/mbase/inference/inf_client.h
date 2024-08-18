@@ -33,6 +33,7 @@ public:
 
 	enum class input_role : U8 {
 		INF_ROLE_SYSTEM,
+		INF_ROLE_ASSISTANT,
 		INF_ROLE_USR,
 		INF_ROLE_NONE
 	};

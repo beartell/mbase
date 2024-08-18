@@ -175,6 +175,13 @@ InfModel::flags InfModel::get_sys_start(mbase::string& out_start)
 	return flags::INF_MODEL_SUCCESS;
 }
 
+InfModel::flags InfModel::get_assistant_start(mbase::string& out_start)
+{
+	MBASE_INF_MODEL_RETURN_UNINITIALIZED;
+	out_start = mSystemStart;
+	return flags::INF_MODEL_SUCCESS;
+}
+
 InfModel::flags InfModel::get_usr_start(mbase::string& out_start)
 {
 	MBASE_INF_MODEL_RETURN_UNINITIALIZED;
@@ -183,6 +190,13 @@ InfModel::flags InfModel::get_usr_start(mbase::string& out_start)
 }
 
 InfModel::flags InfModel::get_sys_end(mbase::string& out_end)
+{
+	MBASE_INF_MODEL_RETURN_UNINITIALIZED;
+	out_end = mEndOfTokenString;
+	return flags::INF_MODEL_SUCCESS;
+}
+
+InfModel::flags InfModel::get_assistant_end(mbase::string& out_end)
 {
 	MBASE_INF_MODEL_RETURN_UNINITIALIZED;
 	out_end = mEndOfTokenString;
@@ -245,6 +259,7 @@ InfModel::flags InfModel::is_token_control(inf_token in_token)
 InfModel::flags InfModel::get_metadata_count(size_type& out_count)
 {
 	MBASE_INF_MODEL_RETURN_UNINITIALIZED;
+	out_count = mModelKvals.size();
 	return flags::INF_MODEL_SUCCESS;
 }
 
@@ -287,6 +302,14 @@ InfModel::flags InfModel::initialize(const mbase::string& in_model_path, const I
 		mModelKvals.insert(mbase::pair(mbase::string(tempBuf), mbase::string(outValue)));
 	}
 
+	if(mModelKvals.find("general.basename") == mModelKvals.end())
+	{
+		mModelKvals["general.basename"] = mModelKvals["general.name"];
+	}
+
+	mbase::string& modelName = mModelKvals["general.basename"];
+	modelName.erase(std::remove_if(modelName.begin(), modelName.end(), isspace), modelName.end());
+
 	mbase::vector<inf_token> tokenList;
 	if(llama_token_eot(mModel) != -1)
 	{
@@ -314,7 +337,8 @@ InfModel::flags InfModel::initialize(const mbase::string& in_model_path, const I
 	// <|assistant|>
 	// <|system|>
 	// <|user|>
-	mSystemStart = "Assistant: ";
+	mSystemStart = "System: ";
+	mAssistantStart = "Assistant: ";
 	mUsrStart = "User: ";
 	if (mModelKvals.find("tokenizer.chat_template") == mModelKvals.end())
 	{
@@ -338,12 +362,19 @@ InfModel::flags InfModel::initialize(const mbase::string& in_model_path, const I
 
 		if(mSystemStart == "<|im_start|>")
 		{
-			mSystemStart += "assistant:";
+			mSystemStart += "system:";
+			mAssistantStart = "<|im_start|>assistant:";
 		}
 
 		else if(mSystemStart == "<|start_header_id|>")
 		{
 			mSystemStart += "system<|end_header_id|>";
+			mAssistantStart = "<|start_header_id|>assistant<|end_header_id|>";
+		}
+
+		else if (mSystemStart == "<|system|>") 
+		{
+			mAssistantStart = "<|assistant|>";
 		}
 
 		mbase::vector<mbase::string> usrBosCandidates = { "<|im_start|>", "<|user|>", "<|start_header_id|>"};

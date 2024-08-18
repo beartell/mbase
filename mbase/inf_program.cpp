@@ -46,7 +46,6 @@ bool InfProgram::is_session_match(MBASE_MAIP_CL_AUTH)
 	{
 		return false;
 	}
-
 	if(mActiveClients[in_csid].mClid != in_clid)
 	{
 		return false;
@@ -128,7 +127,7 @@ InfProgram::maip_err_code InfProgram::inf_get_created_context_ids(MBASE_MAIP_CL_
 	return maip_err_code::INF_SUCCESS;
 }
 
-InfProgram::maip_err_code InfProgram::inf_create_context(MBASE_MAIP_CL_AUTH, const mbase::string& in_model, const U32& in_ctsize)
+InfProgram::maip_err_code InfProgram::inf_create_context(MBASE_MAIP_CL_AUTH, const mbase::string& in_model, const U32& in_ctsize, U64& out_ctxId)
 {
 	MBASE_SESSION_CONTROL;
 
@@ -143,12 +142,13 @@ InfProgram::maip_err_code InfProgram::inf_create_context(MBASE_MAIP_CL_AUTH, con
 	}
 
 	InfModel* tempModel = mRegisteredModels[in_model];
-	InfProcessor::flags procErr;
+	InfProcessor::flags procErr = InfProcessor::flags::INF_PROC_ERR_UNREGISTERED_PROCESSOR;
 	for (auto& tmpProc : *tempModel)
 	{
 		procErr = tmpProc->register_client(mAccClient.mChatSessions[mClientSessionIdCounter], in_ctsize);
 		if(procErr == InfProcessor::flags::INF_PROC_SUCCESS)
 		{
+			out_ctxId = mAccClient.mChatSessionIdCounter;
 			++mAccClient.mChatSessionIdCounter;
 			return maip_err_code::INF_SUCCESS;
 		}
@@ -186,7 +186,7 @@ InfProgram::maip_err_code InfProgram::inf_acquire_model(MBASE_MAIP_CL_AUTH, cons
 		return maip_err_code::INF_MODEL_NAME_MISMATCH;
 	}
 	
-	if (std::find(mAccClient.mAcceptedModels.begin(), mAccClient.mAcceptedModels.end(), in_model) != mAccClient.mAcceptedModels.end())
+	if (std::find(mAccClient.mAcceptedModels.begin(), mAccClient.mAcceptedModels.end(), in_model) == mAccClient.mAcceptedModels.end())
 	{
 		// push the model if not exists
 		mAccClient.mAcceptedModels.push_back(in_model);

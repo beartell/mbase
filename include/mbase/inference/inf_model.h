@@ -79,8 +79,10 @@ public:
 	flags get_model_base_name(mbase::string& out_name);
 	flags get_rope_type(mbase::string& out_type);
 	flags get_sys_start(mbase::string& out_start);
+	flags get_assistant_start(mbase::string& out_start);
 	flags get_usr_start(mbase::string& out_start);
 	flags get_sys_end(mbase::string& out_end);
+	flags get_assistant_end(mbase::string& out_end);
 	flags get_usr_end(mbase::string& out_end);
 	flags get_vocab_count(I32& out_count);
 	flags get_model_param_count(size_type& out_count);
@@ -104,6 +106,7 @@ private:
 	mbase::string mEndOfTokenString;
 	mbase::string mUsrStart;
 	mbase::string mSystemStart;
+	mbase::string mAssistantStart; // maybe the same if the system and assistant is the same in a program
 	inf_token mEndOfToken;
 };
 
