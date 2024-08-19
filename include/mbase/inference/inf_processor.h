@@ -44,6 +44,7 @@ public:
 		INF_PROC_ERR_EXCEED_TOKEN_LIMIT,
 		INF_PROC_ERR_CONTEXT_IS_FULL,
 		INF_PROC_ERR_TOKEN_LIMIT_IS_TOO_LOW,
+		INF_PROC_ERR_HALTED,
 		INF_PROC_WARN_UNABLE_TO_TOKENIZE_INPUT
 	};
 
@@ -51,6 +52,7 @@ public:
 	~InfProcessor();
 
 	bool is_registered() const;
+	bool is_running() const;
 	flags get_context_size(U32& out_size);
 	flags get_client_count(U32& out_size);
 	flags get_max_clients(U32& out_size);
@@ -66,7 +68,8 @@ public:
 	flags register_client(InfClient& out_client, U32 in_token_limit = 256);
 	flags unregister_client(InfClient& in_client);
 	GENERIC set_max_client_count(U32 in_max_clients);
-	GENERIC set_inactivity_threshold(U32 in_threshold);
+	GENERIC halt();
+	GENERIC resume();
 	GENERIC update();
 	GENERIC update_t();
 
@@ -82,6 +85,7 @@ protected:
 	U32 mRegisteredBatchSize;
 	mbase::mutex mClientsMutex;
 	mbase::mutex mProcHandlerMutex;
+	bool mIsRunning;
 
 	// mThreadCount === from llama_n_threads(llama_context)
 	// mBatchThreadCount === from llama_n_threads_batch(llama_context)

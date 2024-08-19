@@ -43,7 +43,7 @@ public:
 
 	/* ===== OBSERVATION METHODS BEGIN ===== */
 	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE I32 get_id() const noexcept;
-	MBASE_ND(MBASE_OBS_IGNORE) static I32 get_current_thread_id() noexcept;
+	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE static I32 get_current_thread_id() noexcept;
 	/* ===== OBSERVATION METHODS END ===== */
 
 	/* ===== STATE-MODIFIER METHODS BEGIN ===== */
@@ -163,7 +163,7 @@ MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE I32 thread<Func, Args...>::get_id() cons
 }
 
 template<typename Func, typename ...Args>
-MBASE_ND(MBASE_OBS_IGNORE) I32 thread<Func, Args...>::get_current_thread_id() noexcept {
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE I32 thread<Func, Args...>::get_current_thread_id() noexcept {
 #ifdef MBASE_PLATFORM_WINDOWS
 	return GetCurrentThreadId();
 #endif

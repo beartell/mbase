@@ -9,6 +9,31 @@ if(!this->is_initialized())\
 	return flags::INF_MODEL_ERR_NOT_INITIALIZED;\
 }
 
+inf_proc_update_t::inf_proc_update_t() : mIsThreadRunning(false)
+{
+
+}
+
+GENERIC inf_proc_update_t::destroy()
+{
+	mIsThreadRunning = false;
+}
+
+GENERIC inf_proc_update_t::run()
+{
+	mIsThreadRunning = true;
+}
+
+GENERIC inf_proc_update_t::on_call(user_data in_data)
+{
+	InfRegisteredProcStructure* freshProcStructure = reinterpret_cast<InfRegisteredProcStructure*>(in_data);
+	while(mIsThreadRunning)
+	{
+		freshProcStructure->mProcessor->update_t();
+	}
+	delete freshProcStructure;
+}
+
 InfModel::InfModel() :
 	mModel(NULL),
 	mRegisteredProcessors(),
@@ -18,7 +43,8 @@ InfModel::InfModel() :
 	mUsrStart(),
 	mSystemStart(),
 	mAssistantStart(),
-	mEndOfToken(0)
+	mEndOfToken(0),
+	mAiLoops(8)
 {
 
 }
@@ -413,15 +439,8 @@ InfModel::flags InfModel::unload_model()
 
 	for(processor_list::iterator It = mRegisteredProcessors.begin(); It != mRegisteredProcessors.end();)
 	{
-		InfProcessor* tempProcessor = *It;
-		if(tempProcessor->mProcessedModel != this)
-		{
-			It = mRegisteredProcessors.erase(It);
-		}
-		else
-		{
-			tempProcessor->_destroy(It);
-		}
+		InfRegisteredProcStructure* tmpRegisteredProcStructure = *It;
+		tmpRegisteredProcStructure->mProcessor->_destroy(It);
 	}
 
 	llama_free_model(mModel);
@@ -481,7 +500,13 @@ InfModel::flags InfModel::register_processor(InfProcessor& out_processor, InfPro
 	out_processor.mModelContext = newModelContext;
 	out_processor.mProcessedModel = this;
 	out_processor.mMaxClients = in_params.mMaxSequence;
-	mRegisteredProcessors.push_back(&out_processor);
+	out_processor.resume();
+	InfRegisteredProcStructure* freshProcStructure = new InfRegisteredProcStructure;
+	freshProcStructure->mProcessor = &out_processor;
+	freshProcStructure->mProcUpdateT.set_user_data(freshProcStructure);
+	freshProcStructure->mProcUpdateT.run();
+	mAiLoops.execute_job(freshProcStructure->mProcUpdateT);
+	mRegisteredProcessors.push_back(freshProcStructure);
 
 	return flags::INF_MODEL_SUCCESS;
 }
@@ -498,29 +523,32 @@ InfModel::flags InfModel::unregister_processor(InfProcessor& in_processor)
 InfModel::flags InfModel::_unregister_processor(InfProcessor& in_processor, iterator& _out_it)
 {
 	MBASE_INF_MODEL_RETURN_UNINITIALIZED;
-	_out_it = std::find(mRegisteredProcessors.begin(), mRegisteredProcessors.end(), &in_processor);
-	if (_out_it == mRegisteredProcessors.end())
+	iterator It;
+	for(iterator It = mRegisteredProcessors.begin(); It != mRegisteredProcessors.end(); ++It)
+	{
+		InfRegisteredProcStructure* tmpStruct = *It;
+		if(tmpStruct->mProcessor == &in_processor)
+		{
+			break;
+		}
+	}
+
+	if(It == mRegisteredProcessors.end())
 	{
 		return flags::INF_MODEL_ERR_PROCESSOR_NOT_FOUND;
 	}
 
-	InfProcessor* tempProcessor = *_out_it;
-
-	if (!tempProcessor->is_registered())
-	{
-		_out_it = mRegisteredProcessors.erase(_out_it);
-		return flags::INF_MODEL_SUCCESS;
-	}
-
-	if (tempProcessor->mProcessedModel != this)
-	{
-		_out_it = mRegisteredProcessors.erase(_out_it);
-		return flags::INF_MODEL_ERR_PROCESSOR_BELONGS_TO_ANOTHER_MODEL;
-	}
-
+	_out_it = It;
+	InfRegisteredProcStructure* tmpStruct = *_out_it;
 	_out_it = mRegisteredProcessors.erase(_out_it);
+	tmpStruct->mProcUpdateT.destroy();
 
 	return flags::INF_MODEL_SUCCESS;
+}
+
+GENERIC InfModel::update()
+{
+
 }
 
 MBASE_END

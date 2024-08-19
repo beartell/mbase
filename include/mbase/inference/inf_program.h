@@ -61,6 +61,7 @@ public:
 		INF_UNKNOWN_STATUS,
 		INF_CLIENT_UNREGISTERING,
 		INF_CLIENT_NOT_REGISTERED,
+		INF_PROCESSOR_UNAVAILABLE,
 		EXEC_SUCCESS = 3000,
 		EXEC_PROCESSING,
 		EXEC_MESSAGE_ID_MISMATCH,
@@ -76,14 +77,16 @@ public:
 	maip_err_code inf_create_session(const mbase::string& in_clid, U64& out_csid, mbase::string& out_clid);
 	maip_err_code inf_destroy_client(MBASE_MAIP_CL_AUTH);
 	maip_err_code inf_get_acquired_models(MBASE_MAIP_CL_AUTH, mbase::vector<mbase::string>& out_models);
-	maip_err_code inf_get_created_context_ids(MBASE_MAIP_CL_AUTH, mbase::vector<mbase::string>& out_contexts);
+	maip_err_code inf_get_created_context_ids(MBASE_MAIP_CL_AUTH, mbase::vector<U64>& out_contexts);
 	maip_err_code inf_create_context(MBASE_MAIP_CL_AUTH, const mbase::string& in_model, const U32& in_ctsize, U64& out_ctxId); // CTSIZE : Context size
 	maip_err_code inf_destroy_context(MBASE_MAIP_CL_AUTH, const U64& in_ctxId);
-	// get_context_params
 	maip_err_code inf_acquire_model(MBASE_MAIP_CL_AUTH, const mbase::string& in_model);
 	maip_err_code inf_release_model(MBASE_MAIP_CL_AUTH, const mbase::string& in_model);
 	maip_err_code inf_get_models(MBASE_MAIP_CL_AUTH, mbase::vector<mbase::string>& out_models);
 	maip_err_code inf_get_model_params(MBASE_MAIP_CL_AUTH, const mbase::string& in_model);
+	maip_err_code inf_get_program_models(MBASE_MAIP_CL_AUTH, mbase::vector<mbase::string>& out_models);
+
+	// get_context_params
 
 	maip_err_code exec_set_input(MBASE_MAIP_CL_AUTH, const U64& in_ctxId, InfClient::input_role in_role, const mbase::string& in_input, U32& out_msgid);
 	maip_err_code exec_execute_input(MBASE_MAIP_CL_AUTH, const U64& in_ctxId, const mbase::vector<U32>& in_msgid);

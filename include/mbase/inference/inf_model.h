@@ -7,6 +7,7 @@
 #include <mbase/vector.h>
 #include <mbase/unordered_map.h>
 #include <mbase/behaviors.h>
+#include <mbase/framework/thread_pool.h>
 #include <llama.h>
 
 MBASE_BEGIN
@@ -24,6 +25,16 @@ static const U32 gInfProcessorMinThreadCount = 1;
 class InfModel;
 class InfProcessor;
 
+class inf_proc_update_t : public mbase::handler_base {
+public:
+	inf_proc_update_t();
+	GENERIC destroy();
+	GENERIC run();
+	GENERIC on_call(user_data in_data) override;
+private:
+	bool mIsThreadRunning;
+};
+
 struct MBASE_API InfProcInitParams {
 	U32 mContextLength = gInfProcessorDefaultCtxLength;
 	U32 mBatchSize = gInfProcessorDefaultBatchSize;
@@ -31,10 +42,15 @@ struct MBASE_API InfProcInitParams {
 	U32 mThreadCount = gInfProcessorDefaultThreadCount;
 };
 
+struct MBASE_API InfRegisteredProcStructure {
+	InfProcessor* mProcessor = NULL;
+	inf_proc_update_t mProcUpdateT;
+};
+
 class MBASE_API InfModel : public non_copyable {
 public:
 	using inf_token = llama_token;
-	using processor_list = mbase::list<InfProcessor*>;
+	using processor_list = mbase::list<InfRegisteredProcStructure*>;
 	using size_type = SIZE_T;
 	using iterator = typename processor_list::iterator;
 	using const_iterator = typename processor_list::const_iterator;
@@ -98,6 +114,7 @@ public:
 	flags register_processor(InfProcessor& out_processor, InfProcInitParams in_params = InfProcInitParams());
 	flags unregister_processor(InfProcessor& in_processor);
 	flags _unregister_processor(InfProcessor& in_processor, iterator& _out_it);
+	GENERIC update();
 
 private:
 	llama_model* mModel;
@@ -109,6 +126,7 @@ private:
 	mbase::string mSystemStart;
 	mbase::string mAssistantStart; // maybe the same if the system and assistant is the same in a program
 	inf_token mEndOfToken;
+	mbase::tpool mAiLoops;
 };
 
 MBASE_END

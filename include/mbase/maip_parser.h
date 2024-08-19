@@ -30,8 +30,8 @@ MBASE_STD_BEGIN
 	maip-identification-line = maip-req-identification-line / maip-resp-identification-line SP LF
 
 	message-description-key = ALPHA *64(VCHAR)
-	message-description-value = 1*256(VCHAR / WSP)
-	message-description = message-description-key ":" message-description-value LF
+	message-description-value = *256(VCHAR / WSP)
+	message-description = message-description-key ":" message-description-value *(";" message-description-value) LF
 
 	maip-end = "END" LF
 	message-data = *OCTET
@@ -41,28 +41,28 @@ MBASE_STD_BEGIN
 
 enum class maip_generic_errors : U16 {
 	SUCCESS = 1000,
-	UNDEFINED_OP_TYPE,
-	UNDEFINED_OP_STRING,
-	OP_TYPE_TOO_LONG,
-	OP_TYPE_NON_ALPHA,
-	OP_STRING_TOO_LONG,
-	OP_STRING_NON_PRINTABLE,
-	OP_TIMED_OUT,
-	INVALID_IDENTIFICATION_ENDING,
-	INVALID_VERSION_MAJOR,
-	INVALID_PROTOCOL,
-	DATA_LENGTH_INCONSISTENCY,
-	MISSING_MANDATORY_KEYS,
-	MISSING_OP_TYPE,
-	MISSING_KEY,
-	MISSING_DATA,
-	PACKET_TOO_LARGE,
-	PACKET_TOO_SHORT,
-	PACKET_INCOMPLETE,
-	KEY_LENGTH_TOO_LARGE,
-	VALUE_LENGTH_TOO_LARGE,
-	INVALID_KVAL_FORMAT,
-	ENGINE_OVERLOADED
+	UNDEFINED_OP_TYPE = 1001,
+	UNDEFINED_OP_STRING = 1002,
+	OP_TYPE_TOO_LONG = 1003,
+	OP_TYPE_NON_ALPHA = 1004,
+	OP_STRING_TOO_LONG = 1005,
+	OP_STRING_NON_PRINTABLE = 1006,
+	OP_TIMED_OUT = 1007,
+	INVALID_IDENTIFICATION_ENDING = 1008,
+	INVALID_VERSION_MAJOR = 1009,
+	INVALID_PROTOCOL = 1010,
+	DATA_LENGTH_INCONSISTENCY = 1011,
+	MISSING_MANDATORY_KEYS = 1012,
+	MISSING_OP_TYPE = 1013,
+	MISSING_KEY = 1014,
+	MISSING_DATA = 1015,
+	PACKET_TOO_LARGE = 1016,
+	PACKET_TOO_SHORT = 1017,
+	PACKET_INCOMPLETE = 1018,
+	KEY_LENGTH_TOO_LARGE = 1019,
+	VALUE_LENGTH_TOO_LARGE = 1020,
+	INVALID_KVAL_FORMAT = 1021,
+	ENGINE_OVERLOADED = 1022
 };
 
 static const U32 gMaipVersionMinLength = 7;
@@ -179,7 +179,6 @@ struct to_string_ifnot_string<mbase::string> {
 	}
 };
 
-// TODO: maip_packet_builder code is terrible here, come back later.
 class maip_packet_builder {
 public:
 	enum class flags : U8 {

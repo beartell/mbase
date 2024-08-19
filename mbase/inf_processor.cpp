@@ -11,6 +11,16 @@ if(!this->is_registered())\
 	return flags::INF_PROC_ERR_UNREGISTERED_PROCESSOR;\
 }
 
+#define MBASE_INF_PROC_RETURN_HALTED \
+if(!this->is_registered())\
+{\
+	return flags::INF_PROC_ERR_UNREGISTERED_PROCESSOR;\
+}\
+if(!this->is_running())\
+{\
+	return flags::INF_PROC_ERR_HALTED;\
+}
+
 static U32 gInfProcMaxTokenLength = 128;
 
 InfProcessor::InfProcessor() :
@@ -23,7 +33,8 @@ InfProcessor::InfProcessor() :
 	mContextIdCounter(0),
 	mClientsMutex(),
 	mMaxClients(gInfProcessorDefaultMaxSeq),
-	mRegisteredBatchSize(0)
+	mRegisteredBatchSize(0),
+	mIsRunning(false)
 {
 }
 
@@ -35,6 +46,11 @@ InfProcessor::~InfProcessor()
 bool InfProcessor::is_registered() const
 {
 	return (mModelContext != NULL);
+}
+
+bool InfProcessor::is_running() const
+{
+	return mIsRunning;
 }
 
 InfProcessor::flags InfProcessor::get_context_size(U32& out_size)
@@ -86,6 +102,7 @@ InfProcessor::flags InfProcessor::destroy()
 		InfClient* myClient = *It;
 		unregister_client(*myClient);
 	}
+	resume();
 	update_t();
 	mClientsMutex.release();
 	update();
@@ -102,6 +119,7 @@ InfProcessor::flags InfProcessor::destroy()
 	InfModel::iterator tmpIt;
 	mProcessedModel->_unregister_processor(*this, tmpIt);
 	mProcessedModel = NULL;
+	mIsRunning = false;
 	// CLEANING PROCESSOR
 
 	return flags::INF_PROC_SUCCESS;
@@ -116,6 +134,7 @@ InfProcessor::flags InfProcessor::_destroy(InfModel::iterator& _out_it)
 		InfClient* myClient = *It;
 		unregister_client(*myClient);
 	}
+	resume();
 	update_t();
 	mClientsMutex.release();
 	update();
@@ -132,6 +151,7 @@ InfProcessor::flags InfProcessor::_destroy(InfModel::iterator& _out_it)
 	InfModel::iterator tmpIt;
 	mProcessedModel->_unregister_processor(*this, _out_it);
 	mProcessedModel = NULL;
+	mIsRunning = false;
 	// CLEANING PROCESSOR
 
 	return flags::INF_PROC_SUCCESS;
@@ -160,7 +180,7 @@ InfProcessor::flags InfProcessor::tokenize_input(CBYTEBUFFER in_data, size_type 
 
 InfProcessor::flags InfProcessor::register_client(const mbase::vector<inf_token>& in_data, InfClient& out_client, U32 in_token_limit)
 {
-	MBASE_INF_PROC_RETURN_UNREGISTERED;
+	MBASE_INF_PROC_RETURN_HALTED;
 
 	if (out_client.is_registered())
 	{
@@ -233,7 +253,7 @@ InfProcessor::flags InfProcessor::register_client(const mbase::string& in_string
 
 InfProcessor::flags InfProcessor::register_client(InfClient& out_client, U32 in_token_limit)
 {
-	MBASE_INF_PROC_RETURN_UNREGISTERED;
+	MBASE_INF_PROC_RETURN_HALTED;
 
 	if (out_client.is_registered())
 	{
@@ -298,9 +318,19 @@ GENERIC InfProcessor::set_max_client_count(U32 in_max_clients)
 	mMaxClients = in_max_clients;
 }
 
+GENERIC InfProcessor::halt()
+{
+	mIsRunning = false;
+}
+
+GENERIC InfProcessor::resume()
+{
+	mIsRunning = true;
+}
+
 GENERIC InfProcessor::update()
 {
-	if(!this->is_registered())
+	if(!this->is_registered() || !this->is_running())
 	{
 		return;
 	}
@@ -318,8 +348,8 @@ GENERIC InfProcessor::update()
 			{
 				myCharacterStream.set_cursor_front();
 				myClient->on_finish(myClient->mfrBatchCursor);
-				myClient->on_unregister();
 			}
+			myClient->on_unregister();
 			continue;
 		}
 
@@ -349,14 +379,18 @@ GENERIC InfProcessor::update()
 
 GENERIC InfProcessor::update_t()
 {
-	if (!this->is_registered())
+	if (!this->is_registered() || !this->is_running())
 	{
 		return;
 	}
 	
+	mbase::lock_guard lgClient(mClientsMutex);
 	for (client_list::iterator It = mRegisteredClients.begin(); It != mRegisteredClients.end(); ++It)
 	{
-		mbase::lock_guard lgClient(mClientsMutex);
+		if (!this->is_registered() || !this->is_running())
+		{
+			return;
+		}
 		InfClient* myClient = *It;
 
 		if(myClient->is_unregistering())
@@ -366,6 +400,7 @@ GENERIC InfProcessor::update_t()
 			{
 				myClient->mFs = InfClient::finish_state::INF_FINISH_STATE_ABANDONED;
 			}
+
 			llama_kv_cache_seq_rm(mModelContext, myClient->mSequenceId, -1, -1);
 			myClient->mfrHostProcessor = NULL;
 			It = mRegisteredClients.erase(It);

@@ -46,6 +46,7 @@ bool InfProgram::is_session_match(MBASE_MAIP_CL_AUTH)
 	{
 		return false;
 	}
+
 	if(mActiveClients[in_csid].mClid != in_clid)
 	{
 		return false;
@@ -116,13 +117,18 @@ InfProgram::maip_err_code InfProgram::inf_get_acquired_models(MBASE_MAIP_CL_AUTH
 	{
 		out_models.push_back(tempModel);
 	}
-
 	return maip_err_code::INF_SUCCESS;
 }
 
-InfProgram::maip_err_code InfProgram::inf_get_created_context_ids(MBASE_MAIP_CL_AUTH, mbase::vector<mbase::string>& out_contexts)
+InfProgram::maip_err_code InfProgram::inf_get_created_context_ids(MBASE_MAIP_CL_AUTH, mbase::vector<U64>& out_contexts)
 {
 	MBASE_SESSION_CONTROL;
+
+	out_contexts.clear();
+	for(auto& tmpSessions : mAccClient.mChatSessions)
+	{
+		out_contexts.push_back(tmpSessions.first);
+	}
 
 	return maip_err_code::INF_SUCCESS;
 }
@@ -145,13 +151,15 @@ InfProgram::maip_err_code InfProgram::inf_create_context(MBASE_MAIP_CL_AUTH, con
 	InfProcessor::flags procErr = InfProcessor::flags::INF_PROC_ERR_UNREGISTERED_PROCESSOR;
 	for (auto& tmpProc : *tempModel)
 	{
-		procErr = tmpProc->register_client(mAccClient.mChatSessions[mClientSessionIdCounter], in_ctsize);
+		InfProcessor* activeProcessor = tmpProc->mProcessor;
+		procErr = activeProcessor->register_client(mAccClient.mChatSessions[mClientSessionIdCounter], in_ctsize);
 		if(procErr == InfProcessor::flags::INF_PROC_SUCCESS)
 		{
 			out_ctxId = mAccClient.mChatSessionIdCounter;
-			++mAccClient.mChatSessionIdCounter;
+			
 			return maip_err_code::INF_SUCCESS;
 		}
+		++mAccClient.mChatSessionIdCounter;
 	}
 
 	return proc_err_to_maip(procErr);
@@ -219,6 +227,18 @@ InfProgram::maip_err_code InfProgram::inf_get_models(MBASE_MAIP_CL_AUTH, mbase::
 InfProgram::maip_err_code InfProgram::inf_get_model_params(MBASE_MAIP_CL_AUTH, const mbase::string& in_model)
 {
 	MBASE_SESSION_CONTROL;
+
+	return maip_err_code::INF_SUCCESS;
+}
+
+InfProgram::maip_err_code InfProgram::inf_get_program_models(MBASE_MAIP_CL_AUTH, mbase::vector<mbase::string>& out_models)
+{
+	MBASE_SESSION_CONTROL;
+
+	for(auto& tmpModel : mRegisteredModels)
+	{
+		out_models.push_back(tmpModel.first);
+	}
 
 	return maip_err_code::INF_SUCCESS;
 }
@@ -333,6 +353,9 @@ InfProgram::maip_err_code InfProgram::proc_err_to_maip(InfProcessor::flags in_fl
 		break;
 	case mbase::InfProcessor::flags::INF_PROC_ERR_MODEL_IS_NOT_INITIALIZED:
 		return maip_err_code::INF_SUCCESS; // change it into model is halted
+		break;
+	case mbase::InfProcessor::flags::INF_PROC_ERR_HALTED:
+		return maip_err_code::INF_PROCESSOR_UNAVAILABLE;
 		break;
 	case mbase::InfProcessor::flags::INF_PROC_ERR_CLIENT_LIMIT_REACHED:
 		return maip_err_code::INF_UNABLE_TO_FIND_SUITABLE_PROCESSOR;
