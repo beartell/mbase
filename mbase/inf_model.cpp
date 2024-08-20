@@ -389,8 +389,8 @@ InfModel::flags InfModel::initialize(const mbase::string& in_model_path, const I
 
 		if(mSystemStart == "<|im_start|>")
 		{
-			mSystemStart += "system:";
-			mAssistantStart = "<|im_start|>assistant:";
+			mSystemStart += "system\n";
+			mAssistantStart = "<|im_start|>assistant\n";
 		}
 
 		else if(mSystemStart == "<|start_header_id|>")
@@ -401,6 +401,7 @@ InfModel::flags InfModel::initialize(const mbase::string& in_model_path, const I
 
 		else if (mSystemStart == "<|system|>") 
 		{
+			
 			mAssistantStart = "<|assistant|>";
 		}
 
@@ -416,12 +417,19 @@ InfModel::flags InfModel::initialize(const mbase::string& in_model_path, const I
 
 		if(mUsrStart == "<|im_start|>")
 		{
-			mUsrStart += "user:";
+			mUsrStart += "user\n";
+			mEndOfTokenString = "<|im_end|>\n";
 		}
 
 		else if(mUsrStart == "<|start_header_id|>")
 		{
 			mUsrStart += "user<|end_header_id|>";
+			mEndOfTokenString = "<|eot_id|>";
+		}
+
+		else if(mUsrStart == "<|user|>")
+		{
+			mEndOfTokenString = "<|end|>";
 		}
 	}
 	return flags::INF_MODEL_SUCCESS;
