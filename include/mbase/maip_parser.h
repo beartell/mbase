@@ -231,6 +231,7 @@ public:
 	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE const maip_request_identification& get_identification() const noexcept;
 	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE kval_container_const_reference get_kvals() const noexcept;
 	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE U32 get_content_length() const;
+	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE const char_stream& get_data() const noexcept;
 	template<typename T>
 	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE T get_kval(const mbase::string& in_key) const;
 
@@ -554,12 +555,16 @@ MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE U32 maip_peer_request::get_conten
 	return 0;
 }
 
+MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE const char_stream& maip_peer_request::get_data() const noexcept
+{
+	return mDataStream;
+}
+
 template<typename T>
 MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE T maip_peer_request::get_kval(const mbase::string& in_key) const
 {
 	return mbase::kval_converter<T>::get_key(in_key, mDescriptionKvals);
 }
-
 
 MBASE_INLINE maip_generic_errors maip_peer_request::parse_request(mbase::char_stream& in_stream)
 {

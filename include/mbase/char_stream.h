@@ -477,7 +477,11 @@ MBASE_INLINE_EXPR GENERIC char_stream::zero_out_buffer(size_type in_length) noex
 
 MBASE_INLINE_EXPR GENERIC char_stream::zero_out_buffern() noexcept
 {
-	putcn(0);
+	for(size_type i = 0; i < mBufferLength; i++)
+	{
+		mSrcBuffer[i] = '\0';
+	}
+	set_cursor_front();
 }
 
 MBASE_INLINE GENERIC char_stream::_destroy_self() noexcept 

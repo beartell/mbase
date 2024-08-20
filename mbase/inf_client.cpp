@@ -55,6 +55,7 @@ InfClient::InfClient(const InfClient& in_rhs):
 	mfrMaxTokenCount(0),
 	mfrBatch(),
 	mfrGeneratedToken(128),
+	mInactivityCounter(0),
 	mFs(finish_state::INF_FINISH_STATE_CONTINUE)
 {
 

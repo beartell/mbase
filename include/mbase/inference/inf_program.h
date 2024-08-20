@@ -28,6 +28,7 @@ public:
 	GENERIC on_finish(size_type out_total_token_size) override;
 	GENERIC on_unregister() override;
 private:
+	mbase::string lastToken;
 	InfAcceptedClient* mManagerClient;
 };
 
@@ -51,25 +52,26 @@ public:
 
 	enum class maip_err_code : U16 {
 		INF_SUCCESS = 2000,
-		INF_MAXIMUM_CLIENTS,
-		INF_CLIENT_ID_MISMATCH,
-		INF_UNAUTHORIZED_ACCESS,
-		INF_MODEL_NAME_MISMATCH,
-		INF_CONTEXT_ID_MISMATCH,
-		INF_CONTEXT_LIMIT_REACHED,
-		INF_UNABLE_TO_FIND_SUITABLE_PROCESSOR,
-		INF_UNKNOWN_STATUS,
-		INF_CLIENT_UNREGISTERING,
-		INF_CLIENT_NOT_REGISTERED,
-		INF_PROCESSOR_UNAVAILABLE,
+		INF_MAXIMUM_CLIENTS = 2001,
+		INF_CLIENT_ID_MISMATCH = 2002,
+		INF_UNAUTHORIZED_ACCESS = 2003,
+		INF_MODEL_NAME_MISMATCH = 2004,
+		INF_CONTEXT_ID_MISMATCH = 2005,
+		INF_CONTEXT_LIMIT_REACHED = 2006,
+		INF_UNABLE_TO_FIND_SUITABLE_PROCESSOR = 2007,
+		INF_UNKNOWN_STATUS = 2008,
+		INF_CLIENT_UNREGISTERING = 2009,
+		INF_CLIENT_NOT_REGISTERED = 2010,
+		INF_PROCESSOR_UNAVAILABLE = 2011,
 		EXEC_SUCCESS = 3000,
-		EXEC_PROCESSING,
-		EXEC_MESSAGE_ID_MISMATCH,
-		EXEC_MISSING_MESSAGE,
-		EXEC_TOKENIZATION_FAILED,
-		EXEC_TOKEN_LIMIT_EXCEEDED,
-		EXEC_MESSAGE_CONTINUE,
-		EXEC_MESSAGE_FINISH
+		EXEC_PROCESSING = 3001,
+		EXEC_MESSAGE_ID_MISMATCH = 3002,
+		EXEC_MISSING_MESSAGE = 3003,
+		EXEC_TOKENIZATION_FAILED = 3004,
+		EXEC_TOKEN_LIMIT_EXCEEDED = 3005,
+		EXEC_MESSAGE_CONTINUE = 3006,
+		EXEC_MESSAGE_FINISH = 3007,
+		EXEC_ABANDONED = 3008
 	};
 
 	bool is_session_match(MBASE_MAIP_CL_AUTH);
@@ -86,12 +88,10 @@ public:
 	maip_err_code inf_get_model_params(MBASE_MAIP_CL_AUTH, const mbase::string& in_model);
 	maip_err_code inf_get_program_models(MBASE_MAIP_CL_AUTH, mbase::vector<mbase::string>& out_models);
 
-	// get_context_params
-
 	maip_err_code exec_set_input(MBASE_MAIP_CL_AUTH, const U64& in_ctxId, InfClient::input_role in_role, const mbase::string& in_input, U32& out_msgid);
-	maip_err_code exec_execute_input(MBASE_MAIP_CL_AUTH, const U64& in_ctxId, const mbase::vector<U32>& in_msgid);
-	maip_err_code exec_next(MBASE_MAIP_CL_AUTH, const U64& in_ctxId);
-	maip_err_code exec_terminate_generation(MBASE_MAIP_CL_AUTH, const U64& in_ctxId);
+	maip_err_code exec_execute_input(MBASE_MAIP_CL_AUTH, std::shared_ptr<mbase::PcNetPeerClient> in_peer, const U64& in_ctxId, const mbase::vector<U32>& in_msgid);
+	maip_err_code exec_next(MBASE_MAIP_CL_AUTH, std::shared_ptr<mbase::PcNetPeerClient> in_peer, const U64& in_ctxId);
+	maip_err_code exec_terminate_generation(MBASE_MAIP_CL_AUTH, std::shared_ptr<mbase::PcNetPeerClient> in_peer, const U64& in_ctxId);
 
 	flags host_model(InfModel& in_model);
 	flags release_model(const mbase::string& in_model_name);

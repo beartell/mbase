@@ -11,7 +11,7 @@ if(!this->is_session_match(in_csid, in_clid))\
 }\
 InfAcceptedClient& mAccClient = mActiveClients[in_csid];
 
-InfMaipTunedClient::InfMaipTunedClient() : mManagerClient(NULL)
+InfMaipTunedClient::InfMaipTunedClient() : lastToken(), mManagerClient(NULL)
 {
 
 }
@@ -27,12 +27,76 @@ GENERIC InfMaipTunedClient::on_register()
 
 GENERIC InfMaipTunedClient::on_write(CBYTEBUFFER out_data, size_type out_size) 
 {
+	mbase::string outData(out_data, out_size);
+	mbase::maip_packet_builder tmpPacketBuilder;
+	if(mFs == finish_state::INF_FINISH_STATE_CONTINUE)
+	{
+		tmpPacketBuilder.set_response_message((U16)InfProgram::maip_err_code::EXEC_MESSAGE_CONTINUE);
+	}
+	else if(mFs == finish_state::INF_FINISH_STATE_SUCCESS)
+	{
+		// on_finish will be called
+		lastToken = outData;
+		return;
+	}
+	else
+	{
+		tmpPacketBuilder.set_response_message((U16)InfProgram::maip_err_code::INF_UNKNOWN_STATUS);
+	}
 
+	mbase::string outPayload;
+
+	if(outData.size())
+	{
+		tmpPacketBuilder.generate_payload(outPayload, outData);
+	}
+	else
+	{
+		tmpPacketBuilder.generate_payload(outPayload);
+	}
+
+	mManagerClient->mPeer->write_data(outPayload.c_str(), outPayload.size());
+	mManagerClient->mPeer->finish_and_ready();
 }
 
 GENERIC InfMaipTunedClient::on_finish(size_type out_total_token_size) 
 {
+	mbase::maip_packet_builder tmpPacketBuilder;
+	if(mFs == finish_state::INF_FINISH_STATE_SUCCESS)
+	{
+		tmpPacketBuilder.set_kval("TOKCOUNT", out_total_token_size);
+		tmpPacketBuilder.set_response_message((U16)InfProgram::maip_err_code::EXEC_MESSAGE_FINISH);
+	}
+	else if(mFs == finish_state::INF_FINISH_STATE_TOKEN_LIMIT_REACHED)
+	{
+		tmpPacketBuilder.set_kval("MAXTOK", mfrMaxTokenCount);
+		tmpPacketBuilder.set_kval("TOKCOUNT", out_total_token_size);
+		tmpPacketBuilder.set_response_message((U16)InfProgram::maip_err_code::EXEC_TOKEN_LIMIT_EXCEEDED);
+	}
+	else if(mFs == finish_state::INF_FINISH_STATE_ABANDONED)
+	{
+		tmpPacketBuilder.set_kval("TOKCOUNT", out_total_token_size);
+		tmpPacketBuilder.set_response_message((U16)InfProgram::maip_err_code::EXEC_ABANDONED);
+	}
+	else 
+	{
+		tmpPacketBuilder.set_response_message((U16)InfProgram::maip_err_code::INF_UNKNOWN_STATUS);
+	}
 
+	mbase::string outPayload;
+
+	if(lastToken.size())
+	{
+		tmpPacketBuilder.generate_payload(outPayload, lastToken);
+		lastToken.clear();
+	}
+	else
+	{
+		tmpPacketBuilder.generate_payload(outPayload);
+	}
+
+	mManagerClient->mPeer->write_data(outPayload.c_str(), outPayload.size());
+	mManagerClient->mPeer->finish_and_ready();
 }
 
 GENERIC InfMaipTunedClient::on_unregister() 
@@ -262,7 +326,7 @@ InfProgram::maip_err_code InfProgram::exec_set_input(MBASE_MAIP_CL_AUTH, const U
 	return maip_err_code::INF_SUCCESS;
 }
 
-InfProgram::maip_err_code InfProgram::exec_execute_input(MBASE_MAIP_CL_AUTH, const U64& in_ctxId, const mbase::vector<U32>& in_msgid)
+InfProgram::maip_err_code InfProgram::exec_execute_input(MBASE_MAIP_CL_AUTH, std::shared_ptr<mbase::PcNetPeerClient> in_peer, const U64& in_ctxId, const mbase::vector<U32>& in_msgid)
 {
 	MBASE_SESSION_CONTROL;
 	if (mAccClient.mChatSessions.find(in_ctxId) == mAccClient.mChatSessions.end())
@@ -271,12 +335,13 @@ InfProgram::maip_err_code InfProgram::exec_execute_input(MBASE_MAIP_CL_AUTH, con
 	}
 
 	InfMaipTunedClient& mySession = mAccClient.mChatSessions[in_ctxId];
+	mAccClient.mPeer = in_peer;
 	InfClient::flags errCode = mySession.execute_prompt(in_msgid);
 
 	return client_err_to_maip(errCode);
 }
 
-InfProgram::maip_err_code InfProgram::exec_next(MBASE_MAIP_CL_AUTH, const U64& in_ctxId)
+InfProgram::maip_err_code InfProgram::exec_next(MBASE_MAIP_CL_AUTH, std::shared_ptr<mbase::PcNetPeerClient> in_peer, const U64& in_ctxId)
 {
 	MBASE_SESSION_CONTROL;
 
@@ -291,12 +356,13 @@ InfProgram::maip_err_code InfProgram::exec_next(MBASE_MAIP_CL_AUTH, const U64& i
 		// TODO: re-register to a processor
 	}
 
+	mAccClient.mPeer = in_peer;
 	mySession.next();
 
 	return maip_err_code::INF_SUCCESS;
 }
 
-InfProgram::maip_err_code InfProgram::exec_terminate_generation(MBASE_MAIP_CL_AUTH, const U64& in_ctxId)
+InfProgram::maip_err_code InfProgram::exec_terminate_generation(MBASE_MAIP_CL_AUTH, std::shared_ptr<mbase::PcNetPeerClient> in_peer, const U64& in_ctxId)
 {
 	MBASE_SESSION_CONTROL;
 
