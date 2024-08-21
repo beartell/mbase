@@ -55,6 +55,12 @@ GENERIC InfMaipTunedClient::on_write(CBYTEBUFFER out_data, size_type out_size)
 		tmpPacketBuilder.generate_payload(outPayload);
 	}
 
+	if(!mManagerClient->mPeer->is_connected())
+	{
+		mManagerClient->mPeer = NULL;
+		return;
+	}
+
 	mManagerClient->mPeer->write_data(outPayload.c_str(), outPayload.size());
 	mManagerClient->mPeer->finish_and_ready();
 }
@@ -93,6 +99,12 @@ GENERIC InfMaipTunedClient::on_finish(size_type out_total_token_size)
 	else
 	{
 		tmpPacketBuilder.generate_payload(outPayload);
+	}
+
+	if (!mManagerClient->mPeer->is_connected())
+	{
+		mManagerClient->mPeer = NULL;
+		return;
 	}
 
 	mManagerClient->mPeer->write_data(outPayload.c_str(), outPayload.size());
@@ -366,7 +378,7 @@ InfProgram::maip_err_code InfProgram::exec_terminate_generation(MBASE_MAIP_CL_AU
 {
 	MBASE_SESSION_CONTROL;
 
-	return maip_err_code::INF_SUCCESS;
+	return maip_err_code::EXEC_SUCCESS;
 }
 
 InfProgram::flags InfProgram::host_model(InfModel& in_model)
