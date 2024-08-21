@@ -167,7 +167,7 @@ InfProgram::maip_err_code InfProgram::inf_destroy_client(MBASE_MAIP_CL_AUTH)
 		activeProcessorMap.second.get_host_processor(tmpProc);
 		if(tmpProc)
 		{
-			tmpProc->unregister_client(activeProcessorMap.second);
+			return proc_err_to_maip(tmpProc->unregister_client(activeProcessorMap.second));
 		}
 	}
 	return maip_err_code::INF_SUCCESS;
@@ -323,7 +323,7 @@ InfProgram::maip_err_code InfProgram::exec_set_input(MBASE_MAIP_CL_AUTH, const U
 		return client_err_to_maip(errCode);
 	}
 
-	return maip_err_code::INF_SUCCESS;
+	return maip_err_code::EXEC_SUCCESS;
 }
 
 InfProgram::maip_err_code InfProgram::exec_execute_input(MBASE_MAIP_CL_AUTH, std::shared_ptr<mbase::PcNetPeerClient> in_peer, const U64& in_ctxId, const mbase::vector<U32>& in_msgid)

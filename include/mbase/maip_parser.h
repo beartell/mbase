@@ -97,7 +97,7 @@ struct maip_response_identification {
 };
 
 struct maip_description_value {
-	maip_description_value() : mStringValue{0} {}
+	maip_description_value() : mStringValue{ 0 } {}
 	maip_description_value(const maip_description_value& in_rhs) : mStringValue{ 0 }
 	{
 		mValType = in_rhs.mValType;
@@ -123,13 +123,13 @@ struct maip_description_value {
 };
 
 struct maip_description_kval {
-	maip_description_kval() : mKey{0} {}
-	maip_description_kval(const maip_description_kval& in_rhs) noexcept : mKey{0}
+	maip_description_kval() : mKey{ 0 } {}
+	maip_description_kval(const maip_description_kval& in_rhs) noexcept : mKey{ 0 }
 	{
 		maip_sequence_helper::copy_bytes(mKey, in_rhs.mKey);
 		mValues = in_rhs.mValues;
 	}
-	maip_description_kval(maip_description_kval&& in_rhs) noexcept : mKey{0}
+	maip_description_kval(maip_description_kval&& in_rhs) noexcept : mKey{ 0 }
 	{
 		maip_sequence_helper::copy_bytes(mKey, in_rhs.mKey);
 		maip_sequence_helper::fill(in_rhs.mKey, '\0', gMaipDescriptionKeyLength);
@@ -173,7 +173,7 @@ template<>
 struct to_string_ifnot_string<mbase::string> {
 	using pointer = const mbase::string*;
 	pointer value;
-	const mbase::string& get_value() 
+	const mbase::string& get_value()
 	{
 		return *value;
 	}
@@ -216,7 +216,7 @@ public:
 	using iterator = typename kval_container::iterator;
 	using const_iterator = typename kval_container::const_iterator;
 
-	MBASE_INLINE maip_peer_request() noexcept : mDataStream(16384){};
+	MBASE_INLINE maip_peer_request() noexcept : mDataStream(16384) {};
 
 	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE iterator begin() noexcept;
 	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE iterator end() noexcept;
@@ -245,9 +245,8 @@ private:
 	MBASE_INLINE maip_generic_errors _parse_resp_identification_line(mbase::char_stream& in_stream);
 	MBASE_INLINE maip_generic_errors _parse_message_description(mbase::char_stream& in_stream, maip_description_kval& out_kval);
 	MBASE_INLINE maip_generic_errors _parse_end(mbase::char_stream& in_stream);
-	MBASE_INLINE maip_generic_errors _parse_message_data(mbase::char_stream& in_stream, IBYTEBUFFER* out_data, U64 out_size);
 
-	MBASE_INLINE GENERIC _clear_request() 
+	MBASE_INLINE GENERIC _clear_request()
 	{
 		mMaipVersion.mVersionMajor = 0;
 		mMaipVersion.mVersionMinor = 0;
@@ -261,7 +260,7 @@ private:
 	mbase::deep_char_stream mDataStream;
 };
 
-template<typename T>
+template<typename T, typename VecType = void>
 struct kval_converter {
 	static T get_key(const mbase::string& in_key, maip_peer_request::kval_container_const_reference in_kval_container)
 	{
@@ -290,6 +289,33 @@ struct kval_converter {
 	}
 };
 
+template<typename T>
+struct kval_converter<T, typename std::enable_if<std::is_same<T, mbase::vector<typename T::value_type>>::value>::type> {
+	static T get_key(const mbase::string& in_key, maip_peer_request::kval_container_const_reference in_kval_container)
+	{
+		try
+		{
+			const mbase::vector<maip_description_kval>& mKval = in_kval_container.at(in_key);
+			T tempVector;
+			for (auto& kval_iter : mKval)
+			{
+				for (auto& values_iter : kval_iter.mValues)
+				{
+					if (values_iter.mValType == mbase::maip_value_type::MAIP_VALTYPE_INT)
+					{
+						tempVector.push_back(values_iter.mIntValue);
+					}
+				}
+			}
+			return tempVector;
+		}
+		catch (const std::exception& out_except)
+		{
+			return T();
+		}
+	}
+};
+
 template<>
 struct kval_converter<F64> {
 	static F64 get_key(const mbase::string& in_key, maip_peer_request::kval_container_const_reference in_kval_container)
@@ -304,7 +330,36 @@ struct kval_converter<F64> {
 				{
 					if (tempKval.mValues.front().mValType == mbase::maip_value_type::MAIP_VALTYPE_FLOAT)
 					{
-						return tempKval.mValues.front().mIntValue;
+						return tempKval.mValues.front().mFloatValue;
+					}
+				}
+
+				return 0.0f;
+			}
+			return 0.0f;
+		}
+		catch (const std::exception& out_except)
+		{
+			return 0.0f;
+		}
+	}
+};
+
+template<>
+struct kval_converter<F32> {
+	static F32 get_key(const mbase::string& in_key, maip_peer_request::kval_container_const_reference in_kval_container)
+	{
+		try
+		{
+			const mbase::vector<maip_description_kval>& mKval = in_kval_container.at(in_key);
+			if (mKval.size())
+			{
+				const maip_description_kval& tempKval = mKval.front();
+				if (tempKval.mValues.size())
+				{
+					if (tempKval.mValues.front().mValType == mbase::maip_value_type::MAIP_VALTYPE_FLOAT)
+					{
+						return tempKval.mValues.front().mFloatValue;
 					}
 				}
 
@@ -348,6 +403,86 @@ struct kval_converter<mbase::string> {
 	}
 };
 
+template<>
+struct kval_converter<mbase::vector<F32>> {
+	static mbase::vector<F32> get_key(const mbase::string& in_key, maip_peer_request::kval_container_const_reference in_kval_container)
+	{
+		try
+		{
+			const mbase::vector<maip_description_kval>& mKval = in_kval_container.at(in_key);
+			mbase::vector<F32> tempVector;
+			for (auto& kval_iter : mKval)
+			{
+				for (auto& values_iter : kval_iter.mValues)
+				{
+					if (values_iter.mValType == mbase::maip_value_type::MAIP_VALTYPE_FLOAT)
+					{
+						tempVector.push_back(values_iter.mFloatValue);
+					}
+				}
+			}
+			return tempVector;
+		}
+		catch (const std::exception& out_except)
+		{
+			return mbase::vector<F32>();
+		}
+	}
+};
+
+template<>
+struct kval_converter<mbase::vector<F64>> {
+	static mbase::vector<F64> get_key(const mbase::string& in_key, maip_peer_request::kval_container_const_reference in_kval_container)
+	{
+		try
+		{
+			const mbase::vector<maip_description_kval>& mKval = in_kval_container.at(in_key);
+			mbase::vector<F64> tempVector;
+			for (auto& kval_iter : mKval)
+			{
+				for (auto& values_iter : kval_iter.mValues)
+				{
+					if (values_iter.mValType == mbase::maip_value_type::MAIP_VALTYPE_FLOAT)
+					{
+						tempVector.push_back(values_iter.mFloatValue);
+					}
+				}
+			}
+			return tempVector;
+		}
+		catch (const std::exception& out_except)
+		{
+			return mbase::vector<F64>();
+		}
+	}
+};
+
+template<>
+struct kval_converter<mbase::vector<mbase::string>> {
+	static mbase::vector<mbase::string> get_key(const mbase::string& in_key, maip_peer_request::kval_container_const_reference in_kval_container)
+	{
+		try
+		{
+			const mbase::vector<maip_description_kval>& mKval = in_kval_container.at(in_key);
+			mbase::vector<mbase::string> tempVector;
+			for (auto& kval_iter : mKval)
+			{
+				for (auto& values_iter : kval_iter.mValues)
+				{
+					if (values_iter.mValType == mbase::maip_value_type::MAIP_VALTPYE_STRING)
+					{
+						tempVector.push_back(values_iter.mStringValue);
+					}
+				}
+			}
+			return tempVector;
+		}
+		catch (const std::exception& out_except)
+		{
+			return mbase::vector<mbase::string>();
+		}
+	}
+};
 
 MBASE_INLINE GENERIC maip_packet_builder::set_version(U8 in_version_major, U8 in_version_minor)
 {
@@ -511,29 +646,29 @@ MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE typename maip_peer_request::const
 	return mDescriptionKvals.cend();
 }
 
-MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE const maip_version& maip_peer_request::get_version() const noexcept 
-{ 
-	return mMaipVersion; 
-}
-
-MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE I16 maip_peer_request::get_version_major() const noexcept 
+MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE const maip_version& maip_peer_request::get_version() const noexcept
 {
-	return mMaipVersion.mVersionMajor; 
+	return mMaipVersion;
 }
 
-MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE I16 maip_peer_request::get_version_minor() const noexcept 
-{ 
-	return mMaipVersion.mVersionMinor; 
+MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE I16 maip_peer_request::get_version_major() const noexcept
+{
+	return mMaipVersion.mVersionMajor;
 }
 
-MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE const maip_request_identification& maip_peer_request::get_identification() const noexcept 
-{ 
-	return mRequestIdentification; 
+MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE I16 maip_peer_request::get_version_minor() const noexcept
+{
+	return mMaipVersion.mVersionMinor;
 }
 
-MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE typename maip_peer_request::kval_container_const_reference maip_peer_request::get_kvals() const noexcept 
-{ 
-	return mDescriptionKvals; 
+MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE const maip_request_identification& maip_peer_request::get_identification() const noexcept
+{
+	return mRequestIdentification;
+}
+
+MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE typename maip_peer_request::kval_container_const_reference maip_peer_request::get_kvals() const noexcept
+{
+	return mDescriptionKvals;
 }
 
 MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE U32 maip_peer_request::get_content_length() const
@@ -641,7 +776,7 @@ MBASE_INLINE maip_generic_errors maip_peer_request::parse_data(mbase::char_strea
 {
 	mDataStream.set_cursor_front();
 
-	if(in_stream.is_cursor_end())
+	if (in_stream.is_cursor_end())
 	{
 		return maip_generic_errors::MISSING_DATA;
 	}
@@ -649,7 +784,7 @@ MBASE_INLINE maip_generic_errors maip_peer_request::parse_data(mbase::char_strea
 	I32 processedBytes = 0;
 	try
 	{
-		for(U32 i = 0; i < in_length; i++)
+		for (U32 i = 0; i < in_length; i++)
 		{
 			mDataStream.putc(in_stream.getc());
 			++processedBytes;
@@ -694,7 +829,7 @@ MBASE_INLINE maip_generic_errors maip_peer_request::_parse_version(mbase::char_s
 		{
 			if (in_stream.getc() == '.')
 			{
-				if(!versionMajorLength)
+				if (!versionMajorLength)
 				{
 					// missing version major
 					in_stream.reverse_safe(processedBytes);
@@ -731,13 +866,13 @@ MBASE_INLINE maip_generic_errors maip_peer_request::_parse_version(mbase::char_s
 			{
 				break;
 			}
-			
+
 			versionMinor[versionMinorLength] = in_stream.getc();
 			++processedBytes;
 			in_stream.advance_safe();
 		}
 
-		if(!versionMinorLength)
+		if (!versionMinorLength)
 		{
 			in_stream.reverse_safe(processedBytes);
 			return maip_generic_errors::INVALID_IDENTIFICATION_ENDING;
@@ -765,15 +900,15 @@ MBASE_INLINE maip_generic_errors maip_peer_request::_parse_req_identification_li
 	{
 		mbase::string opType;
 		I32 opLengthMax = 32;
-		for(I32 i = 0; in_stream.getc() != 32; i++)
+		for (I32 i = 0; in_stream.getc() != 32; i++)
 		{
-			if(i == opLengthMax)
+			if (i == opLengthMax)
 			{
 				in_stream.reverse_safe(processedBytes);
 				return maip_generic_errors::OP_TYPE_TOO_LONG;
 			}
 
-			if(!mbase::string::is_alnum(in_stream.getc()))
+			if (!mbase::string::is_alnum(in_stream.getc()))
 			{
 				in_stream.reverse_safe(processedBytes);
 				return maip_generic_errors::OP_TYPE_NON_ALPHA;
@@ -783,7 +918,7 @@ MBASE_INLINE maip_generic_errors maip_peer_request::_parse_req_identification_li
 			in_stream.advance_safe();
 		}
 
-		if(!opType.size())
+		if (!opType.size())
 		{
 			in_stream.reverse_safe(processedBytes);
 			return maip_generic_errors::MISSING_OP_TYPE;
@@ -794,16 +929,16 @@ MBASE_INLINE maip_generic_errors maip_peer_request::_parse_req_identification_li
 		mbase::string opString;
 		opLengthMax = gMaipOpStringLength;
 
-		for(I32 i = 0; in_stream.getc() != 32; i++)
+		for (I32 i = 0; in_stream.getc() != 32; i++)
 		{
-			if(i == opLengthMax)
+			if (i == opLengthMax)
 			{
 				// OP LENGTH IS TOO LONG
 				in_stream.reverse_safe(processedBytes);
 				return maip_generic_errors::OP_STRING_TOO_LONG;
 			}
 
-			if(in_stream.getc() == 32)
+			if (in_stream.getc() == 32)
 			{
 				in_stream.reverse_safe(processedBytes);
 				return maip_generic_errors::OP_STRING_NON_PRINTABLE;
@@ -822,7 +957,7 @@ MBASE_INLINE maip_generic_errors maip_peer_request::_parse_req_identification_li
 		}
 		++processedBytes;
 		in_stream.advance_safe();
-		if(in_stream.getc() != '\n')
+		if (in_stream.getc() != '\n')
 		{
 			// ENDING IS INVALID
 			in_stream.reverse_safe(processedBytes);
@@ -893,16 +1028,16 @@ MBASE_INLINE maip_generic_errors maip_peer_request::_parse_message_description(m
 	{
 		I32 maxKeyLength = gMaipDescriptionKeyLength - 1;
 		mbase::char_stream keyBuffer(out_kval.mKey, gMaipDescriptionKeyLength);
-		for(I32 i = 0; in_stream.getc() != ':'; i++)
+		for (I32 i = 0; in_stream.getc() != ':'; i++)
 		{
-			if(in_stream.getc() == '\n') 
+			if (in_stream.getc() == '\n')
 			{
 				// this is for understanding that we are reached the END LF
 				in_stream.reverse_safe(processedBytes);
 				return maip_generic_errors::PACKET_INCOMPLETE;
 			}
 
-			if(i == maxKeyLength)
+			if (i == maxKeyLength)
 			{
 				in_stream.reverse_safe(processedBytes);
 				return maip_generic_errors::KEY_LENGTH_TOO_LARGE;
@@ -913,7 +1048,7 @@ MBASE_INLINE maip_generic_errors maip_peer_request::_parse_message_description(m
 			keyBuffer.advance_safe();
 		}
 
-		if(!keyBuffer.get_pos())
+		if (!keyBuffer.get_pos())
 		{
 			// MISSING KEY
 			in_stream.reverse_safe(processedBytes);
@@ -926,9 +1061,9 @@ MBASE_INLINE maip_generic_errors maip_peer_request::_parse_message_description(m
 		++processedBytes;
 		in_stream.advance_safe();
 		maip_description_value mdv;
-		for(I32 i = 0; in_stream.getc() != '\n' && i != 8192; i++)
+		for (I32 i = 0; in_stream.getc() != '\n' && i != 8192; i++)
 		{
-			if(countValueLength == gMaipDescriptionValueLength)
+			if (countValueLength == gMaipDescriptionValueLength)
 			{
 				// value too long
 				in_stream.reverse_safe(processedBytes);
@@ -949,17 +1084,17 @@ MBASE_INLINE maip_generic_errors maip_peer_request::_parse_message_description(m
 			//	in_stream.advance_safe();
 			//	continue;
 			//}
-			
-			if(!mbase::string::is_print(in_stream.getc()))
+
+			if (!mbase::string::is_print(in_stream.getc()))
 			{
 				// non printable characters
 				in_stream.reverse_safe(processedBytes);
 				return maip_generic_errors::INVALID_KVAL_FORMAT;
 			}
-			
-			if(in_stream.getc() == ';')
+
+			if (in_stream.getc() == ';')
 			{
-				if(!countValueLength)
+				if (!countValueLength)
 				{
 					// do nothing
 				}
@@ -975,31 +1110,31 @@ MBASE_INLINE maip_generic_errors maip_peer_request::_parse_message_description(m
 				mdv.mStringValue[countValueLength] = in_stream.getc();
 				++countValueLength;
 			}
-			
+
 			++processedBytes;
 			in_stream.advance_safe();
 		}
 		++processedBytes;
 		in_stream.advance_safe();
 
-		if(countValueLength)
+		if (countValueLength)
 		{
 			out_kval.mValues.push_back(mdv);
 		}
 
-		for(auto &n : out_kval.mValues)
+		for (auto& n : out_kval.mValues)
 		{
-			if(mbase::string::is_integer(n.mStringValue))
+			if (mbase::string::is_integer(n.mStringValue))
 			{
 				n.mValType = maip_value_type::MAIP_VALTYPE_INT;
 				n.mIntValue = _atoi64(n.mStringValue);
 			}
-			else if(mbase::string::is_float(n.mStringValue))
+			else if (mbase::string::is_float(n.mStringValue))
 			{
 				n.mValType = maip_value_type::MAIP_VALTYPE_FLOAT;
 				n.mFloatValue = atof(n.mStringValue);
 			}
-			else 
+			else
 			{
 				n.mValType = maip_value_type::MAIP_VALTPYE_STRING;
 			}
@@ -1018,7 +1153,7 @@ MBASE_INLINE maip_generic_errors maip_peer_request::_parse_message_description(m
 MBASE_INLINE maip_generic_errors maip_peer_request::_parse_end(mbase::char_stream& in_stream)
 {
 	I32 bfLength = in_stream.buffer_length() - in_stream.get_pos();
-	if(bfLength < 4)
+	if (bfLength < 4)
 	{
 		return maip_generic_errors::PACKET_INCOMPLETE;
 	}
@@ -1036,12 +1171,6 @@ MBASE_INLINE maip_generic_errors _parse_message_data(mbase::char_stream& in_stre
 {
 	return maip_generic_errors::SUCCESS;
 }
-
-class MaipRequest {
-public:
-
-private:
-};
 
 MBASE_STD_END
 

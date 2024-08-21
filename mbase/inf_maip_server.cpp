@@ -24,6 +24,7 @@ GENERIC InfMaipServerBase::on_data(std::shared_ptr<PcNetPeerClient> out_peer, CB
 			}
 			else
 			{
+				cs.advance();
 				tempGenericError = mMaipPeerRequest.parse_data(cs, messageContentLength);
 			}
 		}

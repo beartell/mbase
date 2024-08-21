@@ -164,6 +164,11 @@ InfClient::flags InfClient::set_input(CBYTEBUFFER in_data, size_type in_size, in
 {
 	MBASE_INF_CLIENT_USUAL_CHECK;
 
+	if(!in_size)
+	{
+		return flags::INF_CLIENT_ERR_MISSING_INPUT;
+	}
+
 	mbase::string lineString(in_data, in_size);
 	mbase::string roleString;
 	mbase::string totalInput = lineString;
