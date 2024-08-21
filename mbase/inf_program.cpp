@@ -176,10 +176,10 @@ InfProgram::maip_err_code InfProgram::inf_destroy_client(MBASE_MAIP_CL_AUTH)
 	for(auto& activeProcessorMap : mAccClient.mChatSessions)
 	{
 		InfProcessor* tmpProc = NULL;
-		activeProcessorMap.second.get_host_processor(tmpProc);
+		activeProcessorMap.second->get_host_processor(tmpProc);
 		if(tmpProc)
 		{
-			return proc_err_to_maip(tmpProc->unregister_client(activeProcessorMap.second));
+			return proc_err_to_maip(tmpProc->unregister_client(*activeProcessorMap.second));
 		}
 	}
 	return maip_err_code::INF_SUCCESS;
@@ -223,19 +223,22 @@ InfProgram::maip_err_code InfProgram::inf_create_context(MBASE_MAIP_CL_AUTH, con
 		return maip_err_code::INF_MODEL_NAME_MISMATCH;
 	}
 
+	InfMaipTunedClient* currentClient = new InfMaipTunedClient();
+	currentClient->mManagerClient = &mAccClient;
+	mAccClient.mChatSessions[mAccClient.mChatSessionIdCounter] = currentClient;
+
 	InfModel* tempModel = mRegisteredModels[in_model];
 	InfProcessor::flags procErr = InfProcessor::flags::INF_PROC_ERR_UNREGISTERED_PROCESSOR;
 	for (auto& tmpProc : *tempModel)
 	{
 		InfProcessor* activeProcessor = tmpProc->mProcessor;
-		procErr = activeProcessor->register_client(mAccClient.mChatSessions[mClientSessionIdCounter], in_ctsize);
+		procErr = activeProcessor->register_client(*mAccClient.mChatSessions[mAccClient.mChatSessionIdCounter], in_ctsize);
 		if(procErr == InfProcessor::flags::INF_PROC_SUCCESS)
 		{
 			out_ctxId = mAccClient.mChatSessionIdCounter;
-			
+			++mAccClient.mChatSessionIdCounter;
 			return maip_err_code::INF_SUCCESS;
 		}
-		++mAccClient.mChatSessionIdCounter;
 	}
 
 	return proc_err_to_maip(procErr);
@@ -250,7 +253,7 @@ InfProgram::maip_err_code InfProgram::inf_destroy_context(MBASE_MAIP_CL_AUTH, co
 		return maip_err_code::INF_CONTEXT_ID_MISMATCH;
 	}
 
-	InfMaipTunedClient& mySession = mAccClient.mChatSessions[in_ctxId];
+	InfMaipTunedClient& mySession = *mAccClient.mChatSessions[in_ctxId];
 	InfProcessor* myProcessor = NULL;
 	InfClient::flags clientResultFlag = mySession.get_host_processor(myProcessor);
 	if(clientResultFlag != InfClient::flags::INF_CLIENT_SUCCESS)
@@ -328,7 +331,7 @@ InfProgram::maip_err_code InfProgram::exec_set_input(MBASE_MAIP_CL_AUTH, const U
 		return maip_err_code::INF_CONTEXT_ID_MISMATCH;
 	}
 
-	InfMaipTunedClient& mySession = mAccClient.mChatSessions[in_ctxId];
+	InfMaipTunedClient& mySession = *mAccClient.mChatSessions[in_ctxId];
 	InfClient::flags errCode = mySession.set_input(in_input, in_role, out_msgid);
 	if(errCode != InfClient::flags::INF_CLIENT_SUCCESS)
 	{
@@ -346,7 +349,7 @@ InfProgram::maip_err_code InfProgram::exec_execute_input(MBASE_MAIP_CL_AUTH, std
 		return maip_err_code::INF_CONTEXT_ID_MISMATCH;
 	}
 
-	InfMaipTunedClient& mySession = mAccClient.mChatSessions[in_ctxId];
+	InfMaipTunedClient& mySession = *mAccClient.mChatSessions[in_ctxId];
 	mAccClient.mPeer = in_peer;
 	InfClient::flags errCode = mySession.execute_prompt(in_msgid);
 
@@ -362,7 +365,7 @@ InfProgram::maip_err_code InfProgram::exec_next(MBASE_MAIP_CL_AUTH, std::shared_
 		return maip_err_code::INF_CONTEXT_ID_MISMATCH;
 	}
 
-	InfMaipTunedClient& mySession = mAccClient.mChatSessions[in_ctxId];
+	InfMaipTunedClient& mySession = *mAccClient.mChatSessions[in_ctxId];
 	if(!mySession.is_registered())
 	{
 		// TODO: re-register to a processor

@@ -27,7 +27,7 @@ public:
 	GENERIC on_write(CBYTEBUFFER out_data, size_type out_size) override;
 	GENERIC on_finish(size_type out_total_token_size) override;
 	GENERIC on_unregister() override;
-private:
+
 	mbase::string lastToken;
 	InfAcceptedClient* mManagerClient;
 };
@@ -35,10 +35,10 @@ private:
 struct MBASE_API InfAcceptedClient {
 	std::shared_ptr<mbase::PcNetPeerClient> mPeer;
 	mbase::vector<mbase::string> mAcceptedModels;
-	mbase::unordered_map<U64, InfMaipTunedClient> mChatSessions;
-	mbase::string mClid;
-	U64 mCsId;
-	U64 mChatSessionIdCounter;
+	mbase::unordered_map<U64, InfMaipTunedClient*> mChatSessions;
+	mbase::string mClid = "";
+	U64 mCsId = 0;
+	U64 mChatSessionIdCounter = 0;
 };
 
 class MBASE_API InfProgram {
@@ -102,7 +102,7 @@ public:
 private:
 	mbase::unordered_map<U64, InfAcceptedClient> mActiveClients;
 	mbase::unordered_map<mbase::string, InfModel*> mRegisteredModels;
-	U64 mClientSessionIdCounter;
+	U64 mClientSessionIdCounter = 0;
 };
 
 MBASE_END
