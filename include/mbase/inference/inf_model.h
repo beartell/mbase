@@ -66,7 +66,8 @@ public:
 		INF_MODEL_ERR_PROCESSOR_NOT_FOUND,
 		INF_MODEL_ERR_PROCESSOR_BELONGS_TO_ANOTHER_MODEL,
 		INF_MODEL_ERR_UNABLE_REGISTER_PROCESSOR,
-		INF_MODEL_ERR_NOT_INITIALIZED
+		INF_MODEL_ERR_NOT_INITIALIZED,
+		INF_MODEL_ERR_GENERIC
 	};
 
 	InfModel();
@@ -105,6 +106,7 @@ public:
 	flags get_model_params(mbase::unordered_map<mbase::string, mbase::string>& out_params);
 	flags get_size(size_type& out_size);
 	bool is_token_eof_generation(inf_token in_token);
+	flags is_token_special(const mbase::string& in_string);
 	flags is_token_control(inf_token in_token);
 	flags get_metadata_count(size_type& out_count);
 

@@ -30,6 +30,7 @@ public:
 
 	mbase::string lastToken;
 	InfAcceptedClient* mManagerClient;
+	bool mIsDeadClient;
 };
 
 struct MBASE_API InfAcceptedClient {

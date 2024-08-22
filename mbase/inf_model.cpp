@@ -274,6 +274,21 @@ bool InfModel::is_token_eof_generation(inf_token in_token)
 	return llama_token_is_eog(mModel, in_token);
 }
 
+InfModel::flags InfModel::is_token_special(const mbase::string& in_string)
+{
+	MBASE_INF_MODEL_RETURN_UNINITIALIZED;
+
+	mbase::vector<mbase::string> specialTokens;
+	get_special_tokens(specialTokens);
+
+	if(std::find(specialTokens.begin(), specialTokens.end(), in_string) == specialTokens.end())
+	{
+		return flags::INF_MODEL_ERR_GENERIC;
+	}
+
+	return flags::INF_MODEL_SUCCESS;
+}
+
 InfModel::flags InfModel::is_token_control(inf_token in_token)
 {
 	MBASE_INF_MODEL_RETURN_UNINITIALIZED;
@@ -556,7 +571,16 @@ InfModel::flags InfModel::_unregister_processor(InfProcessor& in_processor, iter
 
 GENERIC InfModel::update()
 {
+	if(!this->is_initialized())
+	{
+		return;
+	}
 
+	for(processor_list::iterator It = mRegisteredProcessors.begin(); It != mRegisteredProcessors.end(); ++It)
+	{
+		InfRegisteredProcStructure* tmpProc = *It;
+		tmpProc->mProcessor->update();
+	}
 }
 
 MBASE_END

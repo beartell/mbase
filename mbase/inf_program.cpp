@@ -11,7 +11,7 @@ if(!this->is_session_match(in_csid, in_clid))\
 }\
 InfAcceptedClient& mAccClient = mActiveClients[in_csid];
 
-InfMaipTunedClient::InfMaipTunedClient() : lastToken(), mManagerClient(NULL)
+InfMaipTunedClient::InfMaipTunedClient() : lastToken(), mManagerClient(NULL), mIsDeadClient(true)
 {
 
 }
@@ -22,23 +22,35 @@ InfMaipTunedClient::InfMaipTunedClient(InfAcceptedClient& in_client) : mManagerC
 
 GENERIC InfMaipTunedClient::on_register() 
 {
-
+	if(mIsDeadClient)
+	{
+		delete this;
+	}
 }
 
 GENERIC InfMaipTunedClient::on_write(CBYTEBUFFER out_data, size_type out_size) 
 {
+	if (!mManagerClient->mPeer->is_connected())
+	{
+		mManagerClient->mPeer = NULL;
+		return;
+	}
+
 	mbase::string outData(out_data, out_size);
 	mbase::maip_packet_builder tmpPacketBuilder;
+	
 	if(mFs == finish_state::INF_FINISH_STATE_CONTINUE)
 	{
 		tmpPacketBuilder.set_response_message((U16)InfProgram::maip_err_code::EXEC_MESSAGE_CONTINUE);
 	}
+
 	else if(mFs == finish_state::INF_FINISH_STATE_SUCCESS)
 	{
 		// on_finish will be called
 		lastToken = outData;
 		return;
 	}
+
 	else
 	{
 		tmpPacketBuilder.set_response_message((U16)InfProgram::maip_err_code::INF_UNKNOWN_STATUS);
@@ -46,19 +58,24 @@ GENERIC InfMaipTunedClient::on_write(CBYTEBUFFER out_data, size_type out_size)
 
 	mbase::string outPayload;
 
+	if(this->mfrHostProcessor->get_processed_model()->is_token_special(outData) == InfModel::flags::INF_MODEL_SUCCESS)
+	{
+		tmpPacketBuilder.set_kval("SPECIAL", 1);
+	}
+
+	else
+	{
+		tmpPacketBuilder.set_kval("SPECIAL", 0);
+	}
+
 	if(outData.size())
 	{
 		tmpPacketBuilder.generate_payload(outPayload, outData);
 	}
+
 	else
 	{
 		tmpPacketBuilder.generate_payload(outPayload);
-	}
-
-	if(!mManagerClient->mPeer->is_connected())
-	{
-		mManagerClient->mPeer = NULL;
-		return;
 	}
 
 	mManagerClient->mPeer->write_data(outPayload.c_str(), outPayload.size());
@@ -67,23 +84,32 @@ GENERIC InfMaipTunedClient::on_write(CBYTEBUFFER out_data, size_type out_size)
 
 GENERIC InfMaipTunedClient::on_finish(size_type out_total_token_size) 
 {
+	if (!mManagerClient->mPeer->is_connected())
+	{
+		mManagerClient->mPeer = NULL;
+		return;
+	}
+
 	mbase::maip_packet_builder tmpPacketBuilder;
 	if(mFs == finish_state::INF_FINISH_STATE_SUCCESS)
 	{
 		tmpPacketBuilder.set_kval("TOKCOUNT", out_total_token_size);
 		tmpPacketBuilder.set_response_message((U16)InfProgram::maip_err_code::EXEC_MESSAGE_FINISH);
 	}
+
 	else if(mFs == finish_state::INF_FINISH_STATE_TOKEN_LIMIT_REACHED)
 	{
 		tmpPacketBuilder.set_kval("MAXTOK", mfrMaxTokenCount);
 		tmpPacketBuilder.set_kval("TOKCOUNT", out_total_token_size);
 		tmpPacketBuilder.set_response_message((U16)InfProgram::maip_err_code::EXEC_TOKEN_LIMIT_EXCEEDED);
 	}
+
 	else if(mFs == finish_state::INF_FINISH_STATE_ABANDONED)
 	{
 		tmpPacketBuilder.set_kval("TOKCOUNT", out_total_token_size);
 		tmpPacketBuilder.set_response_message((U16)InfProgram::maip_err_code::EXEC_ABANDONED);
 	}
+
 	else 
 	{
 		tmpPacketBuilder.set_response_message((U16)InfProgram::maip_err_code::INF_UNKNOWN_STATUS);
@@ -99,12 +125,6 @@ GENERIC InfMaipTunedClient::on_finish(size_type out_total_token_size)
 	else
 	{
 		tmpPacketBuilder.generate_payload(outPayload);
-	}
-
-	if (!mManagerClient->mPeer->is_connected())
-	{
-		mManagerClient->mPeer = NULL;
-		return;
 	}
 
 	mManagerClient->mPeer->write_data(outPayload.c_str(), outPayload.size());
@@ -173,15 +193,26 @@ InfProgram::maip_err_code InfProgram::inf_create_session(const mbase::string& in
 InfProgram::maip_err_code InfProgram::inf_destroy_client(MBASE_MAIP_CL_AUTH)
 {
 	MBASE_SESSION_CONTROL;
-	for(auto& activeProcessorMap : mAccClient.mChatSessions)
+
+	for(mbase::unordered_map<U64, InfMaipTunedClient*>::iterator It = mAccClient.mChatSessions.begin(); It != mAccClient.mChatSessions.end(); ++It)
 	{
 		InfProcessor* tmpProc = NULL;
-		activeProcessorMap.second->get_host_processor(tmpProc);
-		if(tmpProc)
+		It->second->get_host_processor(tmpProc);
+		if (tmpProc)
 		{
-			return proc_err_to_maip(tmpProc->unregister_client(*activeProcessorMap.second));
+			It->second->mIsDeadClient = true;
+			InfProcessor::flags unregisterResult = tmpProc->unregister_client(*It->second);
+			It = mAccClient.mChatSessions.erase(It);
+		}
+		else
+		{
+			delete It->second;
+			It = mAccClient.mChatSessions.erase(It);
 		}
 	}
+
+	mActiveClients.erase(in_csid);
+
 	return maip_err_code::INF_SUCCESS;
 }
 
@@ -225,6 +256,7 @@ InfProgram::maip_err_code InfProgram::inf_create_context(MBASE_MAIP_CL_AUTH, con
 
 	InfMaipTunedClient* currentClient = new InfMaipTunedClient();
 	currentClient->mManagerClient = &mAccClient;
+	currentClient->mIsDeadClient = false;
 	mAccClient.mChatSessions[mAccClient.mChatSessionIdCounter] = currentClient;
 
 	InfModel* tempModel = mRegisteredModels[in_model];
@@ -253,15 +285,18 @@ InfProgram::maip_err_code InfProgram::inf_destroy_context(MBASE_MAIP_CL_AUTH, co
 		return maip_err_code::INF_CONTEXT_ID_MISMATCH;
 	}
 
-	InfMaipTunedClient& mySession = *mAccClient.mChatSessions[in_ctxId];
+	InfMaipTunedClient* mySession = mAccClient.mChatSessions[in_ctxId];
 	InfProcessor* myProcessor = NULL;
-	InfClient::flags clientResultFlag = mySession.get_host_processor(myProcessor);
-	if(clientResultFlag != InfClient::flags::INF_CLIENT_SUCCESS)
+	InfClient::flags clientResultFlag = mySession->get_host_processor(myProcessor);
+	if(myProcessor == NULL)
 	{
+		delete mySession;
+		mAccClient.mChatSessions.erase(in_ctxId);
 		return client_err_to_maip(clientResultFlag);
 	}
 
-	return proc_err_to_maip(myProcessor->unregister_client(mySession));
+	mySession->mIsDeadClient = true;
+	return proc_err_to_maip(myProcessor->unregister_client(*mySession));
 }
 
 InfProgram::maip_err_code InfProgram::inf_acquire_model(MBASE_MAIP_CL_AUTH, const mbase::string& in_model)
