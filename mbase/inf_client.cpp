@@ -216,18 +216,20 @@ InfClient::flags InfClient::set_input(CBYTEBUFFER in_data, size_type in_size, in
 		mfrHostProcessor->get_processed_model()->get_sys_end(endString);
 		totalInput = roleString + lineString + endString;
 	}
+
+	else if (in_role == input_role::INF_ROLE_ASSISTANT)
+	{
+		mbase::string endString;
+		mfrHostProcessor->get_processed_model()->get_assistant_start(roleString);
+		mfrHostProcessor->get_processed_model()->get_assistant_end(endString);
+		totalInput = roleString + lineString + endString;
+	}
+
 	else if(in_role == input_role::INF_ROLE_USR)
 	{
 		mbase::string endString;
 		mfrHostProcessor->get_processed_model()->get_usr_start(roleString);
 		mfrHostProcessor->get_processed_model()->get_sys_end(endString);
-		totalInput = roleString + lineString + endString;
-	}
-	else if (in_role == input_role::INF_ROLE_ASSISTANT) 
-	{
-		mbase::string endString;
-		mfrHostProcessor->get_processed_model()->get_assistant_start(roleString);
-		mfrHostProcessor->get_processed_model()->get_assistant_end(endString);
 		totalInput = roleString + lineString + endString;
 	}
 
@@ -241,6 +243,11 @@ InfClient::flags InfClient::set_input(CBYTEBUFFER in_data, size_type in_size, in
 InfClient::flags InfClient::set_input(const mbase::string& in_data, input_role in_role, U32& out_message_id)
 {
 	return set_input(in_data.c_str(), in_data.size(), in_role, out_message_id);
+}
+
+InfClient::flags InfClient::set_input(const mbase::wstring& in_data, input_role in_role, U32& out_message_id)
+{
+	return set_input(mbase::to_utf8(in_data), in_role, out_message_id);
 }
 
 InfClient::flags InfClient::execute_prompt(const mbase::vector<U32>& in_msg_ids)

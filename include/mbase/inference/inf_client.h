@@ -81,6 +81,7 @@ public:
 	virtual GENERIC on_unregister() = 0;
 	flags set_input(CBYTEBUFFER in_data, size_type in_size, input_role in_role, U32& out_message_id);
 	flags set_input(const mbase::string& in_data, input_role in_role, U32& out_message_id);
+	flags set_input(const mbase::wstring& in_data, input_role in_role, U32& out_message_id);
 	flags execute_prompt(const mbase::vector<U32>& in_msg_ids);
 	flags remove_messages(const mbase::vector<U32>& in_msg_ids = mbase::vector<U32>());
 

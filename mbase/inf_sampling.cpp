@@ -60,7 +60,6 @@ GENERIC InfSamplingTemperature::set_temperature(F32 in_temperature)
 
 GENERIC InfSamplingTemperature::apply_sampling()
 {
-	printf("TEMP SAMPLING APPLIED WITH VALUE: %f\n", mCommonFloat);
 	llama_sample_temp(mSelfContext, mTokenArray, mCommonFloat);
 }
 
