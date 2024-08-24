@@ -4,6 +4,8 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <limits>
+#include <inttypes.h>
+#include <ctype.h>
 
 #ifdef _WIN32
 	#define MBASE_PLATFORM_WINDOWS
