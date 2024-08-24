@@ -280,7 +280,7 @@ public:
     /* ===== NON-MODIFIER METHODS END ===== */
 
     /* ===== NON-MEMBER FUNCTIONS BEGIN ===== */
-
+    
     // TODO: MOVE THIS SECTION TO TYPE_SEQUENCE
     MBASE_ND(MBASE_RESULT_IGNORE) static I32 to_i32(const character_sequence& in_string) noexcept { return SeqBase::cnv_to_i32(in_string.c_str()); }
     MBASE_ND(MBASE_RESULT_IGNORE) static I32 to_i64(const character_sequence& in_string) noexcept { return SeqBase::cnv_to_i64(in_string.c_str()); }
@@ -298,7 +298,7 @@ public:
     MBASE_ND(MBASE_OBS_IGNORE) static MBASE_INLINE bool is_digit(const value_type& in_char) noexcept { return SeqBase::type_is_digit(in_char); }
     MBASE_ND(MBASE_OBS_IGNORE) static MBASE_INLINE bool is_integer(const_pointer in_string) noexcept 
     { 
-        if (in_string == NULL || *in_string == '\0')
+        if (in_string == NULL || *in_string == SeqBase::null_value)
         {
             return 0;
         }
@@ -324,7 +324,7 @@ public:
         I32 tempDecimalControl = 0;
         I32 tempDigitControl = 0;
 
-        if (in_string == NULL || *in_string == '\0') 
+        if (in_string == NULL || *in_string == SeqBase::null_value)
         {
             return 0;
         }
@@ -1823,7 +1823,7 @@ template<typename SeqType, typename SeqBase, typename Allocator>
 MBASE_INLINE GENERIC character_sequence<SeqType, SeqBase, Allocator>::pop_back() noexcept 
 {
     mSize--;
-    mRawData[mSize] = '\0';
+    mRawData[mSize] = SeqBase::null_value;
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
@@ -1960,7 +1960,7 @@ MBASE_INLINE_EXPR GENERIC character_sequence<SeqType, SeqBase, Allocator>::copy(
 template<typename SeqType, typename SeqBase, typename Allocator>
 MBASE_INLINE_EXPR GENERIC character_sequence<SeqType, SeqBase, Allocator>::clear() noexcept 
 {
-    this->fill(mRawData, '\0', mSize);
+    this->fill(mRawData, SeqBase::null_value, mSize);
     mSize = 0;
 }
 
@@ -2222,7 +2222,7 @@ MBASE_INLINE GENERIC character_sequence<SeqType, SeqBase, Allocator>::_resize(si
         reverse_iterator rit = rbegin();
         for (I32 i = 0; i < expectedSize; i++)
         {
-            *rit = '\0';
+            *rit = SeqBase::null_value;
             rit++;
         }
         mSize = in_size;
@@ -2279,7 +2279,7 @@ MBASE_INLINE GENERIC character_sequence<SeqType, SeqBase, Allocator>::_clear_sel
 }
 
 using string = character_sequence<IBYTE>;
-using wstring = character_sequence<wchar_t>; // WSTRING WILL BE IMPLEMENTED LATER
+using wstring = character_sequence<wchar_t>;
 using string_view = string; // STRING VIEW WILL BE IMPLEMENTED LATER
 
 MBASE_STD_END
@@ -2303,5 +2303,27 @@ struct std::hash<mbase::string> {
         return myVal;
     }
 };
+
+template<>
+struct std::hash<mbase::wstring> {
+    std::size_t operator()(const mbase::wstring& in_rhs) const noexcept
+    {
+        mbase::wstring::const_pointer myBuffer = in_rhs.c_str();
+        mbase::I32 myVal = 0;
+        while (*myBuffer != L'\0')
+        {
+            mbase::I32 tmp;
+            myVal = (myVal << 4) + (*myBuffer);
+            if (tmp = (myVal & 0xf0000000))
+            {
+                myVal = myVal ^ (tmp >> 24);
+                myVal = myVal ^ tmp;
+            }
+            ++myBuffer;
+        }
+        return myVal;
+    }
+};
+
 
 #endif // MBASE_STRING_H

@@ -28,6 +28,8 @@ public:
     using reverse_iterator = reverse_sequence_iterator<T>;
     using const_reverse_iterator = const_reverse_sequence_iterator<T>;
 
+    static const value_type null_value = '\0';
+
     static MBASE_INLINE pointer copy_bytes(pointer out_target, const_pointer in_source) noexcept { return strcpy(out_target, in_source); }
     static MBASE_INLINE pointer copy_bytes(pointer out_target, const_pointer in_source, size_type in_length) noexcept { return static_cast<pointer>(memcpy(out_target, in_source, sizeof(value_type) * in_length)); }
     static MBASE_INLINE pointer concat(pointer out_target, const_pointer in_source, size_type in_length) { return static_cast<pointer>(strncat(out_target, in_source, sizeof(value_type) * in_length)); }
@@ -112,6 +114,8 @@ public:
     using const_iterator = const_sequence_iterator<wchar_t>;
     using reverse_iterator = reverse_sequence_iterator<wchar_t>;
     using const_reverse_iterator = const_reverse_sequence_iterator<wchar_t>;
+
+    static const value_type null_value = L'\0';
 
     static MBASE_INLINE pointer copy_bytes(pointer out_target, const_pointer in_source) noexcept { return wcscpy(out_target, in_source); }
     static MBASE_INLINE pointer copy_bytes(pointer out_target, const_pointer in_source, size_type in_length) noexcept { return static_cast<pointer>(memcpy(out_target, in_source, sizeof(value_type) * in_length)); }
