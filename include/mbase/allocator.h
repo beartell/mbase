@@ -29,7 +29,7 @@ without the necessity of object instantiation.
 
 #define MBASE_ALLOCATE_WARNING "dynamically allocated memory unused"
 
-template <typename T = I8>
+template <typename T>
 class allocator_simple {
 public:
 	using value_type = T;
@@ -120,7 +120,7 @@ allocator for their data.
 */
 
 
-template<typename T = I8>
+template<typename T>
 class allocator {
 public:
 	using value_type = T;

@@ -7,6 +7,10 @@
 #include <stdexcept>
 #include <ctype.h>
 
+#ifdef MBASE_PLATFORM_WINDOWS
+#include <Windows.h>
+#endif // MBASE_PLATFORM_WINDOWS
+
 MBASE_STD_BEGIN
 
 static const U32 gStringDefaultCapacity = 8;
@@ -376,7 +380,7 @@ public:
         {
             totalCapacity *= 2;
         }
-        allocator alc;
+        allocator<SeqType> alc;
         pointer new_data = alc.allocate(totalCapacity, true);
         //this->length();
         SeqBase::concat(new_data, in_lhs.mRawData, in_lhs.mSize);
@@ -395,7 +399,7 @@ public:
         {
             totalCapacity *= 2;
         }
-        allocator alc;
+        allocator<SeqType> alc;
         pointer new_data = alc.allocate(totalCapacity, true);
 
         SeqBase::concat(new_data, in_lhs.mRawData, in_lhs.mSize);
@@ -2281,6 +2285,51 @@ MBASE_INLINE GENERIC character_sequence<SeqType, SeqBase, Allocator>::_clear_sel
 using string = character_sequence<IBYTE>;
 using wstring = character_sequence<wchar_t>;
 using string_view = string; // STRING VIEW WILL BE IMPLEMENTED LATER
+
+MBASE_INLINE mbase::string to_utf8(const mbase::wstring& in_str)
+{
+    const wchar_t* src = in_str.c_str();
+    I32 src_length = in_str.size();
+    if (!src_length)
+    {
+        return mbase::string();
+    }
+
+    I32 length = WideCharToMultiByte(CP_UTF8, 0, src, src_length, 0, 0, NULL, NULL);
+    IBYTEBUFFER output_buffer = (IBYTEBUFFER)malloc((length + 1) * sizeof(IBYTE));
+    if (output_buffer) {
+        WideCharToMultiByte(CP_UTF8, 0, src, src_length, output_buffer, length, NULL, NULL); 
+        output_buffer[length] = '\0';
+    }
+
+    mbase::string outStr(output_buffer, length);
+    free(output_buffer);
+
+    return outStr;
+}
+
+MBASE_INLINE mbase::wstring from_utf8(const mbase::string& in_str)
+{
+    CBYTEBUFFER src = in_str.c_str();
+    I32 src_length = in_str.size();
+    if (!src_length)
+    {
+        return mbase::wstring();
+    }
+
+    I32 length = MultiByteToWideChar(CP_UTF8, 0, src, src_length, 0, 0);
+    wchar_t* output_buffer = (wchar_t*)malloc((length + 1) * sizeof(wchar_t));
+    if (output_buffer) {
+        MultiByteToWideChar(CP_UTF8, 0, src, src_length, output_buffer, length);
+        output_buffer[length] = L'\0';
+    }
+    
+    mbase::wstring outStr(output_buffer, length);
+
+    free(output_buffer);
+
+    return outStr;
+}
 
 MBASE_STD_END
 template<>
