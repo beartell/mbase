@@ -9,6 +9,8 @@
 
 MBASE_BEGIN
 
+class InfSamplingBase;
+
 class MBASE_API InfClient : public mbase::non_movable {
 public:
 	enum class flags : U8 {
@@ -22,7 +24,8 @@ public:
 		INF_CLIENT_ERR_UNKNOWN,
 		INF_CLIENT_ERR_UNREGISTERATION_IN_PROGRESS,
 		INF_CLIENT_ERR_MISSING_PROCESSOR,
-		INF_CLIENT_ERR_MISSING_INPUT
+		INF_CLIENT_ERR_MISSING_INPUT,
+		INF_CLIENT_ERR_SAMPLER_MISMATCH
 	};
 
 	enum class finish_state : U8 {
@@ -47,6 +50,7 @@ public:
 
 	using inf_proc_iter = mbase::list<InfClient*>::iterator;
 	using chat_history_map = mbase::unordered_map<U32, context_line>;
+	using sampler_map = mbase::unordered_map<mbase::string, InfSamplingBase*>;
 	using token_vector = mbase::vector<InfProcessor::inf_token>;
 	using size_type = SIZE_T;
 
@@ -63,6 +67,9 @@ public:
 	bool is_unregistering() const;
 	bool is_data_set() const;
 	bool is_logic_processed() const;
+	bool has_sampler(const mbase::string& in_sampler_name);
+	bool get_sampler(const mbase::string& in_sampler_name, InfSamplingBase*& out_sampler);
+	GENERIC get_sampling_order(mbase::vector<InfSamplingBase*>& out_order);
 	flags get_generated_token_count(size_type& out_token_count);
 	flags get_context_id(U32& out_context_id);
 	flags get_message_context(U32 in_msg_id, context_line& out_context_line);
@@ -72,11 +79,25 @@ public:
 	virtual GENERIC on_write(CBYTEBUFFER out_data, size_type out_size) = 0;
 	virtual GENERIC on_finish(size_type out_total_token_size) = 0;
 	virtual GENERIC on_unregister() = 0;
-
 	flags set_input(CBYTEBUFFER in_data, size_type in_size, input_role in_role, U32& out_message_id);
 	flags set_input(const mbase::string& in_data, input_role in_role, U32& out_message_id);
 	flags execute_prompt(const mbase::vector<U32>& in_msg_ids);
 	flags remove_messages(const mbase::vector<U32>& in_msg_ids = mbase::vector<U32>());
+
+	template<typename SamplerType>
+	flags add_sampler() {
+		SamplerType* newSampler = new SamplerType(NULL, NULL);
+		mbase::string samplerName = newSampler->get_sampler_name();
+		if(has_sampler(samplerName))
+		{
+			delete newSampler;
+			return flags::INF_CLIENT_SUCCESS;
+		}
+
+		mSamplerMap[samplerName] = newSampler;
+		return flags::INF_CLIENT_SUCCESS;
+	}
+	bool add_to_sampling_order(InfSamplingBase* in_sampler); // MUST BE IN THE SAMPLING MAP
 	GENERIC next();
 	GENERIC abandon();
 	GENERIC clear_chat_history(); // clears the chat map
@@ -91,7 +112,9 @@ protected:
 	bool mIsLogicProcessed;
 	bool mIsDataSet;
 	mbase::vector<InfProcessor::inf_token> mParsedTokens;
+	mbase::vector<InfSamplingBase*> mSamplingOrder;
 	mbase::unordered_map<U32, context_line> mChatHistory;
+	sampler_map mSamplerMap;
 	U32 mSequenceId;
 	U32 mfrBatchCursor;
 	U32 mMessageIndexer;

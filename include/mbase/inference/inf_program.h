@@ -64,6 +64,7 @@ public:
 		INF_CLIENT_UNREGISTERING = 2009,
 		INF_CLIENT_NOT_REGISTERED = 2010,
 		INF_PROCESSOR_UNAVAILABLE = 2011,
+		INF_CONTEXT_ALREADY_ACTIVE = 2012,
 		EXEC_SUCCESS = 3000,
 		EXEC_PROCESSING = 3001,
 		EXEC_MESSAGE_ID_MISMATCH = 3002,
@@ -72,7 +73,8 @@ public:
 		EXEC_TOKEN_LIMIT_EXCEEDED = 3005,
 		EXEC_MESSAGE_CONTINUE = 3006,
 		EXEC_MESSAGE_FINISH = 3007,
-		EXEC_ABANDONED = 3008
+		EXEC_ABANDONED = 3008,
+		EXEC_CONTEXT_UPDATE = 3009
 	};
 
 	bool is_session_match(MBASE_MAIP_CL_AUTH);
@@ -81,7 +83,8 @@ public:
 	maip_err_code inf_destroy_client(MBASE_MAIP_CL_AUTH);
 	maip_err_code inf_get_acquired_models(MBASE_MAIP_CL_AUTH, mbase::vector<mbase::string>& out_models);
 	maip_err_code inf_get_created_context_ids(MBASE_MAIP_CL_AUTH, mbase::vector<U64>& out_contexts);
-	maip_err_code inf_create_context(MBASE_MAIP_CL_AUTH, const mbase::string& in_model, const U32& in_ctsize, U64& out_ctxId); // CTSIZE : Context size
+	maip_err_code inf_create_context(MBASE_MAIP_CL_AUTH, const mbase::string& in_model, const U32& in_ctsize, const mbase::vector<mbase::string>& in_samplers, U64& out_ctxId); // CTSIZE : Context size
+	maip_err_code inf_update_context(MBASE_MAIP_CL_AUTH, const mbase::string& in_model, const U64& in_ctxId);
 	maip_err_code inf_destroy_context(MBASE_MAIP_CL_AUTH, const U64& in_ctxId);
 	maip_err_code inf_acquire_model(MBASE_MAIP_CL_AUTH, const mbase::string& in_model);
 	maip_err_code inf_release_model(MBASE_MAIP_CL_AUTH, const mbase::string& in_model);
@@ -90,7 +93,7 @@ public:
 	maip_err_code inf_get_program_models(MBASE_MAIP_CL_AUTH, mbase::vector<mbase::string>& out_models);
 
 	maip_err_code exec_set_input(MBASE_MAIP_CL_AUTH, const U64& in_ctxId, InfClient::input_role in_role, const mbase::string& in_input, U32& out_msgid);
-	maip_err_code exec_execute_input(MBASE_MAIP_CL_AUTH, std::shared_ptr<mbase::PcNetPeerClient> in_peer, const U64& in_ctxId, const mbase::vector<U32>& in_msgid);
+	maip_err_code exec_execute_input(MBASE_MAIP_CL_AUTH, std::shared_ptr<mbase::PcNetPeerClient> in_peer, const U64& in_ctxId, const mbase::vector<U32>& in_msgid, mbase::vector<mbase::string> in_sampler_order = mbase::vector<mbase::string>(), mbase::vector<IF32> in_sampler_inputs = mbase::vector<IF32>());
 	maip_err_code exec_next(MBASE_MAIP_CL_AUTH, std::shared_ptr<mbase::PcNetPeerClient> in_peer, const U64& in_ctxId);
 	maip_err_code exec_terminate_generation(MBASE_MAIP_CL_AUTH, std::shared_ptr<mbase::PcNetPeerClient> in_peer, const U64& in_ctxId);
 

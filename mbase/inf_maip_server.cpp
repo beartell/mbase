@@ -10,6 +10,7 @@ GENERIC InfMaipServerBase::on_accept(std::shared_ptr<PcNetPeerClient> out_peer)
 
 GENERIC InfMaipServerBase::on_data(std::shared_ptr<PcNetPeerClient> out_peer, CBYTEBUFFER out_data, size_type out_size)
 {
+	mbase::string maipRequest(out_data, out_size);
 	mbase::char_stream cs(const_cast<IBYTEBUFFER>(out_data), out_size);
 	maip_generic_errors tempGenericError = mMaipPeerRequest.parse_request(cs);
 	if(tempGenericError == maip_generic_errors::SUCCESS)

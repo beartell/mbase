@@ -220,28 +220,6 @@ struct string_converter<const F64, StringType> {
     MBASE_INLINE StringType to_string();
 };
 
-struct i32_represent_f32 {
-    using int_type = I32;
-    using float_type = F32;
-
-    union 
-    {
-        F32 mFloat;
-        I32 mInt;
-    };
-};
-
-struct i64_represent_f64 {
-    using int_type = I64;
-    using float_type = F64;
-
-    union 
-    {
-        F64 mFloat;
-        I64 mInt;
-    };
-};
-
 template<typename SerializedType>
 MBASE_INLINE typename serialize_helper<SerializedType>::size_type serialize_helper<SerializedType>::get_serialized_size() const noexcept
 {
@@ -447,19 +425,19 @@ MBASE_INLINE typename serialize_helper<U64>::value_type serialize_helper<U64>::d
 template<>
 MBASE_INLINE typename serialize_helper<F32>::size_type serialize_helper<F32>::get_serialized_size() const noexcept
 {
-    return sizeof(typename i32_represent_f32::int_type);
+    return sizeof(typename IF32::int_type);
 }
 
 template<>
 MBASE_INLINE GENERIC serialize_helper<F32>::serialize(char_stream& out_buffer) noexcept
 {
-    i32_represent_f32 if32;
+    IF32 if32;
     if32.mFloat = *value;
 
     serialize_helper<I32> i32Serializer;
     i32Serializer.value = &if32.mInt;
 
-    out_buffer.put_datan<typename i32_represent_f32::int_type>(*i32Serializer.value);
+    out_buffer.put_datan<typename IF32::int_type>(*i32Serializer.value);
 }
 
 template<>
@@ -469,7 +447,7 @@ MBASE_INLINE typename serialize_helper<F32>::value_type serialize_helper<F32>::d
     {
         throw mbase::invalid_size();
     }
-    i32_represent_f32 if32;
+    IF32 if32;
     serialize_helper<I32> i32Serializer;
 
     if32.mInt = i32Serializer.deserialize(in_src, in_length);
@@ -480,19 +458,19 @@ MBASE_INLINE typename serialize_helper<F32>::value_type serialize_helper<F32>::d
 template<>
 MBASE_INLINE typename serialize_helper<F64>::size_type serialize_helper<F64>::get_serialized_size() const noexcept
 {
-    return sizeof(typename i64_represent_f64::int_type);
+    return sizeof(typename IF64::int_type);
 }
 
 template<>
 MBASE_INLINE GENERIC serialize_helper<F64>::serialize(char_stream& out_buffer) noexcept
 {
-    i64_represent_f64 if64;
+    IF64 if64;
     if64.mFloat = *value;
 
     serialize_helper<I64> i64Serializer;
     i64Serializer.value = &if64.mInt;
 
-    out_buffer.put_datan<typename i64_represent_f64::int_type>(*i64Serializer.value);
+    out_buffer.put_datan<typename IF64::int_type>(*i64Serializer.value);
 }
 
 template<>
@@ -502,7 +480,7 @@ MBASE_INLINE typename serialize_helper<F64>::value_type serialize_helper<F64>::d
     {
         throw mbase::invalid_size();
     }
-    i64_represent_f64 if64;
+    IF64 if64;
     serialize_helper<I64> i64Serializer;
 
     if64.mInt = i64Serializer.deserialize(in_src, in_length);

@@ -17,7 +17,6 @@
 	#define MBASE_PLATFORM_APPLE
 #endif // __APPLE__
 
-
 #ifdef MBASE_PLATFORM_WINDOWS
 
 #ifndef WIN32_LEAN_AND_MEAN
@@ -216,6 +215,29 @@ using CPTRGENERIC = const PTRGENERIC;
 
 using VBUFF = PTRGENERIC;
 using PTRVBUFF = PTRGENERIC*;
+
+struct IF32 {
+	using int_type = I32;
+	using float_type = F32;
+
+	union
+	{
+		F32 mFloat;
+		I32 mInt;
+	};
+};
+
+struct IF64 {
+	using int_type = I64;
+	using float_type = F64;
+
+	union
+	{
+		F64 mFloat;
+		I64 mInt;
+	};
+};
+
 
 MBASE_STD_END
 

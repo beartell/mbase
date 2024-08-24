@@ -1,6 +1,7 @@
 #include <mbase/inference/inf_processor.h>
 #include <mbase/inference/inf_client.h>
 #include <mbase/inference/inf_model.h>
+#include <mbase/inference/inf_sampling.h>
 #include <common/common.h>
 
 MBASE_BEGIN
@@ -356,9 +357,11 @@ GENERIC InfProcessor::update()
 		if(!myClient->is_processing())
 		{
 			myClient->mFs = mbase::InfClient::finish_state::INF_FINISH_STATE_SUCCESS;
+			myClient->mSamplingOrder.clear();
 			myClient->on_write(myCharacterStream.get_buffer(), myCharacterStream.get_pos());
 			myCharacterStream.set_cursor_front();
 			myClient->on_finish(myClient->mfrBatchCursor);
+			myClient->mFs = mbase::InfClient::finish_state::INF_FINISH_STATE_CONTINUE;
 			continue;
 		}
 		
@@ -366,6 +369,8 @@ GENERIC InfProcessor::update()
 		{
 			// means token limit reached
 			myClient->mIsProcessing = false;
+			myClient->mSamplingOrder.clear();
+			myClient->mFs = mbase::InfClient::finish_state::INF_FINISH_STATE_TOKEN_LIMIT_REACHED;
 			myCharacterStream.set_cursor_front();
 			myClient->on_finish(myClient->mfrBatchCursor);
 			continue;
@@ -383,7 +388,7 @@ GENERIC InfProcessor::update_t()
 	{
 		return;
 	}
-	
+
 	mbase::lock_guard lgClient(mClientsMutex);
 	for (client_list::iterator It = mRegisteredClients.begin(); It != mRegisteredClients.end(); ++It)
 	{
@@ -392,7 +397,6 @@ GENERIC InfProcessor::update_t()
 			return;
 		}
 		InfClient* myClient = *It;
-
 		if(myClient->is_unregistering())
 		{
 			mbase::lock_guard procMutex(mProcHandlerMutex);
@@ -466,7 +470,7 @@ GENERIC InfProcessor::update_t()
 				mProcessedHandlers.push_back(myClient);
 				continue;
 			}
-
+			
 			llama_decode(mModelContext, myClient->mfrBatch);
 			I32 modelVocab = 0;
 			I32 seqId = myClient->mSequenceId;
@@ -480,10 +484,31 @@ GENERIC InfProcessor::update_t()
 
 			// TODO: implement an object that will provide a token sampling interface
 			llama_token_data_array tokenCandidates = { mPresetCandidates.data(), mPresetCandidates.size(), false };
-			const llama_token generatedToken = llama_sample_token(mModelContext, &tokenCandidates);
-			
-			// TODO: Handle unknown token generation
 
+			mbase::vector<InfSamplingBase*> tmpSamplers;
+			myClient->get_sampling_order(tmpSamplers);
+
+			for(mbase::vector<InfSamplingBase*>::iterator It = tmpSamplers.begin(); It != tmpSamplers.end(); ++It)
+			{
+				InfSamplingBase* activeSampler = *It;
+				activeSampler->set_context(mModelContext);
+				activeSampler->set_token_array(&tokenCandidates);
+				activeSampler->apply_sampling();
+			}
+
+			llama_token generatedToken;
+
+			if(!tmpSamplers.size())
+			{
+				generatedToken = llama_sample_token_greedy(mModelContext, &tokenCandidates);
+			}
+
+			else
+			{
+				generatedToken = tokenCandidates.data->id;
+			}
+			// TODO: Handle unknown token generation
+			
 			if (llama_token_is_eog(get_processed_model()->get_raw_model(), generatedToken)) // || batch_cursor >= predictMax
 			{
 				I32 resultLength = llama_token_to_piece(get_processed_model()->get_raw_model(), generatedToken, myClient->mfrGeneratedToken.get_buffer(), 128, 0, true);
@@ -501,7 +526,7 @@ GENERIC InfProcessor::update_t()
 				mProcessedHandlers.push_back(myClient);
 				continue;
 			}
-			 
+
 			I32 resultLength = llama_token_to_piece(get_processed_model()->get_raw_model(), generatedToken, myClient->mfrGeneratedToken.get_buffer(), 128, 0, true);
 			llama_batch_clear(myClient->mfrBatch);
 			llama_batch_add(myClient->mfrBatch, generatedToken, myClient->mfrBatchCursor, { seqId }, true);
@@ -517,7 +542,6 @@ GENERIC InfProcessor::update_t()
 
 			mbase::lock_guard procMutex(mProcHandlerMutex);
 			mProcessedHandlers.push_back(myClient);
-			
 		}
 	}
 }

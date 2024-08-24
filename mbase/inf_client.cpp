@@ -1,5 +1,6 @@
 #include <mbase/inference/inf_client.h>
 #include <mbase/inference/inf_model.h>
+#include <mbase/inference/inf_sampling.h>
 #include <iostream>
 
 MBASE_BEGIN
@@ -28,6 +29,7 @@ InfClient::InfClient() :
 	mIsLogicProcessed(true),
 	mIsDataSet(false),
 	mParsedTokens(),
+	mSamplingOrder(),
 	mChatHistory(),
 	mSequenceId(0),
 	mfrBatchCursor(0),
@@ -48,6 +50,7 @@ InfClient::InfClient(const InfClient& in_rhs):
 	mIsLogicProcessed(true),
 	mIsDataSet(false),
 	mParsedTokens(),
+	mSamplingOrder(),
 	mChatHistory(in_rhs.mChatHistory),
 	mSequenceId(0),
 	mfrBatchCursor(0),
@@ -58,12 +61,14 @@ InfClient::InfClient(const InfClient& in_rhs):
 	mInactivityCounter(0),
 	mFs(finish_state::INF_FINISH_STATE_CONTINUE)
 {
-
+	// TODO: Copy the sampler map
 }
 
 InfClient& InfClient::operator=(const InfClient& in_rhs)
 {
+	// TODO: Copy the sampler map
 	mChatHistory = in_rhs.mChatHistory;
+
 	return *this;
 }
 
@@ -73,6 +78,12 @@ InfClient::~InfClient()
 	{
 		// THIS IS A PROBLEM, RETURN HERE LATER
 		mfrHostProcessor->unregister_client(*this);
+	}
+
+	for(sampler_map::iterator It = mSamplerMap.begin(); It != mSamplerMap.end(); ++It)
+	{
+		delete It->second;
+		It = mSamplerMap.erase(It);
 	}
 }
 
@@ -99,6 +110,32 @@ bool InfClient::is_data_set() const
 bool InfClient::is_logic_processed() const
 {
 	return mIsLogicProcessed;
+}
+
+bool InfClient::has_sampler(const mbase::string& in_sampler_name)
+{
+	if(mSamplerMap.find(in_sampler_name) == mSamplerMap.end())
+	{
+		return false;
+	}
+
+	return true;
+}
+
+bool InfClient::get_sampler(const mbase::string& in_sampler_name, InfSamplingBase*& out_sampler)
+{
+	if(!has_sampler(in_sampler_name))
+	{
+		return false;
+	}
+
+	out_sampler = mSamplerMap[in_sampler_name];
+	return true;
+}
+
+GENERIC InfClient::get_sampling_order(mbase::vector<InfSamplingBase*>& out_order)
+{
+	out_order = mSamplingOrder;
 }
 
 InfClient::flags InfClient::get_generated_token_count(size_type& out_token_count)
@@ -193,7 +230,7 @@ InfClient::flags InfClient::set_input(CBYTEBUFFER in_data, size_type in_size, in
 		mfrHostProcessor->get_processed_model()->get_assistant_end(endString);
 		totalInput = roleString + lineString + endString;
 	}
-	
+
 	context_line tempContextLine{ in_role, std::move(totalInput), ++mMessageIndexer };
 	mChatHistory.insert(mbase::pair<U32, context_line>(mMessageIndexer, tempContextLine));
 	out_message_id = mMessageIndexer;
@@ -265,6 +302,22 @@ InfClient::flags InfClient::remove_messages(const mbase::vector<U32>& in_msg_ids
 	return flags::INF_CLIENT_SUCCESS;
 }
 
+bool InfClient::add_to_sampling_order(InfSamplingBase* in_sampler)
+{
+	if(!in_sampler)
+	{
+		return false;
+	}
+
+	if(!has_sampler(in_sampler->get_sampler_name()))
+	{
+		return false;
+	}
+
+	mSamplingOrder.push_back(in_sampler);
+	return true;
+}
+
 GENERIC InfClient::next()
 {
 	mIsLogicProcessed = true;
@@ -296,6 +349,7 @@ GENERIC InfClient::_reset_client()
 	mIsDataSet = false;
 	mFs = finish_state::INF_FINISH_STATE_CONTINUE;
 	mParsedTokens.clear();
+	mSamplingOrder.clear();
 	mSequenceId = 0;
 	mInactivityCounter = 0;
 }
