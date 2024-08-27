@@ -77,6 +77,7 @@ InfClient::~InfClient()
 	if(this->is_registered())
 	{
 		// THIS IS A PROBLEM, RETURN HERE LATER
+
 		mfrHostProcessor->unregister_client(*this);
 	}
 
@@ -197,6 +198,16 @@ InfClient::flags InfClient::get_host_processor(InfProcessor*& out_processor)
 	return flags::INF_CLIENT_SUCCESS;
 }
 
+U32 InfClient::get_inactivity_counter()
+{
+	return mInactivityCounter;
+}
+
+U32 InfClient::get_client_max_token()
+{
+	return mfrMaxTokenCount;
+}
+
 InfClient::flags InfClient::set_input(CBYTEBUFFER in_data, size_type in_size, input_role in_role, U32 &out_message_id)
 {
 	MBASE_INF_CLIENT_USUAL_CHECK;
@@ -273,6 +284,13 @@ InfClient::flags InfClient::execute_prompt(const mbase::vector<U32>& in_msg_ids)
 		return flags::INF_CLIENT_ERR_MISSING_CHAT;
 	}
 
+	if(mChatHistory[in_msg_ids.back()].mRole == input_role::INF_ROLE_USR)
+	{
+		mbase::string assistantString;
+		mfrHostProcessor->get_processed_model()->get_assistant_start(assistantString);
+		totalPrompt += assistantString;
+	}
+
 	if(!totalPrompt.size())
 	{
 		return flags::INF_CLIENT_ERR_MISSING_CHAT;
@@ -343,10 +361,6 @@ GENERIC InfClient::clear_chat_history()
 
 GENERIC InfClient::_reset_client()
 {
-	if(!this->is_registered())
-	{
-		return;
-	}
 	llama_batch_free(mfrBatch);
 	mfrHostProcessor = NULL;
 	mfrSelfIter = NULL;

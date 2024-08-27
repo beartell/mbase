@@ -2,6 +2,8 @@
 #include <mbase/inference/inf_client.h>
 #include <mbase/inference/inf_model.h>
 #include <mbase/inference/inf_sampling.h>
+#include <mbase/framework/timer_loop.h>
+#include <mbase/framework/timers.h>
 #include <common/common.h>
 
 MBASE_BEGIN
@@ -24,6 +26,19 @@ if(!this->is_running())\
 
 static U32 gInfProcMaxTokenLength = 128;
 
+InfInactiveClientCleaner::InfInactiveClientCleaner(InfProcessor & in_host) : mHostProcessor(&in_host)
+{
+
+}
+
+GENERIC InfInactiveClientCleaner::on_call(user_data in_data)
+{
+	if(mHostProcessor)
+	{
+		mHostProcessor->update_inactivity();
+	}
+}
+
 InfProcessor::InfProcessor() :
 	mProcessedHandlers(),
 	mRegisteredClients(),
@@ -35,13 +50,67 @@ InfProcessor::InfProcessor() :
 	mClientsMutex(),
 	mMaxClients(gInfProcessorDefaultMaxSeq),
 	mRegisteredBatchSize(0),
-	mIsRunning(false)
+	mInactivityThreshold(gProcessorMinimumInactivityThreshold),
+	mIsRunning(false),
+	mClientCleaner(*this)
 {
+	mClientCleaner.set_target_time(1000);
+	mClientCleaner.set_tick_limit(100000);
 }
 
 InfProcessor::~InfProcessor()
 {
 	this->destroy();
+}
+
+typename InfProcessor::iterator InfProcessor::begin() noexcept
+{
+	return mRegisteredClients.begin();
+}
+
+typename InfProcessor::iterator InfProcessor::end() noexcept
+{
+	return mRegisteredClients.end();
+}
+
+typename InfProcessor::const_iterator InfProcessor::begin() const noexcept
+{
+	return mRegisteredClients.begin();
+}
+
+typename InfProcessor::const_iterator InfProcessor::end() const noexcept
+{
+	return mRegisteredClients.end();
+}
+
+typename InfProcessor::const_iterator InfProcessor::cbegin() const noexcept
+{
+	return mRegisteredClients.cbegin();
+}
+
+typename InfProcessor::const_iterator InfProcessor::cend() const noexcept
+{
+	return mRegisteredClients.cend();
+}
+
+typename InfProcessor::reverse_iterator InfProcessor::rbegin() noexcept
+{
+	return mRegisteredClients.rbegin();
+}
+
+typename InfProcessor::reverse_iterator InfProcessor::rend() noexcept
+{
+	return mRegisteredClients.rend();
+}
+
+typename InfProcessor::const_reverse_iterator InfProcessor::crbegin() const noexcept
+{
+	return mRegisteredClients.crbegin();
+}
+
+typename InfProcessor::const_reverse_iterator InfProcessor::crend() const noexcept
+{
+	return mRegisteredClients.crend();
 }
 
 bool InfProcessor::is_registered() const
@@ -92,6 +161,16 @@ InfProcessor::flags InfProcessor::get_max_batch_size(U32& out_size)
 InfModel* InfProcessor::get_processed_model()
 {
 	return mProcessedModel;
+}
+
+U32 InfProcessor::get_inactivity_threshold()
+{
+	return mInactivityThreshold;
+}
+
+InfInactiveClientCleaner* InfProcessor::get_client_cleaner()
+{
+	return &mClientCleaner;
 }
 
 InfProcessor::flags InfProcessor::destroy()
@@ -221,8 +300,9 @@ InfProcessor::flags InfProcessor::register_client(const mbase::vector<inf_token>
 
 	out_client.mfrBatchCursor = 0;
 	out_client.mfrHostProcessor = this;
+	out_client.mSequenceId = ++this->mContextIdCounter;
+	out_client.mInactivityCounter = 0;
 	out_client.mfrMaxTokenCount = in_token_limit;
-	out_client.mSequenceId = this->mContextIdCounter++;
 	out_client.mFs = InfClient::finish_state::INF_FINISH_STATE_CONTINUE;
 	out_client.mfrBatch = llama_batch_init(in_token_limit, 0, 1);
 
@@ -284,10 +364,11 @@ InfProcessor::flags InfProcessor::register_client(InfClient& out_client, U32 in_
 	out_client.mfrBatchCursor = 0;
 	out_client.mfrHostProcessor = this;
 	out_client.mSequenceId = ++this->mContextIdCounter;
+	out_client.mInactivityCounter = 0;
 	out_client.mfrMaxTokenCount = in_token_limit;
 	out_client.mFs = InfClient::finish_state::INF_FINISH_STATE_CONTINUE;
 	out_client.mfrBatch = llama_batch_init(in_token_limit, 0, 1);
-
+	
 	mRegisteredBatchSize += out_client.mfrMaxTokenCount;
 	mRegisteredClients.push_back(&out_client);
 	out_client.mfrSelfIter = mRegisteredClients.end_node();
@@ -309,7 +390,6 @@ InfProcessor::flags InfProcessor::unregister_client(InfClient& in_client)
 	{
 		return flags::INF_PROC_ERR_BELONGS_TO_ANOTHER_PROCESSOR;
 	}
-
 	in_client.mIsUnregistering = true;
 	return flags::INF_PROC_SUCCESS;
 }
@@ -317,6 +397,30 @@ InfProcessor::flags InfProcessor::unregister_client(InfClient& in_client)
 GENERIC InfProcessor::set_max_client_count(U32 in_max_clients)
 {
 	mMaxClients = in_max_clients;
+}
+
+GENERIC InfProcessor::set_inactivity_threshold(U32 in_threshold)
+{
+	mInactivityThreshold = in_threshold;
+}
+
+GENERIC InfProcessor::update_inactivity()
+{
+	if (this->is_registered())
+	{
+		for (InfProcessor::client_list::iterator It = begin(); It != end(); ++It)
+		{
+			InfClient* tmpClient = *It;
+
+			if (tmpClient->get_inactivity_counter() == get_inactivity_threshold())
+			{
+				unregister_client(*tmpClient);
+				continue;
+			}
+			++tmpClient->mInactivityCounter;
+		}
+	}
+	mClientCleaner.reset_tick_counter();
 }
 
 GENERIC InfProcessor::halt()
@@ -340,6 +444,7 @@ GENERIC InfProcessor::update()
 	for(logic_handlers::iterator It = mProcessedHandlers.begin(); It != mProcessedHandlers.end(); ++It)
 	{
 		InfClient* myClient = *It;
+		myClient->mInactivityCounter = 0;
 		mbase::char_stream& myCharacterStream = myClient->mfrGeneratedToken;
 		if(!myClient->is_registered())
 		{

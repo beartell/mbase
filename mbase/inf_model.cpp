@@ -528,6 +528,7 @@ InfModel::flags InfModel::register_processor(InfProcessor& out_processor, InfPro
 	freshProcStructure->mProcessor = &out_processor;
 	freshProcStructure->mProcUpdateT.set_user_data(freshProcStructure);
 	freshProcStructure->mProcUpdateT.run();
+	mTimerLoop.register_timer(*freshProcStructure->mProcessor->get_client_cleaner());
 	mAiLoops.execute_job(freshProcStructure->mProcUpdateT);
 	mRegisteredProcessors.push_back(freshProcStructure);
 
@@ -538,6 +539,7 @@ InfModel::flags InfModel::unregister_processor(InfProcessor& in_processor)
 {
 	MBASE_INF_MODEL_RETURN_UNINITIALIZED;
 	
+	mTimerLoop.unregister_timer(*in_processor.get_client_cleaner());
 	in_processor.destroy();
 
 	return flags::INF_MODEL_SUCCESS;
@@ -565,6 +567,7 @@ InfModel::flags InfModel::_unregister_processor(InfProcessor& in_processor, iter
 	InfRegisteredProcStructure* tmpStruct = *_out_it;
 	_out_it = mRegisteredProcessors.erase(_out_it);
 	tmpStruct->mProcUpdateT.destroy();
+	mTimerLoop.unregister_timer(*tmpStruct->mProcessor->get_client_cleaner());
 
 	return flags::INF_MODEL_SUCCESS;
 }
@@ -581,6 +584,7 @@ GENERIC InfModel::update()
 		InfRegisteredProcStructure* tmpProc = *It;
 		tmpProc->mProcessor->update();
 	}
+	mTimerLoop.run_timers();
 }
 
 MBASE_END

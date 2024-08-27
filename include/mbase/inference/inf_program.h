@@ -64,7 +64,8 @@ public:
 		INF_CLIENT_UNREGISTERING = 2009,
 		INF_CLIENT_NOT_REGISTERED = 2010,
 		INF_PROCESSOR_UNAVAILABLE = 2011,
-		INF_CONTEXT_ALREADY_ACTIVE = 2012,
+		INF_CONTEXT_ACTIVE = 2012,
+		INF_CONTEXT_INACTIVE = 2013,
 		EXEC_SUCCESS = 3000,
 		EXEC_PROCESSING = 3001,
 		EXEC_MESSAGE_ID_MISMATCH = 3002,
@@ -74,7 +75,7 @@ public:
 		EXEC_MESSAGE_CONTINUE = 3006,
 		EXEC_MESSAGE_FINISH = 3007,
 		EXEC_ABANDONED = 3008,
-		EXEC_CONTEXT_UPDATE = 3009
+		EXEC_CONTEXT_INACTIVE = 3009
 	};
 
 	bool is_session_match(MBASE_MAIP_CL_AUTH);
@@ -84,8 +85,10 @@ public:
 	maip_err_code inf_get_acquired_models(MBASE_MAIP_CL_AUTH, mbase::vector<mbase::string>& out_models);
 	maip_err_code inf_get_created_context_ids(MBASE_MAIP_CL_AUTH, mbase::vector<U64>& out_contexts);
 	maip_err_code inf_create_context(MBASE_MAIP_CL_AUTH, const mbase::string& in_model, const U32& in_ctsize, const mbase::vector<mbase::string>& in_samplers, U64& out_ctxId); // CTSIZE : Context size
-	maip_err_code inf_update_context(MBASE_MAIP_CL_AUTH, const mbase::string& in_model, const U64& in_ctxId);
+	maip_err_code inf_activate_context(MBASE_MAIP_CL_AUTH, const mbase::string& in_model, const U64& in_ctxId);
+	maip_err_code inf_get_context_status(MBASE_MAIP_CL_AUTH, const U64& in_ctxId);
 	maip_err_code inf_destroy_context(MBASE_MAIP_CL_AUTH, const U64& in_ctxId);
+	maip_err_code inf_release_context(MBASE_MAIP_CL_AUTH, const U64& in_ctxId);
 	maip_err_code inf_acquire_model(MBASE_MAIP_CL_AUTH, const mbase::string& in_model);
 	maip_err_code inf_release_model(MBASE_MAIP_CL_AUTH, const mbase::string& in_model);
 	maip_err_code inf_get_models(MBASE_MAIP_CL_AUTH, mbase::vector<mbase::string>& out_models);
@@ -102,6 +105,8 @@ public:
 
 	static maip_err_code proc_err_to_maip(InfProcessor::flags in_flag);
 	static maip_err_code client_err_to_maip(InfClient::flags in_flag);
+
+	GENERIC update();
 
 private:
 	mbase::unordered_map<U64, InfAcceptedClient> mActiveClients;

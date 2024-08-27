@@ -8,6 +8,7 @@
 #include <mbase/unordered_map.h>
 #include <mbase/behaviors.h>
 #include <mbase/framework/thread_pool.h>
+#include <mbase/framework/timer_loop.h>
 #include <llama.h>
 
 MBASE_BEGIN
@@ -129,6 +130,7 @@ private:
 	mbase::string mAssistantStart; // maybe the same if the system and assistant is the same in a program
 	inf_token mEndOfToken;
 	mbase::tpool mAiLoops;
+	mbase::timer_loop mTimerLoop;
 };
 
 MBASE_END

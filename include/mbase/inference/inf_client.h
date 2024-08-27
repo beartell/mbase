@@ -74,6 +74,8 @@ public:
 	flags get_context_id(U32& out_context_id);
 	flags get_message_context(U32 in_msg_id, context_line& out_context_line);
 	flags get_host_processor(InfProcessor*& out_processor);
+	U32 get_inactivity_counter();
+	U32 get_client_max_token();
 
 	virtual GENERIC on_register() = 0;
 	virtual GENERIC on_write(CBYTEBUFFER out_data, size_type out_size) = 0;
@@ -102,7 +104,7 @@ public:
 	GENERIC next();
 	GENERIC abandon();
 	GENERIC clear_chat_history(); // clears the chat map
-
+	
 protected:
 	GENERIC _reset_client();
 

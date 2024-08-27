@@ -201,6 +201,7 @@ public:
 	MBASE_INLINE size_type generate_payload(mbase::string& out_payload);
 	MBASE_INLINE size_type generate_payload(mbase::string& out_payload, mbase::char_stream& in_stream);
 	MBASE_INLINE size_type generate_payload(mbase::string& out_payload, mbase::string in_string);
+	MBASE_INLINE size_type generate_payload(mbase::string& out_payload, mbase::wstring in_string);
 
 private:
 	mbase::string mVersionString = "MAIP1.0 ";
@@ -613,6 +614,13 @@ MBASE_INLINE typename maip_packet_builder::size_type maip_packet_builder::genera
 MBASE_INLINE typename maip_packet_builder::size_type maip_packet_builder::generate_payload(mbase::string& out_payload, mbase::string in_string)
 {
 	mbase::char_stream cs(in_string.data(), in_string.size());
+	return generate_payload(out_payload, cs);
+}
+
+MBASE_INLINE typename maip_packet_builder::size_type maip_packet_builder::generate_payload(mbase::string& out_payload, mbase::wstring in_string)
+{
+	mbase::string utfString = std::move(mbase::to_utf8(in_string));
+	mbase::char_stream cs(utfString.data(), utfString.size());
 	return generate_payload(out_payload, cs);
 }
 

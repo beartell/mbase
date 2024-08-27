@@ -37,7 +37,7 @@ private:
 };
 
 struct MBASE_API PcNetPacket {
-	PcNetPacket(U16 in_min_packet_size = 32768) noexcept;
+	PcNetPacket(U16 in_min_packet_size = gNetDefaultPacketSize) noexcept;
 	PcNetPacket(const PcNetPacket& in_rhs) noexcept;
 	PcNetPacket(PcNetPacket&& in_rhs) noexcept;
 

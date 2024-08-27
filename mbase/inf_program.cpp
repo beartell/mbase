@@ -12,12 +12,12 @@ if(!this->is_session_match(in_csid, in_clid))\
 }\
 InfAcceptedClient& mAccClient = mActiveClients[in_csid];
 
-InfMaipTunedClient::InfMaipTunedClient() : lastToken(), mManagerClient(NULL), mIsDeadClient(true)
+InfMaipTunedClient::InfMaipTunedClient() : lastToken(), mManagerClient(NULL), mIsDeadClient(false)
 {
 
 }
 
-InfMaipTunedClient::InfMaipTunedClient(InfAcceptedClient& in_client) : mManagerClient(&in_client)
+InfMaipTunedClient::InfMaipTunedClient(InfAcceptedClient& in_client) : mManagerClient(&in_client), mIsDeadClient(false)
 {
 }
 
@@ -188,7 +188,7 @@ InfProgram::maip_err_code InfProgram::inf_create_session(const mbase::string& in
 	out_csid = mClientSessionIdCounter;
 
 	// NOTE: THIS IS A TEMPORARY SOLUTION FOR GENERATING CLIENT IDS
-	// COLLISION IS NOT CHECKED AND IT WILL LIKELY HAPPEN
+	// COLLISION IS NOT CHECKED AND IT WILL LIKELY TO HAPPEN
 	// TODO: USE UUIDs or something else to assign client ids 
 	std::mt19937 randomGenerator(out_csid); // session id is the seed for now
 	InfAcceptedClient iac;
@@ -342,11 +342,16 @@ InfProgram::maip_err_code InfProgram::inf_create_context(MBASE_MAIP_CL_AUTH, con
 	return proc_err_to_maip(procErr);
 }
 
-InfProgram::maip_err_code InfProgram::inf_update_context(MBASE_MAIP_CL_AUTH, const mbase::string& in_model, const U64& in_ctxId)
+InfProgram::maip_err_code InfProgram::inf_activate_context(MBASE_MAIP_CL_AUTH, const mbase::string& in_model, const U64& in_ctxId)
 {
 	MBASE_SESSION_CONTROL;
 
 	if (std::find(mAccClient.mAcceptedModels.begin(), mAccClient.mAcceptedModels.end(), in_model) == mAccClient.mAcceptedModels.end())
+	{
+		return maip_err_code::INF_MODEL_NAME_MISMATCH;
+	}
+
+	if (mRegisteredModels.find(in_model) == mRegisteredModels.end())
 	{
 		return maip_err_code::INF_MODEL_NAME_MISMATCH;
 	}
@@ -360,11 +365,44 @@ InfProgram::maip_err_code InfProgram::inf_update_context(MBASE_MAIP_CL_AUTH, con
 
 	if(mySession->is_registered())
 	{
-		return maip_err_code::INF_CONTEXT_ALREADY_ACTIVE;
+		return maip_err_code::INF_CONTEXT_ACTIVE;
 	}
 
 	mySession->mIsDeadClient = false;
-	return maip_err_code::INF_SUCCESS;
+
+	// RE-REGISTER THE CLIENT
+	InfModel* tempModel = mRegisteredModels[in_model];
+	InfProcessor::flags procErr = InfProcessor::flags::INF_PROC_ERR_UNREGISTERED_PROCESSOR;
+	for (auto& tmpProc : *tempModel)
+	{
+		procErr = tmpProc->mProcessor->register_client(*mySession, mySession->get_client_max_token());
+		if(procErr == InfProcessor::flags::INF_PROC_SUCCESS)
+		{
+			return maip_err_code::INF_SUCCESS;
+		}
+	}
+
+	return proc_err_to_maip(procErr);
+}
+
+InfProgram::maip_err_code InfProgram::inf_get_context_status(MBASE_MAIP_CL_AUTH, const U64& in_ctxId)
+{
+	MBASE_SESSION_CONTROL;
+
+	if (mAccClient.mChatSessions.find(in_ctxId) == mAccClient.mChatSessions.end())
+	{
+		return maip_err_code::INF_CONTEXT_ID_MISMATCH;
+	}
+
+	InfMaipTunedClient* mySession = mAccClient.mChatSessions[in_ctxId];
+	if(mySession->is_registered())
+	{
+		return maip_err_code::INF_CONTEXT_ACTIVE;
+	}
+
+	mySession->mIsDeadClient = false;
+
+	return maip_err_code::INF_CONTEXT_INACTIVE;
 }
 
 InfProgram::maip_err_code InfProgram::inf_destroy_context(MBASE_MAIP_CL_AUTH, const U64& in_ctxId)
@@ -388,6 +426,34 @@ InfProgram::maip_err_code InfProgram::inf_destroy_context(MBASE_MAIP_CL_AUTH, co
 
 	mySession->mIsDeadClient = true;
 	return proc_err_to_maip(myProcessor->unregister_client(*mySession));
+}
+
+InfProgram::maip_err_code InfProgram::inf_release_context(MBASE_MAIP_CL_AUTH, const U64& in_ctxId)
+{
+	MBASE_SESSION_CONTROL;
+	if (mAccClient.mChatSessions.find(in_ctxId) == mAccClient.mChatSessions.end())
+	{
+		return maip_err_code::INF_CONTEXT_ID_MISMATCH;
+	}
+
+	InfMaipTunedClient* mySession = mAccClient.mChatSessions[in_ctxId];
+	if (mySession->is_registered())
+	{
+		InfProcessor* myProcessor = NULL;
+		mySession->get_host_processor(myProcessor);
+		if(myProcessor)
+		{
+			return proc_err_to_maip(myProcessor->unregister_client(*mySession));
+		}
+		else
+		{
+			return maip_err_code::INF_UNKNOWN_STATUS;
+		}
+	}
+
+	mySession->mIsDeadClient = false;
+
+	return maip_err_code::INF_CONTEXT_INACTIVE;
 }
 
 InfProgram::maip_err_code InfProgram::inf_acquire_model(MBASE_MAIP_CL_AUTH, const mbase::string& in_model)
@@ -458,6 +524,12 @@ InfProgram::maip_err_code InfProgram::exec_set_input(MBASE_MAIP_CL_AUTH, const U
 	}
 
 	InfMaipTunedClient* mySession = mAccClient.mChatSessions[in_ctxId];
+
+	if(!mySession->is_registered())
+	{
+		return maip_err_code::EXEC_CONTEXT_INACTIVE;
+	}
+
 	InfClient::flags errCode = mySession->set_input(in_input, in_role, out_msgid);
 	if(errCode != InfClient::flags::INF_CLIENT_SUCCESS)
 	{
@@ -476,6 +548,11 @@ InfProgram::maip_err_code InfProgram::exec_execute_input(MBASE_MAIP_CL_AUTH, std
 	}
 
 	InfMaipTunedClient* mySession = mAccClient.mChatSessions[in_ctxId];
+
+	if (!mySession->is_registered())
+	{
+		return maip_err_code::EXEC_CONTEXT_INACTIVE;
+	}
 
 	I32 indexSamplerValue = 0;
 	for(mbase::vector<mbase::string>::iterator It = in_sampler_order.begin(); It != in_sampler_order.end(); It++)
@@ -517,7 +594,7 @@ InfProgram::maip_err_code InfProgram::exec_next(MBASE_MAIP_CL_AUTH, std::shared_
 	InfMaipTunedClient* mySession = mAccClient.mChatSessions[in_ctxId];
 	if(!mySession->is_registered())
 	{
-		// TODO: re-register to a processor
+		return maip_err_code::EXEC_CONTEXT_INACTIVE;
 	}
 
 	mAccClient.mPeer = in_peer;
@@ -579,10 +656,10 @@ InfProgram::maip_err_code InfProgram::proc_err_to_maip(InfProcessor::flags in_fl
 		return maip_err_code::INF_SUCCESS; // change it into already processing
 		break;
 	case mbase::InfProcessor::flags::INF_PROC_ERR_CLIENT_ALREADY_REGISTERED:
-		return maip_err_code::INF_SUCCESS; // change it into already registered
+		return maip_err_code::INF_CONTEXT_ACTIVE; // change it into already registered
 		break;
 	case mbase::InfProcessor::flags::INF_PROC_ERR_MODEL_IS_NOT_INITIALIZED:
-		return maip_err_code::INF_SUCCESS; // change it into model is halted
+		return maip_err_code::INF_MODEL_NAME_MISMATCH; // change it into model is halted
 		break;
 	case mbase::InfProcessor::flags::INF_PROC_ERR_HALTED:
 		return maip_err_code::INF_PROCESSOR_UNAVAILABLE;
@@ -641,6 +718,14 @@ InfProgram::maip_err_code InfProgram::client_err_to_maip(InfClient::flags in_fla
 		break;
 	}
 	return maip_err_code::INF_SUCCESS;
+}
+
+GENERIC InfProgram::update()
+{
+	for(auto& modelMap : mRegisteredModels)
+	{
+		modelMap.second->update();
+	}
 }
 
 MBASE_END
