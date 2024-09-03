@@ -1,5 +1,6 @@
 #include <mbase/inference/inf_maip_server.h>
 #include <mbase/char_stream.h>
+#include <mbase/io_file.h>
 
 MBASE_BEGIN
 

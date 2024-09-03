@@ -542,6 +542,7 @@ InfProgram::maip_err_code InfProgram::exec_set_input(MBASE_MAIP_CL_AUTH, const U
 InfProgram::maip_err_code InfProgram::exec_execute_input(MBASE_MAIP_CL_AUTH, std::shared_ptr<mbase::PcNetPeerClient> in_peer, const U64& in_ctxId, const mbase::vector<U32>& in_msgid, mbase::vector<mbase::string> in_sampler_order, mbase::vector<IF32> in_sampler_inputs)
 {
 	MBASE_SESSION_CONTROL;
+	
 	if (mAccClient.mChatSessions.find(in_ctxId) == mAccClient.mChatSessions.end())
 	{
 		return maip_err_code::INF_CONTEXT_ID_MISMATCH;
@@ -553,7 +554,7 @@ InfProgram::maip_err_code InfProgram::exec_execute_input(MBASE_MAIP_CL_AUTH, std
 	{
 		return maip_err_code::EXEC_CONTEXT_INACTIVE;
 	}
-
+	
 	I32 indexSamplerValue = 0;
 	for(mbase::vector<mbase::string>::iterator It = in_sampler_order.begin(); It != in_sampler_order.end(); It++)
 	{

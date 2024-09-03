@@ -276,10 +276,10 @@ public:
     /* ===== NON-MODIFIER METHODS BEGIN ===== */
     template<typename SourceContainer = mbase::vector<character_sequence>>
     MBASE_INLINE GENERIC split(const character_sequence& in_delimiters, SourceContainer& out_strings) noexcept;
-    MBASE_ND(MBASE_RESULT_IGNORE) I32 to_i32() noexcept { return atoi(this->c_str()); }
-    MBASE_ND(MBASE_RESULT_IGNORE) I32 to_i64() noexcept { return _atoi64(this->c_str()); }
-    MBASE_ND(MBASE_RESULT_IGNORE) F32 to_f32() noexcept { return strtof(this->c_str(), nullptr); }
-    MBASE_ND(MBASE_RESULT_IGNORE) F64 to_f64() noexcept { return atof(this->c_str()); }
+    MBASE_ND(MBASE_RESULT_IGNORE) I32 to_i32() noexcept { return SeqBase::cnv_to_i32(this->c_str()); }
+    MBASE_ND(MBASE_RESULT_IGNORE) I32 to_i64() noexcept { return SeqBase::cnv_to_i64(this->c_str()); }
+    MBASE_ND(MBASE_RESULT_IGNORE) F32 to_f32() noexcept { return SeqBase::cnv_to_f32(this->c_str()); }
+    MBASE_ND(MBASE_RESULT_IGNORE) F64 to_f64() noexcept { return SeqBase::cnv_to_f64(this->c_str()); }
     MBASE_INLINE GENERIC serialize(char_stream& out_buffer) const;
     /* ===== NON-MODIFIER METHODS END ===== */
 

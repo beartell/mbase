@@ -1,6 +1,7 @@
 #include <mbase/inference/inf_client.h>
 #include <mbase/inference/inf_model.h>
 #include <mbase/inference/inf_sampling.h>
+#include <mbase/io_file.h>
 #include <iostream>
 
 MBASE_BEGIN
@@ -17,7 +18,8 @@ if(!is_registered())\
 if(is_processing() || is_data_set())\
 {\
 	return flags::INF_CLIENT_ERR_PROCESSING;\
-}
+}\
+mInactivityCounter = 0;
 
 static U32 gSeqIdCounter = 0;
 
@@ -244,7 +246,8 @@ InfClient::flags InfClient::set_input(CBYTEBUFFER in_data, size_type in_size, in
 		totalInput = roleString + lineString + endString;
 	}
 
-	context_line tempContextLine{ in_role, std::move(totalInput), ++mMessageIndexer };
+	mMessageIndexer++;
+	context_line tempContextLine{ in_role, std::move(totalInput), mMessageIndexer };
 	mChatHistory.insert(mbase::pair<U32, context_line>(mMessageIndexer, tempContextLine));
 	out_message_id = mMessageIndexer;
 
@@ -264,7 +267,7 @@ InfClient::flags InfClient::set_input(const mbase::wstring& in_data, input_role 
 InfClient::flags InfClient::execute_prompt(const mbase::vector<U32>& in_msg_ids)
 {
 	MBASE_INF_CLIENT_USUAL_CHECK;
-
+	
 	mbase::string totalPrompt;
 	if(in_msg_ids.size())
 	{
@@ -290,7 +293,7 @@ InfClient::flags InfClient::execute_prompt(const mbase::vector<U32>& in_msg_ids)
 		mfrHostProcessor->get_processed_model()->get_assistant_start(assistantString);
 		totalPrompt += assistantString;
 	}
-
+	
 	if(!totalPrompt.size())
 	{
 		return flags::INF_CLIENT_ERR_MISSING_CHAT;
@@ -300,7 +303,7 @@ InfClient::flags InfClient::execute_prompt(const mbase::vector<U32>& in_msg_ids)
 	{
 		return flags::INF_CLIENT_ERR_TOKENIZATION_FAILED;
 	}
-
+	
 	if(mParsedTokens.size() >= mfrMaxTokenCount)
 	{
 		return flags::INF_CLIENT_ERR_TOKEN_LIMIT_EXCEEDED;
@@ -371,6 +374,8 @@ GENERIC InfClient::_reset_client()
 	mFs = finish_state::INF_FINISH_STATE_CONTINUE;
 	mParsedTokens.clear();
 	mSamplingOrder.clear();
+	mChatHistory.clear();
+	mMessageIndexer = 0;
 	mSequenceId = 0;
 	mInactivityCounter = 0;
 }

@@ -547,16 +547,26 @@ GENERIC InfProcessor::update_t()
 				llama_batch_add(myClient->mfrBatch, generatedTokens[i], i, { seqId }, false);
 			}
 
-			//generatedTokens.clear();
+			generatedTokens.clear();
 			myClient->mfrBatch.logits[myClient->mfrBatch.n_tokens - 1] = true;
 			myClient->mIsProcessing = true;
 			myClient->mfrBatchCursor = myClient->mfrBatch.n_tokens;
+			++myClient->mMessageIndexer;
+
+			mbase::InfClient::context_line ctxLine;
+			ctxLine.mMessageIndex = myClient->mMessageIndexer;
+			myClient->mChatHistory.insert(mbase::pair(myClient->mMessageIndexer, ctxLine));
 		}
 		else
 		{
-			
 			if(myClient->mfrBatchCursor >= myClient->mfrMaxTokenCount)
 			{
+				if(!myClient->mChatHistory[myClient->mMessageIndexer].mInput.size()) // if the message map is empty, do not store the chat
+				{
+					myClient->mChatHistory.erase(myClient->mMessageIndexer);
+					--myClient->mMessageIndexer;
+				}
+
 				myClient->mIsDataSet = false;
 				myClient->mFs = InfClient::finish_state::INF_FINISH_STATE_TOKEN_LIMIT_REACHED;
 				llama_batch_clear(myClient->mfrBatch);
@@ -582,8 +592,6 @@ GENERIC InfProcessor::update_t()
 			// TODO: implement an object that will provide a token sampling interface
 			llama_token_data_array tokenCandidates = { mPresetCandidates.data(), mPresetCandidates.size(), false };
 
-			llama_sample_repetition_penalties(mModelContext, &tokenCandidates, myClient->mParsedTokens.data(), myClient->mParsedTokens.size(), 1.0, 0.0, 0.0);
-
 			mbase::vector<InfSamplingBase*> tmpSamplers;
 			myClient->get_sampling_order(tmpSamplers);
 
@@ -604,6 +612,7 @@ GENERIC InfProcessor::update_t()
 			{
 				I32 resultLength = llama_token_to_piece(get_processed_model()->get_raw_model(), generatedToken, myClient->mfrGeneratedToken.get_buffer(), 128, 0, true);
 				mbase::string strGeneratedToken(myClient->mfrGeneratedToken.get_buffer(), resultLength);
+				myClient->mChatHistory[myClient->mMessageIndexer].mInput += strGeneratedToken;
 				myClient->mfrGeneratedToken.set_cursor_pos(resultLength);
 				myClient->mIsDataSet = false;
 				myClient->mIsProcessing = false;
@@ -622,6 +631,7 @@ GENERIC InfProcessor::update_t()
 			llama_batch_add(myClient->mfrBatch, generatedToken, myClient->mfrBatchCursor, { seqId }, true);
 			mbase::string strGeneratedToken(myClient->mfrGeneratedToken.get_buffer(), resultLength);
 			// TODO: CHECK IF THE GENERATED TOKEN IS SPECIAL
+			myClient->mChatHistory[myClient->mMessageIndexer].mInput += strGeneratedToken;
 			myClient->mfrGeneratedToken.set_cursor_pos(resultLength);
 
 			myClient->mfrBatchCursor++;
