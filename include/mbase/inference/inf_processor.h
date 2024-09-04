@@ -102,7 +102,7 @@ public:
 	GENERIC update_t();
 
 protected:
-	logic_handlers mProcessedHandlers;
+	logic_handlers mLogicHandlers;
 	client_list mRegisteredClients;
 	mbase::vector<llama_token_data> mPresetCandidates;
 	InfModel* mProcessedModel;

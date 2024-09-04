@@ -20,26 +20,20 @@
 #endif // __APPLE__
 
 #ifdef MBASE_PLATFORM_WINDOWS
-
-#ifndef WIN32_LEAN_AND_MEAN
-#define WIN32_LEAN_AND_MEAN
-#endif // WINDOWS LEAN AND MEAN
-
-#define MBASE_PLATFORM_NEWLINE "\r\n"
-
+	#ifndef WIN32_LEAN_AND_MEAN
+	#define WIN32_LEAN_AND_MEAN
+	#endif // WINDOWS LEAN AND MEAN
+	#define MBASE_PLATFORM_NEWLINE "\r\n"
 #endif // MBASE_PLATFORM_WINDOWS
 
 #ifdef MBASE_PLATFORM_UNIX
-
-#define MBASE_PLATFORM_NEWLINE "\n"
-
+	#define MBASE_PLATFORM_NEWLINE "\n"
 #endif // MBASE_PLATFORM_UNIX
-
 
 /* LANGUAGE VERSION CONTROL */
 
 #ifndef __cplusplus
-#error Missing C++ compiler
+	#error Missing C++ compiler
 #endif // !__cplusplus
 
 #ifdef __cpp_pack_indexing
@@ -73,14 +67,27 @@
 #endif
 
 #define MBASE_STD_LIB_COMPATIBLE
+#define MBASE_SHARED
 
-#ifndef MBASE_STD_API
+#ifdef MBASE_SHARED
 	#if defined(_MSC_VER)
-		#define MBASE_STD_API __declspec(dllexport)
+		#ifdef MBASE_BUILD
+			#define MBASE_STD_API __declspec(dllexport)
+			#define MBASE_API MBASE_STD_API
+		#else
+			#define MBASE_STD_API __declspec(dllimport)
+			#define MBASE_API MBASE_STD_API
+		#endif // MBASE_BUILD
+	#else
+		#define MBASE_STD_API __attribute__ ((visibility ("default")))
 		#define MBASE_API MBASE_STD_API
 	#endif // _WIN32
-	// MAKE SURE TO IMPL THE CYGWIN AND GNUC
-#endif
+#else
+	#define MBASE_STD_API
+	#define MBASE_API
+#endif // MBASE_SHARED
+
+// MAKE SURE TO IMPL THE CYGWIN AND GNUC
 
 #define MBASE_STD_EXPLICIT explicit
 #define MBASE_EXPLICIT explicit

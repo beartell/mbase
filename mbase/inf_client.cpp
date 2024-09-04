@@ -25,7 +25,6 @@ static U32 gSeqIdCounter = 0;
 
 InfClient::InfClient() :
 	mfrHostProcessor(NULL),
-	mfrSelfIter(NULL),
 	mIsProcessing(false),
 	mIsUnregistering(false),
 	mIsLogicProcessed(true),
@@ -46,7 +45,6 @@ InfClient::InfClient() :
 
 InfClient::InfClient(const InfClient& in_rhs):
 	mfrHostProcessor(NULL),
-	mfrSelfIter(NULL),
 	mIsProcessing(false),
 	mIsUnregistering(false),
 	mIsLogicProcessed(true),
@@ -366,7 +364,6 @@ GENERIC InfClient::_reset_client()
 {
 	llama_batch_free(mfrBatch);
 	mfrHostProcessor = NULL;
-	mfrSelfIter = NULL;
 	mIsProcessing = false;
 	mIsUnregistering = false;
 	mIsLogicProcessed = true;
@@ -378,6 +375,44 @@ GENERIC InfClient::_reset_client()
 	mMessageIndexer = 0;
 	mSequenceId = 0;
 	mInactivityCounter = 0;
+}
+
+GENERIC InfClient::_register_self_client_params(
+	InfProcessor* in_processor,
+	const U32& in_sequence_id,
+	const U32& in_max_tokens
+)
+{
+	mIsProcessing = false;
+	mIsLogicProcessed = true;
+	mIsDataSet = false;
+	mFs = finish_state::INF_FINISH_STATE_CONTINUE;
+	mSamplingOrder.clear();
+	mfrHostProcessor = in_processor;
+	mfrBatchCursor = 0;
+	mSequenceId = in_sequence_id;
+	mInactivityCounter = 0;
+	mfrMaxTokenCount = in_max_tokens;
+	mfrBatch = llama_batch_init(mfrMaxTokenCount, 0, 1);
+	if(!mChatHistory.size())
+	{
+		mMessageIndexer = 0;
+	}
+}
+
+GENERIC InfClient::_register_self_client_params(
+	InfProcessor* in_processor,
+	const mbase::vector<InfProcessor::inf_token>& in_token_vector,
+	const U32& in_sequence_id,
+	const U32& in_max_tokens
+)
+{
+	_register_self_client_params(in_processor, in_sequence_id, in_max_tokens);
+	if(in_token_vector.size())
+	{
+		mParsedTokens = in_token_vector;
+		mIsDataSet = true;
+	}
 }
 
 MBASE_END

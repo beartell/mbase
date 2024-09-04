@@ -108,8 +108,20 @@ public:
 protected:
 	GENERIC _reset_client();
 
+	GENERIC _register_self_client_params(
+		InfProcessor* in_processor,
+		const U32& in_sequence_id,
+		const U32& in_max_tokens
+	);
+
+	GENERIC _register_self_client_params(
+		InfProcessor* in_processor,
+		const mbase::vector<InfProcessor::inf_token>& in_token_vector,
+		const U32& in_sequence_id,
+		const U32& in_max_tokens
+	);
+
 	InfProcessor* mfrHostProcessor;
-	inf_proc_iter mfrSelfIter;
 	bool mIsProcessing;
 	bool mIsUnregistering;
 	bool mIsLogicProcessed;
