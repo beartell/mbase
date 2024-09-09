@@ -7,46 +7,130 @@
 #include <mbase/vector.h>
 #include <mbase/unordered_map.h>
 #include <mbase/behaviors.h>
+#include <mbase/thread.h>
+#include <mbase/framework/logical_processing.h>
 #include <mbase/framework/thread_pool.h>
 #include <mbase/framework/timer_loop.h>
 #include <llama.h>
 
 MBASE_BEGIN
 
-static const U32 gInfProcessorDefaultCtxLength = 4096;
-static const U32 gInfProcessorDefaultBatchSize = 4096;
-static const U32 gInfProcessorDefaultMaxSeq = 32;
-static const U32 gInfProcessorDefaultThreadCount = 32;
+class InfModelBase;
+class InfTextToTextProcessor;
 
-static const U32 gInfProcessorMinCtxLength = 64;
-static const U32 gInfProcessorMinBatchSize = 64;
-static const U32 gInfProcessorMinSeq = 1;
-static const U32 gInfProcessorMinThreadCount = 1;
-
-class InfModel;
-class InfProcessor;
-
-class inf_proc_update_t : public mbase::handler_base {
+class MBASE_API InfModelBase : public mbase::multi_logical_processor {
 public:
-	inf_proc_update_t();
-	GENERIC destroy();
-	GENERIC run();
-	GENERIC on_call(user_data in_data) override;
+	using size_type = SIZE_T;
+	using context_processor_list = mbase::list<InfProcessorBase*>;
+	using iterator = typename context_processor_list::iterator;
+	using const_iterator = typename context_processor_list::const_iterator;
+	using reverse_iterator = typename context_processor_list::reverse_iterator;
+	using const_reverse_iterator = typename context_processor_list::const_reverse_iterator;
+
+	InfModelBase();
+
+	iterator begin() noexcept;
+	iterator end() noexcept;
+	const_iterator begin() const noexcept;
+	const_iterator end() const noexcept;
+	const_iterator cbegin() const noexcept;
+	const_iterator cend() const noexcept;
+	reverse_iterator rbegin() noexcept;
+	reverse_iterator rend() noexcept;
+	const_reverse_iterator crbegin() const noexcept;
+	const_reverse_iterator crend() const noexcept;
+
+	bool is_initialized() const;
+	bool signal_state_initializing() const;
+	bool signal_state_destroying() const;
+	bool signal_initializing() const;
+	bool signal_destroying() const;
+protected:
+	bool mIsInitialized;
+	processor_signal mInitializeSignal;
+	processor_signal mDestroySignal;
+
+	context_processor_list mRegisteredProcessors;
+	mbase::mutex mProcessorListMutex;
+	mbase::timer_loop mModelTimer;
+};
+
+class MBASE_API InfModelTextToText : public InfModelBase {
+public:
+	using inf_token = llama_token;
+
+	enum class flags : U8 {
+		INF_MODEL_SUCCESS,
+		INF_MODEL_ERR_CANT_LOAD_MODEL,
+		INF_MODEL_ERR_MISSING_MODEL,
+		INF_MODEL_ERR_NO_SENTENCE,
+		INF_MODEL_INFO_REGISTERING_PROCESSOR,
+		INF_MODEL_INFO_INITIALIZING_MODEL,
+		INF_MODEL_INFO_DESTROYING_MODEL,
+		INF_MODEL_INFO_PROCESSOR_IS_BEING_DESTROYED,
+		INF_MODEL_ERR_PROCESSOR_ALREADY_REGISTERED,
+		INF_MODEL_ERR_INVALID_INPUT,
+		INF_MODEL_ERR_INVALID_CONTEXT_LENGTH,
+		INF_MODEL_ERR_PROCESSOR_NOT_FOUND,
+		INF_MODEL_ERR_PROCESSOR_BELONGS_TO_ANOTHER_MODEL,
+		INF_MODEL_ERR_UNABLE_REGISTER_PROCESSOR,
+		INF_MODEL_ERR_NOT_INITIALIZED,
+		INF_MODEL_ERR_GENERIC
+	};
+
+	InfModelTextToText();
+
+	llama_model* get_raw_model();
+	flags get_special_tokens(mbase::vector<inf_token>& out_tokens);
+	flags get_special_tokens(mbase::vector<mbase::string>& out_tokens);
+	flags get_model_name(mbase::string& out_name);
+	flags get_vocabulary_type(mbase::string& out_type);
+	flags get_architecture(mbase::string& out_architecture);
+	flags get_finetune_type(mbase::string& out_type);
+	flags get_embedding_length(I32& out_length);
+	flags get_rope_type(mbase::string& out_type);
+	flags get_sys_start(mbase::string& out_start);
+	flags get_assistant_start(mbase::string& out_start);
+	flags get_usr_start(mbase::string& out_start);
+	flags get_sys_end(mbase::string& out_end);
+	flags get_assistant_end(mbase::string& out_end);
+	flags get_usr_end(mbase::string& out_end);
+	flags get_vocab_count(I32& out_count);
+	flags get_model_param_count(size_type& out_count);
+	flags get_model_params(mbase::unordered_map<mbase::string, mbase::string>& out_params);
+	flags get_size(size_type& out_size);
+	bool is_token_eof_generation(inf_token in_token);
+	flags is_token_special(const mbase::string& in_string);
+	flags is_token_control(inf_token in_token);
+	flags get_metadata_count(size_type& out_count);
+
+	flags initialize_model(const mbase::string& in_path, I32 in_gpu_layers = -1);
+	flags register_context_process(InfTextToTextProcessor* in_processor, U32 in_context_length);
+
+	GENERIC update() override;
+	GENERIC update_t() override;
+
 private:
-	bool mIsThreadRunning;
+	llama_model* mModel;
+	mbase::string mEndOfTokenString;
+	mbase::string mUsrStart;
+	mbase::unordered_map<mbase::string, mbase::string> mModelKvals;
+	mbase::string mSystemStart;
+	mbase::string mAssistantStart; // maybe the same if the system and assistant is the same in a program
+	mbase::string mModelPath;
+	llama_model_params mSuppliedParams;
+	inf_token mEndOfToken;
 };
 
-struct MBASE_API InfProcInitParams {
-	U32 mContextLength = gInfProcessorDefaultCtxLength;
-	U32 mBatchSize = gInfProcessorDefaultBatchSize;
-	U32 mMaxSequence = gInfProcessorDefaultMaxSeq;
-	U32 mThreadCount = gInfProcessorDefaultThreadCount;
-};
 
-struct MBASE_API InfRegisteredProcStructure {
-	InfProcessor* mProcessor = NULL;
-	inf_proc_update_t mProcUpdateT;
-};
+
+
+
+
+
+
+
+
 
 class MBASE_API InfModel : public non_copyable {
 public:

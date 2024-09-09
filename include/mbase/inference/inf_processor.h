@@ -8,6 +8,7 @@
 #include <mbase/synchronization.h>
 #include <mbase/behaviors.h>
 #include <mbase/inference/inf_model.h>
+#include <mbase/framework/logical_processing.h>
 #include <mutex>
 #include <llama.h>
 
@@ -16,8 +17,8 @@ MBASE_BEGIN
 static const U32 gProcessorMinimumTokenCount = 32;
 static const U32 gProcessorMinimumInactivityThreshold = 16; // in seconds
 
-class InfClient;
 class InfProcessor;
+class InfClientTextToText;
 class InfInactiveClientCleaner;
 
 class MBASE_API InfInactiveClientCleaner : public mbase::time_interval {
@@ -28,6 +29,138 @@ public:
 private:
 	InfProcessor* mHostProcessor;
 };
+
+class MBASE_API InfProcessorBase : public mbase::single_logical_processor {
+public:
+	using size_type = SIZE_T;
+
+	friend class InfModel;
+
+	enum class flags : U8 {
+		INF_PROC_SUCCESS,
+		INF_PROC_ERR_UNREGISTERED_PROCESSOR,
+		INF_PROC_ERR_ALREADY_INITIALIZED,
+		INF_PROC_ERR_ALREADY_PROCESSING,
+		INF_PROC_ERR_BELONGS_TO_ANOTHER_PROCESSOR,
+		INF_PROC_ERR_MODEL_IS_NOT_INITIALIZED,
+		INF_PROC_ERR_CONTEXT_IS_FULL,
+		INF_PROC_ERR_TOKEN_LIMIT_IS_TOO_LOW,
+		INF_PROC_ERR_INPUT_EXCEED_TOKEN_LIMIT,
+		INF_PROC_ERR_HALTED,
+		INF_PROC_ERR_UNABLE_TO_TOKENIZE_INPUT,
+		INF_PROC_ERR_INPUT_IS_EMPTY,
+		INF_PROC_INFO_CONTINUE
+	};
+
+	InfProcessorBase();
+
+	bool is_registered() const;
+	bool is_running();
+	bool signal_state_initializing() const;
+	bool signal_state_destroying() const;
+	bool signal_initializing() const;
+	bool signal_destroying() const;
+
+	bool has_client() const;
+	flags get_context_size(U32& out_size);
+	InfModelBase* get_processed_model();
+	U32 get_inactivity_threshold();
+	processor_signal& get_initialize_signal();
+	processor_signal& get_destroy_signal();
+
+	GENERIC set_inactivity_threshold(U32 in_threshold);
+	GENERIC halt();
+	GENERIC resume();
+
+protected:
+	//InfInactiveClientCleaner mClientCleaner;
+	InfModelBase* mTargetModel_md_model;
+	bool mIsRunning;
+	bool mIsRegistered;
+	processor_signal mInitializeSignal;
+	processor_signal mDestroySignal;
+
+	U32 mContextSize_md_model;
+	U32 mProcessorId_md_model;
+	U32 mInactivityThreshold;
+}; // TODO: speech-to-text(whisper.cpp), text-to-text(llama.cpp), text-to-speech<EXPERIMENTAL>(bark.cpp)
+
+class MBASE_API InfTextToTextProcessor : public mbase::InfProcessorBase {
+public:
+	using inf_token = llama_token;
+	using inf_token_candidates = mbase::vector<llama_token_data>;
+	using logic_participant = InfClientTextToText*;
+
+	enum class context_state {
+		DECODING_INPUT,
+		GENERATING_OUTPUT,
+		AWAITING_FOR_INPUT,
+		AWAITING_FOR_CURSOR_ALIGNMENT
+	};
+
+	InfTextToTextProcessor();
+	~InfTextToTextProcessor();
+
+	bool is_available() const;
+	bool signal_state_input_process() const;
+	bool signal_state_decode_process() const;
+	bool signal_input_process() const;
+	bool signal_decode_process() const;
+	bool signal_token_generated() const;
+	inf_token_candidates& get_token_candidates();
+	U32 get_max_token_length();
+
+	GENERIC _set_context_length(U32 in_length);
+	flags tokenize_input(CBYTEBUFFER in_data, size_type in_size, mbase::vector<inf_token>& out_tokens);
+	
+	flags execute_input(const mbase::vector<inf_token>& in_tokens, bool in_abandon = false);
+	flags next();
+	GENERIC clear_token_candidates();
+	GENERIC update() override;
+	GENERIC update_t() override;
+	GENERIC release_inference_client();
+
+private:
+	GENERIC _decode_input();
+	GENERIC _decode_next();
+
+	llama_context* mModelContext;
+	llama_batch mInputBatch;
+	inf_token_candidates mPresetCandidates;
+	inf_token mGeneratedToken;
+	U32 mContextLength;
+	U32 mContextCursor; // -----> if it exceeds the context size, stop generating
+	mbase::vector<inf_token> mTokenizedInput;
+	processor_signal mInputSignal;
+	processor_signal mTokenGeneratedSignal;
+	processor_signal mDecodeSignal;
+	context_state mContextState;
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 class MBASE_API InfProcessor : public mbase::non_copyable {
 public:

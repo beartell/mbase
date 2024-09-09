@@ -9,30 +9,567 @@ if(!this->is_initialized())\
 	return flags::INF_MODEL_ERR_NOT_INITIALIZED;\
 }
 
-inf_proc_update_t::inf_proc_update_t() : mIsThreadRunning(false)
+InfModelBase::InfModelBase() :
+	mIsInitialized(false)
+{
+}
+
+typename InfModelBase::iterator InfModelBase::begin() noexcept
+{
+	return mRegisteredProcessors.begin();
+}
+
+typename InfModelBase::iterator InfModelBase::end() noexcept
+{
+	return mRegisteredProcessors.end();
+}
+
+typename InfModelBase::const_iterator InfModelBase::begin() const noexcept
+{
+	return mRegisteredProcessors.begin();
+}
+
+typename InfModelBase::const_iterator InfModelBase::end() const noexcept
+{
+	return mRegisteredProcessors.end();
+}
+
+typename InfModelBase::const_iterator InfModelBase::cbegin() const noexcept
+{
+	return mRegisteredProcessors.cbegin();
+}
+
+typename InfModelBase::const_iterator InfModelBase::cend() const noexcept
+{
+	return mRegisteredProcessors.cend();
+}
+
+typename InfModelBase::reverse_iterator InfModelBase::rbegin() noexcept
+{
+	return mRegisteredProcessors.rbegin();
+}
+
+typename InfModelBase::reverse_iterator InfModelBase::rend() noexcept
+{
+	return mRegisteredProcessors.rend();
+}
+
+typename InfModelBase::const_reverse_iterator InfModelBase::crbegin() const noexcept
+{
+	return mRegisteredProcessors.crbegin();
+}
+
+typename InfModelBase::const_reverse_iterator InfModelBase::crend() const noexcept
+{
+	return mRegisteredProcessors.crend();
+}
+
+bool InfModelBase::is_initialized() const
+{
+	return mIsInitialized;
+}
+
+bool InfModelBase::signal_state_initializing() const
+{
+	return mInitializeSignal.get_signal_state();
+}
+
+bool InfModelBase::signal_state_destroying() const
+{
+	return mDestroySignal.get_signal_state();
+}
+
+bool InfModelBase::signal_initializing() const
+{
+	return mInitializeSignal.get_signal();
+}
+
+bool InfModelBase::signal_destroying() const
+{
+	return mDestroySignal.get_signal();
+}
+
+InfModelTextToText::InfModelTextToText() :
+	mModel(NULL),
+	mEndOfToken(0),
+	mModelKvals(),
+	mEndOfTokenString(),
+	mUsrStart(),
+	mSystemStart(),
+	mAssistantStart()
 {
 
 }
 
-GENERIC inf_proc_update_t::destroy()
+llama_model* InfModelTextToText::get_raw_model()
 {
-	mIsThreadRunning = false;
+	return mModel;
 }
 
-GENERIC inf_proc_update_t::run()
+InfModelTextToText::flags InfModelTextToText::get_special_tokens(mbase::vector<inf_token>& out_tokens)
 {
-	mIsThreadRunning = true;
-}
-
-GENERIC inf_proc_update_t::on_call(user_data in_data)
-{
-	InfRegisteredProcStructure* freshProcStructure = reinterpret_cast<InfRegisteredProcStructure*>(in_data);
-	while(mIsThreadRunning)
+	MBASE_INF_MODEL_RETURN_UNINITIALIZED;
+	for (I32 i = 0; i < llama_n_vocab(mModel); i++)
 	{
-		freshProcStructure->mProcessor->update_t();
+		llama_token_attr lta = llama_token_get_attr(mModel, i);
+		if (lta != LLAMA_TOKEN_ATTR_NORMAL)
+		{
+			out_tokens.push_back(i);
+		}
 	}
-	delete freshProcStructure;
+	return flags::INF_MODEL_SUCCESS;
 }
+
+InfModelTextToText::flags InfModelTextToText::get_special_tokens(mbase::vector<mbase::string>& out_tokens)
+{
+	MBASE_INF_MODEL_RETURN_UNINITIALIZED;
+	mbase::vector<inf_token> specialTokens;
+	get_special_tokens(specialTokens);
+
+	for (auto& n : specialTokens)
+	{
+		IBYTE myChars[128] = { 0 };
+		I32 tokenLength = llama_token_to_piece(mModel, n, myChars, 128, 1, true);
+		out_tokens.push_back(myChars);
+	}
+	return flags::INF_MODEL_SUCCESS;
+}
+
+InfModelTextToText::flags InfModelTextToText::get_model_name(mbase::string& out_name)
+{
+	MBASE_INF_MODEL_RETURN_UNINITIALIZED;
+	out_name = mModelKvals["general.basename"];
+	return flags::INF_MODEL_SUCCESS;
+}
+
+InfModelTextToText::flags InfModelTextToText::get_vocabulary_type(mbase::string& out_type)
+{
+	MBASE_INF_MODEL_RETURN_UNINITIALIZED;
+	return flags::INF_MODEL_SUCCESS;
+}
+
+InfModelTextToText::flags InfModelTextToText::get_architecture(mbase::string& out_architecture)
+{
+	MBASE_INF_MODEL_RETURN_UNINITIALIZED;
+	out_architecture = mModelKvals["general.architecture"];
+	return flags::INF_MODEL_SUCCESS;
+}
+
+InfModelTextToText::flags InfModelTextToText::get_finetune_type(mbase::string& out_type)
+{
+	MBASE_INF_MODEL_RETURN_UNINITIALIZED;
+	out_type = mModelKvals["general.finetune"];
+	return flags::INF_MODEL_SUCCESS;
+}
+
+InfModelTextToText::flags InfModelTextToText::get_embedding_length(I32& out_length)
+{
+	MBASE_INF_MODEL_RETURN_UNINITIALIZED;
+	mbase::string outArchitecture;
+	get_architecture(outArchitecture);
+
+	mbase::string totalKey = outArchitecture + ".embedding_length";
+	mbase::string embeddingLengthString = mModelKvals[totalKey];
+	out_length = embeddingLengthString.to_i32();
+	return flags::INF_MODEL_SUCCESS;
+}
+
+InfModelTextToText::flags InfModelTextToText::get_rope_type(mbase::string& out_type)
+{
+	MBASE_INF_MODEL_RETURN_UNINITIALIZED;
+
+	return flags::INF_MODEL_SUCCESS;
+}
+
+InfModelTextToText::flags InfModelTextToText::get_sys_start(mbase::string& out_start)
+{
+	MBASE_INF_MODEL_RETURN_UNINITIALIZED;
+	out_start = mSystemStart;
+	return flags::INF_MODEL_SUCCESS;
+}
+
+InfModelTextToText::flags InfModelTextToText::get_assistant_start(mbase::string& out_start)
+{
+	MBASE_INF_MODEL_RETURN_UNINITIALIZED;
+	out_start = mAssistantStart;
+	return flags::INF_MODEL_SUCCESS;
+}
+
+InfModelTextToText::flags InfModelTextToText::get_usr_start(mbase::string& out_start)
+{
+	MBASE_INF_MODEL_RETURN_UNINITIALIZED;
+	out_start = mUsrStart;
+	return flags::INF_MODEL_SUCCESS;
+}
+
+InfModelTextToText::flags InfModelTextToText::get_sys_end(mbase::string& out_end)
+{
+	MBASE_INF_MODEL_RETURN_UNINITIALIZED;
+	out_end = mEndOfTokenString;
+	return flags::INF_MODEL_SUCCESS;
+}
+
+InfModelTextToText::flags InfModelTextToText::get_assistant_end(mbase::string& out_end)
+{
+	MBASE_INF_MODEL_RETURN_UNINITIALIZED;
+	out_end = mEndOfTokenString;
+	return flags::INF_MODEL_SUCCESS;
+}
+
+InfModelTextToText::flags InfModelTextToText::get_usr_end(mbase::string& out_end)
+{
+	MBASE_INF_MODEL_RETURN_UNINITIALIZED;
+	out_end = mEndOfTokenString;
+	return flags::INF_MODEL_SUCCESS;
+}
+
+InfModelTextToText::flags InfModelTextToText::get_vocab_count(I32& out_count)
+{
+	MBASE_INF_MODEL_RETURN_UNINITIALIZED;
+	out_count = llama_n_vocab(mModel);
+	return flags::INF_MODEL_SUCCESS;;
+}
+
+InfModelTextToText::flags InfModelTextToText::get_model_param_count(size_type& out_count)
+{
+	MBASE_INF_MODEL_RETURN_UNINITIALIZED;
+	out_count = llama_model_meta_count(mModel);
+	return flags::INF_MODEL_SUCCESS;
+}
+
+InfModelTextToText::flags InfModelTextToText::get_model_params(mbase::unordered_map<mbase::string, mbase::string>& out_params)
+{
+	MBASE_INF_MODEL_RETURN_UNINITIALIZED;
+	out_params = mModelKvals;
+	return flags::INF_MODEL_SUCCESS;
+}
+
+InfModelTextToText::flags InfModelTextToText::get_size(size_type& out_size)
+{
+	MBASE_INF_MODEL_RETURN_UNINITIALIZED;
+	return flags::INF_MODEL_SUCCESS;
+}
+
+bool InfModelTextToText::is_token_eof_generation(inf_token in_token)
+{
+	if (!this->is_initialized())
+	{
+		return false;
+	}
+	return llama_token_is_eog(mModel, in_token);
+}
+
+InfModelTextToText::flags InfModelTextToText::is_token_special(const mbase::string& in_string)
+{
+	MBASE_INF_MODEL_RETURN_UNINITIALIZED;
+
+	mbase::vector<mbase::string> specialTokens;
+	get_special_tokens(specialTokens);
+
+	if (std::find(specialTokens.begin(), specialTokens.end(), in_string) == specialTokens.end())
+	{
+		return flags::INF_MODEL_ERR_GENERIC;
+	}
+
+	return flags::INF_MODEL_SUCCESS;
+}
+
+InfModelTextToText::flags InfModelTextToText::is_token_control(inf_token in_token)
+{
+	MBASE_INF_MODEL_RETURN_UNINITIALIZED;
+	if (llama_token_get_attr(mModel, in_token) & LLAMA_TOKEN_ATTR_CONTROL)
+	{
+		return flags::INF_MODEL_SUCCESS;
+	}
+	return flags::INF_MODEL_SUCCESS;
+}
+
+InfModelTextToText::flags InfModelTextToText::get_metadata_count(size_type& out_count)
+{
+	MBASE_INF_MODEL_RETURN_UNINITIALIZED;
+	out_count = mModelKvals.size();
+	return flags::INF_MODEL_SUCCESS;
+}
+
+InfModelTextToText::flags InfModelTextToText::initialize_model(const mbase::string& in_path, I32 in_gpu_layers)
+{
+	if(is_initialized())
+	{
+		return flags::INF_MODEL_SUCCESS;
+	}
+
+	if(signal_state_initializing())
+	{
+		return flags::INF_MODEL_INFO_INITIALIZING_MODEL;
+	}
+
+	if(in_gpu_layers == -1)
+	{
+		in_gpu_layers = 0;
+	}
+
+	mSuppliedParams = llama_model_default_params();
+
+	mSuppliedParams.n_gpu_layers = in_gpu_layers;
+	mSuppliedParams.split_mode = LLAMA_SPLIT_MODE_NONE;
+
+	mModelPath = in_path;
+
+	mInitializeSignal.set_signal_with_state();
+
+	return flags::INF_MODEL_INFO_INITIALIZING_MODEL;
+}
+
+InfModelTextToText::flags InfModelTextToText::register_context_process(InfTextToTextProcessor* in_processor, U32 in_context_length)
+{
+	MBASE_INF_MODEL_RETURN_UNINITIALIZED;
+
+	if(!in_processor)
+	{
+		return flags::INF_MODEL_ERR_INVALID_INPUT;
+	}
+
+	if (in_processor->is_registered())
+	{
+		return flags::INF_MODEL_ERR_PROCESSOR_ALREADY_REGISTERED;
+	}
+
+	if (in_context_length < gProcessorMinimumTokenCount)
+	{
+		return flags::INF_MODEL_ERR_INVALID_CONTEXT_LENGTH;
+	}
+
+	if(in_processor->signal_state_initializing())
+	{
+		return flags::INF_MODEL_INFO_REGISTERING_PROCESSOR;
+	}
+
+	if(in_processor->signal_state_destroying())
+	{
+		return flags::INF_MODEL_INFO_PROCESSOR_IS_BEING_DESTROYED;
+	}
+
+	in_processor->_set_context_length(in_context_length);
+	in_processor->get_initialize_signal().set_signal_with_state();
+
+	return flags::INF_MODEL_INFO_REGISTERING_PROCESSOR;
+}
+
+GENERIC InfModelTextToText::update()
+{
+	// load and unload control
+
+
+	mbase::lock_guard tmpListMutex(mProcessorListMutex);
+	for(context_processor_list::iterator It = mRegisteredProcessors.begin(); It != mRegisteredProcessors.end(); ++It)
+	{
+		InfProcessorBase* textToTextProcessor = *It;
+		textToTextProcessor->update();
+	}
+}
+
+GENERIC InfModelTextToText::update_t()
+{
+	while(is_processor_running())
+	{
+		Sleep(50); // Since this loop will not be invoked much outside of (init and destroy), we may decrease its speed 
+
+		// THIS PART IS ONLY FOR LOADING AND UNLOADING THE MODEL
+		if(is_initialized())
+		{
+			if(signal_destroying())
+			{
+				// TODO: UNREGISTER ALL INFERENCE PROCESSORS
+				// TODO: DESTROY MODEL
+				mDestroySignal.reset_signal_with_state();
+				stop_processor();
+			}
+		}
+		else
+		{
+			if(signal_initializing())
+			{
+				mInitializeSignal.set_signal_state();
+				// TODO: INITIALIZE THE MODEL
+				mModel = llama_load_model_from_file(mModelPath.c_str(), mSuppliedParams);
+				if(!mModel)
+				{
+					mInitializeSignal.reset_signal_with_state();
+					continue;
+				}
+				size_type modelParamCount = 0;
+				get_model_param_count(modelParamCount);
+
+				for (int i = 0; i < modelParamCount; i++)
+				{
+					char tempBuf[512] = { 0 };
+					char outValue[512] = { 0 };
+					llama_model_meta_key_by_index(mModel, i, tempBuf, 512);
+					llama_model_meta_val_str(mModel, tempBuf, outValue, 512);
+					mModelKvals.insert(mbase::pair(mbase::string(tempBuf), mbase::string(outValue)));
+				}
+
+				if (mModelKvals.find("general.basename") == mModelKvals.end())
+				{
+					mModelKvals["general.basename"] = mModelKvals["general.name"];
+				}
+
+				mbase::string& modelName = mModelKvals["general.basename"];
+				mbase::vector<inf_token> tokenList;
+				if (llama_token_eot(mModel) != -1)
+				{
+					tokenList.push_back(llama_token_eot(mModel));
+				}
+				if (llama_token_eos(mModel) != -1)
+				{
+					tokenList.push_back(llama_token_eos(mModel));
+				}
+
+				if (!tokenList.size())
+				{
+					// MEANS THIS IS NOT AN INSTRUCT MODEL
+				}
+
+				mEndOfToken = tokenList.front();
+				char outValue[512] = { 0 };
+				llama_token_to_piece(mModel, mEndOfToken, outValue, 512, 0, true);
+				mEndOfTokenString = mbase::string(outValue) + '\n';
+				mSystemStart = "SYSTEM: ";
+				mAssistantStart = "ASSISTANT: ";
+				mUsrStart = "USER: ";
+				if (mModelKvals.find("tokenizer.chat_template") == mModelKvals.end())
+				{
+					// CHAT TEMPLATE NOT FOUND
+					// MODEL IS POSSIBLY NON INSTRUCT
+				}
+				else
+				{
+					mbase::vector<mbase::string> sysBosCandidates = { "<|im_start|>", "<|start_header_id|>", "<|assistant|>", "<|system|>" };
+					mbase::vector<mbase::string> mSpecialTokens;
+					get_special_tokens(mSpecialTokens);
+
+					for (auto& n : sysBosCandidates)
+					{
+						mbase::vector<mbase::string>::iterator foundToken = std::find(mSpecialTokens.begin(), mSpecialTokens.end(), n);
+						if (foundToken != mSpecialTokens.end())
+						{
+							mSystemStart = *foundToken;
+						}
+					}
+
+					if (mSystemStart == "<|im_start|>")
+					{
+						mSystemStart += "system\n";
+						mAssistantStart = "<|im_start|>assistant\n";
+					}
+
+					else if (mSystemStart == "<|start_header_id|>")
+					{
+						mSystemStart += "system<|end_header_id|>";
+						mAssistantStart = "<|start_header_id|>assistant<|end_header_id|>";
+					}
+
+					else if (mSystemStart == "<|system|>")
+					{
+
+						mAssistantStart = "<|assistant|>";
+					}
+
+					mbase::vector<mbase::string> usrBosCandidates = { "<|im_start|>", "<|user|>", "<|start_header_id|>" };
+					for (auto& n : usrBosCandidates)
+					{
+						mbase::vector<mbase::string>::iterator foundToken = std::find(mSpecialTokens.begin(), mSpecialTokens.end(), n);
+						if (foundToken != mSpecialTokens.end())
+						{
+							mUsrStart = *foundToken;
+						}
+					}
+					 
+					if (mUsrStart == "<|im_start|>")
+					{
+						mUsrStart += "user\n";
+						mEndOfTokenString = "<|im_end|>\n";
+					}
+
+					else if (mUsrStart == "<|start_header_id|>")
+					{
+						mUsrStart += "user<|end_header_id|>";
+						mEndOfTokenString = "<|eot_id|>";
+					}
+
+					else if (mUsrStart == "<|user|>")
+					{
+						mEndOfTokenString = "<|end|>";
+					}
+				}
+				mIsInitialized = true;
+				mInitializeSignal.reset_signal_with_state();
+			}
+		}
+	}
+	
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 InfModel::InfModel() :
 	mModel(NULL),
@@ -416,7 +953,6 @@ InfModel::flags InfModel::initialize(const mbase::string& in_model_path, const I
 
 		else if (mSystemStart == "<|system|>") 
 		{
-			
 			mAssistantStart = "<|assistant|>";
 		}
 

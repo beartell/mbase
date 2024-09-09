@@ -6,12 +6,88 @@
 #include <mbase/string.h>
 #include <mbase/inference/inf_processor.h>
 #include <mbase/unordered_map.h>
+#include <mbase/framework/handler_base.h>
 
 MBASE_BEGIN
 
 class InfSamplingBase;
 
-class MBASE_API InfClient : public mbase::non_movable {
+// inheriting from InfClientBase seemed unneccesary, so I removed it.
+
+class MBASE_API InfClientTextToText : public mbase::handler_base {
+public:
+	
+	using sampler_map = mbase::unordered_map<mbase::string, InfSamplingBase*>;
+	using token_vector = mbase::vector<InfTextToTextProcessor::inf_token>;
+	using size_type = SIZE_T;
+
+	enum flags : U8 {
+		INF_CLIENT_SUCCESS,
+		INF_CLIENT_ERR_MSG_ID_MISMATCH,
+		INF_CLIENT_ERR_SAMPLER_MISMATCH
+	};
+
+	enum class input_role : U8 {
+		SYSTEM,
+		ASSISTANT,
+		USER,
+		NONE
+	};
+
+	struct context_line {
+		input_role mRole = input_role::NONE;
+		mbase::string mInput = "";
+		U32 mMessageIndex = 0;
+	};
+
+	using chat_history_map = mbase::unordered_map<U32, context_line>;
+
+	InfClientTextToText();
+	InfClientTextToText(const InfClientTextToText& in_rhs);
+	~InfClientTextToText();
+
+	InfClientTextToText& operator=(const InfClientTextToText& in_rhs);
+
+	bool is_registered() const;
+	bool has_sampler(const mbase::string& in_sampler_name);
+	flags get_sampler(const mbase::string& in_sampler_name, InfSamplingBase*& out_sampler);
+	GENERIC get_sampling_order(mbase::vector<InfSamplingBase*>& out_order);
+	flags get_host_processor(InfTextToTextProcessor*& out_processor);
+
+	virtual GENERIC on_register() = 0;
+	virtual GENERIC on_write(CBYTEBUFFER out_data, size_type out_size, InfTextToTextProcessor::inf_token out_token, bool out_is_special) = 0;
+	virtual GENERIC on_finish(size_type out_total_token_size) = 0;
+	virtual GENERIC on_unregister() = 0;
+
+	flags add_message(CBYTEBUFFER in_data, size_type in_size, input_role in_role, U32& out_message_id);
+	flags add_message(const mbase::string& in_data, input_role in_role, U32& out_message_id);
+	flags add_message(const mbase::wstring& in_data, input_role in_role, U32& out_message_id);
+	flags remove_messages(const mbase::vector<U32>& in_msg_ids = mbase::vector<U32>());
+	template<typename SamplerType>
+	flags add_sampler() {
+		SamplerType* newSampler = new SamplerType(NULL, NULL);
+		mbase::string samplerName = newSampler->get_sampler_name();
+		if (has_sampler(samplerName))
+		{
+			delete newSampler;
+			return flags::INF_CLIENT_SUCCESS;
+		}
+
+		mSamplerMap[samplerName] = newSampler;
+		return flags::INF_CLIENT_SUCCESS;
+	}
+	bool add_to_sampling_order(InfSamplingBase* in_sampler);
+	GENERIC clear_chat_history(); // clears the chat map
+	GENERIC clear_samplers();
+private:
+	InfTextToTextProcessor* mT2TProcessor;
+	mbase::vector<InfSamplingBase*> mSamplingOrder;
+	chat_history_map mChatHistory;
+	sampler_map mSamplerMap;
+	U32 mMessageIndexer;
+};
+
+class MBASE_API InfClient : public mbase::handler_base {
 public:
 	enum class flags : U8 {
 		INF_CLIENT_SUCCESS,
@@ -48,13 +124,12 @@ public:
 		U32 mMessageIndex = 0;
 	};
 
-	using inf_proc_iter = mbase::list<InfClient*>::iterator;
 	using chat_history_map = mbase::unordered_map<U32, context_line>;
 	using sampler_map = mbase::unordered_map<mbase::string, InfSamplingBase*>;
-	using token_vector = mbase::vector<InfProcessor::inf_token>;
+	using token_vector = mbase::vector<InfTextToTextProcessor::inf_token>;
 	using size_type = SIZE_T;
 
-	friend class InfProcessor;
+	friend class InfTextToTextProcessor;
 
 	InfClient();
 	InfClient(const InfClient& in_rhs);
@@ -70,12 +145,9 @@ public:
 	bool has_sampler(const mbase::string& in_sampler_name);
 	bool get_sampler(const mbase::string& in_sampler_name, InfSamplingBase*& out_sampler);
 	GENERIC get_sampling_order(mbase::vector<InfSamplingBase*>& out_order);
-	flags get_generated_token_count(size_type& out_token_count);
-	flags get_context_id(U32& out_context_id);
 	flags get_message_context(U32 in_msg_id, context_line& out_context_line);
-	flags get_host_processor(InfProcessor*& out_processor);
+	flags get_host_processor(InfTextToTextProcessor*& out_processor);
 	U32 get_inactivity_counter();
-	U32 get_client_max_token();
 
 	virtual GENERIC on_register() = 0;
 	virtual GENERIC on_write(CBYTEBUFFER out_data, size_type out_size) = 0;
@@ -109,33 +181,25 @@ protected:
 	GENERIC _reset_client();
 
 	GENERIC _register_self_client_params(
-		InfProcessor* in_processor,
-		const U32& in_sequence_id,
-		const U32& in_max_tokens
+		InfTextToTextProcessor* in_processor
 	);
 
 	GENERIC _register_self_client_params(
-		InfProcessor* in_processor,
-		const mbase::vector<InfProcessor::inf_token>& in_token_vector,
-		const U32& in_sequence_id,
-		const U32& in_max_tokens
+		InfTextToTextProcessor* in_processor,
+		const mbase::vector<InfTextToTextProcessor::inf_token>& in_token_vector
 	);
 
-	InfProcessor* mfrHostProcessor;
+	InfTextToTextProcessor* mfrHostProcessor;
 	bool mIsProcessing;
 	bool mIsUnregistering;
 	bool mIsLogicProcessed;
 	bool mIsDataSet;
-	mbase::vector<InfProcessor::inf_token> mParsedTokens;
+	mbase::vector<InfTextToTextProcessor::inf_token> mParsedTokens;
 	mbase::vector<InfSamplingBase*> mSamplingOrder;
 	mbase::unordered_map<U32, context_line> mChatHistory;
 	sampler_map mSamplerMap;
-	U32 mSequenceId;
-	U32 mfrBatchCursor;
 	U32 mMessageIndexer;
-	U32 mfrMaxTokenCount;
 	U32 mInactivityCounter;
-	llama_batch mfrBatch;
 	mbase::deep_char_stream mfrGeneratedToken;
 	finish_state mFs;
 };

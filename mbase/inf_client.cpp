@@ -23,6 +23,85 @@ mInactivityCounter = 0;
 
 static U32 gSeqIdCounter = 0;
 
+InfClientTextToText::InfClientTextToText():
+	mT2TProcessor(NULL),
+	mSamplingOrder(),
+	mChatHistory(),
+	mSamplerMap(),
+	mMessageIndexer(0)
+{
+
+}
+
+InfClientTextToText::InfClientTextToText(const InfClientTextToText& in_rhs):
+	mT2TProcessor(NULL)
+{
+	mSamplingOrder = in_rhs.mSamplingOrder;
+	mChatHistory = in_rhs.mChatHistory;
+	mSamplerMap = in_rhs.mSamplerMap;
+	mMessageIndexer = in_rhs.mMessageIndexer;
+}
+
+InfClientTextToText::~InfClientTextToText()
+{
+	if(is_registered())
+	{
+		// TODO:
+		// release all memory in the sampler map
+		mT2TProcessor->release_inference_client();
+	}
+	for (sampler_map::iterator It = mSamplerMap.begin(); It != mSamplerMap.end(); ++It)
+	{
+		delete It->second;
+	}
+}
+
+InfClientTextToText& InfClientTextToText::operator=(const InfClientTextToText& in_rhs)
+{
+	// todo, implement
+	return *this;
+}
+
+bool InfClientTextToText::is_registered() const
+{
+	return (mT2TProcessor != NULL);
+}
+
+bool InfClientTextToText::has_sampler(const mbase::string & in_sampler_name)
+{
+	if (mSamplerMap.find(in_sampler_name) == mSamplerMap.end())
+	{
+		return false;
+	}
+
+	return true;
+}
+
+InfClientTextToText::flags InfClientTextToText::get_sampler(const mbase::string & in_sampler_name, InfSamplingBase * &out_sampler)
+{
+	if (!has_sampler(in_sampler_name))
+	{
+		return flags::INF_CLIENT_ERR_SAMPLER_MISMATCH;
+	}
+
+	out_sampler = mSamplerMap[in_sampler_name];
+	return flags::INF_CLIENT_SUCCESS;
+}
+
+GENERIC InfClientTextToText::get_sampling_order(mbase::vector<InfSamplingBase*>&out_order)
+{
+	out_order = mSamplingOrder;
+}
+
+InfClientTextToText::flags InfClientTextToText::get_host_processor(InfTextToTextProcessor * &out_processor)
+{
+	if(is_registered())
+	{
+		out_processor = mT2TProcessor;
+		return flags::INF_CLIENT_SUCCESS;
+	}
+}
+
 InfClient::InfClient() :
 	mfrHostProcessor(NULL),
 	mIsProcessing(false),
@@ -32,12 +111,8 @@ InfClient::InfClient() :
 	mParsedTokens(),
 	mSamplingOrder(),
 	mChatHistory(),
-	mSequenceId(0),
-	mfrBatchCursor(0),
 	mMessageIndexer(0),
-	mfrMaxTokenCount(0),
 	mInactivityCounter(0),
-	mfrBatch(),
 	mfrGeneratedToken(128),
 	mFs(finish_state::INF_FINISH_STATE_CONTINUE)
 {
@@ -52,11 +127,7 @@ InfClient::InfClient(const InfClient& in_rhs):
 	mParsedTokens(),
 	mSamplingOrder(),
 	mChatHistory(in_rhs.mChatHistory),
-	mSequenceId(0),
-	mfrBatchCursor(0),
 	mMessageIndexer(0),
-	mfrMaxTokenCount(0),
-	mfrBatch(),
 	mfrGeneratedToken(128),
 	mInactivityCounter(0),
 	mFs(finish_state::INF_FINISH_STATE_CONTINUE)
@@ -139,28 +210,6 @@ GENERIC InfClient::get_sampling_order(mbase::vector<InfSamplingBase*>& out_order
 	out_order = mSamplingOrder;
 }
 
-InfClient::flags InfClient::get_generated_token_count(size_type& out_token_count)
-{
-	MBASE_INF_CLIENT_USUAL_CHECK;
-	out_token_count = mfrBatchCursor;
-	return flags::INF_CLIENT_SUCCESS;
-}
-
-InfClient::flags InfClient::get_context_id(U32& out_context_id)
-{
-	if(is_unregistering())
-	{
-		return flags::INF_CLIENT_ERR_UNREGISTERATION_IN_PROGRESS;
-	}
-
-	if(!is_registered())
-	{
-		return flags::INF_CLIENT_ERR_NOT_REGISTERED;
-	}
-	out_context_id = mSequenceId;
-	return flags::INF_CLIENT_SUCCESS;
-}
-
 InfClient::flags InfClient::get_message_context(U32 in_msg_id, context_line& out_context_line)
 {
 	if (is_unregistering())
@@ -184,7 +233,7 @@ InfClient::flags InfClient::get_message_context(U32 in_msg_id, context_line& out
 	return flags::INF_CLIENT_SUCCESS;
 }
 
-InfClient::flags InfClient::get_host_processor(InfProcessor*& out_processor)
+InfClient::flags InfClient::get_host_processor(InfTextToTextProcessor*& out_processor)
 {
 	if(is_unregistering())
 	{
@@ -201,11 +250,6 @@ InfClient::flags InfClient::get_host_processor(InfProcessor*& out_processor)
 U32 InfClient::get_inactivity_counter()
 {
 	return mInactivityCounter;
-}
-
-U32 InfClient::get_client_max_token()
-{
-	return mfrMaxTokenCount;
 }
 
 InfClient::flags InfClient::set_input(CBYTEBUFFER in_data, size_type in_size, input_role in_role, U32 &out_message_id)
@@ -302,7 +346,7 @@ InfClient::flags InfClient::execute_prompt(const mbase::vector<U32>& in_msg_ids)
 		return flags::INF_CLIENT_ERR_TOKENIZATION_FAILED;
 	}
 	
-	if(mParsedTokens.size() >= mfrMaxTokenCount)
+	if(mParsedTokens.size() >= mfrHostProcessor->get)
 	{
 		return flags::INF_CLIENT_ERR_TOKEN_LIMIT_EXCEEDED;
 	}
