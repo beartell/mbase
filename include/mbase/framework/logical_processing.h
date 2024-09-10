@@ -6,11 +6,10 @@
 #include <mbase/thread.h>
 #include <mbase/synchronization.h>
 #include <mbase/behaviors.h>
-#include <mbase/framework/handler_base.h>
 
 MBASE_BEGIN
 
-class processor_signal {
+class MBASE_API processor_signal {
 public:
 	processor_signal() : mSignalState(false), mSignal(false) {}
 
@@ -60,18 +59,12 @@ private:
 	bool mSignal;
 };
 
-class logical_processor : public mbase::non_copymovable {
+class MBASE_API logical_processor : public mbase::non_copymovable {
 public:
-	using logic_handler = handler_base;
-	using logic_handler_ref = handler_base&;
-
 	logical_processor() : mProcessorThread(_update_t_static, this), mIsProcessorRunning(false) {}
 	~logical_processor() 
 	{ 
-		if(mIsProcessorRunning)
-		{
-			mProcessorThread.join();
-		}
+		stop_processor();
 	}
 
 	bool is_processor_running() { return mIsProcessorRunning; }
@@ -96,9 +89,9 @@ public:
 	{
 		if(mIsProcessorRunning)
 		{
+			mIsProcessorRunning = false;
 			mProcessorThread.join();
 		}
-		mIsProcessorRunning = false;
 	}
 	GENERIC acquire_synchronizer() { mLogicSynchronizer.acquire(); }
 	GENERIC release_synchronizer() { mLogicSynchronizer.release(); }
@@ -109,28 +102,6 @@ protected:
 	mbase::thread<decltype(_update_t_static), logical_processor*> mProcessorThread;
 	mbase::mutex mLogicSynchronizer;
 	bool mIsProcessorRunning;
-};
-
-class single_logical_processor : public logical_processor {
-public:
-	single_logical_processor() : mLogicHandler(NULL), logical_processor() {}
-	single_logical_processor() { mLogicHandler = NULL; }
-
-	GENERIC set_logic_handler(logic_handler_ref in_handler) { mLogicHandler = &in_handler; }
-	GENERIC release_logic_handler() { mLogicHandler = NULL; }
-	logic_handler_ref get_logic_handler() { return *mLogicHandler; }
-protected:
-	logic_handler* mLogicHandler;
-};
-
-class multi_logical_processor : public logical_processor {
-public:
-	multi_logical_processor() : mLogicHandler(), logical_processor() {}
-
-	GENERIC enqueue_logic_handler(logic_handler_ref in_handler) { mLogicHandler.push_back(&in_handler); }
-	mbase::vector<logic_handler*>& get_logic_handler() { return mLogicHandler; }
-protected:
-	mbase::vector<logic_handler*> mLogicHandler;
 };
 
 MBASE_END

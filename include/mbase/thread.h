@@ -273,6 +273,10 @@ MBASE_INLINE thread_error thread<Func, Args...>::exit(I32 in_exit_code) noexcept
 	return thread_error::THREAD_MISSING_THREAD;
 }
 
+MBASE_INLINE GENERIC sleep(I32 in_ms) noexcept {
+	Sleep(in_ms);
+}
+
 MBASE_STD_END
 
 #endif // MBASE_THREAD_H

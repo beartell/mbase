@@ -5,7 +5,7 @@
 
 MBASE_BEGIN
 
-class handler_base {
+class MBASE_API handler_base {
 public:
 	using user_data = PTRGENERIC;
 
