@@ -170,6 +170,16 @@ bool InfTextToTextProcessor::signal_token_generated() const
 	return mTokenGeneratedSignal.get_signal();
 }
 
+bool InfTextToTextProcessor::signal_init_method() const
+{
+	return mInitializeMethodSignal.get_signal();
+}
+
+bool InfTextToTextProcessor::signal_destroy_method() const
+{
+	return mDestroyMethodSignal.get_signal();
+}
+
 typename InfTextToTextProcessor::inf_token_candidates& InfTextToTextProcessor::get_token_candidates()
 {
 	return mPresetCandidates;
@@ -250,7 +260,7 @@ InfTextToTextProcessor::flags InfTextToTextProcessor::tokenize_input(context_lin
 
 		totalMessage += (roleString + tmpLine->mMessage + endString);
 	}
-
+	std::cout << totalMessage << std::endl;
 	return tokenize_input(totalMessage.data(), totalMessage.size(), out_tokens);
 }
 
@@ -341,12 +351,12 @@ InfTextToTextProcessor::flags InfTextToTextProcessor::set_inference_client(InfCl
 	}
 
 	mAssignedClient = in_client;
-	mAssignedClient->on_register(this);
+	mAssignedClient->_on_register(this);
 
 	return flags::INF_PROC_SUCCESS;
 }
 
-InfTextToTextProcessor::flags InfTextToTextProcessor::initialize(U32 in_context_length)
+InfTextToTextProcessor::flags InfTextToTextProcessor::initialize(InfModelTextToText* in_model, U32 in_context_length)
 {
 	if(is_registered())
 	{
@@ -362,11 +372,25 @@ InfTextToTextProcessor::flags InfTextToTextProcessor::initialize(U32 in_context_
 	{
 		return flags::INF_PROC_INFO_DESTROYING;
 	}
-
+	mTargetModel_md_model = in_model;
 	mContextLength = in_context_length;
 	mInitializeSignal.set_signal_with_state();
 	start_processor();
 	return flags::INF_PROC_INFO_INITIALIZING;
+}
+
+InfTextToTextProcessor::flags InfTextToTextProcessor::initialize_sync(InfModelTextToText* in_model, U32 in_context_length)
+{
+	initialize(in_model, in_context_length);
+	while(signal_state_initializing())
+	{
+
+	}
+	if(!is_registered())
+	{
+		return flags::INF_PROC_ERR_UNREGISTERED_PROCESSOR;
+	}
+	return flags::INF_PROC_SUCCESS;
 }
 
 InfTextToTextProcessor::flags InfTextToTextProcessor::destroy()
@@ -389,23 +413,14 @@ InfTextToTextProcessor::flags InfTextToTextProcessor::destroy()
 
 InfTextToTextProcessor::flags InfTextToTextProcessor::destroy_sync()
 {
-	if (!is_registered())
-	{
-		return flags::INF_PROC_SUCCESS;
-	}
-
-	release_inference_client();
-
-	if(!signal_state_destroying())
-	{
-		mDestroySignal.set_signal_with_state();
-	}
+	destroy();
 
 	while(signal_state_destroying())
 	{
 		// block until operation finishes
 	}
 
+	update();
 	return flags::INF_PROC_SUCCESS;
 }
 
@@ -414,7 +429,7 @@ GENERIC InfTextToTextProcessor::release_inference_client()
 	InfClientTextToText* assignedClient = get_assigned_client();
 	if(assignedClient)
 	{
-		assignedClient->on_unregister();
+		assignedClient->_on_unregister();
 		mAssignedClient = NULL;
 	}
 }
@@ -428,6 +443,12 @@ GENERIC InfTextToTextProcessor::update()
 {
 	if(is_registered())
 	{
+		if(signal_init_method())
+		{
+			mInitializeMethodSignal.reset_signal_with_state();
+			on_initialize();
+		}
+
 		if(signal_token_generated())
 		{
 			// do things with the generated token
@@ -465,11 +486,20 @@ GENERIC InfTextToTextProcessor::update()
 			}
 		}
 	}
+	else
+	{
+		if(signal_destroy_method())
+		{
+			mDestroyMethodSignal.reset_signal_with_state();
+			on_destroy();
+		}
+	}
 }
 
 GENERIC InfTextToTextProcessor::_decode_input()
 {
 	// if the input signal is set, process
+	printf("INPUT SIGNAL RECEIVED\n");
 	llama_batch_clear(mInputBatch);
 	for (size_type i = 0; i < mTokenizedInput.size(); ++i)
 	{
@@ -478,9 +508,11 @@ GENERIC InfTextToTextProcessor::_decode_input()
 	mInputBatch.logits[mInputBatch.n_tokens - 1] = true;
 	mContextCursor = mInputBatch.n_tokens;
 	mContextState = context_state::DECODING_INPUT;
-	llama_decode(mModelContext, mInputBatch);
+	mFinishState = finish_state::CONTINUE;
+	int decodeResult = llama_decode(mModelContext, mInputBatch);
 	mInputSignal.reset_signal_with_state();
-	mDecodeSignal.set_signal();
+	mDecodeSignal.set_signal_with_state();
+	printf("INPUT SIGNAL PROCESSED: %d\n", decodeResult);
 }
 
 GENERIC InfTextToTextProcessor::_decode_next()
@@ -547,8 +579,8 @@ GENERIC InfTextToTextProcessor::_initialize_context()
 
 	InfModelTextToText* t2tModel = static_cast<InfModelTextToText*>(this->mTargetModel_md_model);
 
-	llama_context* newModelContext = llama_new_context_with_model(t2tModel->get_raw_model(), ctxParams);
-	if (!newModelContext)
+	mModelContext = llama_new_context_with_model(t2tModel->get_raw_model(), ctxParams);
+	if (!mModelContext)
 	{
 		mInitializeSignal.reset_signal_with_state();
 		return;
@@ -559,6 +591,8 @@ GENERIC InfTextToTextProcessor::_initialize_context()
 	mIsRunning = true;
 	mInitializeSignal.reset_signal_with_state();
 	mIsRegistered = true;
+	
+	mInitializeMethodSignal.set_signal_with_state();
 }
 
 GENERIC InfTextToTextProcessor::_destroy_context()
@@ -579,7 +613,10 @@ GENERIC InfTextToTextProcessor::_destroy_context()
 	mTokenGeneratedSignal.reset_signal_with_state();
 	mDecodeSignal.reset_signal_with_state();
 	mDestroySignal.reset_signal_with_state();
+	mTargetModel_md_model = NULL;
 	mIsRegistered = false;
+
+	mDestroyMethodSignal.set_signal_with_state();
 }
 
 GENERIC InfTextToTextProcessor::update_t()

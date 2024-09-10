@@ -25,7 +25,7 @@ class non copyable.
 
 */
 
-class non_copyable {
+class MBASE_API non_copyable {
 public:
 	/* ===== BUILDER METHODS BEGIN ===== */
 	non_copyable() = default;
@@ -58,7 +58,7 @@ class non movable.
 
 */
 
-class non_movable {
+class MBASE_API non_movable {
 public:
 	/* ===== BUILDER METHODS BEGIN ===== */
 	non_movable() = default;
@@ -89,7 +89,7 @@ both non copyable and non movable.
 
 */
 
-class non_copymovable {
+class MBASE_API non_copymovable {
 public:
 	/* ===== BUILDER METHODS BEGIN ===== */
 	non_copymovable() = default;
@@ -104,7 +104,7 @@ public:
 };
 
 template<typename Object>
-class singleton : public non_copymovable {
+class MBASE_API singleton : public non_copymovable {
 public:
 	static Object& get_instance() noexcept
 	{

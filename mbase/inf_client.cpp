@@ -101,6 +101,49 @@ InfClientTextToText::flags InfClientTextToText::get_host_processor(InfTextToText
 	return flags::INF_CLIENT_ERR_NOT_REGISTERED;
 }
 
+InfClientTextToText::flags InfClientTextToText::get_message(U32 in_msg_id, context_line& out_message)
+{
+	try
+	{
+		out_message = mChatHistory.at(in_msg_id);
+	}
+	catch (const std::exception& out_except)
+	{
+		return flags::INF_CLIENT_ERR_MSG_ID_MISMATCH;
+	}
+	return flags::INF_CLIENT_SUCCESS;
+}
+
+InfClientTextToText::flags InfClientTextToText::get_message_array(PTRU32 in_msg_ids, size_type in_id_count, mbase::vector<context_line>& out_messages)
+{
+	mbase::vector<context_line> outMsgs;
+	for(size_type i = 0; i < in_id_count; ++i)
+	{
+		try
+		{
+			outMsgs.push_back(mChatHistory.at(*(in_msg_ids + i)));
+		}
+		catch (const std::exception& out_except)
+		{
+			return flags::INF_CLIENT_ERR_MSG_ID_MISMATCH;
+		}
+	}
+	out_messages = std::move(outMsgs);
+	return flags::INF_CLIENT_SUCCESS;
+}
+
+GENERIC InfClientTextToText::_on_register(InfTextToTextProcessor* in_processor)
+{
+	mT2TProcessor = in_processor;
+	on_register(mT2TProcessor);
+}
+
+GENERIC InfClientTextToText::_on_unregister()
+{
+	mT2TProcessor = NULL;
+	on_unregister();
+}
+
 InfClientTextToText::flags InfClientTextToText::add_message(CBYTEBUFFER in_data, size_type in_size, context_role in_role, U32& out_message_id)
 {
 	if(!in_data || !in_size)

@@ -18,14 +18,11 @@ MBASE_BEGIN
 static const U32 gProcessorMinimumTokenCount = 32;
 static const U32 gProcessorMinimumInactivityThreshold = 16; // in seconds
 
-class InfProcessor;
 class InfClientTextToText;
 
 class MBASE_API InfProcessorBase : public mbase::logical_processor {
 public:
 	using size_type = SIZE_T;
-
-	friend class InfModel;
 
 	enum class flags : U8 {
 		INF_PROC_SUCCESS,
@@ -106,24 +103,28 @@ public:
 	bool signal_input_process() const;
 	bool signal_decode_process() const;
 	bool signal_token_generated() const;
+	bool signal_init_method() const;
+	bool signal_destroy_method() const;
 	inf_token_candidates& get_token_candidates();
 	U32 get_max_token_length();
 	InfClientTextToText* get_assigned_client();
 	bool has_client() const;
-
 
 	flags tokenize_input(CBYTEBUFFER in_data, size_type in_size, mbase::vector<inf_token>& out_tokens);
 	flags tokenize_input(context_line* in_lines, size_type in_count, mbase::vector<inf_token>& out_tokens);
 	flags execute_input(const mbase::vector<inf_token>& in_tokens, bool in_abandon = false);
 	flags next();
 	flags set_inference_client(InfClientTextToText* in_client, bool in_reset_on_set = true);
-	flags initialize(U32 in_context_length);
+	flags initialize(InfModelTextToText* in_model, U32 in_context_length);
+	flags initialize_sync(InfModelTextToText* in_model, U32 in_context_length);
 	flags destroy();
 	flags destroy_sync();
 	GENERIC release_inference_client();
 	GENERIC clear_token_candidates();
 	GENERIC update() override;
 	GENERIC update_t() override;
+	virtual GENERIC on_initialize() = 0;
+	virtual GENERIC on_destroy() = 0;
 
 private:
 	GENERIC _decode_input();
@@ -141,6 +142,8 @@ private:
 	processor_signal mInputSignal;
 	processor_signal mTokenGeneratedSignal;
 	processor_signal mDecodeSignal;
+	processor_signal mInitializeMethodSignal;
+	processor_signal mDestroyMethodSignal;
 	context_state mContextState;
 	finish_state mFinishState;
 	InfClientTextToText* mAssignedClient;

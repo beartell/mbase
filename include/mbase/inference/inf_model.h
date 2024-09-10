@@ -80,7 +80,10 @@ public:
 	};
 
 	InfModelTextToText();
+	~InfModelTextToText();
 
+	bool signal_init_method() const;
+	bool signal_destroy_method() const;
 	llama_model* get_raw_model();
 	flags get_special_tokens(mbase::vector<inf_token>& out_tokens);
 	flags get_special_tokens(mbase::vector<mbase::string>& out_tokens);
@@ -106,12 +109,17 @@ public:
 	flags get_metadata_count(size_type& out_count);
 
 	flags initialize_model(const mbase::string& in_path, I32 in_gpu_layers = -1);
+	flags initialize_model_sync(const mbase::string& in_path, I32 in_gpu_layers = -1);
 	flags destroy();
+	flags destroy_sync();
 	flags register_context_process(InfTextToTextProcessor* in_processor, U32 in_context_length);
+
+	virtual GENERIC on_initialize() = 0;
+	virtual GENERIC on_destroy() = 0;
 
 	GENERIC update() override;
 	GENERIC update_t() override;
-
+	
 private:
 
 	GENERIC _initialize_model();
@@ -126,6 +134,8 @@ private:
 	mbase::string mModelPath;
 	llama_model_params mSuppliedParams;
 	inf_token mEndOfToken;
+	processor_signal mInitMethodSignal;
+	processor_signal mDestroyMethodSignal;
 };
 
 

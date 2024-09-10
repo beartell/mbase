@@ -42,7 +42,11 @@ public:
 	flags get_sampler(const mbase::string& in_sampler_name, InfSamplingBase*& out_sampler);
 	GENERIC get_sampling_order(mbase::vector<InfSamplingBase*>& out_order);
 	flags get_host_processor(InfTextToTextProcessor*& out_processor);
+	flags get_message(U32 in_msg_id, context_line& out_message);
+	flags get_message_array(PTRU32 in_msg_ids, size_type in_id_count, mbase::vector<context_line>& out_messages);
 
+	GENERIC _on_register(InfTextToTextProcessor* in_processor);
+	GENERIC _on_unregister();
 	virtual GENERIC on_register(InfTextToTextProcessor* out_processor) = 0;
 	virtual GENERIC on_write(CBYTEBUFFER out_data, size_type out_size, InfTextToTextProcessor::inf_token out_token, bool out_is_special, bool out_is_finish) = 0;
 	virtual GENERIC on_finish(size_type out_total_token_size, InfTextToTextProcessor::finish_state out_finish_state) = 0;
@@ -68,7 +72,9 @@ public:
 	bool add_to_sampling_order(InfSamplingBase* in_sampler);
 	GENERIC clear_chat_history(); // clears the chat map
 	GENERIC clear_samplers();
-private:
+
+protected:
+	
 	InfTextToTextProcessor* mT2TProcessor;
 	mbase::vector<InfSamplingBase*> mSamplingOrder;
 	chat_history_map mChatHistory;

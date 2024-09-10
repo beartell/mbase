@@ -109,6 +109,21 @@ InfModelTextToText::InfModelTextToText() :
 
 }
 
+InfModelTextToText::~InfModelTextToText()
+{
+	destroy_sync();
+}
+
+bool InfModelTextToText::signal_init_method() const
+{
+	return mInitMethodSignal.get_signal();
+}
+
+bool InfModelTextToText::signal_destroy_method() const
+{
+	return mDestroyMethodSignal.get_signal();
+}
+
 llama_model* InfModelTextToText::get_raw_model()
 {
 	return mModel;
@@ -140,6 +155,7 @@ InfModelTextToText::flags InfModelTextToText::get_special_tokens(mbase::vector<m
 		I32 tokenLength = llama_token_to_piece(mModel, n, myChars, 128, 1, true);
 		out_tokens.push_back(myChars);
 	}
+
 	return flags::INF_MODEL_SUCCESS;
 }
 
@@ -328,6 +344,23 @@ InfModelTextToText::flags InfModelTextToText::initialize_model(const mbase::stri
 	return flags::INF_MODEL_INFO_INITIALIZING_MODEL;
 }
 
+InfModelTextToText::flags InfModelTextToText::initialize_model_sync(const mbase::string& in_path, I32 in_gpu_layers)
+{
+	initialize_model(in_path, in_gpu_layers);
+
+	while(signal_state_initializing())
+	{
+
+	}
+
+	if(!is_initialized())
+	{
+		return flags::INF_MODEL_ERR_CANT_LOAD_MODEL;
+	}
+
+	return flags::INF_MODEL_INFO_INITIALIZING_MODEL;
+}
+
 InfModelTextToText::flags InfModelTextToText::destroy()
 {
 	if(!is_initialized())
@@ -344,15 +377,25 @@ InfModelTextToText::flags InfModelTextToText::destroy()
 	return flags::INF_MODEL_INFO_DESTROYING_MODEL;
 }
 
+InfModelTextToText::flags InfModelTextToText::destroy_sync()
+{
+	destroy();
+	while(signal_state_destroying())
+	{
+
+	}
+	update();
+	return flags::INF_MODEL_SUCCESS;
+}
+
 InfModelTextToText::flags InfModelTextToText::register_context_process(InfTextToTextProcessor* in_processor, U32 in_context_length)
 {
 	MBASE_INF_MODEL_RETURN_UNINITIALIZED;
-
 	if(!in_processor)
 	{
 		return flags::INF_MODEL_ERR_INVALID_INPUT;
 	}
-
+	
 	if (in_processor->is_registered())
 	{
 		return flags::INF_MODEL_ERR_PROCESSOR_ALREADY_REGISTERED;
@@ -372,8 +415,11 @@ InfModelTextToText::flags InfModelTextToText::register_context_process(InfTextTo
 	{
 		return flags::INF_MODEL_INFO_PROCESSOR_IS_BEING_DESTROYED;
 	}
-
-	in_processor->initialize(in_context_length);
+	
+	in_processor->initialize(this, in_context_length);
+	mProcessorListMutex.acquire();
+	mRegisteredProcessors.push_back(in_processor);
+	mProcessorListMutex.release();
 	return flags::INF_MODEL_INFO_REGISTERING_PROCESSOR;
 }
 
@@ -493,6 +539,7 @@ GENERIC InfModelTextToText::_initialize_model()
 	}
 	mIsInitialized = true;
 	mInitializeSignal.reset_signal_with_state();
+	mInitMethodSignal.set_signal();
 }
 
 GENERIC InfModelTextToText::_destroy_model()
@@ -521,11 +568,24 @@ GENERIC InfModelTextToText::_destroy_model()
 	mInitializeSignal.reset_signal_with_state();
 	mDestroySignal.reset_signal_with_state();
 	mIsInitialized = false;
+	mDestroyMethodSignal.set_signal();
 }
 
 GENERIC InfModelTextToText::update()
 {
 	// load and unload control
+	if(signal_init_method())
+	{
+		mInitMethodSignal.reset_signal_with_state();
+		on_initialize();
+	}
+
+	if(signal_destroy_method())
+	{
+		mDestroyMethodSignal.reset_signal_with_state();
+		on_destroy();
+	}
+
 	mbase::lock_guard tmpListMutex(mProcessorListMutex);
 	for(context_processor_list::iterator It = mRegisteredProcessors.begin(); It != mRegisteredProcessors.end(); ++It)
 	{
