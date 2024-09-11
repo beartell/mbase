@@ -8,7 +8,7 @@
 
 MBASE_BEGIN
 
-class timer_base : public handler_base {
+class MBASE_API timer_base : public handler_base {
 public:
 	enum class flags : U8 {
 		TIMER_TYPE_TIMEOUT = 2,
@@ -68,7 +68,7 @@ public:
 	friend class timer_loop;
 };
 
-class time_interval : public timer_base {
+class MBASE_API time_interval : public timer_base {
 public:
 	MBASE_INLINE time_interval() noexcept;
 

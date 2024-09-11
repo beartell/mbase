@@ -44,9 +44,12 @@ public:
 	flags get_host_processor(InfTextToTextProcessor*& out_processor);
 	flags get_message(U32 in_msg_id, context_line& out_message);
 	flags get_message_array(PTRU32 in_msg_ids, size_type in_id_count, mbase::vector<context_line>& out_messages);
-
+	
+	#ifdef MBASE_INTERNAL_API
 	GENERIC _on_register(InfTextToTextProcessor* in_processor);
 	GENERIC _on_unregister();
+	#endif
+	
 	virtual GENERIC on_register(InfTextToTextProcessor* out_processor) = 0;
 	virtual GENERIC on_write(CBYTEBUFFER out_data, size_type out_size, InfTextToTextProcessor::inf_token out_token, bool out_is_special, bool out_is_finish) = 0;
 	virtual GENERIC on_finish(size_type out_total_token_size, InfTextToTextProcessor::finish_state out_finish_state) = 0;
