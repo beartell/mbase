@@ -195,6 +195,29 @@ InfClientTextToText* InfTextToTextProcessor::get_assigned_client()
 	return mAssignedClient;
 }
 
+bool InfTextToTextProcessor::has_sampler(const mbase::string& in_sampler_name)
+{
+	return mSamplerMap.find(in_sampler_name) != mSamplerMap.end();
+}
+
+InfTextToTextProcessor::flags InfTextToTextProcessor::get_sampler(const mbase::string& in_sampler_name, InfSamplingBase*& out_sampler)
+{
+	if(has_sampler(in_sampler_name))
+	{
+		out_sampler = mSamplerMap[in_sampler_name];
+		return flags::INF_PROC_SUCCESS;
+	}
+	return flags::INF_PROC_ERR_SAMPLER_NAME_MISMATCH;
+}
+
+GENERIC InfTextToTextProcessor::get_available_samplers(mbase::vector<InfSamplingBase*> out_samplers)
+{
+	for(sampler_map::iterator It = mSamplerMap.begin(); It != mSamplerMap.end(); ++It)
+	{
+		out_samplers.push_back(It->second);
+	}
+}
+
 bool InfTextToTextProcessor::has_client() const
 {
 	return mAssignedClient != NULL;
@@ -278,7 +301,7 @@ InfTextToTextProcessor::flags InfTextToTextProcessor::tokenize_input(context_lin
 	return tokenize_input(totalMessage.data(), totalMessage.size(), out_tokens);
 }
 
-InfTextToTextProcessor::flags InfTextToTextProcessor::execute_input(const mbase::vector<inf_token>& in_tokens, bool in_abandon)
+InfTextToTextProcessor::flags InfTextToTextProcessor::execute_input(const mbase::vector<inf_token>& in_tokens, bool in_abandon, const mbase::vector<mbase::string>& in_sampling_order)
 {
 	MBASE_INF_PROC_RETURN_UNREGISTERED;
 
@@ -304,6 +327,11 @@ InfTextToTextProcessor::flags InfTextToTextProcessor::execute_input(const mbase:
 	{
 		mInputSignal.reset_signal_with_state();
 		mDecodeSignal.reset_signal_with_state();
+	}
+
+	for(mbase::vector<mbase::string>::const_iterator It = in_sampling_order.cbegin(); It != in_sampling_order.cend(); ++It)
+	{
+		
 	}
 
 	mTokenizedInput = in_tokens;
@@ -548,7 +576,30 @@ GENERIC InfTextToTextProcessor::_decode_next()
 
 	llama_token_data_array tokenCandidates = { mPresetCandidates.data(), mPresetCandidates.size(), false };
 
-	mGeneratedToken = llama_sample_token_greedy(mModelContext, &tokenCandidates);
+	for(mbase::vector<InfSamplingBase*>::iterator It = mSamplingOrder.begin(); It != mSamplingOrder.end(); ++It)
+	{
+		InfSamplingBase* currentSampler = *It;
+		currentSampler->set_token_array(&tokenCandidates);
+		currentSampler->apply_sampling();
+	}
+
+	/*llama_sample_top_k(mModelContext, &tokenCandidates, 40, 1);
+	llama_sample_tail_free(mModelContext, &tokenCandidates, 1.0, 1);
+	llama_sample_top_p(mModelContext, &tokenCandidates, 0.950, 1);
+	llama_sample_min_p(mModelContext, &tokenCandidates, 0.050, 1);
+	llama_sample_typical(mModelContext, &tokenCandidates, 1.0, 1);
+	llama_sample_temp(mModelContext, &tokenCandidates, 0.1);*/
+	llama_sample_softmax(mModelContext, &tokenCandidates);
+
+	if(mPenaltyList.size() == 64)
+	{
+		mPenaltyList.clear();
+	}
+
+	//llama_sample_repetition_penalties(mModelContext, &tokenCandidates, mPenaltyList.data(), mPenaltyList.size(), 1.0, 0.0, 0.0);
+	mGeneratedToken = mPresetCandidates[0].id;
+	mPenaltyList.push_back(mGeneratedToken);
+
 	llama_batch_clear(mInputBatch);
 	
 	if (llama_token_is_eog(t2tModel->get_raw_model(), mGeneratedToken) || !mGeneratedToken)
@@ -624,8 +675,16 @@ GENERIC InfTextToTextProcessor::_destroy_context()
 	mContextLength = 0;
 	mContextCursor = 0;
 	mTokenizedInput.clear();
+	mPenaltyList.clear();
+	mSamplingOrder.clear();
 	mContextState = context_state::AWAITING_FOR_INPUT;
 	mFinishState = finish_state::FINISHED;
+
+	for(sampler_map::iterator It = mSamplerMap.begin(); It != mSamplerMap.end();)
+	{
+		delete It->second; // samplers are heap allocated at add_sampler
+		It = mSamplerMap.erase(It);
+	}
 
 	mInitializeSignal.reset_signal_with_state();
 	mTokenGeneratedSignal.reset_signal_with_state();

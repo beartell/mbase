@@ -79,7 +79,7 @@ GENERIC InfSamplingTopK::set_k(I32 in_k)
 
 GENERIC InfSamplingTopK::apply_sampling()
 {
-	llama_sample_top_k(mSelfContext, mTokenArray, mCommonFloat, 0);
+	llama_sample_top_k(mSelfContext, mTokenArray, mCommonFloat, 1);
 }
 
 InfSamplingTypicalP::InfSamplingTypicalP(llama_context* in_ctx, llama_token_data_array* in_array) : InfSamplingBase(in_ctx, in_array, "typical_p")
@@ -99,7 +99,7 @@ GENERIC InfSamplingTypicalP::set_typical_p(F32 in_p)
 
 GENERIC InfSamplingTypicalP::apply_sampling()
 {
-	llama_sample_typical(mSelfContext, mTokenArray, mCommonFloat, 0);
+	llama_sample_typical(mSelfContext, mTokenArray, mCommonFloat, 1);
 }
 
 InfSamplingTopP::InfSamplingTopP(llama_context* in_ctx, llama_token_data_array* in_array) : InfSamplingBase(in_ctx, in_array, "top_p")
@@ -118,7 +118,7 @@ GENERIC InfSamplingTopP::set_top_p(F32 in_p)
 
 GENERIC InfSamplingTopP::apply_sampling()
 {
-	llama_sample_top_p(mSelfContext, mTokenArray, mCommonFloat, 0);
+	llama_sample_top_p(mSelfContext, mTokenArray, mCommonFloat, 1);
 }
 
 InfSamplingMinP::InfSamplingMinP(llama_context* in_ctx, llama_token_data_array* in_array) : InfSamplingBase(in_ctx, in_array, "min_p")
@@ -138,7 +138,7 @@ GENERIC InfSamplingMinP::set_min_p(F32 in_p)
 
 GENERIC InfSamplingMinP::apply_sampling() 
 {
-	llama_sample_min_p(mSelfContext, mTokenArray, mCommonFloat, 0);
+	llama_sample_min_p(mSelfContext, mTokenArray, mCommonFloat, 1);
 }
 
 InfSamplingTailFree::InfSamplingTailFree(llama_context* in_ctx, llama_token_data_array* in_array) : InfSamplingBase(in_ctx, in_array, "tailfree")
@@ -157,7 +157,7 @@ GENERIC InfSamplingTailFree::set_z_value(F32 in_z)
 
 GENERIC InfSamplingTailFree::apply_sampling()
 {
-	llama_sample_tail_free(mSelfContext, mTokenArray, mCommonFloat, 0);
+	llama_sample_tail_free(mSelfContext, mTokenArray, mCommonFloat, 1);
 }
 
 InfSamplingSoftmax::InfSamplingSoftmax(llama_context* in_ctx, llama_token_data_array* in_array) : InfSamplingBase(in_ctx, in_array, "softmax")

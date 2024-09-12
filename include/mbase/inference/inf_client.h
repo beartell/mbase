@@ -10,14 +10,11 @@
 
 MBASE_BEGIN
 
-class InfSamplingBase;
-
 // inheriting from InfClientBase seemed unneccesary, so I removed it.
 
 class MBASE_API InfClientTextToText {
 public:
 	
-	using sampler_map = mbase::unordered_map<mbase::string, InfSamplingBase*>;
 	using token_vector = mbase::vector<InfTextToTextProcessor::inf_token>;
 	using size_type = SIZE_T;
 
@@ -81,7 +78,6 @@ protected:
 	InfTextToTextProcessor* mT2TProcessor;
 	mbase::vector<InfSamplingBase*> mSamplingOrder;
 	chat_history_map mChatHistory;
-	sampler_map mSamplerMap;
 	U32 mMessageIndexer;
 };
 
