@@ -32,7 +32,6 @@ public:
 		INF_PROC_ERR_ALREADY_PROCESSING,
 		INF_PROC_ERR_BELONGS_TO_ANOTHER_PROCESSOR,
 		INF_PROC_ERR_MODEL_IS_NOT_INITIALIZED,
-		INF_PROC_ERR_CONTEXT_IS_FULL,
 		INF_PROC_ERR_TOKEN_LIMIT_IS_TOO_LOW,
 		INF_PROC_ERR_INPUT_EXCEED_TOKEN_LIMIT,
 		INF_PROC_ERR_UNABLE_TO_TOKENIZE_INPUT,
@@ -118,6 +117,7 @@ public:
 	flags get_sampler(const mbase::string& in_sampler_name, InfSamplingBase*& out_sampler);
 	GENERIC get_available_samplers(mbase::vector<InfSamplingBase*> out_samplers);
 	bool has_client() const;
+	flags get_processor_status() const;
 
 	flags tokenize_input(CBYTEBUFFER in_data, size_type in_size, mbase::vector<inf_token>& out_tokens);
 	flags tokenize_input(context_line* in_lines, size_type in_count, mbase::vector<inf_token>& out_tokens, bool in_append_assistant_token = true);
@@ -142,12 +142,12 @@ public:
 		{
 			mSamplerMap[samplerName]->set_common_float(in_common_float);
 			delete newSampler;
-			return flags::INF_CLIENT_SUCCESS;
+			return flags::INF_PROC_SUCCESS;
 		}
 		newSampler->set_context(mModelContext);
 		newSampler->set_common_float(in_common_float);
 		mSamplerMap[samplerName] = newSampler;
-		return flags::INF_CLIENT_SUCCESS;
+		return flags::INF_PROC_SUCCESS;
 	}
 
 	GENERIC update_sampler_value(const mbase::string& in_sampler_name, F32 in_common_float);

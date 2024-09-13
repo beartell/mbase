@@ -25,9 +25,7 @@ static U32 gSeqIdCounter = 0;
 
 InfClientTextToText::InfClientTextToText():
 	mT2TProcessor(NULL),
-	mSamplingOrder(),
 	mChatHistory(),
-	mSamplerMap(),
 	mMessageIndexer(0)
 {
 
@@ -36,9 +34,7 @@ InfClientTextToText::InfClientTextToText():
 InfClientTextToText::InfClientTextToText(const InfClientTextToText& in_rhs):
 	mT2TProcessor(NULL)
 {
-	mSamplingOrder = in_rhs.mSamplingOrder;
 	mChatHistory = in_rhs.mChatHistory;
-	mSamplerMap = in_rhs.mSamplerMap;
 	mMessageIndexer = in_rhs.mMessageIndexer;
 }
 
@@ -47,10 +43,6 @@ InfClientTextToText::~InfClientTextToText()
 	if(is_registered())
 	{
 		mT2TProcessor->release_inference_client();
-	}
-	for (sampler_map::iterator It = mSamplerMap.begin(); It != mSamplerMap.end(); ++It)
-	{
-		delete It->second;
 	}
 }
 
@@ -63,32 +55,6 @@ InfClientTextToText& InfClientTextToText::operator=(const InfClientTextToText& i
 bool InfClientTextToText::is_registered() const
 {
 	return (mT2TProcessor != NULL);
-}
-
-bool InfClientTextToText::has_sampler(const mbase::string & in_sampler_name)
-{
-	if (mSamplerMap.find(in_sampler_name) == mSamplerMap.end())
-	{
-		return false;
-	}
-
-	return true;
-}
-
-InfClientTextToText::flags InfClientTextToText::get_sampler(const mbase::string & in_sampler_name, InfSamplingBase * &out_sampler)
-{
-	if (!has_sampler(in_sampler_name))
-	{
-		return flags::INF_CLIENT_ERR_SAMPLER_MISMATCH;
-	}
-
-	out_sampler = mSamplerMap[in_sampler_name];
-	return flags::INF_CLIENT_SUCCESS;
-}
-
-GENERIC InfClientTextToText::get_sampling_order(mbase::vector<InfSamplingBase*>&out_order)
-{
-	out_order = mSamplingOrder;
 }
 
 InfClientTextToText::flags InfClientTextToText::get_host_processor(InfTextToTextProcessor * &out_processor)
@@ -186,31 +152,10 @@ InfClientTextToText::flags InfClientTextToText::remove_messages(const mbase::vec
 	return flags::INF_CLIENT_SUCCESS;
 }
 
-bool InfClientTextToText::add_to_sampling_order(InfSamplingBase* in_sampler)
-{
-	if (!in_sampler)
-	{
-		return false;
-	}
-
-	if (!has_sampler(in_sampler->get_sampler_name()))
-	{
-		return false;
-	}
-
-	mSamplingOrder.push_back(in_sampler);
-	return true;
-}
-
 GENERIC InfClientTextToText::clear_chat_history()
 {
 	mChatHistory.clear();
 	mMessageIndexer = 0;
-}
-
-GENERIC InfClientTextToText::clear_samplers()
-{
-	mSamplingOrder.clear();
 }
 
 //InfClient::InfClient() :

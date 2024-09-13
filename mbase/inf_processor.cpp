@@ -223,6 +223,26 @@ bool InfTextToTextProcessor::has_client() const
 	return mAssignedClient != NULL;
 }
 
+InfTextToTextProcessor::flags InfTextToTextProcessor::get_processor_status() const
+{
+	if(signal_state_initializing())
+	{
+		return flags::INF_PROC_INFO_INITIALIZING;
+	}
+
+	if(!is_registered())
+	{
+		return flags::INF_PROC_ERR_UNREGISTERED_PROCESSOR;
+	}
+
+	if(signal_state_destroying())
+	{
+		return flags::INF_PROC_INFO_DESTROYING;
+	}
+
+	return flags::INF_PROC_SUCCESS;
+}
+
 InfTextToTextProcessor::flags InfTextToTextProcessor::tokenize_input(CBYTEBUFFER in_data, size_type in_size, mbase::vector<inf_token>& out_tokens)
 {
 	MBASE_INF_PROC_RETURN_UNREGISTERED;
@@ -331,7 +351,14 @@ InfTextToTextProcessor::flags InfTextToTextProcessor::execute_input(const mbase:
 
 	for(mbase::vector<mbase::string>::const_iterator It = in_sampling_order.cbegin(); It != in_sampling_order.cend(); ++It)
 	{
-		
+		if(mSamplerMap.find(*It) == mSamplerMap.end())
+		{
+			// ignore
+		}
+		else
+		{
+			mSamplingOrder.push_back(mSamplerMap[*It]);
+		}
 	}
 
 	mTokenizedInput = in_tokens;
@@ -605,6 +632,7 @@ GENERIC InfTextToTextProcessor::_decode_next()
 	if (llama_token_is_eog(t2tModel->get_raw_model(), mGeneratedToken) || !mGeneratedToken)
 	{
 		// means end of generation
+		mSamplingOrder.clear();
 		mFinishState = finish_state::FINISHED;
 		llama_kv_cache_clear(mModelContext);
 		clear_token_candidates();
@@ -619,6 +647,7 @@ GENERIC InfTextToTextProcessor::_decode_next()
 		if (mContextCursor == mContextLength)
 		{
 			// means token limit is reached
+			mSamplingOrder.clear();
 			mContextState = context_state::AWAITING_FOR_CURSOR_ALIGNMENT;
 			mFinishState = finish_state::TOKEN_LIMIT_REACHED;
 			llama_kv_cache_clear(mModelContext);

@@ -35,9 +35,6 @@ public:
 	InfClientTextToText& operator=(const InfClientTextToText& in_rhs);
 
 	bool is_registered() const;
-	bool has_sampler(const mbase::string& in_sampler_name);
-	flags get_sampler(const mbase::string& in_sampler_name, InfSamplingBase*& out_sampler);
-	GENERIC get_sampling_order(mbase::vector<InfSamplingBase*>& out_order);
 	flags get_host_processor(InfTextToTextProcessor*& out_processor);
 	flags get_message(U32 in_msg_id, context_line& out_message);
 	flags get_message_array(PTRU32 in_msg_ids, size_type in_id_count, mbase::vector<context_line>& out_messages);
@@ -56,27 +53,11 @@ public:
 	flags add_message(const mbase::string& in_data, context_role in_role, U32& out_message_id);
 	flags add_message(const mbase::wstring& in_data, context_role in_role, U32& out_message_id);
 	flags remove_messages(const mbase::vector<U32>& in_msg_ids = mbase::vector<U32>());
-	template<typename SamplerType>
-	flags add_sampler() {
-		SamplerType* newSampler = new SamplerType(NULL, NULL);
-		mbase::string samplerName = newSampler->get_sampler_name();
-		if (has_sampler(samplerName))
-		{
-			delete newSampler;
-			return flags::INF_CLIENT_SUCCESS;
-		}
 
-		mSamplerMap[samplerName] = newSampler;
-		return flags::INF_CLIENT_SUCCESS;
-	}
-	bool add_to_sampling_order(InfSamplingBase* in_sampler);
 	GENERIC clear_chat_history(); // clears the chat map
-	GENERIC clear_samplers();
-
 protected:
 	
 	InfTextToTextProcessor* mT2TProcessor;
-	mbase::vector<InfSamplingBase*> mSamplingOrder;
 	chat_history_map mChatHistory;
 	U32 mMessageIndexer;
 };

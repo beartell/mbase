@@ -15,25 +15,11 @@ InfAcceptedClient& mAccClient = mActiveClients[in_csid];
 GENERIC InfMaipTunedT2TProcessor::on_initialize()
 {
 	set_inference_client(mNomineeClient);
-	own_context();
 }
 
 GENERIC InfMaipTunedT2TProcessor::on_destroy()
 {
-	if(mIsAbandoned)
-	{
-		delete this;
-	}
-}
-
-GENERIC InfMaipTunedT2TProcessor::own_context()
-{
-	mIsAbandoned = false;
-}
-
-GENERIC InfMaipTunedT2TProcessor::abandon_context()
-{
-	mIsAbandoned = true;
+	delete this;
 }
 
 GENERIC InfMaipTunedT2TProcessor::set_nominee_client(InfMaipTunedClient* in_nominee)
@@ -58,39 +44,32 @@ GENERIC InfMaipTunedClient::on_write(CBYTEBUFFER out_data, size_type out_size, I
 {
 	if (!mManagerClient->mPeer->is_connected())
 	{
+		// destroy the context if the client is disconnected
 		mManagerClient->mPeer = NULL;
-		InfProcessor* selfProcessor;
-		get_host_processor(selfProcessor);
-		if(selfProcessor)
-		{
-			selfProcessor->unregister_client(*this);
-		}
+		InfTextToTextProcessor* hostProcessor = NULL;
+		get_host_processor(hostProcessor); // 100% success;
+		hostProcessor->destroy();
 		return;
 	}
 
 	mbase::string outData(out_data, out_size);
 	mbase::maip_packet_builder tmpPacketBuilder;
 	
-	if(mFs == finish_state::INF_FINISH_STATE_CONTINUE)
+	if(!out_is_finish)
 	{
 		tmpPacketBuilder.set_response_message((U16)InfProgram::maip_err_code::EXEC_MESSAGE_CONTINUE);
 	}
 
-	else if(mFs == finish_state::INF_FINISH_STATE_SUCCESS)
+	else
 	{
 		// on_finish will be called
 		lastToken = outData;
 		return;
 	}
 
-	else
-	{
-		tmpPacketBuilder.set_response_message((U16)InfProgram::maip_err_code::INF_UNKNOWN_STATUS);
-	}
-
 	mbase::string outPayload;
 
-	if(this->mfrHostProcessor->get_processed_model()->is_token_special(outData) == InfModel::flags::INF_MODEL_SUCCESS)
+	if(out_is_special)
 	{
 		tmpPacketBuilder.set_kval("SPECIAL", 1);
 	}
@@ -118,39 +97,34 @@ GENERIC InfMaipTunedClient::on_finish(size_type out_total_token_size, InfTextToT
 {
 	if (!mManagerClient->mPeer->is_connected())
 	{
+		// destroy the context if the client is disconnected
 		mManagerClient->mPeer = NULL;
-		InfProcessor* selfProcessor;
-		get_host_processor(selfProcessor);
-		if (selfProcessor)
-		{
-			selfProcessor->unregister_client(*this);
-		}
+		InfTextToTextProcessor* hostProcessor = NULL;
+		get_host_processor(hostProcessor); // 100% success;
+		hostProcessor->destroy();
 		return;
 	}
 
 	mbase::maip_packet_builder tmpPacketBuilder;
-	if(mFs == finish_state::INF_FINISH_STATE_SUCCESS)
+	if(out_finish_state == InfTextToTextProcessor::finish_state::FINISHED)
 	{
 		tmpPacketBuilder.set_kval("TOKCOUNT", out_total_token_size);
 		tmpPacketBuilder.set_response_message((U16)InfProgram::maip_err_code::EXEC_MESSAGE_FINISH);
 	}
 
-	else if(mFs == finish_state::INF_FINISH_STATE_TOKEN_LIMIT_REACHED)
+	else if(out_finish_state == InfTextToTextProcessor::finish_state::TOKEN_LIMIT_REACHED)
 	{
-		tmpPacketBuilder.set_kval("MAXTOK", mfrMaxTokenCount);
+		InfTextToTextProcessor* hostProcessor = NULL;
+		get_host_processor(hostProcessor); // 100% success;
+		tmpPacketBuilder.set_kval("MAXTOK", hostProcessor->get_max_token_length());
 		tmpPacketBuilder.set_kval("TOKCOUNT", out_total_token_size);
 		tmpPacketBuilder.set_response_message((U16)InfProgram::maip_err_code::EXEC_TOKEN_LIMIT_EXCEEDED);
 	}
 
-	else if(mFs == finish_state::INF_FINISH_STATE_ABANDONED)
+	else if(out_finish_state == InfTextToTextProcessor::finish_state::ABANDONED)
 	{
 		tmpPacketBuilder.set_kval("TOKCOUNT", out_total_token_size);
 		tmpPacketBuilder.set_response_message((U16)InfProgram::maip_err_code::EXEC_ABANDONED);
-	}
-
-	else 
-	{
-		tmpPacketBuilder.set_response_message((U16)InfProgram::maip_err_code::INF_UNKNOWN_STATUS);
 	}
 
 	mbase::string outPayload;
@@ -238,13 +212,14 @@ InfProgram::maip_err_code InfProgram::inf_destroy_client(MBASE_MAIP_CL_AUTH)
 
 	for(mbase::unordered_map<U64, InfMaipTunedClient*>::iterator It = mAccClient.mChatSessions.begin(); It != mAccClient.mChatSessions.end();)
 	{
+		// destroy all chats
 		InfTextToTextProcessor* tmpProc = NULL;
-		
 		It->second->get_host_processor(tmpProc);
 		if (tmpProc)
 		{
-			tmpProc->destroy();
 			It->second->mIsDeadClient = true;
+			InfMaipTunedT2TProcessor* t2tProc = static_cast<InfMaipTunedT2TProcessor*>(tmpProc);
+			t2tProc->destroy();
 			It = mAccClient.mChatSessions.erase(It);
 		}
 		else
@@ -283,9 +258,11 @@ InfProgram::maip_err_code InfProgram::inf_get_created_context_ids(MBASE_MAIP_CL_
 	return maip_err_code::INF_SUCCESS;
 }
 
-InfProgram::maip_err_code InfProgram::inf_create_context(MBASE_MAIP_CL_AUTH, const mbase::string& in_model, const U32& in_ctsize, const mbase::vector<InfSamplingInit>& in_samplers, U64& out_ctxId)
+InfProgram::maip_err_code InfProgram::inf_create_context(MBASE_MAIP_CL_AUTH, const mbase::string& in_model, const U32& in_ctsize, U64& out_ctxId, const mbase::vector<InfSamplingInit>& in_samplers)
 {
 	MBASE_SESSION_CONTROL;
+
+	// TODO: CHECK IF THERE IS ENOUGH MEMORY FOR CONTEXTS
 
 	if (std::find(mAccClient.mAcceptedModels.begin(), mAccClient.mAcceptedModels.end(), in_model) == mAccClient.mAcceptedModels.end())
 	{
@@ -296,6 +273,12 @@ InfProgram::maip_err_code InfProgram::inf_create_context(MBASE_MAIP_CL_AUTH, con
 	{
 		return maip_err_code::INF_MODEL_NAME_MISMATCH;
 	}
+
+	if(in_ctsize < 32)
+	{
+		return maip_err_code::INF_INVALID_TOKEN_LIMIT;
+	}
+
 	// temp
 	// top_k
 	// typical_p
@@ -311,81 +294,41 @@ InfProgram::maip_err_code InfProgram::inf_create_context(MBASE_MAIP_CL_AUTH, con
 	InfModelTextToText* registeredModel = mRegisteredModels[in_model];
 	InfMaipTunedT2TProcessor* newProcessor = new InfMaipTunedT2TProcessor;
 	newProcessor->set_nominee_client(currentClient);
-	
-	registeredModel->register_context_process(newProcessor, in_ctsize);
-	
+	for(mbase::vector<InfSamplingInit>::const_iterator cIt = in_samplers.cbegin(); cIt != in_samplers.cend(); ++cIt)
+	{
+		if(cIt->mSamplerName == "temp")
+		{
+			newProcessor->add_sampler<InfSamplingTemperature>(cIt->mCommonFloat);
+		}
+		else if(cIt->mSamplerName == "top_k")
+		{
+			newProcessor->add_sampler<InfSamplingTopK>(cIt->mCommonFloat);
+		}
+		else if(cIt->mSamplerName == "typical_p")
+		{
+			newProcessor->add_sampler<InfSamplingTypicalP>(cIt->mCommonFloat);
+		}
+		else if(cIt->mSamplerName == "top_p")
+		{
+			newProcessor->add_sampler<InfSamplingTopP>(cIt->mCommonFloat);
+		}
+		else if(cIt->mSamplerName == "min_p")
+		{
+			newProcessor->add_sampler<InfSamplingMinP>(cIt->mCommonFloat);
+		}
+		else if(cIt->mSamplerName == "tailfree")
+		{
+			newProcessor->add_sampler<InfSamplingTailFree>(cIt->mCommonFloat);
+		}
+	}
+	out_ctxId = ++mAccClient.mChatSessionIdCounter;
+	mAccClient.mChatSessions[out_ctxId] = currentClient;
+	InfModelTextToText::flags outFlag = registeredModel->register_context_process(newProcessor, in_ctsize);
 
-	// TODO: CHECK IF THERE IS ENOUGH MEMORY FOR CONTEXTS
-
-
-
-
-
-	//InfModel* tempModel = mRegisteredModels[in_model];
-	//InfProcessor::flags procErr = InfProcessor::flags::INF_PROC_ERR_UNREGISTERED_PROCESSOR;
-	//for (auto& tmpProc : *tempModel)
-	//{
-	//	InfProcessor* activeProcessor = tmpProc->mProcessor;
-	//	procErr = activeProcessor->register_client(*currentClient, in_ctsize);
-	//	if(procErr == InfProcessor::flags::INF_PROC_SUCCESS)
-	//	{
-	//		out_ctxId = mAccClient.mChatSessionIdCounter;
-	//		mAccClient.mChatSessions[out_ctxId] = currentClient;
-	//		++mAccClient.mChatSessionIdCounter;
-
-	//		for(mbase::vector<mbase::string>::const_iterator cIt = in_samplers.cbegin(); cIt != in_samplers.cend(); cIt++)
-	//		{
-	//			mbase::string samplingMethod = *cIt;
-	//			if(samplingMethod == "temp")
-	//			{
-	//				currentClient->add_sampler<InfSamplingTemperature>();
-	//			}
-
-	//			else if(samplingMethod == "top_k")
-	//			{
-	//				currentClient->add_sampler<InfSamplingTopK>();
-	//			}
-
-	//			else if(samplingMethod == "typical_p")
-	//			{
-	//				currentClient->add_sampler<InfSamplingTypicalP>();
-	//			}
-
-	//			else if(samplingMethod == "top_p")
-	//			{
-	//				currentClient->add_sampler<InfSamplingTopP>();
-	//			}
-
-	//			else if(samplingMethod == "min_p")
-	//			{
-	//				currentClient->add_sampler<InfSamplingMinP>();
-	//			}
-
-	//			else if(samplingMethod == "tailfree")
-	//			{
-	//				currentClient->add_sampler<InfSamplingTailFree>();
-	//			}
-	//			
-	//			else if(samplingMethod == "softmax")
-	//			{
-	//				currentClient->add_sampler<InfSamplingSoftmax>();
-	//			}
-	//			else
-	//			{
-	//				// undefined sampling type
-	//			}
-	//		}
-
-	//		return maip_err_code::INF_SUCCESS;
-	//	}
-	//}
-	//
-	//delete currentClient;
-
-	//return proc_err_to_maip(procErr);
+	return inf_proc_err_to_maip(newProcessor->get_processor_status());
 }
 
-InfProgram::maip_err_code InfProgram::inf_activate_context(MBASE_MAIP_CL_AUTH, const mbase::string& in_model, const U64& in_ctxId)
+InfProgram::maip_err_code InfProgram::inf_activate_context(MBASE_MAIP_CL_AUTH, const mbase::string& in_model, const U64& in_ctxId, const U32& in_ctsize, const mbase::vector<InfSamplingInit>& in_samplers)
 {
 	MBASE_SESSION_CONTROL;
 
@@ -412,20 +355,40 @@ InfProgram::maip_err_code InfProgram::inf_activate_context(MBASE_MAIP_CL_AUTH, c
 	}
 
 	mySession->mIsDeadClient = false;
-
-	// RE-REGISTER THE CLIENT
-	InfModel* tempModel = mRegisteredModels[in_model];
-	InfProcessor::flags procErr = InfProcessor::flags::INF_PROC_ERR_UNREGISTERED_PROCESSOR;
-	for (auto& tmpProc : *tempModel)
+	InfModelTextToText* registeredModel = mRegisteredModels[in_model];
+	InfMaipTunedT2TProcessor* newProcessor = new InfMaipTunedT2TProcessor;
+	newProcessor->set_nominee_client(mySession);
+	for (mbase::vector<InfSamplingInit>::const_iterator cIt = in_samplers.cbegin(); cIt != in_samplers.cend(); ++cIt)
 	{
-		procErr = tmpProc->mProcessor->register_client(*mySession, mySession->get_client_max_token());
-		if(procErr == InfProcessor::flags::INF_PROC_SUCCESS)
+		if (cIt->mSamplerName == "temp")
 		{
-			return maip_err_code::INF_SUCCESS;
+			newProcessor->add_sampler<InfSamplingTemperature>(cIt->mCommonFloat);
+		}
+		else if (cIt->mSamplerName == "top_k")
+		{
+			newProcessor->add_sampler<InfSamplingTopK>(cIt->mCommonFloat);
+		}
+		else if (cIt->mSamplerName == "typical_p")
+		{
+			newProcessor->add_sampler<InfSamplingTypicalP>(cIt->mCommonFloat);
+		}
+		else if (cIt->mSamplerName == "top_p")
+		{
+			newProcessor->add_sampler<InfSamplingTopP>(cIt->mCommonFloat);
+		}
+		else if (cIt->mSamplerName == "min_p")
+		{
+			newProcessor->add_sampler<InfSamplingMinP>(cIt->mCommonFloat);
+		}
+		else if (cIt->mSamplerName == "tailfree")
+		{
+			newProcessor->add_sampler<InfSamplingTailFree>(cIt->mCommonFloat);
 		}
 	}
 
-	return proc_err_to_maip(procErr);
+	InfModelTextToText::flags outFlag = registeredModel->register_context_process(newProcessor, in_ctsize);
+	return inf_proc_err_to_maip(newProcessor->get_processor_status());
+	// TODO: CREATE CONTEXT
 }
 
 InfProgram::maip_err_code InfProgram::inf_get_context_status(MBASE_MAIP_CL_AUTH, const U64& in_ctxId)
@@ -458,17 +421,20 @@ InfProgram::maip_err_code InfProgram::inf_destroy_context(MBASE_MAIP_CL_AUTH, co
 	}
 
 	InfMaipTunedClient* mySession = mAccClient.mChatSessions[in_ctxId];
-	mAccClient.mChatSessions.erase(in_ctxId);
-	InfProcessor* myProcessor = NULL;
-
-	if(!mySession->is_registered())
+	InfTextToTextProcessor* tmpProc = NULL;
+	mySession->get_host_processor(tmpProc);
+	if(tmpProc)
+	{
+		mySession->mIsDeadClient = true;
+		tmpProc->destroy();
+	}
+	else
 	{
 		delete mySession;
-		return maip_err_code::INF_SUCCESS;
 	}
 
-	mySession->mIsDeadClient = true;
-	return proc_err_to_maip(myProcessor->unregister_client(*mySession));
+	mAccClient.mChatSessions.erase(in_ctxId);
+	return maip_err_code::INF_SUCCESS;
 }
 
 InfProgram::maip_err_code InfProgram::inf_release_context(MBASE_MAIP_CL_AUTH, const U64& in_ctxId)
@@ -480,23 +446,16 @@ InfProgram::maip_err_code InfProgram::inf_release_context(MBASE_MAIP_CL_AUTH, co
 	}
 
 	InfMaipTunedClient* mySession = mAccClient.mChatSessions[in_ctxId];
-	if (mySession->is_registered())
+	mySession->mIsDeadClient = false;
+	InfTextToTextProcessor* tmpProc = NULL;
+
+	mySession->get_host_processor(tmpProc);
+	if (tmpProc)
 	{
-		InfProcessor* myProcessor = NULL;
-		mySession->get_host_processor(myProcessor);
-		if(myProcessor)
-		{
-			return proc_err_to_maip(myProcessor->unregister_client(*mySession));
-		}
-		else
-		{
-			return maip_err_code::INF_UNKNOWN_STATUS;
-		}
+		tmpProc->destroy();
 	}
 
-	mySession->mIsDeadClient = false;
-
-	return maip_err_code::INF_CONTEXT_INACTIVE;
+	return maip_err_code::INF_SUCCESS;
 }
 
 InfProgram::maip_err_code InfProgram::inf_acquire_model(MBASE_MAIP_CL_AUTH, const mbase::string& in_model)
@@ -557,7 +516,7 @@ InfProgram::maip_err_code InfProgram::inf_get_program_models(MBASE_MAIP_CL_AUTH,
 	return maip_err_code::INF_SUCCESS;
 }
 
-InfProgram::maip_err_code InfProgram::exec_set_input(MBASE_MAIP_CL_AUTH, const U64& in_ctxId, InfClient::input_role in_role, const mbase::string& in_input, U32& out_msgid)
+InfProgram::maip_err_code InfProgram::exec_set_input(MBASE_MAIP_CL_AUTH, const U64& in_ctxId, context_role in_role, const mbase::string& in_input, U32& out_msgid)
 {
 	MBASE_SESSION_CONTROL;
 
@@ -567,22 +526,16 @@ InfProgram::maip_err_code InfProgram::exec_set_input(MBASE_MAIP_CL_AUTH, const U
 	}
 
 	InfMaipTunedClient* mySession = mAccClient.mChatSessions[in_ctxId];
-
-	if(!mySession->is_registered())
+	InfClientTextToText::flags errCode = mySession->add_message(in_input, in_role, out_msgid);
+	
+	if(errCode == InfClientTextToText::flags::INF_CLIENT_ERR_MISSING_INPUT)
 	{
-		return maip_err_code::EXEC_CONTEXT_INACTIVE;
+		return maip_err_code::EXEC_MISSING_MESSAGE;
 	}
-
-	InfClient::flags errCode = mySession->set_input(in_input, in_role, out_msgid);
-	if(errCode != InfClient::flags::INF_CLIENT_SUCCESS)
-	{
-		return client_err_to_maip(errCode);
-	}
-
 	return maip_err_code::EXEC_SUCCESS;
 }
 
-InfProgram::maip_err_code InfProgram::exec_execute_input(MBASE_MAIP_CL_AUTH, std::shared_ptr<mbase::PcNetPeerClient> in_peer, const U64& in_ctxId, const mbase::vector<U32>& in_msgid, mbase::vector<mbase::string> in_sampler_order, mbase::vector<IF32> in_sampler_inputs)
+InfProgram::maip_err_code InfProgram::exec_execute_input(MBASE_MAIP_CL_AUTH, const U64& in_ctxId, mbase::vector<U32>& in_msgid, mbase::vector<mbase::string> in_sampler_order)
 {
 	MBASE_SESSION_CONTROL;
 	
@@ -592,38 +545,37 @@ InfProgram::maip_err_code InfProgram::exec_execute_input(MBASE_MAIP_CL_AUTH, std
 	}
 
 	InfMaipTunedClient* mySession = mAccClient.mChatSessions[in_ctxId];
+	InfTextToTextProcessor* myProcessor = NULL;
+	mySession->get_host_processor(myProcessor);
 
-	if (!mySession->is_registered())
+	if (!myProcessor)
 	{
 		return maip_err_code::EXEC_CONTEXT_INACTIVE;
 	}
-	
-	I32 indexSamplerValue = 0;
-	for(mbase::vector<mbase::string>::iterator It = in_sampler_order.begin(); It != in_sampler_order.end(); It++)
-	{
-		mbase::string samplerString = *It;
-		InfSamplingBase* tmpSampler = NULL;
-		mAccClient.mChatSessions[in_ctxId]->get_sampler(samplerString, tmpSampler);
-		if(tmpSampler)
-		{
-			if(tmpSampler->get_sampler_name() == "softmax")
-			{
-				// except softmax, all samplers have common float
-			}
 
-			else
-			{
-				tmpSampler->set_common_float(in_sampler_inputs[indexSamplerValue].mFloat);
-				indexSamplerValue++;
-			}
-			mAccClient.mChatSessions[in_ctxId]->add_to_sampling_order(tmpSampler);
-		}
+	if(!in_msgid.size())
+	{
+		return maip_err_code::EXEC_MESSAGE_ID_MISMATCH;
 	}
 
-	mAccClient.mPeer = in_peer;
-	InfClient::flags errCode = mySession->execute_prompt(in_msgid);
+	mbase::vector<context_line> outContexts;
+	if(mySession->get_message_array(in_msgid.data(), in_msgid.size(), outContexts) == InfClientTextToText::flags::INF_CLIENT_ERR_MSG_ID_MISMATCH)
+	{
+		return maip_err_code::EXEC_MESSAGE_ID_MISMATCH;
+	}
+	
+	mbase::InfClientTextToText::token_vector tokenVec;
+	mbase::InfTextToTextProcessor::flags errCode = myProcessor->tokenize_input(outContexts.data(), outContexts.size(), tokenVec);
+	maip_err_code outErrCode = inf_exec_err_to_maip(errCode);
+	if(outErrCode != maip_err_code::EXEC_SUCCESS)
+	{
+		return outErrCode;
+	}
 
-	return client_err_to_maip(errCode);
+	errCode = myProcessor->execute_input(tokenVec, true, in_sampler_order);
+	outErrCode = inf_exec_err_to_maip(errCode);
+
+	return outErrCode;
 }
 
 InfProgram::maip_err_code InfProgram::exec_next(MBASE_MAIP_CL_AUTH, std::shared_ptr<mbase::PcNetPeerClient> in_peer, const U64& in_ctxId)
@@ -636,33 +588,35 @@ InfProgram::maip_err_code InfProgram::exec_next(MBASE_MAIP_CL_AUTH, std::shared_
 	}
 
 	InfMaipTunedClient* mySession = mAccClient.mChatSessions[in_ctxId];
-	if(!mySession->is_registered())
+	InfTextToTextProcessor* myProcessor = NULL;
+	mySession->get_host_processor(myProcessor);
+	if(myProcessor)
 	{
-		return maip_err_code::EXEC_CONTEXT_INACTIVE;
+		mAccClient.mPeer = in_peer;
+		mbase::InfTextToTextProcessor::flags errCode = myProcessor->next();
+		maip_err_code outErrCode = inf_exec_err_to_maip(errCode);
+		return outErrCode;
+	}
+	else
+	{
+		return maip_err_code::INF_CONTEXT_INACTIVE;
+	}
+}
+
+InfProgram::flags InfProgram::host_model(InfModelTextToText* in_model)
+{
+	if(!in_model)
+	{
+		return flags::INF_PROGRAM_ERR_MODEL_MISSING;
 	}
 
-	mAccClient.mPeer = in_peer;
-	mySession->next();
-
-	return maip_err_code::INF_SUCCESS;
-}
-
-InfProgram::maip_err_code InfProgram::exec_terminate_generation(MBASE_MAIP_CL_AUTH, std::shared_ptr<mbase::PcNetPeerClient> in_peer, const U64& in_ctxId)
-{
-	MBASE_SESSION_CONTROL;
-
-	return maip_err_code::EXEC_SUCCESS;
-}
-
-InfProgram::flags InfProgram::host_model(InfModel& in_model)
-{
-	if(!in_model.is_initialized())
+	if(!in_model->is_initialized())
 	{
 		return flags::INF_PROGRAM_ERR_MODEL_IS_NOT_INITIALIZED;
 	}
 
 	mbase::string currentModelName;
-	in_model.get_model_name(currentModelName); // 100% success
+	in_model->get_model_name(currentModelName); // 100% success
 
 	for (auto& tmpModels : mRegisteredModels) 
 	{
@@ -672,7 +626,7 @@ InfProgram::flags InfProgram::host_model(InfModel& in_model)
 		}
 	}
 
-	mRegisteredModels[currentModelName] = &in_model;
+	mRegisteredModels[currentModelName] = in_model;
 	return flags::INF_PROGRAM_SUCCESS;
 }
 
@@ -686,36 +640,36 @@ InfProgram::flags InfProgram::release_model(const mbase::string& in_model_name)
 	return flags::INF_PROGRAM_SUCCESS;
 }
 
-InfProgram::maip_err_code InfProgram::proc_err_to_maip(InfProcessor::flags in_flag)
+InfProgram::maip_err_code InfProgram::inf_proc_err_to_maip(InfProcessorBase::flags in_flag)
 {
 	switch (in_flag)
 	{
-	case mbase::InfProcessor::flags::INF_PROC_SUCCESS:
+	case mbase::InfProcessorBase::flags::INF_PROC_SUCCESS:
 		return maip_err_code::INF_SUCCESS;
 		break;
-	case mbase::InfProcessor::flags::INF_PROC_ERR_UNREGISTERED_PROCESSOR:
-		return maip_err_code::INF_UNABLE_TO_FIND_SUITABLE_PROCESSOR;
+	case mbase::InfProcessorBase::flags::INF_PROC_ERR_UNREGISTERED_PROCESSOR:
+		return maip_err_code::INF_CONTEXT_INACTIVE;
 		break;
-	case mbase::InfProcessor::flags::INF_PROC_ERR_ALREADY_PROCESSING:
-		return maip_err_code::INF_SUCCESS; // change it into already processing
+	case mbase::InfProcessorBase::flags::INF_PROC_ERR_ALREADY_INITIALIZED:
+		return maip_err_code::INF_SUCCESS;
 		break;
-	case mbase::InfProcessor::flags::INF_PROC_ERR_CLIENT_ALREADY_REGISTERED:
-		return maip_err_code::INF_CONTEXT_ACTIVE; // change it into already registered
+	case mbase::InfProcessorBase::flags::INF_PROC_ERR_MODEL_IS_NOT_INITIALIZED:
+		return maip_err_code::INF_CONTEXT_HOST_MODEL_SYSTEM_ERROR;
 		break;
-	case mbase::InfProcessor::flags::INF_PROC_ERR_MODEL_IS_NOT_INITIALIZED:
-		return maip_err_code::INF_MODEL_NAME_MISMATCH; // change it into model is halted
+	case mbase::InfProcessorBase::flags::INF_PROC_ERR_TOKEN_LIMIT_IS_TOO_LOW:
+		return maip_err_code::INF_INVALID_TOKEN_LIMIT;
 		break;
-	case mbase::InfProcessor::flags::INF_PROC_ERR_HALTED:
-		return maip_err_code::INF_PROCESSOR_UNAVAILABLE;
+	case mbase::InfProcessorBase::flags::INF_PROC_ERR_INPUT_IS_EMPTY:
+		return maip_err_code::INF_CONTEXT_INPUT_IS_EMPTY;
 		break;
-	case mbase::InfProcessor::flags::INF_PROC_ERR_CLIENT_LIMIT_REACHED:
-		return maip_err_code::INF_UNABLE_TO_FIND_SUITABLE_PROCESSOR;
+	case mbase::InfProcessorBase::flags::INF_PROC_INFO_INITIALIZING:
+		return maip_err_code::INF_CONTEXT_INITIALIZING;
 		break;
-	case mbase::InfProcessor::flags::INF_PROC_ERR_EXCEED_TOKEN_LIMIT:
-		return maip_err_code::INF_SUCCESS; // change it into given token is bigger than context batch size
+	case mbase::InfProcessorBase::flags::INF_PROC_INFO_DESTROYING:
+		return maip_err_code::INF_CONTEXT_DESTROYING;
 		break;
-	case mbase::InfProcessor::flags::INF_PROC_ERR_CONTEXT_IS_FULL:
-		return maip_err_code::INF_SUCCESS; // change it into processor context is full
+	case mbase::InfProcessorBase::flags::INF_PROC_INFO_HALTED:
+		return maip_err_code::INF_CONTEXT_HALTED;
 		break;
 	default:
 		return maip_err_code::INF_UNKNOWN_STATUS;
@@ -723,45 +677,38 @@ InfProgram::maip_err_code InfProgram::proc_err_to_maip(InfProcessor::flags in_fl
 	}
 }
 
-InfProgram::maip_err_code InfProgram::client_err_to_maip(InfClient::flags in_flag)
+InfProgram::maip_err_code InfProgram::inf_exec_err_to_maip(InfProcessorBase::flags in_flag)
 {
 	switch (in_flag)
 	{
-	case mbase::InfClient::flags::INF_CLIENT_SUCCESS:
-		return maip_err_code::INF_SUCCESS;
+	case mbase::InfProcessorBase::flags::INF_PROC_SUCCESS:
+		return maip_err_code::EXEC_SUCCESS;
 		break;
-	case mbase::InfClient::flags::INF_CLIENT_ERR_NOT_REGISTERED:
-		return maip_err_code::INF_CLIENT_NOT_REGISTERED;
+	case mbase::InfProcessorBase::flags::INF_PROC_ERR_ALREADY_PROCESSING:
+		return maip_err_code::EXEC_ALREADY_PROCESSING;
 		break;
-	case mbase::InfClient::flags::INF_CLIENT_ERR_PROCESSING:
-		return maip_err_code::EXEC_PROCESSING;
-		break;
-	case mbase::InfClient::flags::INF_CLIENT_ERR_MSG_ID_MISMATCH:
-		return maip_err_code::EXEC_MESSAGE_ID_MISMATCH;
-		break;
-	case mbase::InfClient::flags::INF_CLIENT_ERR_MISSING_CHAT:
-		return maip_err_code::EXEC_MISSING_MESSAGE;
-		break;
-	case mbase::InfClient::flags::INF_CLIENT_ERR_TOKENIZATION_FAILED:
-		return maip_err_code::EXEC_TOKENIZATION_FAILED;
-		break;
-	case mbase::InfClient::flags::INF_CLIENT_ERR_TOKEN_LIMIT_EXCEEDED:
+	case mbase::InfProcessorBase::flags::INF_PROC_ERR_INPUT_EXCEED_TOKEN_LIMIT:
 		return maip_err_code::EXEC_TOKEN_LIMIT_EXCEEDED;
 		break;
-	case mbase::InfClient::flags::INF_CLIENT_ERR_UNKNOWN:
-		return maip_err_code::INF_UNKNOWN_STATUS;
+	case mbase::InfProcessorBase::flags::INF_PROC_ERR_UNABLE_TO_TOKENIZE_INPUT:
+		return maip_err_code::EXEC_TOKENIZATION_FAILED;
 		break;
-	case mbase::InfClient::flags::INF_CLIENT_ERR_UNREGISTERATION_IN_PROGRESS:
-		return maip_err_code::INF_CLIENT_UNREGISTERING;
+	case mbase::InfProcessorBase::flags::INF_PROC_ERR_INPUT_IS_EMPTY:
+		return maip_err_code::EXEC_MISSING_MESSAGE;
 		break;
-	case mbase::InfClient::flags::INF_CLIENT_ERR_MISSING_PROCESSOR:
-		return maip_err_code::INF_UNABLE_TO_FIND_SUITABLE_PROCESSOR;
+	case mbase::InfProcessorBase::flags::INF_PROC_INFO_INITIALIZING:
+		return maip_err_code::INF_CONTEXT_INITIALIZING;
+		break;
+	case mbase::InfProcessorBase::flags::INF_PROC_INFO_DESTROYING:
+		return maip_err_code::INF_CONTEXT_DESTROYING;
+		break;
+	case mbase::InfProcessorBase::flags::INF_PROC_INFO_HALTED:
+		return maip_err_code::EXEC_SUCCESS;
 		break;
 	default:
-		return maip_err_code::INF_UNKNOWN_STATUS;
+		return maip_err_code::EXEC_UNKNOWN_STATUS;
 		break;
 	}
-	return maip_err_code::INF_SUCCESS;
 }
 
 GENERIC InfProgram::update()
