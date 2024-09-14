@@ -6,6 +6,7 @@
 #include <mbase/thread.h>
 #include <mbase/synchronization.h>
 #include <mbase/behaviors.h>
+#include <atomic>
 
 MBASE_BEGIN
 
@@ -55,8 +56,8 @@ public:
 	}
 
 private:
-	bool mSignalState;
-	bool mSignal;
+	std::atomic_bool mSignalState;
+	std::atomic_bool mSignal;
 };
 
 class MBASE_API logical_processor : public mbase::non_copymovable {

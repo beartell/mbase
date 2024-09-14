@@ -1,5 +1,6 @@
 #include <mbase/inference/inf_model.h>
 #include <mbase/inference/inf_processor.h>
+#include <iostream>
 
 MBASE_BEGIN
 
@@ -371,13 +372,16 @@ InfModelTextToText::flags InfModelTextToText::initialize_model_sync(const mbase:
 
 	while(signal_state_initializing())
 	{
-
+		
 	}
 
 	if(!is_initialized())
 	{
 		return flags::INF_MODEL_ERR_CANT_LOAD_MODEL;
 	}
+
+	mInitMethodSignal.reset_signal_with_state();
+	on_initialize();
 
 	return flags::INF_MODEL_INFO_INITIALIZING_MODEL;
 }
@@ -405,7 +409,10 @@ InfModelTextToText::flags InfModelTextToText::destroy_sync()
 	{
 
 	}
-	update();
+	
+	mDestroyMethodSignal.reset_signal_with_state();
+	on_destroy();
+
 	return flags::INF_MODEL_SUCCESS;
 }
 
@@ -446,7 +453,6 @@ InfModelTextToText::flags InfModelTextToText::register_context_process(InfTextTo
 
 GENERIC InfModelTextToText::_initialize_model()
 {
-	mInitializeSignal.set_signal_state();
 	// TODO: INITIALIZE THE MODEL
 	mModel = llama_load_model_from_file(mModelPath.c_str(), mSuppliedParams);
 	if (!mModel)

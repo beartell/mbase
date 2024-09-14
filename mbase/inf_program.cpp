@@ -2,6 +2,7 @@
 #include <mbase/inference/inf_sampling.h>
 #include <mbase/maip_parser.h>
 #include <random>
+#include <iostream>
 
 MBASE_BEGIN
 

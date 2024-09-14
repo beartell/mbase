@@ -23,7 +23,6 @@ GENERIC PcConfigFileHandler::on_registered()
 GENERIC PcConfigFileHandler::on_write(CBYTEBUFFER out_data, size_type out_size) 
 {
 	MBASE_PROGRAM_INVOKE_EVENT_WDATA("config_update", &configSelf->get_config_map());
-	std::cout << "les go" << out_size << std::endl;
 }
 
 GENERIC	PcConfigFileHandler::on_read(CBYTEBUFFER out_data, size_type out_size) 

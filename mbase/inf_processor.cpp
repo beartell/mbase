@@ -375,19 +375,18 @@ InfTextToTextProcessor::flags InfTextToTextProcessor::execute_input(const mbase:
 InfTextToTextProcessor::flags InfTextToTextProcessor::next()
 {
 	MBASE_INF_PROC_RETURN_UNREGISTERED;
-	
+
 	if(is_available())
 	{
 		return flags::INF_PROC_ERR_INPUT_IS_EMPTY;
 	}
-	
-	mDecodeSignal.set_signal_state();
 
+	mDecodeSignal.set_signal();
 	if (!is_running())
 	{
 		return flags::INF_PROC_INFO_HALTED;
 	}
-
+	
 	return flags::INF_PROC_SUCCESS;
 }
 
@@ -522,7 +521,6 @@ GENERIC InfTextToTextProcessor::update()
 			// do things with the generated token
 			InfModelTextToText* t2tModel = static_cast<InfModelTextToText*>(this->mTargetModel_md_model);
 			mTokenGeneratedSignal.reset_signal_with_state();
-
 			InfClientTextToText* t2tClient = get_assigned_client();
 			if(!t2tClient)
 			{
@@ -540,12 +538,11 @@ GENERIC InfTextToTextProcessor::update()
 			if(mFinishState != finish_state::CONTINUE)
 			{
 				isFinish = true;
-			}
+			} 
 
 			IBYTE tokenString[64] = { 0 };
 			I32 tokenLength = llama_token_to_piece(t2tModel->get_raw_model(), mGeneratedToken, tokenString, 64, false, true);
 			mbase::string outString(tokenString, tokenLength);
-
 			t2tClient->on_write(outString.c_str(), outString.size(), mGeneratedToken, isTokenControl, isFinish);
 
 			if(isFinish)
@@ -584,11 +581,12 @@ GENERIC InfTextToTextProcessor::_decode_input()
 	mFinishState = finish_state::CONTINUE;
 	int decodeResult = llama_decode(mModelContext, mInputBatch);
 	mInputSignal.reset_signal_with_state();
-	mDecodeSignal.set_signal_with_state();
+	mDecodeSignal.set_signal_state();
 }
 
 GENERIC InfTextToTextProcessor::_decode_next()
 {
+	mDecodeSignal.reset_signal();
 	// if the decode signal state is set, process
 	mContextState = context_state::GENERATING_OUTPUT;
 	I32 modelVocab = 0;
@@ -660,7 +658,6 @@ GENERIC InfTextToTextProcessor::_decode_next()
 			mContextCursor++;
 			llama_decode(mModelContext, mInputBatch);
 		}
-		mDecodeSignal.reset_signal_state();
 		mTokenGeneratedSignal.set_signal();
 	}
 }
@@ -745,16 +742,13 @@ GENERIC InfTextToTextProcessor::update_t()
 
 				if(signal_decode_process())
 				{
-					if(signal_state_decode_process())
-					{
-						_decode_next();
-						/*
-						* IF TOKEN END OF GENERATION --> SIG_SET(token_generated), SIGW_STATE_RESET(decode)
-						* IF NOT TOKEN END OF GENERATION --> SIG_SET(token_generated), SIG_STATE_RESET(decode)
-						* 
-						* 
-						*/
-					}
+					_decode_next();
+					/*
+					* IF TOKEN END OF GENERATION --> SIG_SET(token_generated), SIGW_STATE_RESET(decode)
+					* IF NOT TOKEN END OF GENERATION --> SIG_SET(token_generated), SIG_STATE_RESET(decode)
+					* 
+					* 
+					*/
 				}
 				else
 				{
