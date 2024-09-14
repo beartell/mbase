@@ -703,7 +703,7 @@ InfProgram::maip_err_code InfProgram::inf_exec_err_to_maip(InfProcessorBase::fla
 		return maip_err_code::INF_CONTEXT_DESTROYING;
 		break;
 	case mbase::InfProcessorBase::flags::INF_PROC_INFO_HALTED:
-		return maip_err_code::EXEC_SUCCESS;
+		return maip_err_code::INF_CONTEXT_HALTED;
 		break;
 	default:
 		return maip_err_code::EXEC_UNKNOWN_STATUS;

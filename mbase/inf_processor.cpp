@@ -335,6 +335,11 @@ InfTextToTextProcessor::flags InfTextToTextProcessor::execute_input(const mbase:
 		return flags::INF_PROC_ERR_INPUT_EXCEED_TOKEN_LIMIT;
 	}
 
+	if (!is_running())
+	{
+		return flags::INF_PROC_INFO_HALTED;
+	}
+
 	if(!in_abandon)
 	{
 		if(!is_available())
@@ -364,11 +369,6 @@ InfTextToTextProcessor::flags InfTextToTextProcessor::execute_input(const mbase:
 	mTokenizedInput = in_tokens;
 	mInputSignal.set_signal();
 	
-	if(!is_running())
-	{
-		return flags::INF_PROC_INFO_HALTED;
-	}
-
 	return flags::INF_PROC_SUCCESS;
 }
 
