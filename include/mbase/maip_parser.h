@@ -235,6 +235,7 @@ public:
 	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE const char_stream& get_data() const noexcept;
 	template<typename T>
 	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE T get_kval(const mbase::string& in_key) const;
+	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE bool has_key(const mbase::string& in_key) const;
 
 	MBASE_INLINE maip_generic_errors parse_request(mbase::char_stream& in_stream);
 	MBASE_INLINE maip_generic_errors parse_result(mbase::char_stream& in_stream);
@@ -707,6 +708,11 @@ template<typename T>
 MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE T maip_peer_request::get_kval(const mbase::string& in_key) const
 {
 	return mbase::kval_converter<T>::get_key(in_key, mDescriptionKvals);
+}
+
+MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE bool maip_peer_request::has_key(const mbase::string& in_key) const
+{
+	return mDescriptionKvals.contains(in_key);
 }
 
 MBASE_INLINE maip_generic_errors maip_peer_request::parse_request(mbase::char_stream& in_stream)
