@@ -392,6 +392,18 @@ InfProgram::maip_err_code InfProgram::inf_activate_context(MBASE_MAIP_CL_AUTH, c
 	// TODO: CREATE CONTEXT
 }
 
+InfProgram::maip_err_code InfProgram::inf_clear_short_term_history(MBASE_MAIP_CL_AUTH, const U64& in_ctxId)
+{
+	MBASE_SESSION_CONTROL;
+	if (mAccClient.mChatSessions.find(in_ctxId) == mAccClient.mChatSessions.end())
+	{
+		return maip_err_code::INF_CONTEXT_ID_MISMATCH;
+	}
+	InfMaipTunedClient* mySession = mAccClient.mChatSessions[in_ctxId];
+	mySession->clear_chat_history();
+	return maip_err_code::INF_SUCCESS;
+}
+
 InfProgram::maip_err_code InfProgram::inf_get_context_status(MBASE_MAIP_CL_AUTH, const U64& in_ctxId)
 {
 	MBASE_SESSION_CONTROL;

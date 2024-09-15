@@ -109,6 +109,7 @@ public:
 	maip_err_code inf_get_created_context_ids(MBASE_MAIP_CL_AUTH, mbase::vector<U64>& out_contexts);
 	maip_err_code inf_create_context(MBASE_MAIP_CL_AUTH, const mbase::string& in_model, const U32& in_ctsize, U64& out_ctxId, const mbase::vector<InfSamplingInit>& in_samplers = mbase::vector<InfSamplingInit>()); // TODO: CHANGE CONTENT
 	maip_err_code inf_activate_context(MBASE_MAIP_CL_AUTH, const mbase::string& in_model, const U64& in_ctxId, const U32& in_ctsize, const mbase::vector<InfSamplingInit>& in_samplers = mbase::vector<InfSamplingInit>()); // CHANGE CONTENT
+	maip_err_code inf_clear_short_term_history(MBASE_MAIP_CL_AUTH, const U64& in_ctxId);
 	maip_err_code inf_get_context_status(MBASE_MAIP_CL_AUTH, const U64& in_ctxId); // CHANGE CONTENT
 	maip_err_code inf_destroy_context(MBASE_MAIP_CL_AUTH, const U64& in_ctxId); // CHANGE CONTENT
 	maip_err_code inf_release_context(MBASE_MAIP_CL_AUTH, const U64& in_ctxId); // CHANGE CONTENT
