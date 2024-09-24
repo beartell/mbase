@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.3.0/font/bootstrap-icons.css">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
     <script src="static/chatting.js"></script>
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js" integrity="sha384-2huaZvOR9iDzHqslqwpR87isEmrfxqyWOF7hr7BY6KG0+hVKLoEXMPUJw3ynWuhO" crossorigin="anonymous"></script>
 
     <title>Document</title>
 </head>
@@ -60,6 +61,7 @@ overflow-x: hidden;
             </div>
             <div class="modal-body">
                 <p id="CCModalActionStatusMessage" class="text-danger" style="display: none;">Error goes here...</p>
+                
                 <div class="form-group row mb-2">
                     <label for="maipHostname" class="col-sm-2 col-form-label">MAIP Host:</label>
                     <div class="col-sm-10">
@@ -157,7 +159,7 @@ overflow-x: hidden;
             </div> -->
         </div>
 
-        <div class="col-sm-8">
+        <div class="col-sm-8" style="height: 90%;">
             <div style="margin-top: 5%; margin-left: 10%; margin-right: 10%;">
                 <button class="btn" data-bs-toggle="collapse" data-bs-target="#chatCollapse" aria-expanded="false" aria-controls="chatCollapse">
                     Chat Information
@@ -207,7 +209,7 @@ overflow-x: hidden;
 
                 </div>
                 <br>
-                <div id="chat_container">
+                <div id="chat_container" style="overflow-y: scroll; max-height: 50em;">
                     <div class="d-flex flex-row-reverse mb-5">
                         <div class="p-2 user_message">Lorem ipsum dolor sit amet consectetur adipisicing elit. Omnis reiciendis placeat provident doloremque ex architecto possimus, qui earum iste molestias doloribus asperiores nam minus laboriosam ab, voluptatem perferendis. Laudantium, dolor.</div>
                     </div>
@@ -220,6 +222,31 @@ overflow-x: hidden;
                     <div class="d-flex flex-row mb-5">
                         <div class="p-2 llm_message">Lorem ipsum dolor sit amet consectetur adipisicing elit. Omnis reiciendis placeat provident doloremque ex architecto possimus, qui earum iste molestias doloribus asperiores nam minus laboriosam ab, voluptatem perferendis. Laudantium, dolor.</div>
                     </div>
+                    <div class="d-flex flex-row-reverse mb-5">
+                        <div class="p-2 user_message">Lorem ipsum dolor sit amet consectetur adipisicing elit. Omnis reiciendis placeat provident doloremque ex architecto possimus, qui earum iste molestias doloribus asperiores nam minus laboriosam ab, voluptatem perferendis. Laudantium, dolor.</div>
+                    </div>
+                    <div class="d-flex flex-row mb-5">
+                        <div class="p-2 llm_message">Lorem ipsum dolor sit amet consectetur adipisicing elit. Omnis reiciendis placeat provident doloremque ex architecto possimus, qui earum iste molestias doloribus asperiores nam minus laboriosam ab, voluptatem perferendis. Laudantium, dolor.</div>
+                    </div>
+                    <div class="d-flex flex-row-reverse mb-5">
+                        <div class="p-2 user_message">Lorem ipsum dolor sit amet consectetur adipisicing elit. Omnis reiciendis placeat provident doloremque ex architecto possimus, qui earum iste molestias doloribus asperiores nam minus laboriosam ab, voluptatem perferendis. Laudantium, dolor.</div>
+                    </div>
+                    <div class="d-flex flex-row mb-5">
+                        <div class="p-2 llm_message">Lorem ipsum dolor sit amet consectetur adipisicing elit. Omnis reiciendis placeat provident doloremque ex architecto possimus, qui earum iste molestias doloribus asperiores nam minus laboriosam ab, voluptatem perferendis. Laudantium, dolor.</div>
+                    </div>
+                    <div class="d-flex flex-row-reverse mb-5">
+                        <div class="p-2 user_message">Lorem ipsum dolor sit amet consectetur adipisicing elit. Omnis reiciendis placeat provident doloremque ex architecto possimus, qui earum iste molestias doloribus asperiores nam minus laboriosam ab, voluptatem perferendis. Laudantium, dolor.</div>
+                    </div>
+                    <div class="d-flex flex-row mb-5">
+                        <div class="p-2 llm_message">Lorem ipsum dolor sit amet consectetur adipisicing elit. Omnis reiciendis placeat provident doloremque ex architecto possimus, qui earum iste molestias doloribus asperiores nam minus laboriosam ab, voluptatem perferendis. Laudantium, dolor.</div>
+                    </div>
+                    <div class="d-flex flex-row-reverse mb-5">
+                        <div class="p-2 user_message">Lorem ipsum dolor sit amet consectetur adipisicing elit. Omnis reiciendis placeat provident doloremque ex architecto possimus, qui earum iste molestias doloribus asperiores nam minus laboriosam ab, voluptatem perferendis. Laudantium, dolor.</div>
+                    </div>
+                    <div class="d-flex flex-row mb-5">
+                        <div class="p-2 llm_message">Lorem ipsum dolor sit amet consectetur adipisicing elit. Omnis reiciendis placeat provident doloremque ex architecto possimus, qui earum iste molestias doloribus asperiores nam minus laboriosam ab, voluptatem perferendis. Laudantium, dolor.</div>
+                    </div>
+
                 </div>
             </div>
         </div>
@@ -263,8 +290,11 @@ overflow-x: hidden;
     let infoRememberContext = document.getElementById("contextRemember");
     let infoSystemPrompt = document.getElementById("systemPromptContainer");
     let infoServerStatus = document.getElementById("serverStatusDisplay");
+    let activeChatId = "";
 
     const serverStatusChecker = new XMLHttpRequest();
+    const chatHistoryChecker = new XMLHttpRequest();
+
     serverStatusChecker.onload = function(ev) {
         const serverResult = JSON.parse(this.responseText);
         if(serverResult.status == null)
@@ -308,8 +338,17 @@ overflow-x: hidden;
             else if(server_status == 3)
             {
                 infoServerStatus.innerHTML = `
-                    <div>Server status: Model is not supported <span class="status-danger">●</span></div>  
+                    <div>Server status: Model is not supported (${infoSelectedModel.value})<span class="status-danger">●</span></div>  
                 `;
+                let modelOptionList = "";
+                for(let i = 0; i < serverResult.models.length; i++)
+                {
+                    modelOptionList += `
+                        <option>${serverResult.models[i]}</option>
+                    `;
+                }
+                infoSelectedModel.innerHTML = modelOptionList;
+                infoSelectedModel.value = "";
                 // model not supported
             }
             else
@@ -322,6 +361,22 @@ overflow-x: hidden;
         }
     }
     
+    chatHistoryChecker.onload = function() {
+        const serverResult = JSON.parse(this.responseText);
+        if(serverResult.message_history == null)
+        {
+            
+        }
+        else
+        {
+            
+            for(let i = 0; i < serverResult.message_history.length; i++)
+            {
+                add_chat_message(serverResult.message_history[i].msg_content, serverResult.message_history[i].msg_role);
+            }
+        }
+    }
+
     function modal_display_model_params()
     {
         let maipHost = ccMaipHost.value;
@@ -434,6 +489,7 @@ overflow-x: hidden;
     {
         const chatId = this.id;
         serverStatusChecker.abort();
+        chatHistoryChecker.abort();
         const xhttp = new XMLHttpRequest();
         infoServerStatus.innerHTML = `<div>Server status:<div class="spinner-border" role="status" style="width: 1em; height: 1em;"></div></div>`;
         xhttp.onload = function(ev) {
@@ -447,6 +503,9 @@ overflow-x: hidden;
                 const statusRequest = `/maip/server_status?maip_host=${serverResult.chat_info.maip_host}&maip_port=${serverResult.chat_info.maip_port}&selected_model=${serverResult.chat_info.selected_model}`;
                 serverStatusChecker.open("GET", statusRequest);
                 serverStatusChecker.send();
+                chatHistoryChecker.open("GET", `/chat/get_chat_history/${serverResult.chat_info.context_id}`);
+                chatHistoryChecker.send();
+                activeChatId = serverResult.chat_info.context_id;
                 infoMaipHost.value = serverResult.chat_info.maip_host;
                 infoMaipHost.innerText = serverResult.chat_info.maip_host;
 
@@ -509,10 +568,20 @@ overflow-x: hidden;
         }
     }
 
+    function selected_model_change()
+    {
+        serverStatusChecker.abort();
+        infoServerStatus.innerHTML = `<div>Server status:<div class="spinner-border" role="status" style="width: 1em; height: 1em;"></div></div>`;
+        const statusRequest = `/maip/server_status?maip_host=${infoMaipHost.value}&maip_port=${infoMaipPort.value}&selected_model=${this.value}`;
+        serverStatusChecker.open("GET", statusRequest);
+        serverStatusChecker.send();
+    }    
+
     promptSendButton.addEventListener("click", promptSendButtonPress);
     promptSection.addEventListener("keydown", promptEntryEvent);
     ccMaipPort.addEventListener("focusout", modal_display_model_params);
     ccCreateButton.addEventListener("click", create_chat);
+    infoSelectedModel.addEventListener("change", selected_model_change);
 
     load_chat_list();
 
