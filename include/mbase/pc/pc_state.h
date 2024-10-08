@@ -8,33 +8,137 @@
 
 MBASE_BEGIN
 
+static mbase::string gDefaultStateDirectory = "./";
+
+struct MBASE_API PcStateFileHeader {
+	using size_type = SIZE_T;
+
+	IBYTE mFileMagic[4] = { 0x4D, 0x42, 0x53, 0x46 }; // mbsf -> stands for 'mbase state file'
+	U32 mStateStructCount = 0;
+	U16 mMbaseVersionMajor = 0;
+	U16 mMbaseVersionMinor = 0;
+	mbase::string mStateObjectName = "";
+
+	size_type get_serialized_size() const noexcept;
+	GENERIC serialize(char_stream& out_stream) const;
+	static PcStateFileHeader deserialize(IBYTEBUFFER in_src, size_type in_length, SIZE_T& bytes_processed);
+};
+
+struct MBASE_API PcSerializedStateStruct {
+	using size_type = SIZE_T;
+
+	PcSerializedStateStruct();
+	PcSerializedStateStruct(const PcSerializedStateStruct& in_rhs);
+	PcSerializedStateStruct(PcSerializedStateStruct&& in_rhs);
+	~PcSerializedStateStruct();
+
+	PcSerializedStateStruct& operator=(const PcSerializedStateStruct& in_rhs);
+	PcSerializedStateStruct& operator=(PcSerializedStateStruct&& in_rhs);
+
+	size_type get_serialized_size() const noexcept;
+	GENERIC serialize(char_stream& out_stream) const;
+	static PcSerializedStateStruct deserialize(IBYTEBUFFER in_src, size_type in_length, SIZE_T& bytes_processed);
+
+	mbase::string mStateKey = "";
+	size_type mStateValueLength = 0;
+	IBYTEBUFFER mStateValue = NULL;
+};
+
 class MBASE_API PcState : public mbase::non_copyable {
 public:
-	using key_val_map = mbase::unordered_map<mbase::string, mbase::deep_char_stream>;
+	using key_val_map = mbase::unordered_map<mbase::string, PcSerializedStateStruct>;
+	using size_type = SIZE_T;
 
 	enum class flags : U8 {
 		STATE_SUCCESS,
+		STATE_ERR_OBJECT_NOT_INITIALIZED,
 		STATE_ERR_MISSING_KEY,
 		STATE_ERR_MISSING_DATA,
 		STATE_ERR_NOT_FOUND,
-		STATE_ERR_FORMAT_IS_CORRUPT
+		STATE_ERR_UNABLE_TO_SERIALIZE_DATA
 	};
 
-	PcState() = default;
-	~PcState() = default;
+	PcState();
+	PcState(PcState&& in_rhs) noexcept;
+	~PcState();
 
-	flags set_state_file(const mbase::string& in_path, bool in_transfer_state = true) noexcept { return flags::STATE_SUCCESS; }
-	flags set_state_file_prefix(const mbase::string& in_prefix) { return flags::STATE_SUCCESS; }
-	flags set_state(const mbase::string& in_key, char_stream& in_stream) { return flags::STATE_SUCCESS; }
-	flags set_state_map(const key_val_map& in_kvmap) { return flags::STATE_SUCCESS; }
-	flags load_state_from_file(const mbase::string& in_path) { return flags::STATE_SUCCESS; }
-	flags write_state_to_file(const mbase::string& in_path) { return flags::STATE_SUCCESS; }
-	flags update() { return flags::STATE_SUCCESS; }
-	flags get_state(const mbase::string& in_key, char_stream& out_stream) { return flags::STATE_SUCCESS; }
-	flags get_state_file(mbase::string& out_file) { return flags::STATE_SUCCESS; }
+	PcState& operator=(PcState&& in_rhs);
+
+	flags initialize(const mbase::string& in_object_name, const mbase::string& in_object_suffix);
+	flags initialize(const mbase::string& in_object_name);
+	template<typename T>
+	flags set_state(const mbase::string& in_key, const T& in_value)
+	{
+		if (!is_state_object_initialized())
+		{
+			return flags::STATE_ERR_OBJECT_NOT_INITIALIZED;
+		}
+
+		if (!in_key.size())
+		{
+			return flags::STATE_ERR_MISSING_KEY;
+		}
+
+		size_type serializedSize = mbase::get_serialized_size(in_value);
+		if (!serializedSize)
+		{
+			return flags::STATE_ERR_MISSING_DATA;
+		}
+		deep_char_stream dcs(serializedSize);
+
+		try
+		{
+			mbase::serialize(in_value, dcs);
+			PcSerializedStateStruct stateStruct;
+			stateStruct.mStateKey = in_key;
+			stateStruct.mStateValue = dcs.get_buffer();
+			stateStruct.mStateValueLength = serializedSize;
+			dcs.release_buffer();
+			mKvMap[in_key] = std::move(stateStruct);
+			mIsModified = true;
+		}
+		catch (const std::exception& out_except)
+		{
+			return flags::STATE_ERR_UNABLE_TO_SERIALIZE_DATA;
+		}
+
+		return flags::STATE_SUCCESS;
+	}
+
+	flags remove_state(const mbase::string& in_key);
+	GENERIC update();
+	template<typename T>
+	flags get_state(const mbase::string& in_key, T& out_state)
+	{
+		if (!is_state_object_initialized())
+		{
+			return flags::STATE_ERR_OBJECT_NOT_INITIALIZED;
+		}
+
+		key_val_map::iterator It = mKvMap.find(in_key);
+		if (It == mKvMap.end())
+		{
+			return flags::STATE_ERR_NOT_FOUND;
+		}
+		size_type bytesProcessed = 0;
+		out_state = mbase::deserialize<T>(It->second.mStateValue, It->second.mStateValueLength, bytesProcessed);
+		return flags::STATE_SUCCESS;
+	}
+	mbase::string get_object_name();
+	mbase::string get_object_suffix();
+	mbase::string get_full_state_name();
+	bool is_state_modified();
+	bool is_state_object_initialized();
 
 private:
+	bool mIsInitialized;
+	bool mIsModified;
 	key_val_map mKvMap;
+	mbase::string mObjectName;
+	mbase::string mStateFileSuffix;
+	mbase::string mFullStateName;
+	U16 mVersionMajor;
+	U16 mVersionMinor;
 };
 
 MBASE_END

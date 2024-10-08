@@ -63,7 +63,7 @@ public:
 	MBASE_INLINE_EXPR GENERIC push(const T& in_data) noexcept;
 	MBASE_INLINE_EXPR GENERIC push(T&& in_data) noexcept;
 	MBASE_INLINE_EXPR GENERIC pop() noexcept;
-	MBASE_INLINE GENERIC deserialize(IBYTEBUFFER in_buffer, SIZE_T in_length);
+	MBASE_INLINE GENERIC deserialize(IBYTEBUFFER in_buffer, SIZE_T in_length, SIZE_T& bytes_processed);
 	/* ===== STATE-MODIFIER METHODS END ===== */
 
 	/* ===== NON-MODIFIER METHODS BEGIN ===== */
@@ -157,9 +157,9 @@ MBASE_INLINE_EXPR GENERIC queue<T, SourceContainer>::pop() noexcept
 }
 
 template<typename T, typename SourceContainer>
-MBASE_INLINE GENERIC queue<T, SourceContainer>::deserialize(IBYTEBUFFER in_buffer, SIZE_T in_length)
+MBASE_INLINE GENERIC queue<T, SourceContainer>::deserialize(IBYTEBUFFER in_buffer, SIZE_T in_length, SIZE_T& bytes_processed)
 {
-	_Sc = _Sc.deserialize(in_buffer, in_length);
+	_Sc = _Sc.deserialize(in_buffer, in_length, bytes_processed);
 }
 
 template<typename T, typename SourceContainer>

@@ -154,7 +154,7 @@ public:
 	/* ===== NON-MODIFIER METHODS END ===== */
 
 	/* ===== NON-MEMBER FUNCTIONS BEGIN ===== */
-	MBASE_INLINE_EXPR static mbase::unordered_map<Key, Value, Hash, KeyEqual, Allocator> deserialize(IBYTEBUFFER in_src, SIZE_T in_length)
+	MBASE_INLINE_EXPR static mbase::unordered_map<Key, Value, Hash, KeyEqual, Allocator> deserialize(IBYTEBUFFER in_src, SIZE_T in_length, SIZE_T& bytes_processed)
 	{
 		mbase::unordered_map<Key, Value, Hash, KeyEqual, Allocator> newMap;
 		if (in_length < sizeof(size_type) * 2)
@@ -165,7 +165,8 @@ public:
 		char_stream cs(in_src, in_length);
 		size_type mapSize = cs.get_datan<size_type>();
 		size_type bucketCount = cs.get_datan<size_type>();
-		bucket_type bucketList = std::move(mbase::deserialize<bucket_type>(cs.get_bufferc(), cs.buffer_length() - cs.get_pos()));
+		bytes_processed += sizeof(size_type) * 2;
+		bucket_type bucketList = std::move(mbase::deserialize<bucket_type>(cs.get_bufferc(), cs.buffer_length() - cs.get_pos(), bytes_processed));
 		newMap.mSize = mapSize;
 		newMap.mBucketCount = bucketCount;
 		newMap.mBucket = std::move(bucketList);
@@ -690,11 +691,6 @@ MBASE_INLINE_EXPR GENERIC unordered_map<Key, Value, Hash, KeyEqual, Allocator>::
 		insert(*iBegin);
 	}
 }
-
-
-
-
-
 
 template<typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator>
 typename unordered_map<Key, Value, Hash, KeyEqual, Allocator>::local_iterator unordered_map<Key, Value, Hash, KeyEqual, Allocator>::_is_key_duplicate(bucket_node_type& in_value, const Key& in_key) const noexcept

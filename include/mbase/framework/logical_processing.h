@@ -14,8 +14,8 @@ class MBASE_API processor_signal {
 public:
 	processor_signal() : mSignalState(false), mSignal(false) {}
 
-	bool get_signal_state() const { return mSignalState; }
-	bool get_signal() const { return mSignal; }
+	bool get_signal_state() const { return mSignalState.load(); }
+	bool get_signal() const { return mSignal.load(); }
 
 	GENERIC set_signal_finished() 
 	{

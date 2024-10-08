@@ -102,6 +102,8 @@ public:
 	flags get_sys_end(mbase::string& out_end);
 	flags get_assistant_end(mbase::string& out_end);
 	flags get_usr_end(mbase::string& out_end);
+	flags get_eot_token(inf_token& out_token);
+	flags get_lf_token(inf_token& out_token);
 	flags get_vocab_count(I32& out_count);
 	flags get_model_param_count(size_type& out_count);
 	flags get_model_params(mbase::unordered_map<mbase::string, mbase::string>& out_params);
@@ -122,7 +124,7 @@ public:
 
 	GENERIC update() override;
 	GENERIC update_t() override;
-	
+
 private:
 	GENERIC _initialize_model();
 	GENERIC _destroy_model();

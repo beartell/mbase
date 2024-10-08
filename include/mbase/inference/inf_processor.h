@@ -21,6 +21,12 @@ static const U32 gProcessorMinimumInactivityThreshold = 16; // in seconds
 
 class InfClientTextToText;
 
+struct MBASE_API InfSamplerMeta {
+	mbase::string mSamplerName = "";
+	llama_sampler* mSamplerHandle = NULL;
+	bool mIsOwnedByChain = false;
+};
+
 class MBASE_API InfProcessorBase : public mbase::logical_processor {
 public:
 	using size_type = SIZE_T;
@@ -81,7 +87,6 @@ class MBASE_API InfTextToTextProcessor : public mbase::InfProcessorBase {
 public:
 	using inf_token = llama_token;
 	using inf_token_candidates = mbase::vector<llama_token_data>;
-	using sampler_map = mbase::unordered_map<mbase::string, InfSamplingBase*>;
 
 	enum class context_state {
 		DECODING_INPUT,
@@ -113,15 +118,14 @@ public:
 	#endif // MBASE_INTERNAL_API
 	U32 get_max_token_length();
 	InfClientTextToText* get_assigned_client();
-	bool has_sampler(const mbase::string& in_sampler_name);
-	flags get_sampler(const mbase::string& in_sampler_name, InfSamplingBase*& out_sampler);
-	GENERIC get_available_samplers(mbase::vector<InfSamplingBase*> out_samplers);
+	bool has_sampler(const mbase::string& in_sampler_name, InfSamplerMeta& out_sampler);
+	GENERIC get_available_samplers(mbase::vector<InfSamplerMeta>& out_samplers);
 	bool has_client() const;
 	flags get_processor_status() const;
 
 	flags tokenize_input(CBYTEBUFFER in_data, size_type in_size, mbase::vector<inf_token>& out_tokens);
 	flags tokenize_input(context_line* in_lines, size_type in_count, mbase::vector<inf_token>& out_tokens, bool in_append_assistant_token = true);
-	flags execute_input(const mbase::vector<inf_token>& in_tokens, bool in_abandon = false, const mbase::vector<mbase::string>& in_sampling_order = mbase::vector<mbase::string>());
+	flags execute_input(const mbase::vector<inf_token>& in_tokens, bool in_abandon = false);
 	flags next();
 	flags set_inference_client(InfClientTextToText* in_client, bool in_reset_on_set = true);
 	flags initialize(InfModelTextToText* in_model, U32 in_context_length);
@@ -134,21 +138,8 @@ public:
 	#endif // MBASE_INTERNAL_API
 	GENERIC update() override;
 	GENERIC update_t() override;
-	template<typename SamplerType>
-	flags add_sampler(F32 in_common_float) {
-		SamplerType* newSampler = new SamplerType(NULL, NULL);
-		mbase::string samplerName = newSampler->get_sampler_name();
-		if (has_sampler(samplerName))
-		{
-			mSamplerMap[samplerName]->set_common_float(in_common_float);
-			delete newSampler;
-			return flags::INF_PROC_SUCCESS;
-		}
-		newSampler->set_context(mModelContext);
-		newSampler->set_common_float(in_common_float);
-		mSamplerMap[samplerName] = newSampler;
-		return flags::INF_PROC_SUCCESS;
-	}
+	GENERIC clear_samplers();
+	flags add_sampler(const InfSamplingInput& in_sampling);
 
 	GENERIC update_sampler_value(const mbase::string& in_sampler_name, F32 in_common_float);
 
@@ -169,7 +160,7 @@ private:
 	U32 mContextCursor; // -----> if it exceeds the context size, stop generating
 	mbase::vector<inf_token> mTokenizedInput;
 	mbase::vector<inf_token> mPenaltyList;
-	mbase::vector<InfSamplingBase*> mSamplingOrder;
+	mbase::vector<InfSamplerMeta> mSamplingOrder;
 	processor_signal mInputSignal;
 	processor_signal mTokenGeneratedSignal;
 	processor_signal mDecodeSignal;
@@ -178,7 +169,8 @@ private:
 	context_state mContextState;
 	finish_state mFinishState;
 	InfClientTextToText* mAssignedClient;
-	sampler_map mSamplerMap;
+	llama_sampler* mSamplerChain;
+	llama_sampler* mGreedy;
 };
 
 MBASE_END

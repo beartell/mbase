@@ -139,7 +139,7 @@ public:
 	/* ===== NON-MODIFIER METHODS END ===== */
 
 	/* ===== NON-MEMBER FUNCTIONS BEGIN ===== */
-	MBASE_INLINE static mbase::set<Key, Compare, Allocator> deserialize(IBYTEBUFFER in_src, SIZE_T in_length);
+	MBASE_INLINE static mbase::set<Key, Compare, Allocator> deserialize(IBYTEBUFFER in_src, SIZE_T in_length, SIZE_T& bytes_processed);
 	/* ===== NON-MEMBER FUNCTIONS END ===== */
 
 private:
@@ -603,7 +603,7 @@ MBASE_INLINE GENERIC set<Key, Compare, Allocator>::serialize(char_stream& out_bu
 }
 
 template<typename Key, typename Compare, typename Allocator>
-MBASE_INLINE mbase::set<Key, Compare, Allocator> set<Key, Compare, Allocator>::deserialize(IBYTEBUFFER in_src, SIZE_T in_length)
+MBASE_INLINE mbase::set<Key, Compare, Allocator> set<Key, Compare, Allocator>::deserialize(IBYTEBUFFER in_src, SIZE_T in_length, SIZE_T& bytes_processed)
 {
 	mbase::set<Key, Compare, Allocator> deserializedContainer;
 	if (in_length)
@@ -619,8 +619,9 @@ MBASE_INLINE mbase::set<Key, Compare, Allocator> set<Key, Compare, Allocator>::d
 		while (inBuffer.get_bufferc() < eofBuffer)
 		{
 			I32 blockLength = inBuffer.get_datan<I32>();
+			bytes_processed += blockLength;
 			IBYTEBUFFER blockData = inBuffer.get_bufferc();
-			deserializedContainer.insert(std::move(mbase::deserialize<value_type>(blockData, blockLength)));
+			deserializedContainer.insert(std::move(mbase::deserialize<value_type>(blockData, blockLength, bytes_processed)));
 			inBuffer.advance(blockLength);
 		}
 	}

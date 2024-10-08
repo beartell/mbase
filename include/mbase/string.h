@@ -271,7 +271,7 @@ public:
     character_sequence& operator+=(std::initializer_list<value_type> in_chars);
     /* ===== OPERATOR STATE-MODIFIER METHODS END ===== */
 
-    MBASE_INLINE static character_sequence deserialize(IBYTEBUFFER in_buffer, SIZE_T in_length);
+    MBASE_INLINE static character_sequence deserialize(IBYTEBUFFER in_buffer, SIZE_T in_length, SIZE_T& bytes_processed);
     
     /* ===== NON-MODIFIER METHODS BEGIN ===== */
     template<typename SourceContainer = mbase::vector<character_sequence>>
@@ -1048,7 +1048,7 @@ MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE I32 character_sequence<SeqType, SeqBase,
 template<typename SeqType, typename SeqBase, typename Allocator>
 MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR typename character_sequence<SeqType, SeqBase, Allocator>::size_type character_sequence<SeqType, SeqBase, Allocator>::get_serialized_size() const noexcept
 {
-    return mSize;
+    return mSize + 1;
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
@@ -2157,9 +2157,11 @@ MBASE_INLINE GENERIC character_sequence<SeqType, SeqBase, Allocator>::serialize(
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
-MBASE_INLINE character_sequence<SeqType, SeqBase, Allocator> character_sequence<SeqType, SeqBase, Allocator>::deserialize(IBYTEBUFFER in_buffer, SIZE_T in_length) 
+MBASE_INLINE character_sequence<SeqType, SeqBase, Allocator> character_sequence<SeqType, SeqBase, Allocator>::deserialize(IBYTEBUFFER in_buffer, SIZE_T in_length, SIZE_T& bytes_processed)
 {
-    return character_sequence(in_buffer, in_length);
+    character_sequence cs(in_buffer, in_length);
+    bytes_processed += in_length + 1;
+    return std::move(cs);
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>

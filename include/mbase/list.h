@@ -184,7 +184,7 @@ public:
 	/* ===== NON-MODIFIER METHODS END ===== */
 
 	/* ===== NON-MEMBER FUNCTIONS BEGIN ===== */
-	MBASE_INLINE static mbase::list<T, Allocator> deserialize(IBYTEBUFFER in_src, SIZE_T in_length);
+	MBASE_INLINE static mbase::list<T, Allocator> deserialize(IBYTEBUFFER in_src, SIZE_T in_length, SIZE_T& bytesProcessed);
 	/* ===== NON-MEMBER FUNCTIONS END ===== */
 };
 
@@ -972,7 +972,7 @@ MBASE_INLINE GENERIC list<T, Allocator>::serialize(char_stream& out_buffer) cons
 }
 
 template<typename T, typename Allocator>
-MBASE_INLINE mbase::list<T, Allocator> list<T, Allocator>::deserialize(IBYTEBUFFER in_src, SIZE_T in_length) 
+MBASE_INLINE mbase::list<T, Allocator> list<T, Allocator>::deserialize(IBYTEBUFFER in_src, SIZE_T in_length, SIZE_T& bytes_processed)
 {
 	mbase::list<T, Allocator> deserializedContainer;
 	bool isPrimitive = std::is_integral_v<value_type>;
@@ -1008,9 +1008,10 @@ MBASE_INLINE mbase::list<T, Allocator> list<T, Allocator>::deserialize(IBYTEBUFF
 		else
 		{
 			blockLength = inBuffer.get_datan<size_type>();
+			bytes_processed += sizeof(size_type);
 		}
 		IBYTEBUFFER blockData = inBuffer.get_bufferc();
-		deserializedContainer.push_back(std::move(mbase::deserialize<value_type>(blockData, blockLength)));
+		deserializedContainer.push_back(std::move(mbase::deserialize<value_type>(blockData, blockLength, bytes_processed)));
 		inBuffer.advance(blockLength);
 	}
 	

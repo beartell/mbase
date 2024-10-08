@@ -17,11 +17,10 @@ MBASE_BEGIN
 const U64& in_csid, const mbase::string& in_clid\
 
 struct InfAcceptedClient;
-
-struct MBASE_API InfSamplingInit {
-	mbase::string mSamplerName = "";
-	F32 mCommonFloat = 0;
-};
+class InfMaipTunedClient;
+class InfMaipTunedT2TProcessor;
+class InfProgram;
+class ClientContextCleaner;
 
 class MBASE_API InfMaipTunedClient : public mbase::InfClientTextToText {
 public:
@@ -49,17 +48,34 @@ private:
 	InfMaipTunedClient* mNomineeClient = NULL;
 };
 
+//class MBASE_API ClientContextCleaner : public mbase::time_interval {
+//public:
+//	ClientContextCleaner(InfProgram* in_program);
+//	~ClientContextCleaner();
+//
+//	GENERIC on_register() override;
+//	GENERIC on_call(user_data in_data) override;
+//	GENERIC on_unregister() override;
+//private:
+//	InfProgram* hostProgram;
+//};
+
 struct MBASE_API InfAcceptedClient {
+	using chat_session_map = mbase::unordered_map<U64, InfMaipTunedClient*>;
+
 	std::shared_ptr<mbase::PcNetPeerClient> mPeer;
-	mbase::vector<mbase::string> mAcceptedModels;
-	mbase::unordered_map<U64, InfMaipTunedClient*> mChatSessions;
-	mbase::string mClid = "";
-	U64 mCsId = 0;
-	U64 mChatSessionIdCounter = 0;
+	mbase::vector<mbase::string> mAcceptedModels; // TODO: WRITE TO FILE
+	chat_session_map mChatSessions;
+	mbase::string mClid = ""; // TODO: WRITE TO FILE
+	U64 mCsId = 0; // TODO: WRITE TO FILE
+	U64 mChatSessionIdCounter = 0; // TODO: WRITE TO FILE
 };
 
 class MBASE_API InfProgram {
 public:
+	using active_client_map = mbase::unordered_map<U64, InfAcceptedClient>;
+	using registered_model_map = mbase::unordered_map<mbase::string, InfModelTextToText*>;
+
 	enum class flags : U8 {
 		INF_PROGRAM_SUCCESS,
 		INF_PROGRAM_ERR_MODEL_ALREADY_BEING_HOSTED,
@@ -76,11 +92,11 @@ public:
 		INF_MODEL_NAME_MISMATCH = 2004,
 		INF_CONTEXT_ID_MISMATCH = 2005,
 		INF_INVALID_TOKEN_LIMIT = 2006,
-		INF_UNABLE_TO_FIND_SUITABLE_PROCESSOR = 2007,
+		INF_FAILED_TO_CREATE_CONTEXT = 2007,
 		INF_UNKNOWN_STATUS = 2008,
 		INF_CLIENT_UNREGISTERING = 2009,
 		INF_CLIENT_NOT_REGISTERED = 2010,
-		INF_PROCESSOR_UNAVAILABLE = 2011,
+		INF_CONTEXT_PROCESSING = 2011,
 		INF_CONTEXT_ACTIVE = 2012,
 		INF_CONTEXT_INACTIVE = 2013,
 		INF_CONTEXT_HOST_MODEL_SYSTEM_ERROR = 2014,
@@ -102,17 +118,20 @@ public:
 	};
 
 	bool is_session_match(MBASE_MAIP_CL_AUTH);
-
+	#ifdef MBASE_INTERNAL_API
+	active_client_map& get_active_clients();
+	#endif
+	
 	maip_err_code inf_create_session(const mbase::string& in_clid, U64& out_csid, mbase::string& out_clid);
 	maip_err_code inf_destroy_client(MBASE_MAIP_CL_AUTH);
 	maip_err_code inf_get_acquired_models(MBASE_MAIP_CL_AUTH, mbase::vector<mbase::string>& out_models);
 	maip_err_code inf_get_created_context_ids(MBASE_MAIP_CL_AUTH, mbase::vector<U64>& out_contexts);
-	maip_err_code inf_create_context(MBASE_MAIP_CL_AUTH, const mbase::string& in_model, const U32& in_ctsize, U64& out_ctxId, const mbase::vector<InfSamplingInit>& in_samplers = mbase::vector<InfSamplingInit>()); // TODO: CHANGE CONTENT
-	maip_err_code inf_activate_context(MBASE_MAIP_CL_AUTH, const mbase::string& in_model, const U64& in_ctxId, const U32& in_ctsize, const mbase::vector<InfSamplingInit>& in_samplers = mbase::vector<InfSamplingInit>()); // CHANGE CONTENT
+	maip_err_code inf_create_context(MBASE_MAIP_CL_AUTH, const mbase::string& in_model, const U32& in_ctsize, U64& out_ctxId, const mbase::vector<InfSamplingInput>& in_samplers = mbase::vector<InfSamplingInput>()); // TODO: CHANGE CONTENT
+	//maip_err_code inf_activate_context(MBASE_MAIP_CL_AUTH, const mbase::string& in_model, const U64& in_ctxId, const U32& in_ctsize, const mbase::vector<InfSamplingInit>& in_samplers = mbase::vector<InfSamplingInit>()); // CHANGE CONTENT
 	maip_err_code inf_clear_short_term_history(MBASE_MAIP_CL_AUTH, const U64& in_ctxId);
 	maip_err_code inf_get_context_status(MBASE_MAIP_CL_AUTH, const U64& in_ctxId); // CHANGE CONTENT
 	maip_err_code inf_destroy_context(MBASE_MAIP_CL_AUTH, const U64& in_ctxId); // CHANGE CONTENT
-	maip_err_code inf_release_context(MBASE_MAIP_CL_AUTH, const U64& in_ctxId); // CHANGE CONTENT
+	//maip_err_code inf_release_context(MBASE_MAIP_CL_AUTH, const U64& in_ctxId); // CHANGE CONTENT
 	maip_err_code inf_acquire_model(MBASE_MAIP_CL_AUTH, const mbase::string& in_model);
 	maip_err_code inf_release_model(MBASE_MAIP_CL_AUTH, const mbase::string& in_model);
 	maip_err_code inf_get_models(MBASE_MAIP_CL_AUTH, mbase::vector<mbase::string>& out_models);
@@ -120,20 +139,23 @@ public:
 	maip_err_code inf_get_program_models(MBASE_MAIP_CL_AUTH, mbase::vector<mbase::string>& out_models);
 
 	maip_err_code exec_set_input(MBASE_MAIP_CL_AUTH, const U64& in_ctxId, mbase::context_role in_role, const mbase::string& in_input, U32& out_msgid);
-	maip_err_code exec_execute_input(MBASE_MAIP_CL_AUTH, const U64& in_ctxId, mbase::vector<U32>& in_msgid, mbase::vector<mbase::string> in_sampler_order = mbase::vector<mbase::string>()); // TODO: CHANGE CONTENT
+	maip_err_code exec_execute_input(MBASE_MAIP_CL_AUTH, const U64& in_ctxId, mbase::vector<U32>& in_msgid); // TODO: CHANGE CONTENT
 	maip_err_code exec_next(MBASE_MAIP_CL_AUTH, std::shared_ptr<mbase::PcNetPeerClient> in_peer, const U64& in_ctxId);
 
 	flags host_model(InfModelTextToText* in_model);
 	flags release_model(const mbase::string& in_model_name);
-
+	#ifdef MBASE_INTERNAL_API
+	GENERIC destroy_all_context(InfAcceptedClient* in_client);
+	GENERIC destroy_context(InfAcceptedClient* in_client, const U64& in_ctxId);
+	#endif
 	static maip_err_code inf_proc_err_to_maip(InfProcessorBase::flags in_flag);
 	static maip_err_code inf_exec_err_to_maip(InfProcessorBase::flags in_flag);
 
 	GENERIC update();
 
 private:
-	mbase::unordered_map<U64, InfAcceptedClient> mActiveClients;
-	mbase::unordered_map<mbase::string, InfModelTextToText*> mRegisteredModels;
+	active_client_map mActiveClients;
+	registered_model_map mRegisteredModels;
 	U64 mClientSessionIdCounter = 0;
 };
 

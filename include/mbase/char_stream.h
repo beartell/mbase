@@ -78,6 +78,7 @@ public:
 	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR bool is_cursor_end() const noexcept;
 	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR size_type buffer_length() const noexcept;
 	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR size_type get_pos() const noexcept;
+	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR size_type get_difference() const noexcept;
 	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR reference getc() noexcept;
 	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR const_reference getc() const noexcept;
 	template<typename T>
@@ -86,6 +87,8 @@ public:
 	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR T& get_data() noexcept;
 	template<typename T>
 	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR T& get_datan(size_type in_length = sizeof(T)) noexcept;
+	template<typename T>
+	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR T& get_datan_safe(size_type in_length = sizeof(T)) noexcept;
 	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR IBYTEBUFFER get_buffer() noexcept;
 	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR IBYTEBUFFER get_bufferc() noexcept;
 	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR IBYTEBUFFER data() noexcept;
@@ -200,6 +203,7 @@ public:
 
 	/* ===== STATE-MODIFIER METHODS BEGIN ===== */
 	MBASE_INLINE GENERIC _destroy_self() noexcept override;
+	MBASE_INLINE IBYTEBUFFER release_buffer() noexcept;
 	/* ===== STATE-MODIFIER METHODS END ===== */
 };
 
@@ -267,14 +271,19 @@ MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR bool char_stream::is_cursor_end() c
 	return mStreamCursor == mBufferLength - 1;
 }
 
-MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR char_stream::size_type char_stream::buffer_length() const noexcept 
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR typename char_stream::size_type char_stream::buffer_length() const noexcept 
 {
 	return mBufferLength;
 }
 
-MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR char_stream::size_type char_stream::get_pos() const noexcept
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR typename char_stream::size_type char_stream::get_pos() const noexcept
 {
 	return mStreamCursor;
+}
+
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR typename char_stream::size_type char_stream::get_difference() const noexcept
+{
+	return mBufferLength - mStreamCursor;
 }
 
 MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR typename char_stream::reference char_stream::getc() noexcept
@@ -304,6 +313,14 @@ MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR T& char_stream::get_datan(size_type
 {
 	T* iData = reinterpret_cast<T*>(mSrcBuffer + mStreamCursor);
 	advance(in_length);
+	return *iData;
+}
+
+template<typename T>
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR T& char_stream::get_datan_safe(size_type in_length) noexcept
+{
+	T* iData = reinterpret_cast<T*>(mSrcBuffer + mStreamCursor);
+	advance_safe(in_length);
 	return *iData;
 }
 
@@ -538,9 +555,9 @@ MBASE_INLINE deep_char_stream::deep_char_stream(IBYTEBUFFER in_src) noexcept : c
 		return;
 	}
 
-	IBYTEBUFFER freshBuffer = static_cast<IBYTEBUFFER>(malloc(mBufferLength));
-	this->copy_bytes(freshBuffer, mSrcBuffer, mBufferLength);
-	mSrcBuffer = freshBuffer;
+	//IBYTEBUFFER freshBuffer = static_cast<IBYTEBUFFER>(malloc(mBufferLength));
+	//this->copy_bytes(freshBuffer, mSrcBuffer, mBufferLength);
+	//mSrcBuffer = freshBuffer;
 }
 
 MBASE_INLINE deep_char_stream::deep_char_stream(IBYTEBUFFER in_src, size_type in_length) noexcept : char_stream(in_src, in_length) 
@@ -550,9 +567,9 @@ MBASE_INLINE deep_char_stream::deep_char_stream(IBYTEBUFFER in_src, size_type in
 		return;
 	}
 
-	IBYTEBUFFER freshBuffer = static_cast<IBYTEBUFFER>(malloc(mBufferLength));
-	this->copy_bytes(freshBuffer, mSrcBuffer, mBufferLength);
-	mSrcBuffer = freshBuffer;
+	//IBYTEBUFFER freshBuffer = static_cast<IBYTEBUFFER>(malloc(mBufferLength));
+	//this->copy_bytes(freshBuffer, mSrcBuffer, mBufferLength);
+	//mSrcBuffer = freshBuffer;
 }
 
 MBASE_INLINE deep_char_stream::deep_char_stream(size_type in_length) : char_stream() 
@@ -562,7 +579,7 @@ MBASE_INLINE deep_char_stream::deep_char_stream(size_type in_length) : char_stre
 		return;
 	}
 
-	IBYTEBUFFER freshBuffer = static_cast<IBYTEBUFFER>(malloc(in_length));
+	IBYTEBUFFER freshBuffer = new IBYTE[in_length];
 	mBufferLength = in_length;
 	mSrcBuffer = freshBuffer;
 	this->fill(mSrcBuffer, 0, mBufferLength);
@@ -577,7 +594,7 @@ MBASE_INLINE deep_char_stream::deep_char_stream(const deep_char_stream& in_rhs) 
 		return;
 	}
 
-	mSrcBuffer = static_cast<IBYTEBUFFER>(malloc(mBufferLength));
+	mSrcBuffer = new IBYTE[mBufferLength];
 	this->copy_bytes(mSrcBuffer, in_rhs.mSrcBuffer, in_rhs.mBufferLength);
 }
 
@@ -585,6 +602,7 @@ MBASE_INLINE deep_char_stream::deep_char_stream(deep_char_stream&& in_rhs) noexc
 {
 	mBufferLength = in_rhs.mBufferLength;
 	mSrcBuffer = in_rhs.mSrcBuffer;
+	mStreamCursor = in_rhs.mStreamCursor;
 	in_rhs.mSrcBuffer = nullptr;
 	in_rhs.mBufferLength = 0;
 	in_rhs.mStreamCursor = 0;
@@ -607,7 +625,7 @@ MBASE_INLINE deep_char_stream& deep_char_stream::operator=(const deep_char_strea
 		_destroy_self();
 		mBufferLength = in_rhs.mBufferLength;
 		mStreamCursor = in_rhs.mStreamCursor;
-		mSrcBuffer = static_cast<IBYTEBUFFER>(malloc(mBufferLength));
+		mSrcBuffer = new IBYTE[mBufferLength];
 		this->fill(mSrcBuffer, 0, mBufferLength);
 		this->copy_bytes(mSrcBuffer, in_rhs.mSrcBuffer, in_rhs.mBufferLength);
 	}
@@ -620,6 +638,7 @@ MBASE_INLINE deep_char_stream& deep_char_stream::operator=(deep_char_stream&& in
 	_destroy_self();
 	mBufferLength = in_rhs.mBufferLength;
 	mSrcBuffer = in_rhs.mSrcBuffer;
+	mStreamCursor = in_rhs.mStreamCursor;
 	in_rhs.mSrcBuffer = nullptr;
 	in_rhs.mBufferLength = 0;
 	in_rhs.mStreamCursor = 0;
@@ -633,10 +652,20 @@ MBASE_INLINE GENERIC deep_char_stream::_destroy_self() noexcept
 		return;
 	}
 
-	free(mSrcBuffer);
+	delete[] mSrcBuffer;
 	mSrcBuffer = nullptr;
 	mBufferLength = 0;
 	mStreamCursor = 0;
+}
+
+MBASE_INLINE IBYTEBUFFER deep_char_stream::release_buffer() noexcept
+{
+	IBYTEBUFFER activeBuffer = mSrcBuffer;
+	mSrcBuffer = nullptr;
+	mBufferLength = 0;
+	mStreamCursor = 0;
+
+	return activeBuffer;
 }
 
 MBASE_STD_END

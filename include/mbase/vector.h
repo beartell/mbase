@@ -161,7 +161,7 @@ public:
 	/* ===== NON-MODIFIER METHODS END ===== */
 
 	/* ===== NON-MEMBER FUNCTIONS BEGIN ===== */
-	MBASE_INLINE_EXPR static mbase::vector<T, Allocator> deserialize(IBYTEBUFFER in_src, SIZE_T in_length);
+	MBASE_INLINE_EXPR static mbase::vector<T, Allocator> deserialize(IBYTEBUFFER in_src, SIZE_T in_length, SIZE_T& bytesProcessed);
 	/* ===== NON-MEMBER FUNCTIONS END ===== */
 
 private:
@@ -919,7 +919,7 @@ MBASE_INLINE_EXPR GENERIC vector<T, Allocator>::serialize(char_stream& out_buffe
 }
 
 template<typename T, typename Allocator>
-MBASE_INLINE_EXPR mbase::vector<T, Allocator> mbase::vector<T, Allocator>::deserialize(IBYTEBUFFER in_src, SIZE_T in_length)
+MBASE_INLINE_EXPR mbase::vector<T, Allocator> mbase::vector<T, Allocator>::deserialize(IBYTEBUFFER in_src, SIZE_T in_length, SIZE_T& bytesProcessed)
 {
 	mbase::vector<T, Allocator> deserializedVec;
 	bool isPrimitive = std::is_integral_v<value_type>;
@@ -955,9 +955,10 @@ MBASE_INLINE_EXPR mbase::vector<T, Allocator> mbase::vector<T, Allocator>::deser
 		else
 		{
 			blockLength = inBuffer.get_datan<size_type>();
+			bytesProcessed += sizeof(size_type);
 		}
 		IBYTEBUFFER blockData = inBuffer.get_bufferc();
-		deserializedVec.push_back(std::move(mbase::deserialize<value_type>(blockData, blockLength)));
+		deserializedVec.push_back(std::move(mbase::deserialize<value_type>(blockData, blockLength, bytesProcessed)));
 		inBuffer.advance(blockLength);
 	}
 	

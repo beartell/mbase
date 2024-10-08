@@ -269,6 +269,20 @@ InfModelTextToText::flags InfModelTextToText::get_usr_end(mbase::string& out_end
 	return flags::INF_MODEL_SUCCESS;
 }
 
+InfModelTextToText::flags InfModelTextToText::get_eot_token(inf_token& out_token)
+{
+	MBASE_INF_MODEL_RETURN_UNINITIALIZED;
+	out_token = llama_token_eot(mModel);
+	return flags::INF_MODEL_SUCCESS;
+}
+
+InfModelTextToText::flags InfModelTextToText::get_lf_token(inf_token& out_token)
+{
+	MBASE_INF_MODEL_RETURN_UNINITIALIZED;
+	out_token = llama_token_nl(mModel);
+	return flags::INF_MODEL_SUCCESS;
+}
+
 InfModelTextToText::flags InfModelTextToText::get_vocab_count(I32& out_count)
 {
 	MBASE_INF_MODEL_RETURN_UNINITIALIZED;
@@ -474,6 +488,11 @@ GENERIC InfModelTextToText::_initialize_model()
 	if (mModelKvals.find("general.basename") == mModelKvals.end())
 	{
 		mModelKvals["general.basename"] = mModelKvals["general.name"];
+		if(!mModelKvals["general.basename"].size())
+		{
+			mModelKvals["general.basename"] = mModelKvals["general.base_model.0.name"];
+			// if this is also an empty string, I don't know what the fuck to do anymore...
+		}
 	}
 
 	mbase::string& modelName = mModelKvals["general.basename"];
@@ -590,7 +609,7 @@ GENERIC InfModelTextToText::_initialize_model()
 		tokenArray.resize(tokenCount);
 		mUserStartTokenized = tokenArray;
 	}
-
+	
 	mIsInitialized = true;
 	mInitializeSignal.reset_signal_with_state();
 	mInitMethodSignal.set_signal();
