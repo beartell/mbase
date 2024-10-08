@@ -252,7 +252,7 @@ PcState& PcState::operator=(PcState&& in_rhs)
 	return *this;
 }
 
-PcState::flags PcState::initialize(const mbase::string& in_object_name)
+PcState::flags PcState::initialize(const mbase::string& in_object_name, const mbase::string& in_state_path)
 {
 	if (is_state_object_initialized())
 	{
@@ -260,14 +260,31 @@ PcState::flags PcState::initialize(const mbase::string& in_object_name)
 		{
 			return flags::STATE_SUCCESS;
 		}
+		update();
 		mIsInitialized = false;
 		mIsModified = false;
 		mKvMap.clear();
 	}
 
+	mbase::string statePath = in_state_path;
+	if(!statePath.size())
+	{
+		statePath = gDefaultStateDirectory;
+	}
+
+	if(statePath.back() != '/' || statePath.back() != '\\')
+	{
+#ifdef MBASE_PLATFORM_WINDOWS
+		statePath += '\\';
+#elif MBASE_PLATFORM_UNIX
+		statePath += '/';
+#endif // MBASE_PLATFORM_WINDOWS
+
+	}
+
 	if (in_object_name.size())
 	{
-		mFullStateName = gDefaultStateDirectory + in_object_name;
+		mFullStateName = statePath + in_object_name;
 		mObjectName = in_object_name;
 		mbase::io_file ioStateFile;
 		ioStateFile.open_file(mFullStateName + ".mbsf", mbase::io_file::access_mode::READ_ACCESS, mbase::io_file::disposition::APPEND);
@@ -318,19 +335,6 @@ PcState::flags PcState::initialize(const mbase::string& in_object_name)
 		}
 	}
 	return flags::STATE_SUCCESS;
-}
-
-PcState::flags PcState::initialize(const mbase::string& in_object_name, const mbase::string& in_object_suffix)
-{
-	mbase::string fullName = in_object_name;
-	if (in_object_suffix.size())
-	{
-		fullName += "-" + in_object_suffix;
-		mStateFileSuffix = in_object_suffix;
-		mObjectName = in_object_name;
-	}
-
-	return initialize(fullName);
 }
 
 PcState::flags PcState::remove_state(const mbase::string& in_key)
@@ -398,11 +402,6 @@ GENERIC PcState::update()
 mbase::string PcState::get_object_name()
 {
 	return mObjectName;
-}
-
-mbase::string PcState::get_object_suffix()
-{
-	return mStateFileSuffix;
 }
 
 mbase::string PcState::get_full_state_name()

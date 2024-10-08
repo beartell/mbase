@@ -8,7 +8,11 @@
 
 MBASE_BEGIN
 
+#ifdef MBASE_PLATFORM_WINDOWS
+static mbase::string gDefaultStateDirectory = ".\\";
+#elif MBASE_PLATFORM_UNIX
 static mbase::string gDefaultStateDirectory = "./";
+#endif // MBASE_PLATFORM_WINDOWS
 
 struct MBASE_API PcStateFileHeader {
 	using size_type = SIZE_T;
@@ -64,8 +68,7 @@ public:
 
 	PcState& operator=(PcState&& in_rhs);
 
-	flags initialize(const mbase::string& in_object_name, const mbase::string& in_object_suffix);
-	flags initialize(const mbase::string& in_object_name);
+	flags initialize(const mbase::string& in_object_name, const mbase::string& in_state_path = gDefaultStateDirectory);
 	template<typename T>
 	flags set_state(const mbase::string& in_key, const T& in_value)
 	{
@@ -125,7 +128,6 @@ public:
 		return flags::STATE_SUCCESS;
 	}
 	mbase::string get_object_name();
-	mbase::string get_object_suffix();
 	mbase::string get_full_state_name();
 	bool is_state_modified();
 	bool is_state_object_initialized();
