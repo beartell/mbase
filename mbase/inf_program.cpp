@@ -1,6 +1,8 @@
 #include <mbase/inference/inf_program.h>
 #include <mbase/inference/inf_sampling.h>
 #include <mbase/maip_parser.h>
+#include <mbase/pc/pc_state.h>
+#include <mbase/filesystem.h>
 #include <random>
 #include <iostream>
 
@@ -11,7 +13,9 @@ if(!this->is_session_match(in_csid, in_clid))\
 {\
 	return maip_err_code::INF_UNAUTHORIZED_ACCESS;\
 }\
-InfAcceptedClient& mAccClient = mActiveClients[in_csid];
+InfAcceptedClient& mAccClient = mAcceptedClients[in_csid];
+
+#define MBASE_BUILD_CSCL_STRING mbase::string::from_format("cs%llu-cl%s", mAccClient.mCsId, mAccClient.mClid.c_str())
 
 GENERIC InfMaipTunedT2TProcessor::on_initialize()
 {
@@ -52,7 +56,7 @@ GENERIC InfMaipTunedClient::on_write(CBYTEBUFFER out_data, size_type out_size, I
 		hostProcessor->destroy();
 		return;
 	}
-
+	
 	mbase::string outData(out_data, out_size);
 	mbase::maip_packet_builder tmpPacketBuilder;
 	
@@ -153,14 +157,53 @@ GENERIC InfMaipTunedClient::on_unregister()
 	}
 }
 
+typename InfAcceptedClient::size_type InfAcceptedClient::get_serialized_size() const noexcept
+{
+	size_type serializedSize = mClid.get_serialized_size();
+	serializedSize += mbase::get_serialized_size(mCsId);
+	serializedSize += mbase::get_serialized_size(mAcceptedModels);
+	
+	return serializedSize;
+}
+
+GENERIC InfAcceptedClient::serialize(char_stream& out_stream) const
+{
+	mbase::serialize(mCsId, out_stream);
+	mbase::serialize(mClid, out_stream);
+	mbase::serialize(mAcceptedModels, out_stream);
+}
+
+InfAcceptedClient InfAcceptedClient::deserialize(IBYTEBUFFER in_src, size_type in_length, SIZE_T& bytes_processed)
+{
+	mbase::char_stream cs(in_src, in_length);
+	SIZE_T bytesProcessed = 0;
+	U64 csId = mbase::deserialize<U64>(cs.get_bufferc(), cs.buffer_length(), bytesProcessed);
+	bytes_processed += bytesProcessed;
+	bytesProcessed = 0;
+	cs.advance(bytesProcessed);
+
+	mbase::string clId = mbase::deserialize<mbase::string>(cs.get_bufferc(), cs.buffer_length(), bytesProcessed);
+	bytes_processed += bytesProcessed;
+	bytesProcessed = 0;
+	cs.advance(bytesProcessed);
+
+	mbase::vector<mbase::string> acceptedModels = mbase::deserialize<mbase::vector<mbase::string>>(cs.get_bufferc(), cs.buffer_length(), bytesProcessed);
+	InfAcceptedClient iac;
+	iac.mTemporaryClient = false;
+	iac.mCsId = csId;
+	iac.mClid = std::move(clId);
+	iac.mAcceptedModels = std::move(acceptedModels);
+	return iac;
+}
+
 bool InfProgram::is_session_match(MBASE_MAIP_CL_AUTH)
 {
-	if(mActiveClients.find(in_csid) == mActiveClients.end())
+	if(mAcceptedClients.find(in_csid) == mAcceptedClients.end())
 	{
 		return false;
 	}
 
-	if(mActiveClients[in_csid].mClid != in_clid)
+	if(mAcceptedClients[in_csid].mClid != in_clid)
 	{
 		return false;
 	}
@@ -168,17 +211,17 @@ bool InfProgram::is_session_match(MBASE_MAIP_CL_AUTH)
 	return true;
 }
 
-typename InfProgram::active_client_map& InfProgram::get_active_clients()
+typename InfProgram::accepted_client_map& InfProgram::get_accepted_clients()
 {
-	return mActiveClients;
+	return mAcceptedClients;
 }
 
-InfProgram::maip_err_code InfProgram::inf_create_session(const mbase::string& in_clid, U64& out_csid, mbase::string& out_clid)
+InfProgram::maip_err_code InfProgram::inf_create_session(const mbase::string& in_clid, U64& out_csid, mbase::string& out_clid, bool in_is_temporary)
 {
 	if(in_clid.size())
 	{
 		// FIND THE CLID AND RETURN ITS CSID
-		for(mbase::unordered_map<U64, InfAcceptedClient>::iterator It = mActiveClients.begin(); It != mActiveClients.end(); ++It)
+		for(mbase::unordered_map<U64, InfAcceptedClient>::iterator It = mAcceptedClients.begin(); It != mAcceptedClients.end(); ++It)
 		{
 			if(It->second.mClid == in_clid)
 			{
@@ -190,7 +233,7 @@ InfProgram::maip_err_code InfProgram::inf_create_session(const mbase::string& in
 		return maip_err_code::INF_CLIENT_ID_MISMATCH;
 	}
 
-	for(mClientSessionIdCounter; mActiveClients.find(mClientSessionIdCounter) != mActiveClients.end(); ++mClientSessionIdCounter)
+	for(mClientSessionIdCounter; mAcceptedClients.find(mClientSessionIdCounter) != mAcceptedClients.end(); ++mClientSessionIdCounter)
 	{
 	}
 	
@@ -201,11 +244,30 @@ InfProgram::maip_err_code InfProgram::inf_create_session(const mbase::string& in
 	// TODO: USE UUIDs or something else to assign client ids 
 	std::mt19937 randomGenerator(out_csid); // session id is the seed for now
 	InfAcceptedClient iac;
-	iac.mClid = mbase::to_string(randomGenerator());
-	iac.mCsId = out_csid;
-	iac.mPeer = NULL;
-	mActiveClients[out_csid] = iac;
+	mbase::string generatedClId = mbase::to_string(randomGenerator());
+	mbase::string CSCLString = mbase::string::from_format("cs%llu-cl%s", out_csid, generatedClId.c_str());
 	++mClientSessionIdCounter;
+
+	PcState stateObject;
+	if(stateObject.initialize(CSCLString, mClientStateDirectory) != PcState::flags::STATE_WARN_STATE_FILE_MISSING)
+	{
+		if(stateObject.get_state("accepted-client", iac) == PcState::flags::STATE_ERR_NOT_FOUND)
+		{
+		}
+	}
+	else
+	{
+		if(!in_is_temporary)
+		{
+			iac.mCsId = out_csid;
+			iac.mPeer = NULL;
+			iac.mTemporaryClient = in_is_temporary;
+			iac.mClid = generatedClId;
+			stateObject.set_state("accepted-client", iac);
+		}
+	}
+
+	mAcceptedClients[out_csid] = iac;
 
 	out_clid = iac.mClid;
 
@@ -215,9 +277,11 @@ InfProgram::maip_err_code InfProgram::inf_create_session(const mbase::string& in
 InfProgram::maip_err_code InfProgram::inf_destroy_client(MBASE_MAIP_CL_AUTH)
 {
 	MBASE_SESSION_CONTROL;
+	mbase::string CSCLString = MBASE_BUILD_CSCL_STRING;
+	mbase::delete_file(CSCLString);
 
 	destroy_all_context(&mAccClient);
-	mActiveClients.erase(in_csid);
+	mAcceptedClients.erase(in_csid);
 
 	return maip_err_code::INF_SUCCESS;
 }
@@ -293,69 +357,6 @@ InfProgram::maip_err_code InfProgram::inf_create_context(MBASE_MAIP_CL_AUTH, con
 	return inf_proc_err_to_maip(newProcessor->get_processor_status());
 }
 
-//InfProgram::maip_err_code InfProgram::inf_activate_context(MBASE_MAIP_CL_AUTH, const mbase::string& in_model, const U64& in_ctxId, const U32& in_ctsize, const mbase::vector<InfSamplingInit>& in_samplers)
-//{
-//	MBASE_SESSION_CONTROL;
-//
-//	if (std::find(mAccClient.mAcceptedModels.begin(), mAccClient.mAcceptedModels.end(), in_model) == mAccClient.mAcceptedModels.end())
-//	{
-//		return maip_err_code::INF_MODEL_NAME_MISMATCH;
-//	}
-//
-//	if (mRegisteredModels.find(in_model) == mRegisteredModels.end())
-//	{
-//		return maip_err_code::INF_MODEL_NAME_MISMATCH;
-//	}
-//
-//	if (mAccClient.mChatSessions.find(in_ctxId) == mAccClient.mChatSessions.end())
-//	{
-//		return maip_err_code::INF_CONTEXT_ID_MISMATCH;
-//	}
-//	
-//	InfMaipTunedClient* mySession = mAccClient.mChatSessions[in_ctxId];
-//
-//	if(mySession->is_registered())
-//	{
-//		return maip_err_code::INF_CONTEXT_ACTIVE;
-//	}
-//
-//	mySession->mIsDeadClient = false;
-//	InfModelTextToText* registeredModel = mRegisteredModels[in_model];
-//	InfMaipTunedT2TProcessor* newProcessor = new InfMaipTunedT2TProcessor;
-//	newProcessor->set_nominee_client(mySession);
-//	for (mbase::vector<InfSamplingInit>::const_iterator cIt = in_samplers.cbegin(); cIt != in_samplers.cend(); ++cIt)
-//	{
-//		if (cIt->mSamplerName == "temp")
-//		{
-//			newProcessor->add_sampler<InfSamplingTemperature>(cIt->mCommonFloat);
-//		}
-//		else if (cIt->mSamplerName == "top_k")
-//		{
-//			newProcessor->add_sampler<InfSamplingTopK>(cIt->mCommonFloat);
-//		}
-//		else if (cIt->mSamplerName == "typical_p")
-//		{
-//			newProcessor->add_sampler<InfSamplingTypicalP>(cIt->mCommonFloat);
-//		}
-//		else if (cIt->mSamplerName == "top_p")
-//		{
-//			newProcessor->add_sampler<InfSamplingTopP>(cIt->mCommonFloat);
-//		}
-//		else if (cIt->mSamplerName == "min_p")
-//		{
-//			newProcessor->add_sampler<InfSamplingMinP>(cIt->mCommonFloat);
-//		}
-//		else if (cIt->mSamplerName == "tailfree")
-//		{
-//			newProcessor->add_sampler<InfSamplingTailFree>(cIt->mCommonFloat);
-//		}
-//	}
-//
-//	InfModelTextToText::flags outFlag = registeredModel->register_context_process(newProcessor, in_ctsize);
-//	return inf_proc_err_to_maip(newProcessor->get_processor_status());
-//	// TODO: CREATE CONTEXT
-//}
-
 InfProgram::maip_err_code InfProgram::inf_clear_short_term_history(MBASE_MAIP_CL_AUTH, const U64& in_ctxId)
 {
 	MBASE_SESSION_CONTROL;
@@ -407,44 +408,8 @@ InfProgram::maip_err_code InfProgram::inf_destroy_context(MBASE_MAIP_CL_AUTH, co
 	}
 
 	destroy_context(&mAccClient, in_ctxId);
-
-	/*InfMaipTunedClient* mySession = mAccClient.mChatSessions[in_ctxId];
-	InfTextToTextProcessor* tmpProc = NULL;
-	mySession->get_host_processor(tmpProc);
-	if(tmpProc)
-	{
-		mySession->mIsDeadClient = true;
-		tmpProc->destroy();
-	}
-	else
-	{
-		delete mySession;
-	}
-
-	mAccClient.mChatSessions.erase(in_ctxId);*/
 	return maip_err_code::INF_SUCCESS;
 }
-
-//InfProgram::maip_err_code InfProgram::inf_release_context(MBASE_MAIP_CL_AUTH, const U64& in_ctxId)
-//{
-//	MBASE_SESSION_CONTROL;
-//	if (mAccClient.mChatSessions.find(in_ctxId) == mAccClient.mChatSessions.end())
-//	{
-//		return maip_err_code::INF_CONTEXT_ID_MISMATCH;
-//	}
-//
-//	InfMaipTunedClient* mySession = mAccClient.mChatSessions[in_ctxId];
-//	mySession->mIsDeadClient = false;
-//	InfTextToTextProcessor* tmpProc = NULL;
-//
-//	mySession->get_host_processor(tmpProc);
-//	if (tmpProc)
-//	{
-//		tmpProc->destroy();
-//	}
-//
-//	return maip_err_code::INF_SUCCESS;
-//}
 
 InfProgram::maip_err_code InfProgram::inf_acquire_model(MBASE_MAIP_CL_AUTH, const mbase::string& in_model)
 {
@@ -459,6 +424,9 @@ InfProgram::maip_err_code InfProgram::inf_acquire_model(MBASE_MAIP_CL_AUTH, cons
 	{
 		// push the model if not exists
 		mAccClient.mAcceptedModels.push_back(in_model);
+		PcState clientState;
+		clientState.initialize_overwrite(MBASE_BUILD_CSCL_STRING, mClientStateDirectory);
+		clientState.set_state("accepted-client", mAccClient);
 	}
 	
 	return maip_err_code::INF_SUCCESS;
@@ -474,6 +442,10 @@ InfProgram::maip_err_code InfProgram::inf_release_model(MBASE_MAIP_CL_AUTH, cons
 		return maip_err_code::INF_MODEL_NAME_MISMATCH;
 	}
 	mAccClient.mAcceptedModels.erase(resultIt);
+	PcState clientState;
+	clientState.initialize_overwrite(MBASE_BUILD_CSCL_STRING, mClientStateDirectory);
+	clientState.set_state("accepted-client", mAccClient);
+
 	return maip_err_code::INF_SUCCESS;
 }
 

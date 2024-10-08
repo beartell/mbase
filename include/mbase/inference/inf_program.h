@@ -48,32 +48,26 @@ private:
 	InfMaipTunedClient* mNomineeClient = NULL;
 };
 
-//class MBASE_API ClientContextCleaner : public mbase::time_interval {
-//public:
-//	ClientContextCleaner(InfProgram* in_program);
-//	~ClientContextCleaner();
-//
-//	GENERIC on_register() override;
-//	GENERIC on_call(user_data in_data) override;
-//	GENERIC on_unregister() override;
-//private:
-//	InfProgram* hostProgram;
-//};
-
 struct MBASE_API InfAcceptedClient {
 	using chat_session_map = mbase::unordered_map<U64, InfMaipTunedClient*>;
+	using size_type = SIZE_T;
 
 	std::shared_ptr<mbase::PcNetPeerClient> mPeer;
 	mbase::vector<mbase::string> mAcceptedModels; // TODO: WRITE TO FILE
 	chat_session_map mChatSessions;
 	mbase::string mClid = ""; // TODO: WRITE TO FILE
 	U64 mCsId = 0; // TODO: WRITE TO FILE
-	U64 mChatSessionIdCounter = 0; // TODO: WRITE TO FILE
+	U64 mChatSessionIdCounter = 0;
+	bool mTemporaryClient = true;
+
+	size_type get_serialized_size() const noexcept;
+	GENERIC serialize(char_stream& out_stream) const;
+	static InfAcceptedClient deserialize(IBYTEBUFFER in_src, size_type in_length, SIZE_T& bytes_processed);
 };
 
 class MBASE_API InfProgram {
 public:
-	using active_client_map = mbase::unordered_map<U64, InfAcceptedClient>;
+	using accepted_client_map = mbase::unordered_map<U64, InfAcceptedClient>;
 	using registered_model_map = mbase::unordered_map<mbase::string, InfModelTextToText*>;
 
 	enum class flags : U8 {
@@ -119,10 +113,10 @@ public:
 
 	bool is_session_match(MBASE_MAIP_CL_AUTH);
 	#ifdef MBASE_INTERNAL_API
-	active_client_map& get_active_clients();
+	accepted_client_map& get_accepted_clients();
 	#endif
 	
-	maip_err_code inf_create_session(const mbase::string& in_clid, U64& out_csid, mbase::string& out_clid);
+	maip_err_code inf_create_session(const mbase::string& in_clid, U64& out_csid, mbase::string& out_clid, bool in_is_temporary = true);
 	maip_err_code inf_destroy_client(MBASE_MAIP_CL_AUTH);
 	maip_err_code inf_get_acquired_models(MBASE_MAIP_CL_AUTH, mbase::vector<mbase::string>& out_models);
 	maip_err_code inf_get_created_context_ids(MBASE_MAIP_CL_AUTH, mbase::vector<U64>& out_contexts);
@@ -142,6 +136,7 @@ public:
 	maip_err_code exec_execute_input(MBASE_MAIP_CL_AUTH, const U64& in_ctxId, mbase::vector<U32>& in_msgid); // TODO: CHANGE CONTENT
 	maip_err_code exec_next(MBASE_MAIP_CL_AUTH, std::shared_ptr<mbase::PcNetPeerClient> in_peer, const U64& in_ctxId);
 
+	GENERIC initialize();
 	flags host_model(InfModelTextToText* in_model);
 	flags release_model(const mbase::string& in_model_name);
 	#ifdef MBASE_INTERNAL_API
@@ -154,9 +149,10 @@ public:
 	GENERIC update();
 
 private:
-	active_client_map mActiveClients;
+	accepted_client_map mAcceptedClients;
 	registered_model_map mRegisteredModels;
 	U64 mClientSessionIdCounter = 0;
+	mbase::string mClientStateDirectory;
 };
 
 MBASE_END

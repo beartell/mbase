@@ -18,18 +18,13 @@ GENERIC PcStateFileHeader::serialize(char_stream& out_stream) const
 		// do not serialize
 		throw invalid_size();
 	}
+	
 
 	out_stream.put_buffern(reinterpret_cast<CBYTEBUFFER>(mFileMagic), sizeof(mFileMagic));
-	out_stream.put_buffern(reinterpret_cast<CBYTEBUFFER>(&mStateStructCount), sizeof(mStateStructCount));
-	out_stream.put_buffern(reinterpret_cast<CBYTEBUFFER>(&mMbaseVersionMajor), sizeof(mMbaseVersionMajor));
-	out_stream.put_buffern(reinterpret_cast<CBYTEBUFFER>(&mMbaseVersionMinor), sizeof(mMbaseVersionMinor));
-
-	size_type objectNameLength = mStateObjectName.get_serialized_size();
-	deep_char_stream deepCs(objectNameLength);
-	mStateObjectName.serialize(deepCs);
-
-	out_stream.put_buffern(deepCs.get_buffer(), deepCs.buffer_length());
-	// serialization done
+	mbase::serialize(mStateStructCount, out_stream);
+	mbase::serialize(mMbaseVersionMajor, out_stream);
+	mbase::serialize(mMbaseVersionMinor, out_stream);
+	mbase::serialize(mStateObjectName, out_stream);
 }
 
 PcStateFileHeader PcStateFileHeader::deserialize(IBYTEBUFFER in_src, size_type in_length, SIZE_T& bytes_processed)
@@ -129,7 +124,6 @@ PcSerializedStateStruct& PcSerializedStateStruct::operator=(const PcSerializedSt
 
 	return *this;
 }
-
 
 PcSerializedStateStruct& PcSerializedStateStruct::operator=(PcSerializedStateStruct&& in_rhs)
 {
@@ -333,7 +327,53 @@ PcState::flags PcState::initialize(const mbase::string& in_object_name, const mb
 				}
 			}
 		}
+		else
+		{
+			return flags::STATE_WARN_STATE_FILE_MISSING;
+		}
 	}
+	return flags::STATE_SUCCESS;
+}
+
+PcState::flags PcState::initialize_overwrite(const mbase::string& in_object_name, const mbase::string& in_state_path)
+{
+	if (is_state_object_initialized())
+	{
+		if (mFullStateName == in_object_name)
+		{
+			return flags::STATE_SUCCESS;
+		}
+		update();
+		mIsInitialized = false;
+		mIsModified = false;
+		mKvMap.clear();
+	}
+
+	mbase::string statePath = in_state_path;
+	if (!statePath.size())
+	{
+		statePath = gDefaultStateDirectory;
+	}
+
+	if (statePath.back() != '/' || statePath.back() != '\\')
+	{
+#ifdef MBASE_PLATFORM_WINDOWS
+		statePath += '\\';
+#elif MBASE_PLATFORM_UNIX
+		statePath += '/';
+#endif // MBASE_PLATFORM_WINDOWS
+
+	}
+
+	if (in_object_name.size())
+	{
+		mFullStateName = statePath + in_object_name;
+		mObjectName = in_object_name;
+		mbase::io_file ioStateFile;
+		ioStateFile.open_file(mFullStateName + ".mbsf");
+		mIsInitialized = true; // FOR NOW, IT WILL WE MARKED INITIALIZED REGARDLESS OF ALL THE PROBLEMS
+	}
+
 	return flags::STATE_SUCCESS;
 }
 

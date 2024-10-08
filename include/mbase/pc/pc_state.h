@@ -55,6 +55,7 @@ public:
 
 	enum class flags : U8 {
 		STATE_SUCCESS,
+		STATE_WARN_STATE_FILE_MISSING,
 		STATE_ERR_OBJECT_NOT_INITIALIZED,
 		STATE_ERR_MISSING_KEY,
 		STATE_ERR_MISSING_DATA,
@@ -69,6 +70,7 @@ public:
 	PcState& operator=(PcState&& in_rhs);
 
 	flags initialize(const mbase::string& in_object_name, const mbase::string& in_state_path = gDefaultStateDirectory);
+	flags initialize_overwrite(const mbase::string& in_object_name, const mbase::string& in_state_path = gDefaultStateDirectory);
 	template<typename T>
 	flags set_state(const mbase::string& in_key, const T& in_value)
 	{
