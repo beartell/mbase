@@ -170,7 +170,7 @@ GENERIC InfAcceptedClient::serialize(char_stream& out_stream) const
 {
 	mbase::serialize(mCsId, out_stream);
 	mbase::serialize(mClid, out_stream);
-	mbase::serialize(mAcceptedModels, out_stream);
+	mAcceptedModels.serialize(out_stream);
 }
 
 InfAcceptedClient InfAcceptedClient::deserialize(IBYTEBUFFER in_src, size_type in_length, SIZE_T& bytes_processed)
@@ -274,11 +274,44 @@ InfProgram::maip_err_code InfProgram::inf_create_session(const mbase::string& in
 	return maip_err_code::INF_SUCCESS;
 }
 
+InfProgram::maip_err_code InfProgram::inf_authorize(MBASE_MAIP_CL_AUTH)
+{
+	accepted_client_map::iterator It = mAcceptedClients.find(in_csid);
+	if(It != mAcceptedClients.end())
+	{
+		if(It->second.mClid == in_clid)
+		{
+			return maip_err_code::INF_SUCCESS;
+		}
+		return maip_err_code::INF_CLIENT_ID_MISMATCH;
+	}
+
+	PcState clientState;
+	if(clientState.initialize(mbase::string::from_format("cs%llu-cl%s", in_csid, in_clid), mClientStateDirectory) == PcState::flags::STATE_WARN_STATE_FILE_MISSING)
+	{
+		return maip_err_code::INF_CONTEXT_ID_MISMATCH;
+	}
+
+	InfAcceptedClient iac;
+	if(clientState.get_state("accepted-client", iac) == PcState::flags::STATE_ERR_NOT_FOUND)
+	{
+		return maip_err_code::INF_CLIENT_ID_MISMATCH;
+	}
+
+	if(iac.mCsId == in_csid && iac.mClid == in_clid)
+	{
+		mAcceptedClients[in_csid] = iac;
+		return maip_err_code::INF_SUCCESS;
+	}
+
+	return maip_err_code::INF_CLIENT_ID_MISMATCH;
+}
+
 InfProgram::maip_err_code InfProgram::inf_destroy_client(MBASE_MAIP_CL_AUTH)
 {
 	MBASE_SESSION_CONTROL;
 	mbase::string CSCLString = MBASE_BUILD_CSCL_STRING;
-	mbase::delete_file(CSCLString);
+	mbase::delete_file(mClientStateDirectory + CSCLString);
 
 	destroy_all_context(&mAccClient);
 	mAcceptedClients.erase(in_csid);
@@ -427,6 +460,7 @@ InfProgram::maip_err_code InfProgram::inf_acquire_model(MBASE_MAIP_CL_AUTH, cons
 		PcState clientState;
 		clientState.initialize_overwrite(MBASE_BUILD_CSCL_STRING, mClientStateDirectory);
 		clientState.set_state("accepted-client", mAccClient);
+		clientState.update();
 	}
 	
 	return maip_err_code::INF_SUCCESS;
@@ -445,6 +479,7 @@ InfProgram::maip_err_code InfProgram::inf_release_model(MBASE_MAIP_CL_AUTH, cons
 	PcState clientState;
 	clientState.initialize_overwrite(MBASE_BUILD_CSCL_STRING, mClientStateDirectory);
 	clientState.set_state("accepted-client", mAccClient);
+	clientState.update();
 
 	return maip_err_code::INF_SUCCESS;
 }
@@ -565,6 +600,12 @@ InfProgram::maip_err_code InfProgram::exec_next(MBASE_MAIP_CL_AUTH, std::shared_
 		mAccClient.mChatSessions.erase(in_ctxId);
 		return maip_err_code::INF_CONTEXT_ID_MISMATCH;
 	}
+}
+
+GENERIC InfProgram::initialize(const mbase::string& in_state_directory)
+{
+	// TODO: Handle all possibilities
+	mClientStateDirectory = in_state_directory;
 }
 
 InfProgram::flags InfProgram::host_model(InfModelTextToText* in_model)
@@ -724,6 +765,22 @@ InfProgram::maip_err_code InfProgram::inf_exec_err_to_maip(InfProcessorBase::fla
 
 GENERIC InfProgram::update()
 {
+	/*for(accepted_client_map::iterator It = mAcceptedClients.begin(); It != mAcceptedClients.end();)
+	{
+		InfAcceptedClient& tmpClient = It->second;
+		if(tmpClient.mPeer != NULL)
+		{
+			if(!tmpClient.mPeer->is_connected())
+			{
+				destroy_all_context(&tmpClient);
+				It = mAcceptedClients.erase(It);
+				continue;
+			}
+			++It;
+			continue;
+		}
+	}*/
+
 	for(auto& modelMap : mRegisteredModels)
 	{
 		modelMap.second->update();

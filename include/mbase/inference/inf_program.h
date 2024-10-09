@@ -8,6 +8,7 @@
 #include <mbase/unordered_map.h>
 #include <mbase/traits.h>
 #include <mbase/pc/pc_net_manager.h>
+#include <mbase/pc/pc_state.h>
 #include <mbase/inference/inf_model.h>
 #include <mbase/inference/inf_client.h>
 
@@ -117,15 +118,14 @@ public:
 	#endif
 	
 	maip_err_code inf_create_session(const mbase::string& in_clid, U64& out_csid, mbase::string& out_clid, bool in_is_temporary = true);
+	maip_err_code inf_authorize(MBASE_MAIP_CL_AUTH);
 	maip_err_code inf_destroy_client(MBASE_MAIP_CL_AUTH);
 	maip_err_code inf_get_acquired_models(MBASE_MAIP_CL_AUTH, mbase::vector<mbase::string>& out_models);
 	maip_err_code inf_get_created_context_ids(MBASE_MAIP_CL_AUTH, mbase::vector<U64>& out_contexts);
 	maip_err_code inf_create_context(MBASE_MAIP_CL_AUTH, const mbase::string& in_model, const U32& in_ctsize, U64& out_ctxId, const mbase::vector<InfSamplingInput>& in_samplers = mbase::vector<InfSamplingInput>()); // TODO: CHANGE CONTENT
-	//maip_err_code inf_activate_context(MBASE_MAIP_CL_AUTH, const mbase::string& in_model, const U64& in_ctxId, const U32& in_ctsize, const mbase::vector<InfSamplingInit>& in_samplers = mbase::vector<InfSamplingInit>()); // CHANGE CONTENT
 	maip_err_code inf_clear_short_term_history(MBASE_MAIP_CL_AUTH, const U64& in_ctxId);
 	maip_err_code inf_get_context_status(MBASE_MAIP_CL_AUTH, const U64& in_ctxId); // CHANGE CONTENT
 	maip_err_code inf_destroy_context(MBASE_MAIP_CL_AUTH, const U64& in_ctxId); // CHANGE CONTENT
-	//maip_err_code inf_release_context(MBASE_MAIP_CL_AUTH, const U64& in_ctxId); // CHANGE CONTENT
 	maip_err_code inf_acquire_model(MBASE_MAIP_CL_AUTH, const mbase::string& in_model);
 	maip_err_code inf_release_model(MBASE_MAIP_CL_AUTH, const mbase::string& in_model);
 	maip_err_code inf_get_models(MBASE_MAIP_CL_AUTH, mbase::vector<mbase::string>& out_models);
@@ -136,7 +136,7 @@ public:
 	maip_err_code exec_execute_input(MBASE_MAIP_CL_AUTH, const U64& in_ctxId, mbase::vector<U32>& in_msgid); // TODO: CHANGE CONTENT
 	maip_err_code exec_next(MBASE_MAIP_CL_AUTH, std::shared_ptr<mbase::PcNetPeerClient> in_peer, const U64& in_ctxId);
 
-	GENERIC initialize();
+	GENERIC initialize(const mbase::string& in_state_directory = gDefaultStateDirectory);
 	flags host_model(InfModelTextToText* in_model);
 	flags release_model(const mbase::string& in_model_name);
 	#ifdef MBASE_INTERNAL_API

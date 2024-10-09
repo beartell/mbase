@@ -170,7 +170,6 @@ private:
 	finish_state mFinishState;
 	InfClientTextToText* mAssignedClient;
 	llama_sampler* mSamplerChain;
-	llama_sampler* mGreedy;
 };
 
 MBASE_END

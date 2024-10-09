@@ -126,8 +126,7 @@ InfTextToTextProcessor::InfTextToTextProcessor():
 	mContextState(context_state::AWAITING_FOR_INPUT),
 	mFinishState(finish_state::FINISHED),
 	mAssignedClient(NULL),
-	mSamplerChain(NULL),
-	mGreedy(NULL)
+	mSamplerChain(NULL)
 {
 
 }
@@ -508,8 +507,6 @@ GENERIC InfTextToTextProcessor::clear_token_candidates()
 
 GENERIC InfTextToTextProcessor::clear_samplers()
 {
-	llama_sampler_free(mGreedy);
-	mGreedy = NULL;
 	// TODO: Do not allow clearing when processing tokens
 	// TODO: Delete the return when the sampler interface is properly working
 	return;
@@ -753,7 +750,6 @@ GENERIC InfTextToTextProcessor::_initialize_context()
 	mIsRegistered = true;
 	
 	auto sparams = llama_sampler_chain_default_params();
-	mGreedy = llama_sampler_init_greedy();
 	mSamplerChain = llama_sampler_chain_init(sparams);
 
 	/*I32 modelVocabCount = 0;
