@@ -179,15 +179,15 @@ InfAcceptedClient InfAcceptedClient::deserialize(IBYTEBUFFER in_src, size_type i
 	SIZE_T bytesProcessed = 0;
 	U64 csId = mbase::deserialize<U64>(cs.get_bufferc(), cs.buffer_length(), bytesProcessed);
 	bytes_processed += bytesProcessed;
-	bytesProcessed = 0;
 	cs.advance(bytesProcessed);
-
-	mbase::string clId = mbase::deserialize<mbase::string>(cs.get_bufferc(), cs.buffer_length(), bytesProcessed);
+	bytesProcessed = 0;
+	mbase::string clId = mbase::deserialize<mbase::string>(cs.get_bufferc(), mbase::type_sequence<IBYTE>::length_bytes(cs.get_bufferc()), bytesProcessed);
 	bytes_processed += bytesProcessed;
-	bytesProcessed = 0;
 	cs.advance(bytesProcessed);
+	bytesProcessed = 0;
+	
+	mbase::vector<mbase::string> acceptedModels = mbase::deserialize<mbase::vector<mbase::string>>(cs.get_bufferc(), cs.get_difference(), bytesProcessed);
 
-	mbase::vector<mbase::string> acceptedModels = mbase::deserialize<mbase::vector<mbase::string>>(cs.get_bufferc(), cs.buffer_length(), bytesProcessed);
 	InfAcceptedClient iac;
 	iac.mTemporaryClient = false;
 	iac.mCsId = csId;
@@ -545,9 +545,14 @@ InfProgram::maip_err_code InfProgram::exec_execute_input(MBASE_MAIP_CL_AUTH, con
 
 	if (!myProcessor)
 	{
-		delete mySession;
-		mAccClient.mChatSessions.erase(in_ctxId);
-		return maip_err_code::INF_CONTEXT_ID_MISMATCH;
+		if(mySession->mIsDeadClient)
+		{
+			return maip_err_code::INF_CONTEXT_ID_MISMATCH;
+		}
+		else
+		{
+			return maip_err_code::INF_CONTEXT_INITIALIZING;
+		}
 	}
 
 	if(!in_msgid.size())
@@ -779,6 +784,7 @@ GENERIC InfProgram::update()
 			++It;
 			continue;
 		}
+		++It;
 	}*/
 
 	for(auto& modelMap : mRegisteredModels)
