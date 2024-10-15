@@ -23,6 +23,7 @@
 
 MBASE_STD_BEGIN
 
+static const SIZE_T gSerializedVectorElementCountLength = 8;
 static const SIZE_T gSerializedVectorBlockLength = 8;
 static const SIZE_T gVectorDefaultCapacity = 4;
 
@@ -428,7 +429,7 @@ MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR typename vector<T, Allocator
 template<typename T, typename Allocator>
 MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE_EXPR typename vector<T, Allocator>::size_type vector<T, Allocator>::get_serialized_size() const noexcept
 {
-	size_type totalSize = 0;
+	size_type totalSize = gSerializedVectorElementCountLength;
 	for(const_iterator It = cbegin(); It != cend(); It++)
 	{
 		bool isPrimitive = std::is_integral_v<value_type>;
@@ -895,15 +896,18 @@ MBASE_INLINE_EXPR GENERIC vector<T, Allocator>::pop_back() noexcept
 template<typename T, typename Allocator>
 MBASE_INLINE_EXPR GENERIC vector<T, Allocator>::serialize(char_stream& out_buffer) const noexcept
 {
+	size_type serializedSize = this->get_serialized_size();
+
+	if (out_buffer.buffer_length() < serializedSize)
+	{
+		// BUFFER LENGTH IS NOT ENOUGH TO HOLD SERIALIZED DATA
+		return;
+	}
+
+	out_buffer.put_datan<size_type>(mSize);
 	if (mSize)
 	{
-		size_type serializedSize = this->get_serialized_size();
-		if(out_buffer.buffer_length() < serializedSize)
-		{
-			// BUFFER LENGTH IS NOT ENOUGH TO HOLD SERIALIZED DATA
-			return;
-		}
-
+		
 		for(const_iterator It = cbegin(); It != cend(); ++It)
 		{
 			bool isPrimitive = std::is_integral_v<value_type>;
@@ -938,17 +942,12 @@ MBASE_INLINE_EXPR mbase::vector<T, Allocator> mbase::vector<T, Allocator>::deser
 	}
 
 	char_stream inBuffer(in_src, in_length);
-
-	inBuffer.set_cursor_end();
-	inBuffer.advance();
-
-	IBYTEBUFFER eofBuffer = inBuffer.get_bufferc();
-	inBuffer.set_cursor_front();
+	size_type inSize = inBuffer.get_datan<size_type>();
 	
-	while(inBuffer.get_bufferc() < eofBuffer)
+	for(size_type i = 0; i < inSize; ++i)
 	{
 		size_type blockLength = 0;
-		if(isPrimitive)
+		if (isPrimitive)
 		{
 			blockLength = sizeof(value_type);
 		}
@@ -961,7 +960,7 @@ MBASE_INLINE_EXPR mbase::vector<T, Allocator> mbase::vector<T, Allocator>::deser
 		deserializedVec.push_back(std::move(mbase::deserialize<value_type>(blockData, blockLength, bytesProcessed)));
 		inBuffer.advance(blockLength);
 	}
-	
+
 	return deserializedVec;
 }
 

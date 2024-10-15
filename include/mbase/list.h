@@ -14,7 +14,8 @@
 
 MBASE_STD_BEGIN
 
-static const U32 gSerializedListBlockLength = 8;
+static const SIZE_T gSerializedListBlockLength = 8;
+static const SIZE_T gSerializedListElementCountLength = 8;
 
 /*
 
@@ -373,7 +374,7 @@ MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR typename list<T, Allocator>:
 template<typename T, typename Allocator>
 MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE_EXPR typename list<T, Allocator>::size_type list<T, Allocator>::get_serialized_size() const noexcept
 {
-	size_type totalSize = 0;
+	size_type totalSize = gSerializedListElementCountLength;
 	for (const_iterator It = cbegin(); It != cend(); It++)
 	{
 		bool isPrimitive = std::is_integral_v<value_type>;
@@ -949,23 +950,26 @@ MBASE_INLINE_EXPR GENERIC list<T, Allocator>::swap(list& in_src) noexcept
 template<typename T, typename Allocator>
 MBASE_INLINE GENERIC list<T, Allocator>::serialize(char_stream& out_buffer) const noexcept 
 {
+	size_type serializedSize = this->get_serialized_size();
+
+	if (out_buffer.buffer_length() < serializedSize)
+	{
+		// BUFFER LENGTH IS NOT ENOUGH TO HOLD SERIALIZED DATA
+		return;
+	}
+
+	out_buffer.put_datan<size_type>(mSize);
 	if (mSize)
 	{
-		size_type serializedSize = this->get_serialized_size();
-		if (out_buffer.buffer_length() < serializedSize)
-		{
-			// BUFFER LENGTH IS NOT ENOUGH TO HOLD SERIALIZED DATA
-			return;
-		}
-
-		for (const_iterator It = begin(); It != end(); It++)
+		for (const_iterator It = cbegin(); It != cend(); ++It)
 		{
 			bool isPrimitive = std::is_integral_v<value_type>;
 			if (!isPrimitive)
 			{
 				size_type blockLength = mbase::get_serialized_size(*It);
-				out_buffer.put_datan(blockLength);
+				out_buffer.put_datan<size_type>(blockLength);
 			}
+
 			mbase::serialize(*It, out_buffer);
 		}
 	}
@@ -974,7 +978,7 @@ MBASE_INLINE GENERIC list<T, Allocator>::serialize(char_stream& out_buffer) cons
 template<typename T, typename Allocator>
 MBASE_INLINE mbase::list<T, Allocator> list<T, Allocator>::deserialize(IBYTEBUFFER in_src, SIZE_T in_length, SIZE_T& bytes_processed)
 {
-	mbase::list<T, Allocator> deserializedContainer;
+	mbase::list<T, Allocator> deserializedList;
 	bool isPrimitive = std::is_integral_v<value_type>;
 
 	if (isPrimitive)
@@ -989,16 +993,11 @@ MBASE_INLINE mbase::list<T, Allocator> list<T, Allocator>::deserialize(IBYTEBUFF
 	{
 		throw mbase::invalid_size();
 	}
-	
+
 	char_stream inBuffer(in_src, in_length);
+	size_type inSize = inBuffer.get_datan<size_type>();
 
-	inBuffer.set_cursor_end();
-	inBuffer.advance();
-
-	IBYTEBUFFER eofBuffer = inBuffer.get_bufferc();
-	inBuffer.set_cursor_front();
-
-	while (inBuffer.get_bufferc() < eofBuffer)
+	for (size_type i = 0; i < inSize; ++i)
 	{
 		size_type blockLength = 0;
 		if (isPrimitive)
@@ -1011,11 +1010,12 @@ MBASE_INLINE mbase::list<T, Allocator> list<T, Allocator>::deserialize(IBYTEBUFF
 			bytes_processed += sizeof(size_type);
 		}
 		IBYTEBUFFER blockData = inBuffer.get_bufferc();
-		deserializedContainer.push_back(std::move(mbase::deserialize<value_type>(blockData, blockLength, bytes_processed)));
+		//deserializedList.push_back(mbase::deserialize<value_type>(blockData, blockLength, bytes_processed));
+		deserializedList.push_back(std::move(mbase::deserialize<value_type>(blockData, blockLength, bytes_processed)));
 		inBuffer.advance(blockLength);
 	}
-	
-	return deserializedContainer;
+
+	return deserializedList;
 }
 
 template<typename T, typename Allocator>

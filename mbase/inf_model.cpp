@@ -133,30 +133,14 @@ llama_model* InfModelTextToText::get_raw_model()
 InfModelTextToText::flags InfModelTextToText::get_special_tokens(mbase::vector<inf_token>& out_tokens)
 {
 	MBASE_INF_MODEL_RETURN_UNINITIALIZED;
-	for (I32 i = 0; i < llama_n_vocab(mModel); i++)
-	{
-		llama_token_attr lta = llama_token_get_attr(mModel, i);
-		if (lta != LLAMA_TOKEN_ATTR_NORMAL)
-		{
-			out_tokens.push_back(i);
-		}
-	}
+	_get_special_tokens(out_tokens);
 	return flags::INF_MODEL_SUCCESS;
 }
 
 InfModelTextToText::flags InfModelTextToText::get_special_tokens(mbase::vector<mbase::string>& out_tokens)
 {
 	MBASE_INF_MODEL_RETURN_UNINITIALIZED;
-	mbase::vector<inf_token> specialTokens;
-	get_special_tokens(specialTokens);
-
-	for (auto& n : specialTokens)
-	{
-		IBYTE myChars[128] = { 0 };
-		I32 tokenLength = llama_token_to_piece(mModel, n, myChars, 128, 1, true);
-		out_tokens.push_back(myChars);
-	}
-
+	_get_special_tokens(out_tokens);
 	return flags::INF_MODEL_SUCCESS;
 }
 
@@ -511,7 +495,6 @@ GENERIC InfModelTextToText::_initialize_model()
 	{
 		// MEANS THIS IS NOT AN INSTRUCT MODEL
 	}
-
 	mEndOfToken = tokenList.front();
 	char outValue[512] = { 0 };
 	llama_token_to_piece(mModel, mEndOfToken, outValue, 512, 0, true);
@@ -520,70 +503,74 @@ GENERIC InfModelTextToText::_initialize_model()
 	mAssistantStart = "ASSISTANT: ";
 	mUsrStart = "USER: ";
 
-	if (mModelKvals.find("tokenizer.chat_template") == mModelKvals.end())
+	mbase::vector<mbase::string> sysBosCandidates = { "<|im_start|>", "<|start_header_id|>", "<|assistant|>", "<|system|>" };
+	mbase::vector<mbase::string> mSpecialTokens;
+	for (I32 i = 0; i < llama_n_vocab(mModel); i++)
 	{
-		// CHAT TEMPLATE NOT FOUND
-		// MODEL IS POSSIBLY NON INSTRUCT
-	}
-	else
-	{
-		mbase::vector<mbase::string> sysBosCandidates = { "<|im_start|>", "<|start_header_id|>", "<|assistant|>", "<|system|>" };
-		mbase::vector<mbase::string> mSpecialTokens;
-		get_special_tokens(mSpecialTokens);
-
-		for (auto& n : sysBosCandidates)
+		llama_token_attr lta = llama_token_get_attr(mModel, i);
+		
+		if (lta != LLAMA_TOKEN_ATTR_NORMAL)
 		{
-			mbase::vector<mbase::string>::iterator foundToken = std::find(mSpecialTokens.begin(), mSpecialTokens.end(), n);
-			if (foundToken != mSpecialTokens.end())
-			{
-				mSystemStart = *foundToken;
-			}
-		}
-
-		if (mSystemStart == "<|im_start|>")
-		{
-			mSystemStart += "system\n";
-			mAssistantStart = "<|im_start|>assistant\n";
-		}
-
-		else if (mSystemStart == "<|start_header_id|>")
-		{
-			mSystemStart += "system<|end_header_id|>";
-			mAssistantStart = "<|start_header_id|>assistant<|end_header_id|>";
-		}
-
-		else if (mSystemStart == "<|system|>")
-		{
-			mAssistantStart = "<|assistant|>";
-		}
-
-		mbase::vector<mbase::string> usrBosCandidates = { "<|im_start|>", "<|user|>", "<|start_header_id|>" };
-		for (auto& n : usrBosCandidates)
-		{
-			mbase::vector<mbase::string>::iterator foundToken = std::find(mSpecialTokens.begin(), mSpecialTokens.end(), n);
-			if (foundToken != mSpecialTokens.end())
-			{
-				mUsrStart = *foundToken;
-			}
-		}
-
-		if (mUsrStart == "<|im_start|>")
-		{
-			mUsrStart += "user\n";
-			mEndOfTokenString = "<|im_end|>\n";
-		}
-
-		else if (mUsrStart == "<|start_header_id|>")
-		{
-			mUsrStart += "user<|end_header_id|>";
-			mEndOfTokenString = "<|eot_id|>";
-		}
-
-		else if (mUsrStart == "<|user|>")
-		{
-			mEndOfTokenString = "<|end|>";
+			IBYTE myChars[128] = { 0 };
+			I32 tokenLength = llama_token_to_piece(mModel, i, myChars, 128, 1, true);
+			mSpecialTokens.push_back(mbase::string(myChars, tokenLength));
+			//out_tokens.push_back(i);
 		}
 	}
+
+	for (auto& n : sysBosCandidates)
+	{
+		mbase::vector<mbase::string>::iterator foundToken = std::find(mSpecialTokens.begin(), mSpecialTokens.end(), n);
+		if (foundToken != mSpecialTokens.end())
+		{
+			mSystemStart = *foundToken;
+		}
+	}
+
+	if (mSystemStart == "<|im_start|>")
+	{
+		mSystemStart += "system\n";
+		mAssistantStart = "<|im_start|>assistant\n";
+	}
+
+	else if (mSystemStart == "<|start_header_id|>")
+	{
+		mSystemStart += "system<|end_header_id|>\n";
+		mAssistantStart = "<|start_header_id|>assistant<|end_header_id|>\n";
+	}
+
+	else if (mSystemStart == "<|system|>")
+	{
+		mAssistantStart = "<|assistant|>";
+	}
+
+	mbase::vector<mbase::string> usrBosCandidates = { "<|im_start|>", "<|user|>", "<|start_header_id|>" };
+	for (auto& n : usrBosCandidates)
+	{
+		mbase::vector<mbase::string>::iterator foundToken = std::find(mSpecialTokens.begin(), mSpecialTokens.end(), n);
+		if (foundToken != mSpecialTokens.end())
+		{
+			mUsrStart = *foundToken;
+		}
+	}
+
+	if (mUsrStart == "<|im_start|>")
+	{
+		mUsrStart += "user\n";
+		mEndOfTokenString = "<|im_end|>\n";
+	}
+
+	else if (mUsrStart == "<|start_header_id|>")
+	{
+		mUsrStart += "user<|end_header_id|>\n";
+		mEndOfTokenString = "<|eot_id|>\n";
+	}
+
+	else if (mUsrStart == "<|user|>")
+	{
+		mEndOfTokenString = "<|end|>";
+	}
+	
 
 	mbase::vector<inf_token> tokenArray(32);
 	I32 tokenCount = llama_tokenize(mModel, mSystemStart.c_str(), mSystemStart.size(), tokenArray.data(), 32, true, true);
@@ -642,6 +629,29 @@ GENERIC InfModelTextToText::_destroy_model()
 	mDestroySignal.reset_signal_with_state();
 	mIsInitialized = false;
 	mDestroyMethodSignal.set_signal();
+}
+
+GENERIC InfModelTextToText::_get_special_tokens(mbase::vector<inf_token>& out_tokens)
+{
+	for (I32 i = 0; i < llama_n_vocab(mModel); i++)
+	{
+		llama_token_attr lta = llama_token_get_attr(mModel, i);
+		if (lta != LLAMA_TOKEN_ATTR_NORMAL)
+		{
+			out_tokens.push_back(i);
+		}
+	}
+}
+GENERIC InfModelTextToText::_get_special_tokens(mbase::vector<mbase::string>& out_tokens)
+{
+	mbase::vector<inf_token> specialTokens;
+	get_special_tokens(specialTokens);
+	for (auto& n : specialTokens)
+	{
+		IBYTE myChars[128] = { 0 };
+		I32 tokenLength = llama_token_to_piece(mModel, n, myChars, 128, 1, true);
+		out_tokens.push_back(myChars);
+	}
 }
 
 GENERIC InfModelTextToText::update()

@@ -126,8 +126,11 @@ public:
 	GENERIC update_t() override;
 
 private:
+
 	GENERIC _initialize_model();
 	GENERIC _destroy_model();
+	GENERIC _get_special_tokens(mbase::vector<inf_token>& out_tokens);
+	GENERIC _get_special_tokens(mbase::vector<mbase::string>& out_tokens);
 
 	llama_model* mModel;
 	mbase::string mEndOfTokenString;

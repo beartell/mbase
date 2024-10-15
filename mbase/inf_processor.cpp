@@ -126,7 +126,8 @@ InfTextToTextProcessor::InfTextToTextProcessor():
 	mContextState(context_state::AWAITING_FOR_INPUT),
 	mFinishState(finish_state::FINISHED),
 	mAssignedClient(NULL),
-	mSamplerChain(NULL)
+	mSamplerChain(NULL),
+	mIsSamplerSet(false)
 {
 
 }
@@ -351,20 +352,24 @@ InfTextToTextProcessor::flags InfTextToTextProcessor::execute_input(const mbase:
 		mDecodeSignal.reset_signal_with_state();
 	}
 
-	//for(mbase::vector<mbase::string>::const_iterator It = in_sampling_order.cbegin(); It != in_sampling_order.cend(); ++It)
-	//{
-	//	std::cout << mSamplerMap.size() << std::endl;
-	//	if(mSamplerMap.find(*It) == mSamplerMap.end())
-	//	{
-	//		std::cout << "Couldn't find"  << *It << std::endl;
-	//		// ignore
-	//	}
-	//	else
-	//	{
-	//		mSamplingOrder.push_back(mSamplerMap[*It]);
-	//	}
-	//}
+	if(!mIsSamplerSet)
+	{
+		I32 seedValue = 3261246819; // TODO, GET THIS FROM APPLICATION CONFIGURATION
+		InfModelTextToText* t2tModel = static_cast<InfModelTextToText*>(this->mTargetModel_md_model);
+		I32 modelVocab = 0;
+		inf_token eotId = 0;
+		inf_token lineFeedId = 0;
 
+		t2tModel->get_vocab_count(modelVocab);
+		t2tModel->get_eot_token(eotId);
+		t2tModel->get_lf_token(lineFeedId);
+
+		llama_sampler_chain_add(mSamplerChain, llama_sampler_init_softmax());
+		llama_sampler_chain_add(mSamplerChain, llama_sampler_init_dist(seedValue));
+		llama_sampler_chain_add(mSamplerChain, llama_sampler_init_mirostat_v2(seedValue, 5.0, 0.100));
+
+		mIsSamplerSet = true;
+	}
 	mTokenizedInput = in_tokens;
 	mInputSignal.set_signal();
 	
@@ -509,24 +514,20 @@ GENERIC InfTextToTextProcessor::clear_samplers()
 {
 	// TODO: Do not allow clearing when processing tokens
 	// TODO: Delete the return when the sampler interface is properly working
-	return;
-	for(mbase::vector<InfSamplerMeta>::iterator It = mSamplingOrder.begin(); It != mSamplingOrder.end(); ++It)
+	
+	if(mSamplerChain)
 	{
-		if(!It->mIsOwnedByChain)
-		{
-			// TODO: DO MANUAL CLEANING ON THE SAMPLER
-		}
+		llama_sampler_free(mSamplerChain);
+		mIsSamplerSet = false;
+		mSamplingOrder.clear();
+		mSamplerChain = NULL;
 	}
-	llama_sampler_free(mSamplerChain);
-	mSamplingOrder.clear();
 }
 
 InfTextToTextProcessor::flags InfTextToTextProcessor::add_sampler(const InfSamplingInput& in_sampling)
 {
 	// TODO: Do not allow adding samplers while clearing
 	// TODO: After fixing the sampler interface, delete this return
-
-	return flags::INF_PROC_SUCCESS;
 
 	InfSamplerMeta tmpSampler;
 	if(has_sampler(in_sampling.mSamplerName, tmpSampler))
@@ -538,42 +539,49 @@ InfTextToTextProcessor::flags InfTextToTextProcessor::add_sampler(const InfSampl
 	
 	if(in_sampling.mSamplerName == "TEMP")
 	{
+		printf("Temp: %f\n", in_sampling.mSamplerValue);
 		newSampler = llama_sampler_init_temp(in_sampling.mSamplerValue);
 		llama_sampler_chain_add(mSamplerChain, newSampler);
 		mSamplingOrder.push_back({ "TEMP", newSampler, true });
 	}
-
+	
 	else if(in_sampling.mSamplerName == "TOP_K")
 	{
-		newSampler = llama_sampler_init_top_k(in_sampling.mSamplerValue);
+		I32 kValue = in_sampling.mSamplerValue;
+		printf("Top_k: %d\n", kValue);
+		newSampler = llama_sampler_init_top_k((I32)in_sampling.mSamplerValue);
 		llama_sampler_chain_add(mSamplerChain, newSampler);
 		mSamplingOrder.push_back({ "TOP_K", newSampler, true });
 	}
 
 	else if(in_sampling.mSamplerName == "TYPICAL_P")
 	{
-		newSampler = llama_sampler_init_typical(in_sampling.mSamplerValue, 0);
+		printf("Typical_p: %f\n", in_sampling.mSamplerValue);
+		newSampler = llama_sampler_init_typical(in_sampling.mSamplerValue, 1);
 		llama_sampler_chain_add(mSamplerChain, newSampler);
 		mSamplingOrder.push_back({ "TYPICAL_P", newSampler, true });
 	}
 
 	else if(in_sampling.mSamplerName == "TOP_P")
 	{
-		newSampler = llama_sampler_init_top_p(in_sampling.mSamplerValue, 0);
+		printf("Top_p: %f\n", in_sampling.mSamplerValue);
+		newSampler = llama_sampler_init_top_p(in_sampling.mSamplerValue, 1);
 		llama_sampler_chain_add(mSamplerChain, newSampler);
 		mSamplingOrder.push_back({ "TOP_P", newSampler, true });
 	}
 	
 	else if(in_sampling.mSamplerName == "MIN_P")
 	{
-		newSampler = llama_sampler_init_min_p(in_sampling.mSamplerValue, 0);
+		printf("Min_p: %f\n", in_sampling.mSamplerValue);
+		newSampler = llama_sampler_init_min_p(in_sampling.mSamplerValue, 1);
 		llama_sampler_chain_add(mSamplerChain, newSampler);
 		mSamplingOrder.push_back({ "MIN_P", newSampler, true });
 	}
 
 	else if(in_sampling.mSamplerName == "TFZ")
 	{
-		newSampler = llama_sampler_init_tail_free(in_sampling.mSamplerValue, 0);
+		printf("Tfz: %f\n", in_sampling.mSamplerValue);
+		newSampler = llama_sampler_init_tail_free(in_sampling.mSamplerValue, 1);
 		llama_sampler_chain_add(mSamplerChain, newSampler);
 		mSamplingOrder.push_back({ "TFZ", newSampler, true });
 	}
@@ -680,9 +688,15 @@ GENERIC InfTextToTextProcessor::_decode_next()
 		mPresetCandidates.emplace_back(llama_token_data{ token_id, logits[token_id], 0.0f });
 	}
 	llama_token_data_array tokenCandidates = { mPresetCandidates.data(), mPresetCandidates.size(), false};
+	llama_sampler_reset(mSamplerChain);
 	llama_sampler_apply(mSamplerChain, &tokenCandidates);
 	mGeneratedToken = llama_sampler_sample(mSamplerChain, mModelContext, -1);
+	//llama_sampler_reset(greedySampler);
+	llama_sampler_accept(mSamplerChain, mGeneratedToken);
 	//llama_sampler_accept(mSamplerChain, mGeneratedToken);
+	
+
+
 	//llama_token_data_array tokenCandidates = { mPresetCandidates.data(), mPresetCandidates.size(), false };
 	//mGeneratedToken = llama_sampler_sample(mGreedy, mModelContext, -1);
 	//llama_sampler_accept(mSamplerChain, mGeneratedToken);
@@ -751,7 +765,6 @@ GENERIC InfTextToTextProcessor::_initialize_context()
 	
 	auto sparams = llama_sampler_chain_default_params();
 	mSamplerChain = llama_sampler_chain_init(sparams);
-
 	/*I32 modelVocabCount = 0;
 	t2tModel->get_vocab_count(modelVocabCount);*/
 	
@@ -766,22 +779,20 @@ GENERIC InfTextToTextProcessor::_initialize_context()
 	t2tModel->get_eot_token(eotToken);
 	t2tModel->get_lf_token(nlToken);
 	I32 seedValue = 1048204757;
+	printf("Model vocab count: %d\n", modelVocabCount);
+	printf("EOT id: %d\n", eotToken);
+	printf("LF id: %d\n", nlToken);
+	printf("Penalty repeat: %f, freq: %f, present: %f\n", 1.0, 0.0, 0.0);
 
-	//llama_sampler_chain_add(mSamplerChain, llama_sampler_init_mirostat_v2(seedValue, 0.1, 0.5));
-
-	//
-	llama_sampler_chain_add(mSamplerChain, llama_sampler_init_temp(0.1));
-	llama_sampler_chain_add(mSamplerChain, llama_sampler_init_min_p(0.7, 1));
-	llama_sampler_chain_add(mSamplerChain, llama_sampler_init_top_p(0.95, 1));
-	//llama_sampler_chain_add(mSamplerChain, llama_sampler_init_typical(1.0, 1));
-	//llama_sampler_chain_add(mSamplerChain, llama_sampler_init_tail_free(1.0, 1));
-	llama_sampler_chain_add(mSamplerChain, llama_sampler_init_top_k(50));
-	llama_sampler_chain_add(mSamplerChain, llama_sampler_init_penalties(modelVocabCount, 128009, 128, 64, 1.5, 1.1, 1.1, true, true));
-	llama_sampler_chain_add(mSamplerChain, llama_sampler_init_softmax());
-	llama_sampler_chain_add(mSamplerChain, llama_sampler_init_dist(seedValue));
-
-	llama_sampler_chain_add(mSamplerChain, llama_sampler_init_mirostat_v2(seedValue, 4.0, 0.100));
-	
+	llama_sampler* penaltySampler = llama_sampler_init_penalties(modelVocabCount, eotToken, nlToken, 64, 1.5, 0.5, 0.5, false, false);
+	llama_sampler_chain_add(mSamplerChain, penaltySampler);
+	//llama_sampler_chain_add(mSamplerChain, llama_sampler_init_temp(0.1));
+	//llama_sampler_chain_add(mSamplerChain, llama_sampler_init_min_p(0.5, 1));
+	//llama_sampler_chain_add(mSamplerChain, llama_sampler_init_top_p(0.95, 1));
+	//llama_sampler_chain_add(mSamplerChain, llama_sampler_init_top_k(50));
+	//llama_sampler_chain_add(mSamplerChain, llama_sampler_init_softmax());
+	//llama_sampler_chain_add(mSamplerChain, llama_sampler_init_dist(seedValue));
+	//llama_sampler_chain_add(mSamplerChain, llama_sampler_init_mirostat_v2(seedValue, 4.0, 0.100));	
 	
 	//llama_sampler_chain_add(mSamplerChain, llama_sampler_init_penalties(modelVocabCount, 128009, 128, 64, 1.5, 0.0, 0.0, false, true));
 
@@ -818,7 +829,6 @@ GENERIC InfTextToTextProcessor::_destroy_context()
 
 	clear_samplers();
 
-	mSamplerChain = NULL;
 	mInitializeSignal.reset_signal_with_state();
 	mTokenGeneratedSignal.reset_signal_with_state();
 	mDecodeSignal.reset_signal_with_state();

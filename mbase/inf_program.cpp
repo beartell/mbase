@@ -185,9 +185,8 @@ InfAcceptedClient InfAcceptedClient::deserialize(IBYTEBUFFER in_src, size_type i
 	bytes_processed += bytesProcessed;
 	cs.advance(bytesProcessed);
 	bytesProcessed = 0;
-	
-	mbase::vector<mbase::string> acceptedModels = mbase::deserialize<mbase::vector<mbase::string>>(cs.get_bufferc(), cs.get_difference(), bytesProcessed);
 
+	mbase::vector<mbase::string> acceptedModels = mbase::deserialize<mbase::vector<mbase::string>>(cs.get_bufferc(), cs.get_difference(), bytesProcessed);
 	InfAcceptedClient iac;
 	iac.mTemporaryClient = false;
 	iac.mCsId = csId;
@@ -221,7 +220,7 @@ InfProgram::maip_err_code InfProgram::inf_create_session(const mbase::string& in
 	if(in_clid.size())
 	{
 		// FIND THE CLID AND RETURN ITS CSID
-		for(mbase::unordered_map<U64, InfAcceptedClient>::iterator It = mAcceptedClients.begin(); It != mAcceptedClients.end(); ++It)
+		for(accepted_client_map::iterator It = mAcceptedClients.begin(); It != mAcceptedClients.end(); ++It)
 		{
 			if(It->second.mClid == in_clid)
 			{
@@ -267,6 +266,11 @@ InfProgram::maip_err_code InfProgram::inf_create_session(const mbase::string& in
 		}
 	}
 
+	PcState programState;
+	programState.initialize("program_state", mClientStateDirectory);
+	programState.set_state("client_session_counter", mClientSessionIdCounter);
+	programState.update();
+
 	mAcceptedClients[out_csid] = iac;
 
 	out_clid = iac.mClid;
@@ -287,7 +291,8 @@ InfProgram::maip_err_code InfProgram::inf_authorize(MBASE_MAIP_CL_AUTH)
 	}
 
 	PcState clientState;
-	if(clientState.initialize(mbase::string::from_format("cs%llu-cl%s", in_csid, in_clid), mClientStateDirectory) == PcState::flags::STATE_WARN_STATE_FILE_MISSING)
+	std::cout << mbase::string::from_format("cs%llu-cl%s", in_csid, in_clid.c_str()) << std::endl;
+	if(clientState.initialize(mbase::string::from_format("cs%llu-cl%s", in_csid, in_clid.c_str()), mClientStateDirectory) == PcState::flags::STATE_WARN_STATE_FILE_MISSING)
 	{
 		return maip_err_code::INF_CONTEXT_ID_MISMATCH;
 	}
@@ -611,6 +616,9 @@ GENERIC InfProgram::initialize(const mbase::string& in_state_directory)
 {
 	// TODO: Handle all possibilities
 	mClientStateDirectory = in_state_directory;
+	PcState temporaryProgramState;
+	temporaryProgramState.initialize("program_state", mClientStateDirectory);
+	temporaryProgramState.get_state("client_session_counter", mClientSessionIdCounter);
 }
 
 InfProgram::flags InfProgram::host_model(InfModelTextToText* in_model)
@@ -770,7 +778,7 @@ InfProgram::maip_err_code InfProgram::inf_exec_err_to_maip(InfProcessorBase::fla
 
 GENERIC InfProgram::update()
 {
-	/*for(accepted_client_map::iterator It = mAcceptedClients.begin(); It != mAcceptedClients.end();)
+	for(accepted_client_map::iterator It = mAcceptedClients.begin(); It != mAcceptedClients.end();)
 	{
 		InfAcceptedClient& tmpClient = It->second;
 		if(tmpClient.mPeer != NULL)
@@ -785,7 +793,7 @@ GENERIC InfProgram::update()
 			continue;
 		}
 		++It;
-	}*/
+	}
 
 	for(auto& modelMap : mRegisteredModels)
 	{

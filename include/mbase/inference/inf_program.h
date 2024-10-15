@@ -11,6 +11,7 @@
 #include <mbase/pc/pc_state.h>
 #include <mbase/inference/inf_model.h>
 #include <mbase/inference/inf_client.h>
+#include <unordered_map>
 
 MBASE_BEGIN
 
@@ -50,7 +51,7 @@ private:
 };
 
 struct MBASE_API InfAcceptedClient {
-	using chat_session_map = mbase::unordered_map<U64, InfMaipTunedClient*>;
+	using chat_session_map = std::unordered_map<U64, InfMaipTunedClient*>;
 	using size_type = SIZE_T;
 
 	std::shared_ptr<mbase::PcNetPeerClient> mPeer;
@@ -68,8 +69,8 @@ struct MBASE_API InfAcceptedClient {
 
 class MBASE_API InfProgram {
 public:
-	using accepted_client_map = mbase::unordered_map<U64, InfAcceptedClient>;
-	using registered_model_map = mbase::unordered_map<mbase::string, InfModelTextToText*>;
+	using accepted_client_map = std::unordered_map<U64, InfAcceptedClient>;
+	using registered_model_map = std::unordered_map<mbase::string, InfModelTextToText*>;
 
 	enum class flags : U8 {
 		INF_PROGRAM_SUCCESS,
