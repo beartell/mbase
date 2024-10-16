@@ -294,7 +294,7 @@ InfProgram::maip_err_code InfProgram::inf_authorize(MBASE_MAIP_CL_AUTH)
 	std::cout << mbase::string::from_format("cs%llu-cl%s", in_csid, in_clid.c_str()) << std::endl;
 	if(clientState.initialize(mbase::string::from_format("cs%llu-cl%s", in_csid, in_clid.c_str()), mClientStateDirectory) == PcState::flags::STATE_WARN_STATE_FILE_MISSING)
 	{
-		return maip_err_code::INF_CONTEXT_ID_MISMATCH;
+		return maip_err_code::INF_CLIENT_ID_MISMATCH;
 	}
 
 	InfAcceptedClient iac;

@@ -112,7 +112,17 @@ InfModelTextToText::InfModelTextToText() :
 
 InfModelTextToText::~InfModelTextToText()
 {
-	destroy_sync();
+	if (!is_initialized())
+	{
+		
+	}
+	else
+	{
+		destroy();
+		while (signal_state_destroying())
+		{
+		}
+	}
 }
 
 bool InfModelTextToText::signal_init_method() const
@@ -402,10 +412,14 @@ InfModelTextToText::flags InfModelTextToText::destroy()
 
 InfModelTextToText::flags InfModelTextToText::destroy_sync()
 {
+	if(!is_initialized())
+	{
+		return flags::INF_MODEL_SUCCESS;
+	}
+
 	destroy();
 	while(signal_state_destroying())
 	{
-
 	}
 	
 	mDestroyMethodSignal.reset_signal_with_state();
@@ -605,14 +619,13 @@ GENERIC InfModelTextToText::_initialize_model()
 GENERIC InfModelTextToText::_destroy_model()
 {
 	mbase::lock_guard tmpListMutex(mProcessorListMutex);
-	for (context_processor_list::iterator It = mRegisteredProcessors.begin(); It != mRegisteredProcessors.end(); ++It)
+	for (context_processor_list::iterator It = mRegisteredProcessors.begin(); It != mRegisteredProcessors.end();)
 	{
 		InfProcessorBase* baseProcessor = *It;
 		InfTextToTextProcessor* t2tProcessor = static_cast<InfTextToTextProcessor*>(baseProcessor);
 		t2tProcessor->destroy();
 		It = mRegisteredProcessors.erase(It);
 	}
-
 	llama_free_model(mModel);
 	mModel = NULL;
 	mEndOfTokenString.clear();
@@ -626,9 +639,12 @@ GENERIC InfModelTextToText::_destroy_model()
 
 	/* RESET ALL SIGNALS */
 	mInitializeSignal.reset_signal_with_state();
+	mIsProcessorRunning = false;
 	mDestroySignal.reset_signal_with_state();
+
 	mIsInitialized = false;
 	mDestroyMethodSignal.set_signal();
+
 }
 
 GENERIC InfModelTextToText::_get_special_tokens(mbase::vector<inf_token>& out_tokens)
@@ -716,7 +732,7 @@ GENERIC InfModelTextToText::update_t()
 				_initialize_model();
 			}
 		}
-		Sleep(50); // Since this loop will not be invoked much outside of (init and destroy), we may decrease its speed 
+		mbase::sleep(50); // Since this loop will not be invoked much outside of (init and destroy), we may decrease its speed 
 	}
 }
 

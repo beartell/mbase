@@ -47,7 +47,7 @@ public:
 	bool signal_initializing() const;
 	bool signal_destroying() const;
 protected:
-	bool mIsInitialized;
+	volatile bool mIsInitialized;
 	processor_signal mInitializeSignal;
 	processor_signal mDestroySignal;
 

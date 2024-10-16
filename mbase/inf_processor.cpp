@@ -129,7 +129,8 @@ InfTextToTextProcessor::InfTextToTextProcessor():
 	mSamplerChain(NULL),
 	mIsSamplerSet(false)
 {
-
+	auto sparams = llama_sampler_chain_default_params();
+	mSamplerChain = llama_sampler_chain_init(sparams);
 }
 
 InfTextToTextProcessor::~InfTextToTextProcessor()
@@ -467,6 +468,7 @@ InfTextToTextProcessor::flags InfTextToTextProcessor::initialize_sync(InfModelTe
 
 InfTextToTextProcessor::flags InfTextToTextProcessor::destroy()
 {
+	clear_samplers();
 	if(!is_registered())
 	{
 		return flags::INF_PROC_SUCCESS;
@@ -486,7 +488,6 @@ InfTextToTextProcessor::flags InfTextToTextProcessor::destroy()
 InfTextToTextProcessor::flags InfTextToTextProcessor::destroy_sync()
 {
 	destroy();
-
 	while(signal_state_destroying())
 	{
 		// block until operation finishes
@@ -527,7 +528,6 @@ GENERIC InfTextToTextProcessor::clear_samplers()
 InfTextToTextProcessor::flags InfTextToTextProcessor::add_sampler(const InfSamplingInput& in_sampling)
 {
 	// TODO: Do not allow adding samplers while clearing
-	// TODO: After fixing the sampler interface, delete this return
 
 	InfSamplerMeta tmpSampler;
 	if(has_sampler(in_sampling.mSamplerName, tmpSampler))
@@ -539,7 +539,6 @@ InfTextToTextProcessor::flags InfTextToTextProcessor::add_sampler(const InfSampl
 	
 	if(in_sampling.mSamplerName == "TEMP")
 	{
-		printf("Temp: %f\n", in_sampling.mSamplerValue);
 		newSampler = llama_sampler_init_temp(in_sampling.mSamplerValue);
 		llama_sampler_chain_add(mSamplerChain, newSampler);
 		mSamplingOrder.push_back({ "TEMP", newSampler, true });
@@ -548,7 +547,6 @@ InfTextToTextProcessor::flags InfTextToTextProcessor::add_sampler(const InfSampl
 	else if(in_sampling.mSamplerName == "TOP_K")
 	{
 		I32 kValue = in_sampling.mSamplerValue;
-		printf("Top_k: %d\n", kValue);
 		newSampler = llama_sampler_init_top_k((I32)in_sampling.mSamplerValue);
 		llama_sampler_chain_add(mSamplerChain, newSampler);
 		mSamplingOrder.push_back({ "TOP_K", newSampler, true });
@@ -556,7 +554,6 @@ InfTextToTextProcessor::flags InfTextToTextProcessor::add_sampler(const InfSampl
 
 	else if(in_sampling.mSamplerName == "TYPICAL_P")
 	{
-		printf("Typical_p: %f\n", in_sampling.mSamplerValue);
 		newSampler = llama_sampler_init_typical(in_sampling.mSamplerValue, 1);
 		llama_sampler_chain_add(mSamplerChain, newSampler);
 		mSamplingOrder.push_back({ "TYPICAL_P", newSampler, true });
@@ -564,7 +561,6 @@ InfTextToTextProcessor::flags InfTextToTextProcessor::add_sampler(const InfSampl
 
 	else if(in_sampling.mSamplerName == "TOP_P")
 	{
-		printf("Top_p: %f\n", in_sampling.mSamplerValue);
 		newSampler = llama_sampler_init_top_p(in_sampling.mSamplerValue, 1);
 		llama_sampler_chain_add(mSamplerChain, newSampler);
 		mSamplingOrder.push_back({ "TOP_P", newSampler, true });
@@ -572,7 +568,6 @@ InfTextToTextProcessor::flags InfTextToTextProcessor::add_sampler(const InfSampl
 	
 	else if(in_sampling.mSamplerName == "MIN_P")
 	{
-		printf("Min_p: %f\n", in_sampling.mSamplerValue);
 		newSampler = llama_sampler_init_min_p(in_sampling.mSamplerValue, 1);
 		llama_sampler_chain_add(mSamplerChain, newSampler);
 		mSamplingOrder.push_back({ "MIN_P", newSampler, true });
@@ -580,7 +575,6 @@ InfTextToTextProcessor::flags InfTextToTextProcessor::add_sampler(const InfSampl
 
 	else if(in_sampling.mSamplerName == "TFZ")
 	{
-		printf("Tfz: %f\n", in_sampling.mSamplerValue);
 		newSampler = llama_sampler_init_tail_free(in_sampling.mSamplerValue, 1);
 		llama_sampler_chain_add(mSamplerChain, newSampler);
 		mSamplingOrder.push_back({ "TFZ", newSampler, true });
@@ -763,8 +757,6 @@ GENERIC InfTextToTextProcessor::_initialize_context()
 	mInitializeSignal.reset_signal_with_state();
 	mIsRegistered = true;
 	
-	auto sparams = llama_sampler_chain_default_params();
-	mSamplerChain = llama_sampler_chain_init(sparams);
 	/*I32 modelVocabCount = 0;
 	t2tModel->get_vocab_count(modelVocabCount);*/
 	
@@ -779,10 +771,6 @@ GENERIC InfTextToTextProcessor::_initialize_context()
 	t2tModel->get_eot_token(eotToken);
 	t2tModel->get_lf_token(nlToken);
 	I32 seedValue = 1048204757;
-	printf("Model vocab count: %d\n", modelVocabCount);
-	printf("EOT id: %d\n", eotToken);
-	printf("LF id: %d\n", nlToken);
-	printf("Penalty repeat: %f, freq: %f, present: %f\n", 1.0, 0.0, 0.0);
 
 	llama_sampler* penaltySampler = llama_sampler_init_penalties(modelVocabCount, eotToken, nlToken, 64, 1.5, 0.5, 0.5, false, false);
 	llama_sampler_chain_add(mSamplerChain, penaltySampler);

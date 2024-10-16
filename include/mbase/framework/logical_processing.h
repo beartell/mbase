@@ -14,8 +14,8 @@ class MBASE_API processor_signal {
 public:
 	processor_signal() : mSignalState(false), mSignal(false) {}
 
-	bool get_signal_state() const { return mSignalState.load(); }
-	bool get_signal() const { return mSignal.load(); }
+	volatile bool get_signal_state() const { return mSignalState; }
+	volatile bool get_signal() const { return mSignal; }
 
 	GENERIC set_signal_finished() 
 	{
@@ -56,8 +56,8 @@ public:
 	}
 
 private:
-	std::atomic_bool mSignalState;
-	std::atomic_bool mSignal;
+	volatile bool mSignalState;
+	volatile bool mSignal;
 };
 
 class MBASE_API logical_processor : public mbase::non_copymovable {
