@@ -84,6 +84,7 @@ public:
 	MBASE_ND(MBASE_OBS_IGNORE) bool is_awaiting_connection() const noexcept;
 	MBASE_ND(MBASE_OBS_IGNORE) mbase::string get_peer_addr() const noexcept;
 	MBASE_ND(MBASE_OBS_IGNORE) I32 get_peer_port() const noexcept;
+	MBASE_ND(MBASE_OBS_IGNORE) socket_handle get_raw_socket() const noexcept;
 
 	flags write_data(CBYTEBUFFER in_data, size_type in_size); // TODO: CHECK NET PACKET OVERFLOW
 	flags read_data(IBYTEBUFFER& out_data, size_type& out_size);
@@ -279,5 +280,8 @@ private:
 };
 
 MBASE_END
+
+
+
 
 #endif // !MBASE_PC_NET_MANAGER_H

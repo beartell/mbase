@@ -8,7 +8,9 @@
 #include <ctype.h>
 
 #ifdef MBASE_PLATFORM_WINDOWS
+#pragma comment(lib, "rpcrt4.lib")
 #include <Windows.h>
+#include <rpc.h>
 #endif // MBASE_PLATFORM_WINDOWS
 
 MBASE_STD_BEGIN
@@ -369,6 +371,36 @@ public:
 
     template<typename ... Params>
     MBASE_ND(MBASE_RESULT_IGNORE) static MBASE_INLINE character_sequence from_format(const_pointer in_format, Params ... in_params) noexcept;
+    
+    MBASE_ND(MBASE_RESULT_IGNORE) static MBASE_INLINE character_sequence generate_uuid(bool in_remove_dashes = true) noexcept 
+    {
+#ifdef MBASE_PLATFORM_WINDOWS
+        UUID tmpUuid;
+        UuidCreate(&tmpUuid);
+        IBYTEBUFFER uuidString;
+        UuidToStringA(&tmpUuid, (RPC_CSTR*)&uuidString);
+
+        if (in_remove_dashes)
+        {
+            I32 uuidLength = SeqBase::length_bytes(uuidString);
+            character_sequence newUuid;
+            newUuid.reserve(uuidLength);
+            for (I32 i = 0; i < uuidLength; ++i)
+            {
+                if (uuidString[i] == '-')
+                {
+                    continue;
+                }
+                newUuid.push_back(uuidString[i]);
+            }
+            RpcStringFreeA((RPC_CSTR*)&uuidString);
+            return newUuid;
+        }
+        character_sequence newUuid(uuidString);
+        RpcStringFreeA((RPC_CSTR*)&uuidString);
+        return newUuid;
+#endif // MBASE_PLATFORM_WINDOWS
+    }
     /* ===== NON-MEMBER FUNCTIONS END ===== */
 
     /* ===== OPERATOR NON-MEMBER FUNCTIONS BEGIN ===== */

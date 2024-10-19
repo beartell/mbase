@@ -345,7 +345,7 @@ InfModelTextToText::flags InfModelTextToText::get_metadata_count(size_type& out_
 	return flags::INF_MODEL_SUCCESS;
 }
 
-InfModelTextToText::flags InfModelTextToText::initialize_model(const mbase::string& in_path, I32 in_gpu_layers)
+InfModelTextToText::flags InfModelTextToText::initialize_model(const mbase::string& in_path, const U32& in_total_context_size, I32 in_gpu_layers)
 {
 	if(is_initialized())
 	{
@@ -361,9 +361,10 @@ InfModelTextToText::flags InfModelTextToText::initialize_model(const mbase::stri
 	{
 		in_gpu_layers = 0;
 	}
+	// TODO: Check if the given total context size is too small
 
 	mSuppliedParams = llama_model_default_params();
-
+	mTotalContextSize = in_total_context_size;
 	mSuppliedParams.n_gpu_layers = in_gpu_layers;
 	mSuppliedParams.split_mode = LLAMA_SPLIT_MODE_NONE;
 
@@ -374,9 +375,9 @@ InfModelTextToText::flags InfModelTextToText::initialize_model(const mbase::stri
 	return flags::INF_MODEL_INFO_INITIALIZING_MODEL;
 }
 
-InfModelTextToText::flags InfModelTextToText::initialize_model_sync(const mbase::string& in_path, I32 in_gpu_layers)
+InfModelTextToText::flags InfModelTextToText::initialize_model_sync(const mbase::string& in_path, const U32& in_total_context_size, I32 in_gpu_layers)
 {
-	initialize_model(in_path, in_gpu_layers);
+	initialize_model(in_path, in_total_context_size, in_gpu_layers);
 
 	while(signal_state_initializing())
 	{
@@ -492,7 +493,7 @@ GENERIC InfModelTextToText::_initialize_model()
 			// if this is also an empty string, I don't know what the fuck to do anymore...
 		}
 	}
-
+	
 	mbase::string& modelName = mModelKvals["general.basename"];
 	mbase::vector<inf_token> tokenList;
 	if (llama_token_eot(mModel) != -1)

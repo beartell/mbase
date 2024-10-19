@@ -164,6 +164,11 @@ MBASE_ND(MBASE_OBS_IGNORE) I32 PcNetPeerClient::get_peer_port() const noexcept
 	return mPeerPort;
 }
 
+MBASE_ND(MBASE_OBS_IGNORE) typename PcNetPeerClient::socket_handle PcNetPeerClient::get_raw_socket() const noexcept
+{
+	return mPeerSocket;
+}
+
 PcNetPeerClient::flags PcNetPeerClient::write_data(CBYTEBUFFER in_data, size_type in_size)
 {
 	if(!is_connected())

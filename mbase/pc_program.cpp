@@ -77,7 +77,7 @@ GENERIC PcProgram::initialize()
 	mNetManager = &PcNetManager::get_instance();
 
 	mIoManager->initialize();
-	mDiagnostics.initialize();
+	mDiagnostics.initialize("placeholder_text");
 	mConfig->initialize();
 }
 

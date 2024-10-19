@@ -1,4 +1,5 @@
 #include <mbase/pc/pc_diagnostics.h>
+#include <mbase/io_file.h>
 
 MBASE_BEGIN
 
@@ -7,8 +8,9 @@ typename const PcDiagnostics::log_list& PcDiagnostics::get_log_list() const noex
 	return mLogList;
 }
 
-bool PcDiagnostics::initialize()
+bool PcDiagnostics::initialize(const mbase::string& in_diagnostics_name)
 {
+	mDiagnosticsName = in_diagnostics_name;
 	return true;
 }
 
@@ -22,29 +24,10 @@ PcDiagnostics::flags PcDiagnostics::log(flags in_log_type, flags in_log_importan
 	mbase::string totalLog = _build_log_heading(in_log_type, in_log_importance);
 	totalLog += in_message + MBASE_PLATFORM_NEWLINE;
 
-	mbase::lock_guard lockGuard(mLogMutex);
 	mLogList.push_back(totalLog);
 
 	return flags::DIAGNOSTICS_SUCCESS;
 }
-
-//template<typename ... Params>
-//PcDiagnostics::flags PcDiagnostics::log(flags in_log_type, flags in_log_importance, MSTRING in_format, Params ... in_params) noexcept
-//{
-//	if (in_format == NULL || !mbase::string::length_bytes(in_format))
-//	{
-//		return flags::DIAGNOSTICS_ERR_MISSING_MESSAGE;
-//	}
-//
-//	mbase::string totalLog = _build_log_heading(in_log_type, in_log_importance);
-//
-//	totalLog += mbase::string::from_format(in_format, std::forward<Params>(in_params)...) + MBASE_PLATFORM_NEWLINE;
-//
-//	mbase::lock_guard lockGuard(mLogMutex);
-//	mLogList.push_back(totalLog);
-//
-//	return flags::DIAGNOSTICS_SUCCESS;
-//}
 
 GENERIC PcDiagnostics::flush_logs() noexcept
 {
@@ -59,9 +42,40 @@ GENERIC PcDiagnostics::print_logs() const noexcept
 	}
 }
 
-PcDiagnostics::flags PcDiagnostics::dump_logs_to_file(const mbase::string& in_file) noexcept
+GENERIC PcDiagnostics::dump_logs_to_file() noexcept
 {
-	return flags::DIAGNOSTICS_SUCCESS;
+	if (mLogList.size())
+	{
+		mbase::io_file iof;
+		iof.open_file(mDiagnosticsName + ".txt", mbase::io_file::access_mode::RW_ACCESS, mbase::io_file::disposition::OPEN);
+		iof.set_file_pointer(0, mbase::io_base::move_method::MV_END);
+
+		mbase::deep_char_stream dcs(mLogList.get_serialized_size());
+		mLogList.serialize(dcs);
+		iof.write_data(dcs.get_buffer(), dcs.buffer_length());
+
+		mLogList.clear();
+	}
+}
+
+GENERIC PcDiagnostics::dump_logs_to_file(const mbase::string& in_file) noexcept
+{
+	if (mLogList.size())
+	{
+		if(!in_file.size())
+		{
+			return;
+		}
+		mbase::io_file iof;
+		iof.open_file(in_file, mbase::io_file::access_mode::RW_ACCESS, mbase::io_file::disposition::OPEN);
+		iof.set_file_pointer(0, mbase::io_base::move_method::MV_END);
+
+		mbase::deep_char_stream dcs(mLogList.get_serialized_size());
+		mLogList.serialize(dcs);
+		iof.write_data(dcs.get_buffer(), dcs.buffer_length());
+
+		mLogList.clear();
+	}
 }
 
 mbase::string PcDiagnostics::_build_log_heading(flags in_log_type, flags in_log_importance) noexcept

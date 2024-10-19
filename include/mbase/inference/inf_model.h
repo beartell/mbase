@@ -108,13 +108,15 @@ public:
 	flags get_model_param_count(size_type& out_count);
 	flags get_model_params(mbase::unordered_map<mbase::string, mbase::string>& out_params);
 	flags get_size(size_type& out_size);
+	// flags get_template_identifier(mbase::string& out_identifier); ---> Will be implemented when the specification is complete
 	bool is_token_eof_generation(inf_token in_token);
 	flags is_token_special(const mbase::string& in_string);
 	flags is_token_control(inf_token in_token);
 	flags get_metadata_count(size_type& out_count);
+	U32 get_total_context_size();
 
-	flags initialize_model(const mbase::string& in_path, I32 in_gpu_layers = -1);
-	flags initialize_model_sync(const mbase::string& in_path, I32 in_gpu_layers = -1);
+	flags initialize_model(const mbase::string& in_path, const U32& in_total_context_size, I32 in_gpu_layers = -1);
+	flags initialize_model_sync(const mbase::string& in_path, const U32& in_total_context_size, I32 in_gpu_layers = -1);
 	flags destroy();
 	flags destroy_sync();
 	flags register_context_process(InfTextToTextProcessor* in_processor, U32 in_context_length);
@@ -146,7 +148,29 @@ private:
 	mbase::vector<inf_token> mSystemStartTokenized;
 	mbase::vector<inf_token> mAssistantStartTokenized;
 	mbase::vector<inf_token> mUserStartTokenized;
+	U32 mTotalContextSize;
 };
+
+// class MBASE_API InfModelImageToText : public InfModelBase{ // possibly using llava
+//	...
+// }
+
+// class MBASE_API InfModelSpeechToText : public InfModelBase{ // possibly using whisper.cpp
+//	...
+// }
+
+// class MBASE_API InfModelTextToImage : public InfModelBase{ // possibly using stable_diffusion.cpp
+//	...
+// }
+
+// class MBASE_API InfModelTextToSpeech : public InfModelBase{ // possibly using bark.cpp
+//	...
+// }
+
+// class MBASE_API InfModelEmbedding : public InfModelBase{ // Implement soon
+//	...
+// }
+
 
 MBASE_END
 

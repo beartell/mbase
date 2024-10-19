@@ -83,6 +83,9 @@ GENERIC GgufMetaConfigurator::_clear_context()
 
 			newGgufFile.open_file(modifiedFileName, mbase::io_file::access_mode::RW_ACCESS, mbase::io_file::disposition::APPEND);
 			newGgufFile.write_data(dcs.get_buffer(), dcs.buffer_length());
+			newGgufFile.close_file();
+			
+			MoveFileExA(modifiedFileName.c_str(), mGgufFile.c_str(), MOVEFILE_REPLACE_EXISTING);
 		}
 		gguf_free(mGgufContext);
 		mGgufContext = NULL;

@@ -65,10 +65,15 @@ public:
 
 	/* ===== BUILDER METHODS BEGIN ===== */
 	MBASE_INLINE char_stream() noexcept;
+	MBASE_INLINE char_stream(const char_stream& in_rhs) noexcept;
 	MBASE_INLINE MBASE_STD_EXPLICIT char_stream(IBYTEBUFFER in_src) noexcept;
 	MBASE_INLINE MBASE_STD_EXPLICIT char_stream(IBYTEBUFFER in_src, size_type in_length) noexcept;
 	MBASE_INLINE ~char_stream() noexcept;
 	/* ===== BUILDER METHODS END ===== */
+
+	/* ===== OPERATOR BUILDER METHODS BEGIN ===== */
+	MBASE_INLINE char_stream& operator=(const char_stream& in_rhs) noexcept;
+	/* ===== OPERATOR BUILDER METHODS END ===== */
 
 	/* ===== OBSERVATION METHODS BEGIN ===== */
 	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR reference front() noexcept;
@@ -211,6 +216,19 @@ MBASE_INLINE char_stream::char_stream() noexcept : mBufferLength(0), mStreamCurs
 {
 }
 
+MBASE_INLINE char_stream::char_stream(const char_stream& in_rhs) noexcept : mBufferLength(in_rhs.mBufferLength), mStreamCursor(in_rhs.mStreamCursor), mSrcBuffer(in_rhs.mSrcBuffer)
+{
+}
+
+MBASE_INLINE char_stream& char_stream::operator=(const char_stream& in_rhs) noexcept
+{
+	mBufferLength = in_rhs.mBufferLength;
+	mStreamCursor = in_rhs.mStreamCursor;
+	mSrcBuffer = in_rhs.mSrcBuffer;
+
+	return *this;
+}
+
 MBASE_INLINE char_stream::char_stream(IBYTEBUFFER in_src) noexcept {
 	mBufferLength = this->length_bytes(in_src) + 1; // CHAR STREAM WILL INCLUDE NULL TERMINATOR
 	mStreamCursor = 0;
@@ -223,7 +241,7 @@ MBASE_INLINE char_stream::char_stream(IBYTEBUFFER in_src, size_type in_length) n
 
 MBASE_INLINE char_stream::~char_stream() noexcept
 {
-	_destroy_self();
+	//_destroy_self(); // maybe problematic
 }
 
 MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE IBYTEBUFFER char_stream::operator*() noexcept 

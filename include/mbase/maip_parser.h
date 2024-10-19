@@ -217,8 +217,6 @@ public:
 	using iterator = typename kval_container::iterator;
 	using const_iterator = typename kval_container::const_iterator;
 
-	MBASE_INLINE maip_peer_request() noexcept : mDataStream(16384) {};
-
 	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE iterator begin() noexcept;
 	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE iterator end() noexcept;
 	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE const_iterator begin() const noexcept;
@@ -239,8 +237,9 @@ public:
 
 	MBASE_INLINE maip_generic_errors parse_request(mbase::char_stream& in_stream);
 	MBASE_INLINE maip_generic_errors parse_result(mbase::char_stream& in_stream);
-	MBASE_INLINE maip_generic_errors parse_data(mbase::char_stream& in_stream, U32 in_length);
+	MBASE_INLINE maip_generic_errors parse_data(mbase::char_stream& in_stream);
 
+	MBASE_INLINE GENERIC set_external_data(mbase::char_stream& in_stream);
 private:
 	MBASE_INLINE maip_generic_errors _parse_version(mbase::char_stream& in_stream);
 	MBASE_INLINE maip_generic_errors _parse_req_identification_line(mbase::char_stream& in_stream);
@@ -259,7 +258,7 @@ private:
 	maip_version mMaipVersion;
 	maip_request_identification mRequestIdentification;
 	kval_container mDescriptionKvals;
-	mbase::deep_char_stream mDataStream;
+	mbase::char_stream mDataStream;
 };
 
 template<typename T, typename VecType = void>
@@ -785,10 +784,9 @@ MBASE_INLINE maip_generic_errors maip_peer_request::parse_result(mbase::char_str
 	return _parse_end(in_stream);
 }
 
-
-MBASE_INLINE maip_generic_errors maip_peer_request::parse_data(mbase::char_stream& in_stream, U32 in_length)
+MBASE_INLINE maip_generic_errors maip_peer_request::parse_data(mbase::char_stream& in_stream)
 {
-	mDataStream.set_cursor_front();
+	mDataStream = in_stream;
 
 	if (in_stream.is_cursor_end())
 	{
@@ -798,7 +796,7 @@ MBASE_INLINE maip_generic_errors maip_peer_request::parse_data(mbase::char_strea
 	I32 processedBytes = 0;
 	try
 	{
-		for (U32 i = 0; i < in_length; i++)
+		for (U32 i = 0; i < mDataStream.buffer_length(); i++)
 		{
 			mDataStream.putc(in_stream.getc());
 			++processedBytes;
@@ -813,6 +811,11 @@ MBASE_INLINE maip_generic_errors maip_peer_request::parse_data(mbase::char_strea
 	}
 
 	return maip_generic_errors::SUCCESS;
+}
+
+MBASE_INLINE GENERIC maip_peer_request::set_external_data(mbase::char_stream& in_stream)
+{
+	mDataStream = in_stream;
 }
 
 MBASE_INLINE maip_generic_errors maip_peer_request::_parse_version(mbase::char_stream& in_stream)
