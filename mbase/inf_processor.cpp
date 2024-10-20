@@ -447,6 +447,7 @@ InfTextToTextProcessor::flags InfTextToTextProcessor::initialize(InfModelTextToT
 	}
 	mTargetModel_md_model = in_model;
 	mContextLength = in_context_length;
+	mDiagnostics.log(PcDiagnostics::flags::LOGTYPE_INFO, PcDiagnostics::flags::LOGIMPORTANCE_HIGH, "Initializing %d", 15);
 	mInitializeSignal.set_signal_with_state();
 	start_processor();
 	return flags::INF_PROC_INFO_INITIALIZING;
@@ -523,6 +524,21 @@ GENERIC InfTextToTextProcessor::clear_samplers()
 		mSamplingOrder.clear();
 		mSamplerChain = NULL;
 	}
+}
+
+GENERIC InfTextToTextProcessor::on_initializing()
+{
+
+}
+
+GENERIC InfTextToTextProcessor::on_initialize_fail()
+{
+
+}
+
+GENERIC InfTextToTextProcessor::on_destroying()
+{
+
 }
 
 InfTextToTextProcessor::flags InfTextToTextProcessor::add_sampler(const InfSamplingInput& in_sampling)

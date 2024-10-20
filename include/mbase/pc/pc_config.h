@@ -7,26 +7,13 @@
 #include <mbase/filesystem.h>
 #include <mbase/unordered_map.h>
 #include <mbase/synchronization.h>
-#include <mbase/pc/pc_io_manager.h>
+#include <mbase/pc/pc_diagnostics.h>
 
 MBASE_BEGIN
 
 class PcConfig;
 
-class MBASE_API PcConfigFileHandler : public PcIoHandler {
-public:
-	PcConfigFileHandler(PcConfig& in_self);
-
-	GENERIC on_registered() override;
-	GENERIC on_write(CBYTEBUFFER out_data, size_type out_size) override;
-	GENERIC	on_read(CBYTEBUFFER out_data, size_type out_size) override;
-	GENERIC on_unregistered() override;
-
-private:
-	PcConfig* configSelf;
-};
-
-class MBASE_API PcConfig : public mbase::singleton<PcConfig> {
+class MBASE_API PcConfig {
 public:
 	using config_map = mbase::unordered_map<mbase::string, mbase::string>;
 
@@ -50,7 +37,12 @@ public:
 	const config_map& get_config_map() const noexcept;
 	bool is_initialized() const noexcept;
 
-	bool initialize(const mbase::string& in_temp_path = "", const mbase::string& in_root_path = "", const mbase::string& in_config_path = "");
+	bool initialize(
+		PcDiagnostics& in_diagnostics,
+		const mbase::string& in_temp_path = "", 
+		const mbase::string& in_root_path = "", 
+		const mbase::string& in_config_path = ""
+	);
 	flags set_temp_path(const mbase::string& in_path) noexcept;
 	flags set_root_path(const mbase::string& in_path) noexcept;
 	flags set_config_path(const mbase::string& in_path) noexcept;
@@ -59,10 +51,18 @@ public:
 	flags update(config_map& in_cmap) noexcept;
 	flags set_config_param(const mbase::string& in_key, const mbase::string& in_param) noexcept;
 	flags dump_to_string(mbase::string& out_config_string) noexcept;
+	virtual GENERIC on_initializing();
+	virtual GENERIC on_initialize();
+	virtual GENERIC on_initialize_fail();
+	virtual GENERIC on_destroying();
+	virtual GENERIC on_destroy();
+	virtual GENERIC on_config_update();
+	virtual GENERIC on_temp_path_update();
+	virtual GENERIC on_root_path_update();
+	virtual GENERIC on_config_path_update();
 
 private:
-	PcConfigFileHandler mConfigFileHandler;
-	mbase::mutex mConfigSync;
+	PcDiagnostics* mDiagnosticsManager;
 	mbase::string mTempPath;
 	mbase::string mRootPath;
 	mbase::string mConfigPath;

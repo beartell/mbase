@@ -60,7 +60,7 @@ GENERIC InfMaipServerBase::accumulated_processing(std::shared_ptr<PcNetPeerClien
 			mAccumulationMap.erase(in_accum_iterator);
 			return;
 		}
-		out_peer->finish_and_ready();
+		out_peer->send_read_signal();
 
 	}
 }
@@ -106,7 +106,7 @@ GENERIC InfMaipServerBase::simple_processing(std::shared_ptr<PcNetPeerClient> ou
 						processedDataLength.append(cs.get_bufferc(), messageSize - 1);
 					}
 					mAccumulationMap[out_peer->get_raw_socket()] = { messageContentLength, csId, clId, std::move(processedDataLength), mMaipPeerRequest };
-					out_peer->finish_and_ready();
+					out_peer->send_read_signal();
 					return;
 				}
 			}
@@ -140,7 +140,8 @@ GENERIC InfMaipServerBase::simple_processing(std::shared_ptr<PcNetPeerClient> ou
 	tmpPacketBuilder.generate_payload(outMessage);
 
 	out_peer->write_data(outMessage.c_str(), outMessage.size());
-	out_peer->finish_and_ready();
+	out_peer->send_write_signal();
+	out_peer->send_read_signal();
 }
 
 MBASE_END

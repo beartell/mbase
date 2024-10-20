@@ -62,6 +62,16 @@ GENERIC InfMaipUser::make_superuser()
 	
 }
 
+GENERIC InfMaipUser::lock_authorization()
+{
+	mIsAuthorizationLocked = true;
+}
+
+GENERIC InfMaipUser::unlock_authorization()
+{
+	mIsAuthorizationLocked = false;
+}
+
 bool InfMaipUser::is_superuser()
 {
 	return mIsSuperUser;

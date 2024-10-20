@@ -95,7 +95,8 @@ GENERIC InfMaipTunedClient::on_write(CBYTEBUFFER out_data, size_type out_size, I
 	}
 
 	mManagerClient->mPeer->write_data(outPayload.c_str(), outPayload.size());
-	mManagerClient->mPeer->finish_and_ready();
+	mManagerClient->mPeer->send_write_signal();
+	mManagerClient->mPeer->send_read_signal();
 }
 
 GENERIC InfMaipTunedClient::on_finish(size_type out_total_token_size, InfTextToTextProcessor::finish_state out_finish_state)
@@ -146,7 +147,8 @@ GENERIC InfMaipTunedClient::on_finish(size_type out_total_token_size, InfTextToT
 	}
 
 	mManagerClient->mPeer->write_data(outPayload.c_str(), outPayload.size());
-	mManagerClient->mPeer->finish_and_ready();
+	mManagerClient->mPeer->send_write_signal();
+	mManagerClient->mPeer->send_read_signal();
 }
 
 GENERIC InfMaipTunedClient::on_unregister() 

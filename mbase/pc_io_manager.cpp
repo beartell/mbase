@@ -291,7 +291,7 @@ PcIoHandler::PcIoHandler() :
 
 PcIoHandler::~PcIoHandler()
 {
-	PcIoManager* ioMng = MBASE_PROGRAM_IO_MANAGER();
+	PcIoManager* ioMng = NULL;
 	if(is_registered())
 	{
 		ioMng->unregister_handler(*this);
@@ -341,7 +341,7 @@ PcIoHandler::flags PcIoHandler::set_io_direction(direction in_direction, bool is
 PcIoHandler::flags PcIoHandler::set_stream(mbase::char_stream& in_stream, bool is_sync)
 {
 	MBASE_IO_HANDLER_USUAL_CHECK();
-	PcIoManager* ioMng = MBASE_PROGRAM_IO_MANAGER();
+	PcIoManager* ioMng = NULL;
 	ioMng->get_stream_manager()->release_stream(mPolledStreamHandle);
 	mPolledStreamHandle = MBASE_INVALID_STREAM_HANDLE;
 	mProcessorStream = &in_stream;
@@ -381,7 +381,7 @@ PcIoHandler::flags PcIoHandler::flush_stream(bool is_sync)
 PcIoHandler::flags PcIoHandler::finish(bool is_sync)
 {
 	MBASE_IO_HANDLER_USUAL_CHECK();
-	PcIoManager* ioMng = MBASE_PROGRAM_IO_MANAGER();
+	PcIoManager* ioMng = NULL;
 	
 	ioMng->add_handler(*this);
 	mIsProcessing = true;

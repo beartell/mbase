@@ -11,6 +11,7 @@
 #include <mbase/inference/inf_context_line.h>
 #include <mbase/inference/inf_sampling.h>
 #include <mbase/framework/logical_processing.h>
+#include <mbase/pc/pc_diagnostics.h>
 #include <mutex>
 #include <llama.h>
 
@@ -20,6 +21,7 @@ static const U32 gProcessorMinimumTokenCount = 32;
 static const U32 gProcessorMinimumInactivityThreshold = 16; // in seconds
 
 class InfClientTextToText;
+class InfProgram;
 
 struct MBASE_API InfSamplerMeta {
 	mbase::string mSamplerName = "";
@@ -143,6 +145,10 @@ public:
 
 	GENERIC update_sampler_value(const mbase::string& in_sampler_name, F32 in_common_float);
 
+	virtual GENERIC on_initializing();
+	virtual GENERIC on_initialize_fail();
+	virtual GENERIC on_destroying();
+
 	virtual GENERIC on_initialize() = 0;
 	virtual GENERIC on_destroy() = 0;
 
@@ -159,7 +165,7 @@ private:
 	U32 mContextLength;
 	U32 mContextCursor; // -----> if it exceeds the context size, stop generating
 	mbase::vector<inf_token> mTokenizedInput;
-	mbase::vector<inf_token> mPenaltyList;
+	mbase::vector<inf_token> mPenaltyList; // Unused, remove later
 	mbase::vector<InfSamplerMeta> mSamplingOrder;
 	processor_signal mInputSignal;
 	processor_signal mTokenGeneratedSignal;
@@ -171,6 +177,8 @@ private:
 	InfClientTextToText* mAssignedClient;
 	llama_sampler* mSamplerChain;
 	bool mIsSamplerSet;
+	InfProgram* mAssignedProgram;
+	PcDiagnostics mDiagnostics;
 };
 
 MBASE_END

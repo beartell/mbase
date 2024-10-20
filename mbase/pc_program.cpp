@@ -6,11 +6,12 @@
 
 MBASE_BEGIN
 
-PcProgram::PcProgram() :
+PcProgramBase::PcProgramBase() :
 	mConfig(NULL),
-	mDiagnostics(),
+	mDiagnostics(NULL),
 	mIoManager(NULL),
 	mNetManager(NULL),
+	mProgramState(NULL),
 	mIsRunning(false),
 	mIsAuthorized(false),
 	mIsInitialized(false),
@@ -20,87 +21,86 @@ PcProgram::PcProgram() :
 
 }
 
-PcProgram::~PcProgram()
+PcProgramBase::~PcProgramBase()
 {
 
 }
 
-PcConfig* PcProgram::get_config() noexcept
+PcConfig* PcProgramBase::get_config() noexcept
 {
 	return mConfig;
 }
 
-PcDiagnostics* PcProgram::get_diagnostics_manager() noexcept
+PcDiagnostics* PcProgramBase::get_diagnostics_manager() noexcept
 {
-	return &mDiagnostics;
+	return mDiagnostics;
 }
 
-PcIoManager* PcProgram::get_io_manager() noexcept
+PcIoManager* PcProgramBase::get_io_manager() noexcept
 {
 	return mIoManager;
 }
 
-PcNetManager* PcProgram::get_net_manager() noexcept
+PcNetManager* PcProgramBase::get_net_manager() noexcept
 {
 	return mNetManager;
 }
 
-const PcProgramInfo* PcProgram::get_program_info() const noexcept
+PcProgramInformation PcProgramBase::get_program_info() const noexcept
 {
-	return &mProgramInfo;
+	return mProgramInfo;
 }
 
-event_manager* PcProgram::get_event_manager() noexcept
+event_manager* PcProgramBase::get_event_manager() noexcept
 {
 	return &mEventManager;
 }
 
-timer_loop* PcProgram::get_timer_loop() noexcept
+timer_loop* PcProgramBase::get_timer_loop() noexcept
 {
 	return &mTimerLoop;
 }
 
-bool PcProgram::is_running() const noexcept
+bool PcProgramBase::is_running() const noexcept
 {
 	return mIsRunning;
 }
 
-bool PcProgram::is_initialized() const noexcept
+bool PcProgramBase::is_initialized() const noexcept
 {
 	return mIsInitialized;
 }
 
-GENERIC PcProgram::initialize()
+GENERIC PcProgramBase::initialize(
+	PcProgramInformation in_program_info,
+	PcConfig* in_configurator,
+	PcDiagnostics* in_diagnostics,
+	PcIoManager* in_io_manager,
+	PcNetManager* in_net_manager,
+	PcState* in_program_state
+)
 {
-	mConfig = &PcConfig::get_instance();
-	mIoManager = &PcIoManager::get_instance();
-	mNetManager = &PcNetManager::get_instance();
-
-	mIoManager->initialize();
-	mDiagnostics.initialize("placeholder_text");
-	mConfig->initialize();
+	mProgramInfo = in_program_info;
+	mConfig = in_configurator;
+	mDiagnostics = in_diagnostics;
+	mIoManager = in_io_manager;
+	mNetManager = in_net_manager;
+	mProgramState = in_program_state;
 }
 
-bool PcProgram::authorize(mbase::string in_name, mbase::string in_password)
+GENERIC PcProgramBase::update_defaults()
 {
-	return false;
-}
-
-bool PcProgram::update()
-{
-	mTimerLoop.run_timers();
-	mConfig->update();
+	mNetManager->update();
 	mIoManager->update();
-	mIoManager->update_t();
-	return false;
+	mTimerLoop.run_timers();
 }
 
-bool PcProgram::halt()
+bool PcProgramBase::halt()
 {
 	return false;
 }
 
-bool PcProgram::exit(I32 in_code, mbase::string in_message)
+bool PcProgramBase::exit(I32 in_code, mbase::string in_message)
 {
 	return false;
 }

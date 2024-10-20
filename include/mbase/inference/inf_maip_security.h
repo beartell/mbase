@@ -7,13 +7,13 @@
 
 MBASE_BEGIN
 
-#define MAIP_MODEL_LOAD_UNLOAD 0x1
-#define MAIP_ADAPTER_LOAD_UNLOAD 0x2
-#define MAIP_CONTEXT_LENGTH_MODIFICATION 0x4
-#define MAIP_USER_ACCESS_MODIFICATION 0x8
-#define MAIP_USER_CREATE_DELETE 0x10
-#define MAIP_USER_MODIFICATION 0x20
-#define MAIP_USER_STATIC 0x40
+#define MAIP_MODEL_LOAD_UNLOAD (1 << 0)
+#define MAIP_ADAPTER_LOAD_UNLOAD (1 << 1)
+#define MAIP_CONTEXT_LENGTH_MODIFICATION (1 << 2)
+#define MAIP_USER_ACCESS_MODIFICATION (1 << 3)
+#define MAIP_USER_CREATE_DELETE (1 << 4)
+#define MAIP_USER_MODIFICATION (1 << 5)
+#define MAIP_USER_STATIC (1 << 6)
 
 //enum class maip_authority_flags : U32 {
 //	MODEL_LOAD_UNLOAD, // Allows user group to load and unload models
@@ -45,9 +45,12 @@ public:
 	flags add_accessible_model(const mbase::string& in_modelname);
 	flags remove_accessible_model(const mbase::string& in_modelname);
 	GENERIC set_username(const mbase::string& in_username);
+	GENERIC set_access_key(const mbase::string& in_key);
 	GENERIC add_authority_flags(U32 in_flags);
 	GENERIC remove_authority_flags(U32 in_flags);
 	GENERIC make_superuser();
+	GENERIC lock_authorization();
+	GENERIC unlock_authorization();
 
 	bool is_superuser();
 	bool is_authorization_locked();
@@ -60,6 +63,7 @@ private:
 	U32 mMaximumContextLength;
 	model_name_vector mAccessibleModels;
 	mbase::string mUsername;
+	mbase::string mAccessKey;
 	bool mIsSuperUser;
 	bool mIsAuthorizationLocked; // If this is true, new clients won't be able to associate themselves with this user.
 };

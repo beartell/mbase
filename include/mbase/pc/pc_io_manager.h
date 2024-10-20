@@ -24,7 +24,7 @@ static const U32 gIoManagerMaxWritesDefault = 32;
 class PcIoHandler;
 class PcIoManager;
 
-class MBASE_API PcIoManager : public mbase::singleton<PcIoManager> {
+class MBASE_API PcIoManager {
 public:
 	using size_type = SIZE_T;
 	using io_participants = mbase::vector<PcIoHandler*>;
