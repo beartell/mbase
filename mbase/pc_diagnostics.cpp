@@ -50,9 +50,10 @@ GENERIC PcDiagnostics::dump_logs_to_file() noexcept
 		iof.open_file(mDiagnosticsName + ".txt", mbase::io_file::access_mode::RW_ACCESS, mbase::io_file::disposition::OPEN);
 		iof.set_file_pointer(0, mbase::io_base::move_method::MV_END);
 
-		mbase::deep_char_stream dcs(mLogList.get_serialized_size());
-		mLogList.serialize(dcs);
-		iof.write_data(dcs.get_buffer(), dcs.buffer_length());
+		for(auto & n : mLogList)
+		{
+			iof.write_data(n);
+		}
 
 		mLogList.clear();
 	}
@@ -70,9 +71,10 @@ GENERIC PcDiagnostics::dump_logs_to_file(const mbase::string& in_file) noexcept
 		iof.open_file(in_file, mbase::io_file::access_mode::RW_ACCESS, mbase::io_file::disposition::OPEN);
 		iof.set_file_pointer(0, mbase::io_base::move_method::MV_END);
 
-		mbase::deep_char_stream dcs(mLogList.get_serialized_size());
-		mLogList.serialize(dcs);
-		iof.write_data(dcs.get_buffer(), dcs.buffer_length());
+		for (auto& n : mLogList)
+		{
+			iof.write_data(n);
+		}
 
 		mLogList.clear();
 	}

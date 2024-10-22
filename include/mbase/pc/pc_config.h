@@ -29,7 +29,7 @@ public:
 	};
 
 	PcConfig();
-	~PcConfig() = default;
+	~PcConfig();
 
 	flags get_config_param(const mbase::string& in_key, mbase::string& out_param) noexcept; 
 	mbase::string get_temp_path() const noexcept; // On windows: C:/Windows/Temp, On Linux: /tmp
@@ -48,9 +48,9 @@ public:
 	flags set_temp_path(const mbase::string& in_path) noexcept;
 	flags set_data_path(const mbase::string& in_path) noexcept;
 	flags set_root_path(const mbase::string& in_path) noexcept;
-	flags load_config_file(const mbase::string& in_file, config_map& out_cmap) noexcept;
+	bool load_config_file(const mbase::string& in_file, config_map& out_cmap) noexcept;
+	bool load_config_file(const mbase::string& in_file) noexcept;
 	flags update() noexcept;
-	flags update(config_map& in_cmap) noexcept;
 	flags set_config_param(const mbase::string& in_key, const mbase::string& in_param) noexcept;
 	flags dump_to_string(mbase::string& out_config_string) noexcept;
 	virtual GENERIC on_initializing();

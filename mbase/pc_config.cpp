@@ -23,6 +23,14 @@ PcConfig::PcConfig() :
 
 }
 
+PcConfig::~PcConfig()
+{
+	if(mDiagnosticsManager)
+	{
+		update();
+	}
+}
+
 PcConfig::flags PcConfig::get_config_param(const mbase::string& in_key, mbase::string& out_param) noexcept
 {
 	MBASE_CONFIG_RETURN_UNINITIALIZED;
@@ -124,43 +132,8 @@ bool PcConfig::initialize(PcDiagnostics& in_diagnostics, const mbase::string& in
 				mConfigFileName = "main_config.txt";
 				mDiagnosticsManager->log(mbase::PcDiagnostics::flags::LOGTYPE_INFO, mbase::PcDiagnostics::flags::LOGIMPORTANCE_MID, "Main configuration folder found.");
 				mIsInitialized = true;
-
-				mbase::io_file mainConfigFile;
-				mainConfigFile.open_file(It->fileName, mbase::io_file::access_mode::READ_ACCESS, mbase::io_file::disposition::OPEN);
-
-				if(mainConfigFile.is_file_open())
-				{
-					mbase::deep_char_stream dcs(mainConfigFile.get_file_size());
-					mainConfigFile.read_data(dcs);
-					mbase::string fileString(dcs.get_buffer(), dcs.buffer_length());
-					fileString.remove_all(' ');
-
-					mbase::vector<mbase::string> configLines;
-					fileString.split("\r\n", configLines);
-
-					for(mbase::string& configLine : configLines)
-					{
-						if(!configLine.size())
-						{
-							continue;
-						}
-
-						mbase::vector<mbase::string> configKval;
-						configLine.split("=", configKval);
-						
-						if(configLine.size() == 2)
-						{
-							mbase::string configKey = configKval[0];
-							mbase::string configValue = configKval[1];
-
-							mConfigMap[configKey] = configValue;
-						}
-					}
-				}
-				else
-				{
-					mDiagnosticsManager->log(mbase::PcDiagnostics::flags::LOGTYPE_INFO, mbase::PcDiagnostics::flags::LOGIMPORTANCE_MID, "Unable to open config file %s.", mbase::string(mDataPath + mConfigFileName));
-				}
+				load_config_file(It->fileName);
+				
 				mDiagnosticsManager->log(mbase::PcDiagnostics::flags::LOGTYPE_SUCCESS, mbase::PcDiagnostics::flags::LOGIMPORTANCE_LOW, "Config object initialized.");
 
 				on_initialize();
@@ -224,11 +197,79 @@ PcConfig::flags PcConfig::set_root_path(const mbase::string& in_path) noexcept
 	return flags::CONFIG_SUCCESS;
 }
 
-PcConfig::flags PcConfig::load_config_file(const mbase::string& in_file, config_map& out_cmap) noexcept
+bool PcConfig::load_config_file(const mbase::string& in_file, config_map& out_cmap) noexcept
 {
-	MBASE_CONFIG_RETURN_UNINITIALIZED;
+	mbase::io_file mainConfigFile;
+	mainConfigFile.open_file(in_file, mbase::io_file::access_mode::READ_ACCESS, mbase::io_file::disposition::OPEN);
 
-	return flags::CONFIG_SUCCESS;
+	if (mainConfigFile.is_file_open())
+	{
+		out_cmap.clear();
+
+		mbase::deep_char_stream dcs(mainConfigFile.get_file_size());
+		mainConfigFile.read_data(dcs);
+		mbase::string fileString(dcs.get_buffer(), dcs.buffer_length());
+
+		mbase::vector<mbase::string> configLines;
+		fileString.split("\r\n", configLines);
+
+		for (mbase::string& configLine : configLines)
+		{
+			if (!configLine.size())
+			{
+				continue;
+			}
+
+			mbase::vector<mbase::string> configKval;
+			configLine.split("=", configKval);
+
+			if (configKval.size() == 2)
+			{
+				mbase::string configKey = configKval[0];
+				configKey.remove_all(' ');
+				mbase::string configValue = configKval[1];
+				if(configValue.front() == ' ')
+				{
+					I32 beginIndex = 0;
+					I32 endIndex = configValue.size();
+					for(mbase::string::iterator It = configValue.begin(); It != configValue.end(); ++It)
+					{
+						if (*It != ' ') 
+						{
+							break;
+						}
+						beginIndex++;
+					}
+
+					for(mbase::string::reverse_iterator It = configValue.rbegin(); It != configValue.rend(); ++It)
+					{
+						if(*It != ' ')
+						{
+							break;
+						}
+						endIndex--;
+					}
+
+					mbase::string newConfigValue;
+					for(beginIndex; beginIndex < endIndex; ++beginIndex)
+					{
+						newConfigValue.push_back(configValue[beginIndex]);
+					}
+					configValue = std::move(newConfigValue);
+				}
+
+				out_cmap[configKey] = configValue;
+			}
+		}
+		return true;
+	}
+	return false;
+}
+
+bool PcConfig::load_config_file(const mbase::string& in_file) noexcept
+{
+	mConfigFileName = in_file;
+	return load_config_file(mConfigFileName, mConfigMap);
 }
 
 PcConfig::flags PcConfig::update() noexcept
@@ -249,22 +290,9 @@ PcConfig::flags PcConfig::update() noexcept
 		mbase::io_file updatedConfigFile;
 		updatedConfigFile.open_file(mDataPath + mConfigFileName);
 		updatedConfigFile.write_data(dcs.get_buffer(), dcs.buffer_length());
-		//mEventManager->dispatch_event("config_update", &this->get_config_map());
 		mIsUpdated = false;
 	}
 
-	return flags::CONFIG_SUCCESS;
-}
-
-PcConfig::flags PcConfig::update(config_map& in_cmap) noexcept
-{
-	MBASE_CONFIG_RETURN_UNINITIALIZED;
-	
-	mDiagnosticsManager->log(mbase::PcDiagnostics::flags::LOGTYPE_INFO, mbase::PcDiagnostics::flags::LOGIMPORTANCE_MID, "Loading new config map");
-
-	mConfigMap = in_cmap;
-	mIsUpdated = true;
-	mDiagnosticsManager->log(mbase::PcDiagnostics::flags::LOGTYPE_INFO, mbase::PcDiagnostics::flags::LOGIMPORTANCE_MID, "New config map loaded");
 	return flags::CONFIG_SUCCESS;
 }
 

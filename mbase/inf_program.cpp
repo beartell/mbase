@@ -581,7 +581,7 @@ InfProgram::maip_err_code InfProgram::inf_delete_user(const mbase::string& in_se
 
 	mUserMap.erase(It);
 
-	mbase::string fileToBeDeleted = mInferenceConfigurator.get_data_path() + "/states/users/" + in_username + ".mbfs";
+	mbase::string fileToBeDeleted = mInferenceConfigurator.get_data_path() + "states/users/" + in_username + ".mbfs";
 	mbase::delete_file(fileToBeDeleted);
 	return maip_err_code::INF_SUCCESS;
 }
@@ -715,6 +715,8 @@ GENERIC InfProgram::initialize(InfProgramInformation in_program_information)
 		in_program_information.mExecutionPath,
 		in_program_information.mDataPath
 	);
+	mbase::string mainStateName = in_program_information.mProgramInformation.mProductName;
+	mMainProgramState.initialize(mainStateName, in_program_information.mDataPath);
 
 	this->initialize_system(
 		in_program_information.mProgramInformation,

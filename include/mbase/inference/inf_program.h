@@ -65,7 +65,7 @@ struct MBASE_API InfClientSession {
 	std::shared_ptr<mbase::PcNetPeerClient> mPeer;
 	chat_session_map mChatSessions;
 	InfMaipUser mMaipUser;
-	U64 mContextCounter;
+	U64 mContextCounter = 0;
 };
 
 struct MBASE_API InfProgramInformation {
