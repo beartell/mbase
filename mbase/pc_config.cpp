@@ -13,8 +13,8 @@ MBASE_BEGIN
 
 PcConfig::PcConfig() :
 	mTempPath(),
+	mDataPath(),
 	mRootPath(),
-	mConfigPath(),
 	mConfigMap(),
 	mIsInitialized(false),
 	mIsUpdated(false),
@@ -47,9 +47,9 @@ mbase::string PcConfig::get_temp_path() const noexcept
 	return mTempPath;
 }
 
-mbase::string PcConfig::get_root_path() const noexcept
+mbase::string PcConfig::get_data_path() const noexcept
 {
-	return mRootPath;
+	return mDataPath;
 }
 
 typename const PcConfig::config_map& PcConfig::get_config_map() const noexcept
@@ -62,7 +62,7 @@ bool PcConfig::is_initialized() const noexcept
 	return mIsInitialized;
 }
 
-bool PcConfig::initialize(PcDiagnostics& in_diagnostics, const mbase::string& in_temp_path, const mbase::string& in_root_path, const mbase::string& in_config_path)
+bool PcConfig::initialize(PcDiagnostics& in_diagnostics, const mbase::string& in_temp_path, const mbase::string& in_root_path, const mbase::string& in_data_path, bool in_main_config, const mbase::string& in_config_file_name)
 {
 	if (is_initialized())
 	{
@@ -74,8 +74,8 @@ bool PcConfig::initialize(PcDiagnostics& in_diagnostics, const mbase::string& in
 	mDiagnosticsManager->log(mbase::PcDiagnostics::flags::LOGTYPE_INFO, mbase::PcDiagnostics::flags::LOGIMPORTANCE_LOW, "Initializing program config.");
 
 	mTempPath = in_temp_path;
+	mDataPath = in_data_path;
 	mRootPath = in_root_path;
-	mConfigPath = in_config_path;
 
 	if (!in_temp_path.size())
 	{
@@ -84,44 +84,92 @@ bool PcConfig::initialize(PcDiagnostics& in_diagnostics, const mbase::string& in
 
 	if (!in_root_path.size())
 	{
+		mDataPath = std::move(mbase::get_current_path());
+	}
+
+	if (!in_root_path.size())
+	{
 		mRootPath = std::move(mbase::get_current_path());
 	}
 
-	if (!in_config_path.size())
+	if(mTempPath.back() != '\\')
 	{
-		mConfigPath = std::move(mbase::get_current_path());
+		mTempPath.push_back('\\');
 	}
+
+	if(mDataPath.back() != '\\')
+	{
+		mDataPath.push_back('\\');
+	}
+
+	if(mRootPath.back() != '\\')
+	{
+		mRootPath.push_back('\\');
+	}
+
+	mConfigFileName = in_config_file_name;
 
 	mDiagnosticsManager->log(mbase::PcDiagnostics::flags::LOGTYPE_INFO, mbase::PcDiagnostics::flags::LOGIMPORTANCE_LOW, "Program temporary path: " + mTempPath);
-	mDiagnosticsManager->log(mbase::PcDiagnostics::flags::LOGTYPE_INFO, mbase::PcDiagnostics::flags::LOGIMPORTANCE_LOW, "Program root path: " + mRootPath);
-
-	mConfigMap.insert({ mbase::string("tmp_path"), mTempPath });
-	mConfigMap.insert({ mbase::string("root_path"), mRootPath });
-
-	mbase::vector<mbase::FS_FILE_INFORMATION> fileInfo;
-	mbase::get_directory(mConfigPath + "/*", fileInfo);
-	mConfigPath += "\\config\\";
-	mConfigMap.insert({ mbase::string("config_path"), mConfigPath });
-	for (mbase::vector<mbase::FS_FILE_INFORMATION>::iterator It = fileInfo.begin(); It != fileInfo.end(); ++It)
+	mDiagnosticsManager->log(mbase::PcDiagnostics::flags::LOGTYPE_INFO, mbase::PcDiagnostics::flags::LOGIMPORTANCE_LOW, "Program data path: " + mDataPath);
+	mDiagnosticsManager->log(mbase::PcDiagnostics::flags::LOGTYPE_INFO, mbase::PcDiagnostics::flags::LOGIMPORTANCE_LOW, "Program execution path: " + mRootPath);
+	if(in_main_config)
 	{
-		if (It->fileName == "config")
-		{
-			mDiagnosticsManager->log(mbase::PcDiagnostics::flags::LOGTYPE_INFO, mbase::PcDiagnostics::flags::LOGIMPORTANCE_MID, "'config' folder found and set");
-			mDiagnosticsManager->log(mbase::PcDiagnostics::flags::LOGTYPE_SUCCESS, mbase::PcDiagnostics::flags::LOGIMPORTANCE_LOW, "Config object initialized.");
-			mIsInitialized = true;
-			
-			on_initialize();
+		mbase::vector<mbase::FS_FILE_INFORMATION> fileInfo;
+		mbase::get_directory(mDataPath + '*', fileInfo);
 
-			return true;
+		for (mbase::vector<mbase::FS_FILE_INFORMATION>::iterator It = fileInfo.begin(); It != fileInfo.end(); ++It)
+		{
+			if (It->fileName == "main_config.txt")
+			{
+				mConfigFileName = "main_config.txt";
+				mDiagnosticsManager->log(mbase::PcDiagnostics::flags::LOGTYPE_INFO, mbase::PcDiagnostics::flags::LOGIMPORTANCE_MID, "Main configuration folder found.");
+				mIsInitialized = true;
+
+				mbase::io_file mainConfigFile;
+				mainConfigFile.open_file(It->fileName, mbase::io_file::access_mode::READ_ACCESS, mbase::io_file::disposition::OPEN);
+
+				if(mainConfigFile.is_file_open())
+				{
+					mbase::deep_char_stream dcs(mainConfigFile.get_file_size());
+					mainConfigFile.read_data(dcs);
+					mbase::string fileString(dcs.get_buffer(), dcs.buffer_length());
+					fileString.remove_all(' ');
+
+					mbase::vector<mbase::string> configLines;
+					fileString.split("\r\n", configLines);
+
+					for(mbase::string& configLine : configLines)
+					{
+						if(!configLine.size())
+						{
+							continue;
+						}
+
+						mbase::vector<mbase::string> configKval;
+						configLine.split("=", configKval);
+						
+						if(configLine.size() == 2)
+						{
+							mbase::string configKey = configKval[0];
+							mbase::string configValue = configKval[1];
+
+							mConfigMap[configKey] = configValue;
+						}
+					}
+				}
+				else
+				{
+					mDiagnosticsManager->log(mbase::PcDiagnostics::flags::LOGTYPE_INFO, mbase::PcDiagnostics::flags::LOGIMPORTANCE_MID, "Unable to open config file %s.", mbase::string(mDataPath + mConfigFileName));
+				}
+				mDiagnosticsManager->log(mbase::PcDiagnostics::flags::LOGTYPE_SUCCESS, mbase::PcDiagnostics::flags::LOGIMPORTANCE_LOW, "Config object initialized.");
+
+				on_initialize();
+
+				return true;
+			}
 		}
 	}
-
-	mDiagnosticsManager->log(mbase::PcDiagnostics::flags::LOGTYPE_INFO, mbase::PcDiagnostics::flags::LOGIMPORTANCE_LOW, "Creating 'config' folder under root.");
-	if (mbase::create_directory(mConfigPath) != mbase::FS_ERROR::FS_SUCCESS)
-	{
-		mDiagnosticsManager->log(mbase::PcDiagnostics::flags::LOGTYPE_ERROR, mbase::PcDiagnostics::flags::LOGIMPORTANCE_FATAL, "Unable to create 'config' folder under directory: " + mConfigPath);
-		return false;
-	}
+	
 	mDiagnosticsManager->log(mbase::PcDiagnostics::flags::LOGTYPE_SUCCESS, mbase::PcDiagnostics::flags::LOGIMPORTANCE_LOW, "Config object initialized.");
 	on_initialize();
 	mIsInitialized = true;
@@ -140,12 +188,11 @@ PcConfig::flags PcConfig::set_temp_path(const mbase::string& in_path) noexcept
 	}
 	mIsUpdated = true;
 	mTempPath = in_path;
-	mConfigMap.insert({ mbase::string("tmp_path"), mTempPath });
 	on_temp_path_update();
 	return flags::CONFIG_SUCCESS;
 }
 
-PcConfig::flags PcConfig::set_root_path(const mbase::string& in_path) noexcept
+PcConfig::flags PcConfig::set_data_path(const mbase::string& in_path) noexcept
 {
 	MBASE_CONFIG_RETURN_UNINITIALIZED;
 
@@ -156,13 +203,12 @@ PcConfig::flags PcConfig::set_root_path(const mbase::string& in_path) noexcept
 		return flags::CONFIG_ERR_MISSING_PATH;
 	}
 	mIsUpdated = true;
-	mRootPath = in_path;
-	mConfigMap.insert({ mbase::string("root_path"), mRootPath });
-	on_root_path_update();
+	mDataPath = in_path;
+	on_data_path_update();
 	return flags::CONFIG_SUCCESS;
 }
 
-PcConfig::flags PcConfig::set_config_path(const mbase::string& in_path) noexcept
+PcConfig::flags PcConfig::set_root_path(const mbase::string& in_path) noexcept
 {
 	MBASE_CONFIG_RETURN_UNINITIALIZED;
 	
@@ -173,9 +219,8 @@ PcConfig::flags PcConfig::set_config_path(const mbase::string& in_path) noexcept
 		return flags::CONFIG_ERR_MISSING_PATH;
 	}
 	mIsUpdated = true;
-	mConfigPath = in_path;
-	mConfigMap.insert({ mbase::string("config_path"), mConfigPath });
-	on_config_path_update();
+	mRootPath = in_path;
+	on_root_path_update();
 	return flags::CONFIG_SUCCESS;
 }
 
@@ -202,7 +247,7 @@ PcConfig::flags PcConfig::update() noexcept
 		totalConfigString.serialize(dcs);
 		
 		mbase::io_file updatedConfigFile;
-		updatedConfigFile.open_file(mConfigPath + "config.txt");
+		updatedConfigFile.open_file(mDataPath + mConfigFileName);
 		updatedConfigFile.write_data(dcs.get_buffer(), dcs.buffer_length());
 		//mEventManager->dispatch_event("config_update", &this->get_config_map());
 		mIsUpdated = false;
@@ -271,6 +316,6 @@ GENERIC PcConfig::on_destroying(){}
 GENERIC PcConfig::on_destroy(){}
 GENERIC PcConfig::on_config_update() {}
 GENERIC PcConfig::on_temp_path_update(){}
+GENERIC PcConfig::on_data_path_update(){}
 GENERIC PcConfig::on_root_path_update(){}
-GENERIC PcConfig::on_config_path_update(){}
 MBASE_END

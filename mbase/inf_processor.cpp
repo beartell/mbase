@@ -38,8 +38,7 @@ InfProcessorBase::InfProcessorBase() :
 	mTargetModel_md_model(NULL),
 	mIsRunning(false),
 	mIsRegistered(false),
-	mContextSize_md_model(0),
-	mProcessorId_md_model(0),
+	mContextLength(0),
 	mInactivityThreshold(0)
 {
 }
@@ -74,11 +73,9 @@ bool InfProcessorBase::signal_destroying() const
 	return mDestroySignal.get_signal();
 }
 
-InfProcessorBase::flags InfProcessorBase::get_context_size(U32& out_size)
+U32 InfProcessorBase::get_context_size()
 {
-	MBASE_INF_PROC_RETURN_UNREGISTERED;
-	out_size = mContextSize_md_model;
-	return flags::INF_PROC_SUCCESS;
+	return mContextLength;
 }
 
 InfModelBase* InfProcessorBase::get_processed_model()
@@ -101,6 +98,11 @@ processor_signal& InfProcessorBase::get_destroy_signal()
 	return mDestroySignal;
 }
 
+const mbase::string& InfProcessorBase::get_context_identifier()
+{
+	return mContextIdentifier;
+}
+
 GENERIC InfProcessorBase::set_inactivity_threshold(U32 in_threshold)
 {
 	mInactivityThreshold = in_threshold;
@@ -120,7 +122,6 @@ InfTextToTextProcessor::InfTextToTextProcessor():
 	mModelContext(NULL),
 	//mPresetCandidates(),
 	mGeneratedToken(0),
-	mContextLength(0),
 	mContextCursor(0),
 	mTokenizedInput(),
 	mContextState(context_state::AWAITING_FOR_INPUT),
@@ -136,6 +137,11 @@ InfTextToTextProcessor::InfTextToTextProcessor():
 InfTextToTextProcessor::~InfTextToTextProcessor()
 {
 	destroy_sync();
+}
+
+InfTextToTextProcessor::init_fail_code InfTextToTextProcessor::get_last_fail_code() const
+{
+	return mLastFailCode;
 }
 
 bool InfTextToTextProcessor::is_available() const
@@ -181,6 +187,11 @@ bool InfTextToTextProcessor::signal_init_method() const
 bool InfTextToTextProcessor::signal_destroy_method() const
 {
 	return mDestroyMethodSignal.get_signal();
+}
+
+bool InfTextToTextProcessor::signal_init_fail_method() const
+{
+	return mInitializeFailSignal.get_signal();
 }
 
 //typename InfTextToTextProcessor::inf_token_candidates& InfTextToTextProcessor::get_token_candidates()
@@ -395,7 +406,7 @@ InfTextToTextProcessor::flags InfTextToTextProcessor::next()
 	return flags::INF_PROC_SUCCESS;
 }
 
-InfTextToTextProcessor::flags InfTextToTextProcessor::set_inference_client(InfClientTextToText* in_client, bool in_reset_on_set)
+InfTextToTextProcessor::flags InfTextToTextProcessor::set_inference_client(InfClientTextToText* in_client)
 {
 	MBASE_INF_PROC_RETURN_UNREGISTERED;
 
@@ -429,7 +440,7 @@ InfTextToTextProcessor::flags InfTextToTextProcessor::set_inference_client(InfCl
 	return flags::INF_PROC_SUCCESS;
 }
 
-InfTextToTextProcessor::flags InfTextToTextProcessor::initialize(InfModelTextToText* in_model, U32 in_context_length)
+InfTextToTextProcessor::flags InfTextToTextProcessor::initialize(InfModelTextToText* in_model, U32 in_context_length, const mbase::string& in_context_id)
 {
 	if(is_registered())
 	{
@@ -445,17 +456,20 @@ InfTextToTextProcessor::flags InfTextToTextProcessor::initialize(InfModelTextToT
 	{
 		return flags::INF_PROC_INFO_DESTROYING;
 	}
+
+	mContextIdentifier = in_context_id;
 	mTargetModel_md_model = in_model;
 	mContextLength = in_context_length;
-	mDiagnostics.log(PcDiagnostics::flags::LOGTYPE_INFO, PcDiagnostics::flags::LOGIMPORTANCE_HIGH, "Initializing %d", 15);
+	mDiagnostics.log(PcDiagnostics::flags::LOGTYPE_INFO, PcDiagnostics::flags::LOGIMPORTANCE_HIGH, "Initializing context with length (%d) and id (%s)", in_context_length, in_context_id.c_str());
 	mInitializeSignal.set_signal_with_state();
+	on_initializing();
 	start_processor();
 	return flags::INF_PROC_INFO_INITIALIZING;
 }
 
-InfTextToTextProcessor::flags InfTextToTextProcessor::initialize_sync(InfModelTextToText* in_model, U32 in_context_length)
+InfTextToTextProcessor::flags InfTextToTextProcessor::initialize_sync(InfModelTextToText* in_model, U32 in_context_length, const mbase::string& in_context_id)
 {
-	initialize(in_model, in_context_length);
+	initialize(in_model, in_context_length, in_context_id);
 	while(signal_state_initializing())
 	{
 
@@ -481,7 +495,7 @@ InfTextToTextProcessor::flags InfTextToTextProcessor::destroy()
 	{
 		return flags::INF_PROC_INFO_DESTROYING;
 	}
-
+	on_destroying();
 	mDestroySignal.set_signal_with_state();
 	return flags::INF_PROC_INFO_DESTROYING;
 }
@@ -531,7 +545,7 @@ GENERIC InfTextToTextProcessor::on_initializing()
 
 }
 
-GENERIC InfTextToTextProcessor::on_initialize_fail()
+GENERIC InfTextToTextProcessor::on_initialize_fail(init_fail_code out_code)
 {
 
 }
@@ -705,8 +719,6 @@ GENERIC InfTextToTextProcessor::_decode_next()
 	llama_sampler_accept(mSamplerChain, mGeneratedToken);
 	//llama_sampler_accept(mSamplerChain, mGeneratedToken);
 	
-
-
 	//llama_token_data_array tokenCandidates = { mPresetCandidates.data(), mPresetCandidates.size(), false };
 	//mGeneratedToken = llama_sampler_sample(mGreedy, mModelContext, -1);
 	//llama_sampler_accept(mSamplerChain, mGeneratedToken);
@@ -758,11 +770,25 @@ GENERIC InfTextToTextProcessor::_initialize_context()
 	ctxParams.n_threads_batch = 32;
 	ctxParams.n_ubatch = mContextLength / 8;
 
+	mInitializeFailSignal.reset_signal_with_state();
+
 	InfModelTextToText* t2tModel = static_cast<InfModelTextToText*>(this->mTargetModel_md_model);
+
+	if(!t2tModel || !t2tModel->is_initialized())
+	{
+		clear_samplers();
+		mLastFailCode = init_fail_code::MODEL_NOT_INITIALIZED;
+		mInitializeFailSignal.set_signal_with_state();
+		mInitializeSignal.reset_signal_with_state();
+		return;
+	}
 
 	mModelContext = llama_new_context_with_model(t2tModel->get_raw_model(), ctxParams);
 	if (!mModelContext)
 	{
+		clear_samplers();
+		mLastFailCode = init_fail_code::NOT_ENOUGH_MEMORY;
+		mInitializeFailSignal.set_signal_with_state();
 		mInitializeSignal.reset_signal_with_state();
 		return;
 	}
@@ -790,27 +816,6 @@ GENERIC InfTextToTextProcessor::_initialize_context()
 
 	llama_sampler* penaltySampler = llama_sampler_init_penalties(modelVocabCount, eotToken, nlToken, 64, 1.5, 0.5, 0.5, false, false);
 	llama_sampler_chain_add(mSamplerChain, penaltySampler);
-	//llama_sampler_chain_add(mSamplerChain, llama_sampler_init_temp(0.1));
-	//llama_sampler_chain_add(mSamplerChain, llama_sampler_init_min_p(0.5, 1));
-	//llama_sampler_chain_add(mSamplerChain, llama_sampler_init_top_p(0.95, 1));
-	//llama_sampler_chain_add(mSamplerChain, llama_sampler_init_top_k(50));
-	//llama_sampler_chain_add(mSamplerChain, llama_sampler_init_softmax());
-	//llama_sampler_chain_add(mSamplerChain, llama_sampler_init_dist(seedValue));
-	//llama_sampler_chain_add(mSamplerChain, llama_sampler_init_mirostat_v2(seedValue, 4.0, 0.100));	
-	
-	//llama_sampler_chain_add(mSamplerChain, llama_sampler_init_penalties(modelVocabCount, 128009, 128, 64, 1.5, 0.0, 0.0, false, true));
-
-	/*;
-	llama_sampler_chain_add(mSamplerChain, llama_sampler_init_penalties(modelVocabCount, 128009, 128, 64, 1.5, 0.0, 0.0, true, true));
-	llama_sampler_chain_add(mSamplerChain, llama_sampler_init_top_k(5));
-	llama_sampler_chain_add(mSamplerChain, llama_sampler_init_tail_free(1.0, 0));
-	llama_sampler_chain_add(mSamplerChain, llama_sampler_init_typical(1.0, 0));
-	llama_sampler_chain_add(mSamplerChain, llama_sampler_init_top_p(0.95, 0));
-	llama_sampler_chain_add(mSamplerChain, llama_sampler_init_min_p(0.050, 0));
-	llama_sampler_chain_add(mSamplerChain, llama_sampler_init_temp(0.8));
-	llama_sampler_chain_add(mSamplerChain, llama_sampler_init_softmax());
-	llama_sampler_chain_add(mSamplerChain, llama_sampler_init_dist(seedValue))
-	*/
 
 	mInitializeMethodSignal.set_signal_with_state();
 }
@@ -822,8 +827,8 @@ GENERIC InfTextToTextProcessor::_destroy_context()
 	mContextCursor = 0;
 	mModelContext = NULL;
 	mIsRunning = false;
-	//mPresetCandidates.clear();
-	mContextLength = 0;
+	mPresetCandidates.clear();
+	// mContextLength = 0; // WE ARE NOT DESTROYING CONTEXT LENGTH BECAUSE IT'S OBSERVATION IS NECESSARY ON MODEL'S UPDATE LOOP
 	mContextCursor = 0;
 	mTokenizedInput.clear();
 	mPenaltyList.clear();

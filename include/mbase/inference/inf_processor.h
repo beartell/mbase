@@ -62,11 +62,12 @@ public:
 	bool signal_initializing() const;
 	bool signal_destroying() const;
 
-	flags get_context_size(U32& out_size);
+	U32 get_context_size();
 	InfModelBase* get_processed_model();
 	U32 get_inactivity_threshold();
 	processor_signal& get_initialize_signal();
 	processor_signal& get_destroy_signal();
+	const mbase::string& get_context_identifier();
 
 	GENERIC set_inactivity_threshold(U32 in_threshold);
 	GENERIC halt();
@@ -80,9 +81,9 @@ protected:
 	processor_signal mInitializeSignal;
 	processor_signal mDestroySignal;
 
-	U32 mContextSize_md_model;
-	U32 mProcessorId_md_model;
+	U32 mContextLength;
 	U32 mInactivityThreshold;
+	mbase::string mContextIdentifier;
 }; // TODO: speech-to-text(whisper.cpp), text-to-text(llama.cpp), text-to-speech<EXPERIMENTAL>(bark.cpp)
 
 class MBASE_API InfTextToTextProcessor : public mbase::InfProcessorBase {
@@ -104,9 +105,15 @@ public:
 		TOKEN_LIMIT_REACHED
 	};
 
+	enum class init_fail_code {
+		MODEL_NOT_INITIALIZED,
+		NOT_ENOUGH_MEMORY
+	};
+
 	InfTextToTextProcessor();
 	~InfTextToTextProcessor();
 
+	init_fail_code get_last_fail_code() const;
 	bool is_available() const;
 	bool signal_state_input_process() const;
 	bool signal_state_decode_process() const;
@@ -115,6 +122,7 @@ public:
 	bool signal_token_generated() const;
 	bool signal_init_method() const;
 	bool signal_destroy_method() const;
+	bool signal_init_fail_method() const;
 	#ifdef MBASE_INTERNAL_API
 		inf_token_candidates& get_token_candidates();
 	#endif // MBASE_INTERNAL_API
@@ -129,9 +137,9 @@ public:
 	flags tokenize_input(context_line* in_lines, size_type in_count, mbase::vector<inf_token>& out_tokens, bool in_append_assistant_token = true);
 	flags execute_input(const mbase::vector<inf_token>& in_tokens, bool in_abandon = false);
 	flags next();
-	flags set_inference_client(InfClientTextToText* in_client, bool in_reset_on_set = true);
-	flags initialize(InfModelTextToText* in_model, U32 in_context_length);
-	flags initialize_sync(InfModelTextToText* in_model, U32 in_context_length);
+	flags set_inference_client(InfClientTextToText* in_client);
+	flags initialize(InfModelTextToText* in_model, U32 in_context_length, const mbase::string& in_context_id);
+	flags initialize_sync(InfModelTextToText* in_model, U32 in_context_length, const mbase::string& in_context_id);
 	flags destroy();
 	flags destroy_sync();
 	GENERIC release_inference_client();
@@ -146,7 +154,7 @@ public:
 	GENERIC update_sampler_value(const mbase::string& in_sampler_name, F32 in_common_float);
 
 	virtual GENERIC on_initializing();
-	virtual GENERIC on_initialize_fail();
+	virtual GENERIC on_initialize_fail(init_fail_code out_code);
 	virtual GENERIC on_destroying();
 
 	virtual GENERIC on_initialize() = 0;
@@ -162,7 +170,6 @@ private:
 	llama_batch mInputBatch;
 	inf_token_candidates mPresetCandidates;
 	inf_token mGeneratedToken;
-	U32 mContextLength;
 	U32 mContextCursor; // -----> if it exceeds the context size, stop generating
 	mbase::vector<inf_token> mTokenizedInput;
 	mbase::vector<inf_token> mPenaltyList; // Unused, remove later
@@ -172,13 +179,14 @@ private:
 	processor_signal mDecodeSignal;
 	processor_signal mInitializeMethodSignal;
 	processor_signal mDestroyMethodSignal;
+	processor_signal mInitializeFailSignal;
 	context_state mContextState;
 	finish_state mFinishState;
 	InfClientTextToText* mAssignedClient;
 	llama_sampler* mSamplerChain;
 	bool mIsSamplerSet;
-	InfProgram* mAssignedProgram;
 	PcDiagnostics mDiagnostics;
+	init_fail_code mLastFailCode;
 };
 
 MBASE_END

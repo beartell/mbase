@@ -71,6 +71,7 @@ public:
 		INF_MODEL_INFO_PROCESSOR_IS_BEING_DESTROYED,
 		INF_MODEL_ERR_PROCESSOR_ALREADY_REGISTERED,
 		INF_MODEL_ERR_INVALID_INPUT,
+		INF_MODEL_ERR_MODEL_CONTEXT_FULL,
 		INF_MODEL_ERR_INVALID_CONTEXT_LENGTH,
 		INF_MODEL_ERR_PROCESSOR_NOT_FOUND,
 		INF_MODEL_ERR_PROCESSOR_BELONGS_TO_ANOTHER_MODEL,
@@ -82,6 +83,7 @@ public:
 	InfModelTextToText();
 	~InfModelTextToText();
 
+	bool is_available(const U32& in_context_size);
 	bool signal_init_method() const;
 	bool signal_destroy_method() const;
 	llama_model* get_raw_model();
@@ -114,6 +116,7 @@ public:
 	flags is_token_control(inf_token in_token);
 	flags get_metadata_count(size_type& out_count);
 	U32 get_total_context_size();
+	U32 get_occupied_context_size();
 
 	flags initialize_model(const mbase::string& in_path, const U32& in_total_context_size, I32 in_gpu_layers = -1);
 	flags initialize_model_sync(const mbase::string& in_path, const U32& in_total_context_size, I32 in_gpu_layers = -1);
@@ -148,6 +151,7 @@ private:
 	mbase::vector<inf_token> mSystemStartTokenized;
 	mbase::vector<inf_token> mAssistantStartTokenized;
 	mbase::vector<inf_token> mUserStartTokenized;
+	U32 mOccupiedContext;
 	U32 mTotalContextSize;
 };
 

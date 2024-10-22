@@ -105,7 +105,8 @@ InfModelTextToText::InfModelTextToText() :
 	mEndOfTokenString(),
 	mUsrStart(),
 	mSystemStart(),
-	mAssistantStart()
+	mAssistantStart(),
+	mOccupiedContext(0)
 {
 
 }
@@ -123,6 +124,27 @@ InfModelTextToText::~InfModelTextToText()
 		{
 		}
 	}
+}
+
+bool InfModelTextToText::is_available(const U32& in_context_size)
+{
+	if (this->signal_state_initializing())
+	{
+		return false; 
+	}
+	if (!this->is_initialized())
+	{
+		return false; 
+	}
+	if (this->signal_state_destroying())
+	{
+		return false; 
+	}
+	if(get_occupied_context_size() + in_context_size > get_total_context_size())
+	{
+		return false;
+	}
+	return true;
 }
 
 bool InfModelTextToText::signal_init_method() const
@@ -345,6 +367,16 @@ InfModelTextToText::flags InfModelTextToText::get_metadata_count(size_type& out_
 	return flags::INF_MODEL_SUCCESS;
 }
 
+U32 InfModelTextToText::get_total_context_size()
+{
+	return mTotalContextSize;
+}
+
+U32 InfModelTextToText::get_occupied_context_size()
+{
+	return mOccupiedContext;
+}
+
 InfModelTextToText::flags InfModelTextToText::initialize_model(const mbase::string& in_path, const U32& in_total_context_size, I32 in_gpu_layers)
 {
 	if(is_initialized())
@@ -407,6 +439,7 @@ InfModelTextToText::flags InfModelTextToText::destroy()
 		return flags::INF_MODEL_INFO_DESTROYING_MODEL;
 	}
 
+	start_processor();
 	mDestroySignal.set_signal_with_state();
 	return flags::INF_MODEL_INFO_DESTROYING_MODEL;
 }
@@ -432,7 +465,7 @@ InfModelTextToText::flags InfModelTextToText::destroy_sync()
 InfModelTextToText::flags InfModelTextToText::register_context_process(InfTextToTextProcessor* in_processor, U32 in_context_length)
 {
 	MBASE_INF_MODEL_RETURN_UNINITIALIZED;
-	if(!in_processor)
+	if(!in_processor || !in_context_length)
 	{
 		return flags::INF_MODEL_ERR_INVALID_INPUT;
 	}
@@ -457,7 +490,14 @@ InfModelTextToText::flags InfModelTextToText::register_context_process(InfTextTo
 		return flags::INF_MODEL_INFO_PROCESSOR_IS_BEING_DESTROYED;
 	}
 	
-	in_processor->initialize(this, in_context_length);
+	if(mOccupiedContext + in_context_length > mTotalContextSize)
+	{
+		return flags::INF_MODEL_ERR_MODEL_CONTEXT_FULL;
+	}
+
+	mOccupiedContext += in_context_length;
+
+	in_processor->initialize(this, in_context_length, mbase::string::generate_uuid());
 	mProcessorListMutex.acquire();
 	mRegisteredProcessors.push_back(in_processor);
 	mProcessorListMutex.release();
@@ -636,6 +676,7 @@ GENERIC InfModelTextToText::_destroy_model()
 	mAssistantStart.clear();
 	mModelPath.clear();
 	mEndOfToken = 0;
+	mOccupiedContext = 0;
 	mModelTimer.clear_timers();
 
 	/* RESET ALL SIGNALS */
@@ -645,7 +686,6 @@ GENERIC InfModelTextToText::_destroy_model()
 
 	mIsInitialized = false;
 	mDestroyMethodSignal.set_signal();
-
 }
 
 GENERIC InfModelTextToText::_get_special_tokens(mbase::vector<inf_token>& out_tokens)
@@ -676,6 +716,7 @@ GENERIC InfModelTextToText::update()
 	// load and unload control
 	if(signal_init_method())
 	{
+		stop_processor();
 		mInitMethodSignal.reset_signal_with_state();
 		on_initialize();
 	}
@@ -702,6 +743,11 @@ GENERIC InfModelTextToText::update()
 		{
 			if(!t2tProcessor->signal_state_initializing())
 			{
+				mOccupiedContext -= t2tProcessor->get_context_size();
+				if(t2tProcessor->signal_init_fail_method())
+				{
+					t2tProcessor->on_initialize_fail(t2tProcessor->get_last_fail_code());
+				}
 				if(t2tProcessor->signal_destroy_method())
 				{
 					t2tProcessor->update(); // one last update to invoke the destroy method

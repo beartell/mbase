@@ -239,6 +239,30 @@ MBASE_INLINE typename serialize_helper<SerializedType>::value_type serialize_hel
 }
 
 template<>
+MBASE_INLINE typename serialize_helper<bool>::size_type serialize_helper<bool>::get_serialized_size() const noexcept
+{
+    return sizeof(typename serialize_helper<bool>::value_type);
+}
+
+template<>
+MBASE_INLINE GENERIC serialize_helper<bool>::serialize(char_stream& out_buffer) const
+{
+    out_buffer.putcn(static_cast<char>(*value ? 1 : 0));
+}
+
+template<>
+MBASE_INLINE typename serialize_helper<bool>::value_type serialize_helper<bool>::deserialize(IBYTEBUFFER in_src, SIZE_T in_length, SIZE_T& bytes_processed)
+{
+    if (in_length < sizeof(value_type))
+    {
+        throw mbase::invalid_size();
+    }
+    bytes_processed += sizeof(value_type);
+    PTR8 bf = reinterpret_cast<PTR8>(in_src);
+    return *bf != 0;
+}
+
+template<>
 MBASE_INLINE typename serialize_helper<I8>::size_type serialize_helper<I8>::get_serialized_size() const noexcept
 {
     return sizeof(typename serialize_helper<I8>::value_type);

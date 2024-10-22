@@ -264,6 +264,7 @@ public:
     MBASE_INLINE_EXPR character_sequence& replace(const_iterator in_begin, const_iterator in_end, const_pointer in_str, size_type in_count2); // IMPLEMENT
     MBASE_INLINE_EXPR character_sequence& replace(size_type in_pos, size_type in_count, size_type in_count2, value_type in_char); // IMPLEMENT
     MBASE_INLINE_EXPR character_sequence& replace(const_iterator in_begin, const_iterator in_end, size_type in_count2, value_type in_char); // IMPLEMENT
+    MBASE_INLINE_EXPR character_sequence& remove_all(value_type in_value);
     /* ===== STATE-MODIFIER METHODS END ===== */
 
     /* ===== OPERATOR STATE-MODIFIER METHODS BEGIN ===== */
@@ -2111,6 +2112,22 @@ MBASE_INLINE_EXPR typename character_sequence<SeqType, SeqBase, Allocator>::iter
     }
     // TODO: RETURN THE CORRECT THING
     return begin();
+}
+
+template<typename SeqType, typename SeqBase, typename Allocator>
+MBASE_INLINE_EXPR character_sequence<SeqType, SeqBase, Allocator>& character_sequence<SeqType, SeqBase, Allocator>::remove_all(value_type in_value)
+{
+    character_sequence newSequence;
+    for(iterator It = begin(); It != end(); ++It)
+    {
+        if(*It != in_value)
+        {
+            newSequence.push_back(*It);
+        }
+    }
+
+    *this = std::move(newSequence);
+    return *this;
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>

@@ -7,13 +7,16 @@
 
 MBASE_BEGIN
 
-#define MAIP_MODEL_LOAD_UNLOAD (1 << 0)
-#define MAIP_ADAPTER_LOAD_UNLOAD (1 << 1)
-#define MAIP_CONTEXT_LENGTH_MODIFICATION (1 << 2)
-#define MAIP_USER_ACCESS_MODIFICATION (1 << 3)
-#define MAIP_USER_CREATE_DELETE (1 << 4)
-#define MAIP_USER_MODIFICATION (1 << 5)
-#define MAIP_USER_STATIC (1 << 6)
+static U32 gMaipSecurityDefaultModelAccessLimit = 4;
+static U32 gMaipSecurityDefaultMaximumContextLength = 4096;
+
+#define MAIP_MODEL_LOAD_UNLOAD (1 << 0) // allow loading/unloading models
+#define MAIP_ADAPTER_LOAD_UNLOAD (1 << 1) // allow loading/unloading adapters
+#define MAIP_CONTEXT_LENGTH_MODIFICATION (1 << 2) // context length modification
+#define MAIP_USER_ACCESS_MODIFICATION (1 << 3) // model access modification
+#define MAIP_USER_CREATE_DELETE (1 << 4) // user deletion creation 
+#define MAIP_USER_MODIFICATION (1 << 5) // name and token modification
+#define MAIP_USER_STATIC (1 << 6) // makes user group parameters unchangable besides super user access
 
 //enum class maip_authority_flags : U32 {
 //	MODEL_LOAD_UNLOAD, // Allows user group to load and unload models
@@ -28,6 +31,7 @@ MBASE_BEGIN
 class InfMaipUser { // Useless unless it is associated with MAIP Program
 public:
 	using model_name_vector = mbase::vector<mbase::string>;
+	using size_type = SIZE_T;
 
 	enum class flags : U8 {
 		INF_MAIP_USER_SUCCESS,
@@ -39,6 +43,20 @@ public:
 	InfMaipUser(const InfMaipUser& in_rhs) = default;
 	InfMaipUser(InfMaipUser&& in_rhs) = default;
 	~InfMaipUser() = default;
+
+	InfMaipUser& operator=(const InfMaipUser& in_rhs) = default;
+	InfMaipUser& operator=(InfMaipUser&& in_rhs) = default;
+
+	bool is_superuser();
+	bool is_authorization_locked();
+	bool is_flags_set(U32 in_flags);
+	bool is_model_accessible(const mbase::string& in_modelname);
+	U32 get_model_access_limit();
+	U32 get_maximum_context_length();
+	const mbase::string& get_access_key();
+	const mbase::string& get_username();
+	U32 get_authority_flags();
+	const model_name_vector& get_accessible_models();
 
 	GENERIC set_distinct_model_access_limit(const U32& in_access_limit);
 	GENERIC set_maximum_context_length(const U32& in_context_length);
@@ -52,20 +70,15 @@ public:
 	GENERIC lock_authorization();
 	GENERIC unlock_authorization();
 
-	bool is_superuser();
-	bool is_authorization_locked();
-	bool is_flags_set(U32 in_flags);
-	bool is_model_accessible(const mbase::string& in_username);
-
 private:
-	U32 mAuthorityFlags;
-	U32 mDistinctModelAccessLimit;
-	U32 mMaximumContextLength;
+	U32 mAuthorityFlags = 0;
+	U32 mDistinctModelAccessLimit = 0;
+	U32 mMaximumContextLength = 0;
 	model_name_vector mAccessibleModels;
-	mbase::string mUsername;
-	mbase::string mAccessKey;
-	bool mIsSuperUser;
-	bool mIsAuthorizationLocked; // If this is true, new clients won't be able to associate themselves with this user.
+	mbase::string mUsername = "";
+	mbase::string mAccessKey = "";
+	bool mIsSuperUser = false;
+	bool mIsAuthorizationLocked = false; // If this is true, new clients won't be able to associate themselves with this user.
 };
 
 MBASE_END

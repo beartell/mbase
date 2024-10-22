@@ -32,8 +32,8 @@ public:
 	~PcConfig() = default;
 
 	flags get_config_param(const mbase::string& in_key, mbase::string& out_param) noexcept; 
-	mbase::string get_temp_path() const noexcept;
-	mbase::string get_root_path() const noexcept;
+	mbase::string get_temp_path() const noexcept; // On windows: C:/Windows/Temp, On Linux: /tmp
+	mbase::string get_data_path() const noexcept; // On windows: C:/ProgramData,  On Linux: /var/lib
 	const config_map& get_config_map() const noexcept;
 	bool is_initialized() const noexcept;
 
@@ -41,11 +41,13 @@ public:
 		PcDiagnostics& in_diagnostics,
 		const mbase::string& in_temp_path = "", 
 		const mbase::string& in_root_path = "", 
-		const mbase::string& in_config_path = ""
+		const mbase::string& in_data_path = "",
+		bool in_main_config = false,
+		const mbase::string& in_config_file_name = ""
 	);
 	flags set_temp_path(const mbase::string& in_path) noexcept;
+	flags set_data_path(const mbase::string& in_path) noexcept;
 	flags set_root_path(const mbase::string& in_path) noexcept;
-	flags set_config_path(const mbase::string& in_path) noexcept;
 	flags load_config_file(const mbase::string& in_file, config_map& out_cmap) noexcept;
 	flags update() noexcept;
 	flags update(config_map& in_cmap) noexcept;
@@ -58,14 +60,15 @@ public:
 	virtual GENERIC on_destroy();
 	virtual GENERIC on_config_update();
 	virtual GENERIC on_temp_path_update();
+	virtual GENERIC on_data_path_update();
 	virtual GENERIC on_root_path_update();
-	virtual GENERIC on_config_path_update();
 
 private:
 	PcDiagnostics* mDiagnosticsManager;
 	mbase::string mTempPath;
+	mbase::string mDataPath;
 	mbase::string mRootPath;
-	mbase::string mConfigPath;
+	mbase::string mConfigFileName;
 	config_map mConfigMap;
 	bool mIsInitialized;
 	bool mIsUpdated;

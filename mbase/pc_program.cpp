@@ -3,6 +3,7 @@
 #include <mbase/pc/pc_diagnostics.h>
 #include <mbase/pc/pc_io_manager.h>
 #include <mbase/pc/pc_net_manager.h>
+#include <mbase/pc/pc_state.h>
 
 MBASE_BEGIN
 
@@ -14,9 +15,7 @@ PcProgramBase::PcProgramBase() :
 	mProgramState(NULL),
 	mIsRunning(false),
 	mIsAuthorized(false),
-	mIsInitialized(false),
-	mSessionTime(0),
-	mLastSessionTime(0)
+	mIsInitialized(false)
 {
 
 }
@@ -51,11 +50,6 @@ PcProgramInformation PcProgramBase::get_program_info() const noexcept
 	return mProgramInfo;
 }
 
-event_manager* PcProgramBase::get_event_manager() noexcept
-{
-	return &mEventManager;
-}
-
 timer_loop* PcProgramBase::get_timer_loop() noexcept
 {
 	return &mTimerLoop;
@@ -71,7 +65,7 @@ bool PcProgramBase::is_initialized() const noexcept
 	return mIsInitialized;
 }
 
-GENERIC PcProgramBase::initialize(
+GENERIC PcProgramBase::initialize_system(
 	PcProgramInformation in_program_info,
 	PcConfig* in_configurator,
 	PcDiagnostics* in_diagnostics,
@@ -90,8 +84,10 @@ GENERIC PcProgramBase::initialize(
 
 GENERIC PcProgramBase::update_defaults()
 {
+	mConfig->update();
+	mProgramState->update();
 	mNetManager->update();
-	mIoManager->update();
+	//mIoManager->update();
 	mTimerLoop.run_timers();
 }
 

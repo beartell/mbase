@@ -19,8 +19,7 @@ struct MBASE_API PcProgramInformation {
 	U16 mVersionMajor;
 	U16 mVersionMinor;
 	U16 mVersionPatch;
-	mbase::string mProgramName;
-	mbase::string mProgramVersion;
+	mbase::string mProductVersion;
 	mbase::string mProductId;
 	mbase::string mProductName;
 	mbase::string mProductAuthor;
@@ -41,12 +40,11 @@ public:
 	PcIoManager* get_io_manager() noexcept;
 	PcNetManager* get_net_manager() noexcept;
 	PcProgramInformation get_program_info() const noexcept;
-	event_manager* get_event_manager() noexcept;
 	timer_loop* get_timer_loop() noexcept;
 	bool is_running() const noexcept;
 	bool is_initialized() const noexcept;
 
-	GENERIC initialize(
+	GENERIC initialize_system(
 		PcProgramInformation in_program_info,
 		PcConfig* in_configurator = NULL, 
 		PcDiagnostics* in_diagnostics = NULL,
@@ -66,13 +64,10 @@ private:
 	PcNetManager* mNetManager;
 	PcState* mProgramState;
 	PcProgramInformation mProgramInfo;
-	event_manager mEventManager;
 	timer_loop mTimerLoop;
 	bool mIsRunning;
 	bool mIsAuthorized;
 	bool mIsInitialized;
-	MBDate mSessionTime;
-	MBDate mLastSessionTime;
 };
 
 MBASE_END
