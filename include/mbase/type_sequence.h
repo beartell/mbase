@@ -36,20 +36,12 @@ public:
 
     MBASE_ND(MBASE_RESULT_IGNORE) static MBASE_INLINE bool is_equal(const_pointer in_lhs, const_pointer in_rhs, size_type in_length) noexcept 
     {
-        if (!memcmp(in_lhs, in_rhs, sizeof(value_type) * in_length))
-        {
-            return true;
-        }
-        return false;
+        return !memcmp(in_lhs, in_rhs, sizeof(value_type) * in_length) ? true : false;
     }
 
     MBASE_ND(MBASE_RESULT_IGNORE) static MBASE_INLINE bool is_equal(const_pointer in_lhs, const_pointer in_rhs) noexcept 
     {
-        if (!strcmp(in_lhs, in_rhs))
-        {
-            return true;
-        }
-        return false;
+        return !strcmp(in_lhs, in_rhs) ? true : false;
     }
 
     MBASE_ND(MBASE_RESULT_IGNORE) static MBASE_INLINE size_type length_bytes(const_pointer in_target) noexcept { return strlen(in_target); }
@@ -96,6 +88,7 @@ public:
     MBASE_ND(MBASE_RESULT_IGNORE) static MBASE_INLINE bool type_is_punctuation(const value_type& in_char) noexcept { return ispunct(in_char); }
     MBASE_ND(MBASE_RESULT_IGNORE) static MBASE_INLINE bool type_is_print(const value_type& in_char) noexcept { return isprint(in_char); }
     MBASE_ND(MBASE_RESULT_IGNORE) static MBASE_INLINE bool type_is_digit(const value_type& in_char) noexcept { return isdigit(in_char); }
+    MBASE_ND(MBASE_RESULT_IGNORE) static MBASE_INLINE pointer string_token(pointer in_data, const_pointer in_delim) { return strtok(in_data, in_delim); }
 };
 
 template <>
@@ -123,20 +116,12 @@ public:
 
     MBASE_ND(MBASE_RESULT_IGNORE) static MBASE_INLINE bool is_equal(const_pointer in_lhs, const_pointer in_rhs, size_type in_length) noexcept
     {
-        if (!memcmp(in_lhs, in_rhs, sizeof(value_type) * in_length))
-        {
-            return true;
-        }
-        return false;
+        return !memcmp(in_lhs, in_rhs, sizeof(value_type) * in_length) ? true : false;
     }
 
     MBASE_ND(MBASE_RESULT_IGNORE) static MBASE_INLINE bool is_equal(const_pointer in_lhs, const_pointer in_rhs) noexcept
     {
-        if (!wcscmp(in_lhs, in_rhs))
-        {
-            return true;
-        }
-        return false;
+        return !wcscmp(in_lhs, in_rhs) ? true : false;
     }
 
     MBASE_ND(MBASE_RESULT_IGNORE) static MBASE_INLINE size_type length_bytes(const_pointer in_target) noexcept { return wcslen(in_target); }
@@ -185,6 +170,7 @@ public:
     MBASE_ND(MBASE_RESULT_IGNORE) static MBASE_INLINE bool type_is_punctuation(const value_type& in_char) noexcept { return iswpunct(in_char); }
     MBASE_ND(MBASE_RESULT_IGNORE) static MBASE_INLINE bool type_is_print(const value_type& in_char) noexcept { return iswprint(in_char); }
     MBASE_ND(MBASE_RESULT_IGNORE) static MBASE_INLINE bool type_is_digit(const value_type& in_char) noexcept { return iswdigit(in_char); }
+    MBASE_ND(MBASE_RESULT_IGNORE) static MBASE_INLINE pointer string_token(pointer in_data, const_pointer in_delim) { return wcstok(in_data, in_delim); }
 };
 
 MBASE_STD_END

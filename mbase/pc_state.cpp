@@ -19,7 +19,6 @@ GENERIC PcStateFileHeader::serialize(char_stream& out_stream) const
 		throw invalid_size();
 	}
 	
-
 	out_stream.put_buffern(reinterpret_cast<CBYTEBUFFER>(mFileMagic), sizeof(mFileMagic));
 	mbase::serialize(mStateStructCount, out_stream);
 	mbase::serialize(mMbaseVersionMajor, out_stream);
@@ -246,7 +245,7 @@ PcState& PcState::operator=(PcState&& in_rhs)
 	return *this;
 }
 
-PcState::flags PcState::initialize(const mbase::string& in_object_name, const mbase::string& in_state_path)
+PcState::flags PcState::initialize(const mbase::string& in_object_name, const mbase::wstring& in_state_path)
 {
 	if (is_state_object_initialized())
 	{
@@ -260,7 +259,7 @@ PcState::flags PcState::initialize(const mbase::string& in_object_name, const mb
 		mKvMap.clear();
 	}
 
-	mbase::string statePath = in_state_path;
+	mbase::wstring statePath = in_state_path;
 	if(!statePath.size())
 	{
 		statePath = gDefaultStateDirectory;
@@ -278,10 +277,15 @@ PcState::flags PcState::initialize(const mbase::string& in_object_name, const mb
 
 	if (in_object_name.size())
 	{
-		mFullStateName = statePath + in_object_name;
+		mFullStateName = mbase::to_utf8(statePath) + in_object_name;
 		mObjectName = in_object_name;
 		mbase::io_file ioStateFile;
-		ioStateFile.open_file(mFullStateName + ".mbsf", mbase::io_file::access_mode::READ_ACCESS, mbase::io_file::disposition::APPEND);
+		if(mbase::string::get_extension(mFullStateName) != "mbsf")
+		{
+			mFullStateName += ".mbsf";
+		}
+		ioStateFile.open_file(mbase::from_utf8(mFullStateName), mbase::io_file::access_mode::READ_ACCESS, mbase::io_file::disposition::APPEND);
+
 		mIsInitialized = true; // FOR NOW, IT WILL WE MARKED INITIALIZED REGARDLESS OF ALL THE PROBLEMS
 		if (ioStateFile.is_file_open())
 		{
@@ -335,7 +339,7 @@ PcState::flags PcState::initialize(const mbase::string& in_object_name, const mb
 	return flags::STATE_SUCCESS;
 }
 
-PcState::flags PcState::initialize_overwrite(const mbase::string& in_object_name, const mbase::string& in_state_path)
+PcState::flags PcState::initialize_overwrite(const mbase::string& in_object_name, const mbase::wstring& in_state_path)
 {
 	if (is_state_object_initialized())
 	{
@@ -349,7 +353,7 @@ PcState::flags PcState::initialize_overwrite(const mbase::string& in_object_name
 		mKvMap.clear();
 	}
 
-	mbase::string statePath = in_state_path;
+	mbase::wstring statePath = in_state_path;
 	if (!statePath.size())
 	{
 		statePath = gDefaultStateDirectory;
@@ -367,10 +371,14 @@ PcState::flags PcState::initialize_overwrite(const mbase::string& in_object_name
 
 	if (in_object_name.size())
 	{
-		mFullStateName = statePath + in_object_name;
+		mFullStateName = mbase::to_utf8(statePath) + in_object_name;
+		if(mbase::string::get_extension(mFullStateName) != "mbsf")
+		{
+			mFullStateName += ".mbsf";
+		}
 		mObjectName = in_object_name;
 		mbase::io_file ioStateFile;
-		ioStateFile.open_file(mFullStateName + ".mbsf");
+		ioStateFile.open_file(mbase::from_utf8(mFullStateName));
 		mIsInitialized = true; // FOR NOW, IT WILL WE MARKED INITIALIZED REGARDLESS OF ALL THE PROBLEMS
 	}
 
@@ -411,7 +419,7 @@ GENERIC PcState::update()
 	if (is_state_modified())
 	{
 		mbase::io_file iof;
-		iof.open_file(mFullStateName + ".mbsf");
+		iof.open_file(mbase::from_utf8(mFullStateName));
 		if (iof.is_file_open())
 		{
 			// write the state map into the .mbsf file

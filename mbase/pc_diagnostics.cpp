@@ -47,7 +47,7 @@ GENERIC PcDiagnostics::dump_logs_to_file() noexcept
 	if (mLogList.size())
 	{
 		mbase::io_file iof;
-		iof.open_file(mDiagnosticsName + ".txt", mbase::io_file::access_mode::RW_ACCESS, mbase::io_file::disposition::OPEN);
+		iof.open_file(mbase::from_utf8(mDiagnosticsName + ".txt"), mbase::io_file::access_mode::RW_ACCESS, mbase::io_file::disposition::OPEN);
 		iof.set_file_pointer(0, mbase::io_base::move_method::MV_END);
 
 		for(auto & n : mLogList)
@@ -59,7 +59,7 @@ GENERIC PcDiagnostics::dump_logs_to_file() noexcept
 	}
 }
 
-GENERIC PcDiagnostics::dump_logs_to_file(const mbase::string& in_file) noexcept
+GENERIC PcDiagnostics::dump_logs_to_file(const mbase::wstring& in_file) noexcept
 {
 	if (mLogList.size())
 	{

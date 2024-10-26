@@ -73,11 +73,8 @@ GENERIC InfMaipUser::set_maximum_context_length(const U32& in_context_length)
 
 InfMaipUser::flags InfMaipUser::add_accessible_model(const mbase::string& in_modelname)
 {
-	if (!is_flags_set(MAIP_USER_ACCESS_MODIFICATION))
-	{
-		return flags::INF_MAIP_USER_UNAUTHORIZED_OPERATION;
-	}
 	model_name_vector::iterator accessibleModels = std::find(mAccessibleModels.begin(), mAccessibleModels.end(), in_modelname);
+
 	if (accessibleModels == mAccessibleModels.end())
 	{
 		mAccessibleModels.push_back(in_modelname);
@@ -87,11 +84,6 @@ InfMaipUser::flags InfMaipUser::add_accessible_model(const mbase::string& in_mod
 
 InfMaipUser::flags InfMaipUser::remove_accessible_model(const mbase::string& in_modelname)
 {
-	if(!is_flags_set(MAIP_USER_ACCESS_MODIFICATION))
-	{
-		return flags::INF_MAIP_USER_UNAUTHORIZED_OPERATION;
-	}
-
 	model_name_vector::iterator accessibleModels = std::find(mAccessibleModels.begin(), mAccessibleModels.end(), in_modelname);
 	if(accessibleModels != mAccessibleModels.end())
 	{
@@ -113,7 +105,7 @@ GENERIC InfMaipUser::set_access_key(const mbase::string& in_key)
 
 GENERIC InfMaipUser::add_authority_flags(U32 in_flags)
 {
-	mAuthorityFlags | in_flags;
+	mAuthorityFlags |= in_flags;
 }
 
 GENERIC InfMaipUser::remove_authority_flags(U32 in_flags)

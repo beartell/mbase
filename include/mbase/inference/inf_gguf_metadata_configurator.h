@@ -149,7 +149,15 @@ public:
 	using kv_map = std::unordered_map<mbase::string, I32>;
 	using size_type = SIZE_T;
 
-	GgufMetaConfigurator(const mbase::string in_filename);
+	enum class purification_error : U8 {
+		SUCCESS,
+		ERR_ARCH_NOT_SET,
+		ERR_BLOCK_COUNT_NOT_FOUND,
+		ERR_EMBEDDING_LENGTH_NOT_FOUND,
+		ERR_ATTENTION_HEAD_COUNT_NOT_FOUND
+	};
+
+	GgufMetaConfigurator(const mbase::wstring in_filename);
 	~GgufMetaConfigurator();
 
 	template<typename T>
@@ -183,13 +191,14 @@ public:
 		}
 	}
 	GENERIC remove_key(const mbase::string& in_key);
-	
+	purification_error apply_purification(const mbase::string& in_system_prompt);
+
 private:
 	GENERIC _clear_context();
 	gguf_context* mGgufContext;
 	kv_map mMetadataMap;
 	bool mIsModified;
-	mbase::string mGgufFile;
+	mbase::wstring mGgufFile;
 	size_type mOldMetaSize;
 };
 

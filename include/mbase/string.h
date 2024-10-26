@@ -283,6 +283,17 @@ public:
     MBASE_ND(MBASE_RESULT_IGNORE) I32 to_i64() noexcept { return SeqBase::cnv_to_i64(this->c_str()); }
     MBASE_ND(MBASE_RESULT_IGNORE) F32 to_f32() noexcept { return SeqBase::cnv_to_f32(this->c_str()); }
     MBASE_ND(MBASE_RESULT_IGNORE) F64 to_f64() noexcept { return SeqBase::cnv_to_f64(this->c_str()); }
+    MBASE_ND(MBASE_RESULT_IGNORE) static MBASE_INLINE character_sequence get_extension(character_sequence in_rhs)
+    {
+        mbase::vector<character_sequence> listOfString;
+        in_rhs.split(".", listOfString);
+        if(listOfString.size())
+        {
+            return listOfString[listOfString.size() - 1];
+        }
+
+        return character_sequence();
+    }
     MBASE_INLINE GENERIC serialize(char_stream& out_buffer) const;
     /* ===== NON-MODIFIER METHODS END ===== */
 
@@ -2237,13 +2248,15 @@ template<typename SeqType, typename SeqBase, typename Allocator>
 template<typename SourceContainer>
 MBASE_INLINE GENERIC character_sequence<SeqType, SeqBase, Allocator>::split(const character_sequence& in_delimiters, SourceContainer& out_strings) noexcept
 {
+    character_sequence<SeqType, SeqBase, Allocator> oldString(mRawData, mSize);
     const_pointer delims = in_delimiters.c_str();
-    pointer stringOut = strtok(mRawData, delims);
+    pointer stringOut = SeqBase::string_token(mRawData, delims);
     while (stringOut != nullptr)
     {
         out_strings.push_back(stringOut);
-        stringOut = strtok(nullptr, delims);
+        stringOut = SeqBase::string_token(nullptr, delims);
     }
+    *this = std::move(oldString);
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>

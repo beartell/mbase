@@ -70,15 +70,26 @@ struct MBASE_API InfClientSession {
 
 struct MBASE_API InfProgramInformation {
 	PcProgramInformation mProgramInformation;
-	mbase::string mDataPath;
-	mbase::string mExecutionPath;
-	mbase::string mTempPath;
+	mbase::wstring mDataPath;
+	mbase::wstring mExecutionPath;
+	mbase::wstring mTempPath;
+};
+
+struct MBASE_API InfRegisteredModelInformation {
+	mbase::string mModelName;
+	mbase::string mParamCount;
+	mbase::string mTemplateId;
+	mbase::string mSystemPrompt;
+	U32 mEmdeddingLength;
+	U32 mBlockCount;
+	U32 mHeadCount;
 };
 
 class MBASE_API InfProgram : mbase::PcProgramBase {
 public:
 	using accepted_client_map = std::unordered_map<mbase::string, InfClientSession>;
 	using registered_model_map = std::unordered_map<mbase::string, InfModelTextToText*>;
+	using model_information_map = std::unordered_map<mbase::string, InfRegisteredModelInformation>;
 	using inference_user_map = std::unordered_map<mbase::string, InfMaipUser>;
 
 	enum class flags : U8 {
@@ -86,7 +97,11 @@ public:
 		INF_PROGRAM_ERR_MODEL_ALREADY_BEING_HOSTED,
 		INF_PROGRAM_ERR_MODEL_IS_NOT_INITIALIZED,
 		INF_PROGRAM_ERR_MODEL_NAME_MISMATCH,
-		INF_PROGRAM_ERR_MODEL_MISSING
+		INF_PROGRAM_ERR_MODEL_MISSING,
+		INF_PROGRAM_ERR_USR_NAME_NOT_GIVEN,
+		INF_PROGRAM_ERR_USR_NAME_TOO_LONG,
+		INF_PROGRAM_ERR_USR_ALREADY_EXISTS,
+		INF_PROGRAM_ERR_USR_NOT_FOUND
 	};
 
 	enum class maip_err_code : U16 {
@@ -125,18 +140,19 @@ public:
 	bool is_session_token_valid(const mbase::string& in_session_token);
 	#ifdef MBASE_INTERNAL_API
 	accepted_client_map& get_accepted_clients();
+	registered_model_map& get_registered_models();
 	#endif
 	
 	maip_err_code inf_access_request(const mbase::string& in_username, const mbase::string& in_access_token, mbase::string& out_session_token);
 	maip_err_code inf_destroy_session(const mbase::string& in_session_token);
 	maip_err_code inf_get_accessible_models(const mbase::string& in_session_token, mbase::vector<mbase::string>& out_models);
 	maip_err_code inf_get_context_ids(const mbase::string& in_session_token, mbase::vector<U64>& out_contexts);
-	maip_err_code inf_create_context(const mbase::string& in_session_token, std::shared_ptr<mbase::PcNetPeerClient> in_peer, const mbase::string& in_model, const U32& in_ctsize, U64& out_ctxId, const mbase::vector<InfSamplingInput>& in_samplers = mbase::vector<InfSamplingInput>());
+	maip_err_code inf_create_context(const mbase::string& in_session_token, std::shared_ptr<mbase::PcNetPeerClient> in_peer, const mbase::string& in_model, const U32& in_ctsize, const mbase::vector<InfSamplingInput>& in_samplers = mbase::vector<InfSamplingInput>());
 	maip_err_code inf_clear_context_history(const mbase::string& in_session_token, const U64& in_ctxId);
 	maip_err_code inf_get_context_status(const mbase::string& in_session_token, const U64& in_ctxId);
 	maip_err_code inf_destroy_context(const mbase::string& in_session_token, const U64& in_ctxId);
 	maip_err_code inf_get_program_models(const mbase::string& in_session_token, mbase::vector<mbase::string>& out_models);
-	maip_err_code inf_load_model(const mbase::string& in_session_token, const mbase::string& in_modelname);
+	maip_err_code inf_load_model(const mbase::string& in_session_token, const mbase::string& in_modelname, const U32& in_total_context_size);
 	maip_err_code inf_unload_model(const mbase::string& in_session_token, const mbase::string& in_modelname);
 	//maip_err_code inf_load_adapter(const mbase::string& in_session_token, const mbase::string& in_adapter_name);
 	//maip_err_code inf_unload_adapter(const mbase::string& in_session_token, const mbase::string& in_adapter_name);
@@ -166,6 +182,20 @@ public:
 	GENERIC initialize(InfProgramInformation in_program_information);
 	flags host_model(InfModelTextToText* in_model);
 	flags release_model(const mbase::string& in_model_name);
+	flags create_user(const mbase::string& in_username,
+		const U32& in_model_access_limit,
+		const U32& in_maximum_context_length,
+		const bool& in_superuser,
+		const bool& in_authorization_locked,
+		const mbase::string& in_access_token,
+		const U32& in_authority_flags,
+		const bool& in_is_permanent,
+		mbase::string& out_access_token
+	);
+	flags update_users_model_access_limit(const mbase::string& in_username, const U32& in_new_access_limit);
+	flags update_users_maximum_context(const mbase::string& in_username, const U32& in_new_context_length);
+	flags authorize_user_on_model(const mbase::string& in_username, const mbase::string& in_model);
+	//flags delete_user(const mbase::string& in_username);
 
 	GENERIC update() override;
 
@@ -177,6 +207,7 @@ private:
 
 	accepted_client_map mSessionMap;
 	registered_model_map mRegisteredModels;
+	model_information_map mModelInformationMap;
 	inference_user_map mUserMap;
 	U64 mClientSessionIdCounter = 0;
 	U32 mModelHostingLimit;

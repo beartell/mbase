@@ -75,18 +75,18 @@ public:
 
 	/* ===== BUILDER METHODS BEGIN ===== */
 	MBASE_INLINE io_file() noexcept;
-	MBASE_INLINE io_file(const mbase::string& in_filename, access_mode in_accmode = access_mode::RW_ACCESS, disposition in_disp = disposition::OVERWRITE, bool in_async = false) noexcept;
+	MBASE_INLINE io_file(const mbase::wstring& in_filename, access_mode in_accmode = access_mode::RW_ACCESS, disposition in_disp = disposition::OVERWRITE, bool in_async = false) noexcept;
 	MBASE_INLINE ~io_file() noexcept;
 	/* ===== BUILDER METHODS END ===== */
 
 	/* ===== OBSERVATION METHODS BEGIN ===== */
 	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE bool is_file_open() const noexcept;
-	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE mbase::string get_file_name() const noexcept;
+	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE mbase::wstring get_file_name() const noexcept;
 	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE size_type get_file_size() const noexcept;
 	/* ===== OBSERVATION METHODS END ===== */
 
 	/* ===== STATE-MODIFIER METHODS BEGIN ===== */
-	MBASE_INLINE os_file_handle open_file(const mbase::string& in_filename, access_mode in_accmode = access_mode::RW_ACCESS, disposition in_disp = disposition::OVERWRITE, bool in_async = false) noexcept;
+	MBASE_INLINE os_file_handle open_file(const mbase::wstring& in_filename, access_mode in_accmode = access_mode::RW_ACCESS, disposition in_disp = disposition::OVERWRITE, bool in_async = false) noexcept;
 	MBASE_INLINE GENERIC close_file() noexcept;
 	MBASE_INLINE GENERIC clear_file() noexcept;
 	MBASE_INLINE size_type write_data(const IBYTEBUFFER in_src) override;
@@ -100,14 +100,14 @@ public:
 	/* ===== STATE-MODIFIER METHODS END ===== */
 
 private:
-	mbase::string mFileName;
+	mbase::wstring mFileName;
 };
 
 MBASE_INLINE io_file::io_file() noexcept : mFileName()
 {
 }
 
-MBASE_INLINE io_file::io_file(const mbase::string& in_filename, access_mode in_accmode, disposition in_disp, bool in_async) noexcept : mFileName(in_filename)
+MBASE_INLINE io_file::io_file(const mbase::wstring& in_filename, access_mode in_accmode, disposition in_disp, bool in_async) noexcept : mFileName(in_filename)
 {
 	open_file(in_filename, in_accmode, in_disp, in_async);
 }
@@ -122,7 +122,7 @@ MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE bool io_file::is_file_open() const noexc
 	return mOperateReady;
 }
 
-MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE mbase::string io_file::get_file_name() const noexcept 
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE mbase::wstring io_file::get_file_name() const noexcept 
 {
 	return mFileName;
 }
@@ -146,7 +146,7 @@ MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE typename io_file::size_type io_file::get
 #endif
 }
 
-MBASE_INLINE io_base::os_file_handle io_file::open_file(const mbase::string& in_filename, access_mode in_accmode, disposition in_disp, bool is_async) noexcept
+MBASE_INLINE io_base::os_file_handle io_file::open_file(const mbase::wstring& in_filename, access_mode in_accmode, disposition in_disp, bool is_async) noexcept
 {
 #ifdef MBASE_PLATFORM_WINDOWS
 	DWORD fileAttrs = FILE_ATTRIBUTE_NORMAL;
@@ -156,7 +156,7 @@ MBASE_INLINE io_base::os_file_handle io_file::open_file(const mbase::string& in_
 	}
 	
 	mFileName = in_filename;
-	PTRGENERIC rawHandle = CreateFileA(mFileName.c_str(), (DWORD)in_accmode, FILE_SHARE_READ, nullptr, (DWORD)in_disp, fileAttrs, nullptr);	
+	PTRGENERIC rawHandle = CreateFileW(mFileName.c_str(), (DWORD)in_accmode, FILE_SHARE_READ, nullptr, (DWORD)in_disp, fileAttrs, nullptr);	
 	
 	if (rawHandle == INVALID_HANDLE_VALUE)
 	{

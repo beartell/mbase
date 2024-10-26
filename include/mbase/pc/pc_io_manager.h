@@ -52,7 +52,7 @@ public:
 	_sync_handle _get_sync_handle();
 
 	flags initialize(U32 in_max_write_count = gIoManagerMaxWritesDefault, U32 in_max_read_count = gIoManagerMaxReadsDefault);
-	flags register_handler(const mbase::string& in_filename, PcIoHandler& out_handler, bool in_stream_polled = true);
+	flags register_handler(const mbase::wstring& in_filename, PcIoHandler& out_handler, bool in_stream_polled = true);
 	flags unregister_handler(PcIoHandler& in_handler);
 	flags add_handler(PcIoHandler& in_handler);
 	flags update(); // SHOULD BE CALLED ON LOGIC LOOP

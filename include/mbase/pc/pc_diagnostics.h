@@ -54,7 +54,7 @@ public:
 	GENERIC flush_logs() noexcept;
 	GENERIC print_logs() const noexcept;
 	GENERIC dump_logs_to_file() noexcept;
-	GENERIC dump_logs_to_file(const mbase::string& in_file) noexcept;
+	GENERIC dump_logs_to_file(const mbase::wstring& in_file) noexcept;
 
 private:
 	mbase::string _build_log_heading(flags in_log_type, flags in_log_importance) noexcept;

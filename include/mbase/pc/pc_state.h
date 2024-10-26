@@ -9,9 +9,9 @@
 MBASE_BEGIN
 
 #ifdef MBASE_PLATFORM_WINDOWS
-static mbase::string gDefaultStateDirectory = ".\\";
+static mbase::wstring gDefaultStateDirectory = L".\\";
 #elif MBASE_PLATFORM_UNIX
-static mbase::string gDefaultStateDirectory = "./";
+static mbase::wstring gDefaultStateDirectory = "./";
 #endif // MBASE_PLATFORM_WINDOWS
 
 struct MBASE_API PcStateFileHeader {
@@ -69,8 +69,8 @@ public:
 
 	PcState& operator=(PcState&& in_rhs);
 
-	flags initialize(const mbase::string& in_object_name, const mbase::string& in_state_path = gDefaultStateDirectory);
-	flags initialize_overwrite(const mbase::string& in_object_name, const mbase::string& in_state_path = gDefaultStateDirectory);
+	flags initialize(const mbase::string& in_object_name, const mbase::wstring& in_state_path = gDefaultStateDirectory);
+	flags initialize_overwrite(const mbase::string& in_object_name, const mbase::wstring& in_state_path = gDefaultStateDirectory);
 	template<typename T>
 	flags set_state(const mbase::string& in_key, const T& in_value)
 	{

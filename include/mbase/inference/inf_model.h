@@ -80,20 +80,26 @@ public:
 		INF_MODEL_ERR_GENERIC
 	};
 
+	enum class init_fail_code : U8 {
+		NOT_ENOUGH_MEMORY,
+		MBASE_PARAMS_DONT_MATCH,
+		PATH_NOT_FOUND,
+		LLAMA_SYSTEM_ERROR
+	};
+
 	InfModelTextToText();
 	~InfModelTextToText();
 
 	bool is_available(const U32& in_context_size);
+	bool signal_init_fail_method() const;
 	bool signal_init_method() const;
 	bool signal_destroy_method() const;
 	llama_model* get_raw_model();
 	flags get_special_tokens(mbase::vector<inf_token>& out_tokens);
 	flags get_special_tokens(mbase::vector<mbase::string>& out_tokens);
 	flags get_model_name(mbase::string& out_name);
-	flags get_vocabulary_type(mbase::string& out_type);
 	flags get_architecture(mbase::string& out_architecture);
-	flags get_finetune_type(mbase::string& out_type);
-	flags get_embedding_length(I32& out_length);
+	flags get_embedding_length(U32& out_length);
 	flags get_rope_type(mbase::string& out_type);
 	flags get_sys_start(mbase::string& out_start);
 	flags get_sys_start(mbase::vector<inf_token>& out_tokens);
@@ -107,23 +113,24 @@ public:
 	flags get_eot_token(inf_token& out_token);
 	flags get_lf_token(inf_token& out_token);
 	flags get_vocab_count(I32& out_count);
-	flags get_model_param_count(size_type& out_count);
-	flags get_model_params(mbase::unordered_map<mbase::string, mbase::string>& out_params);
 	flags get_size(size_type& out_size);
 	// flags get_template_identifier(mbase::string& out_identifier); ---> Will be implemented when the specification is complete
 	bool is_token_eof_generation(inf_token in_token);
 	flags is_token_special(const mbase::string& in_string);
 	flags is_token_control(inf_token in_token);
-	flags get_metadata_count(size_type& out_count);
 	U32 get_total_context_size();
 	U32 get_occupied_context_size();
 
-	flags initialize_model(const mbase::string& in_path, const U32& in_total_context_size, I32 in_gpu_layers = -1);
-	flags initialize_model_sync(const mbase::string& in_path, const U32& in_total_context_size, I32 in_gpu_layers = -1);
+	static bool get_mbase_chat_template_id(const mbase::string& in_architecture, mbase::string& out_id);
+
+	flags initialize_model(const mbase::wstring& in_path, const U32& in_total_context_size, I32 in_gpu_layers = -1);
+	flags initialize_model_sync(const mbase::wstring& in_path, const U32& in_total_context_size, I32 in_gpu_layers = -1);
+	flags load_model();
 	flags destroy();
 	flags destroy_sync();
 	flags register_context_process(InfTextToTextProcessor* in_processor, U32 in_context_length);
 
+	virtual GENERIC on_initialize_fail(init_fail_code out_fail_code);
 	virtual GENERIC on_initialize() = 0;
 	virtual GENERIC on_destroy() = 0;
 
@@ -131,28 +138,39 @@ public:
 	GENERIC update_t() override;
 
 private:
-
 	GENERIC _initialize_model();
 	GENERIC _destroy_model();
 	GENERIC _get_special_tokens(mbase::vector<inf_token>& out_tokens);
 	GENERIC _get_special_tokens(mbase::vector<mbase::string>& out_tokens);
 
 	llama_model* mModel;
-	mbase::string mEndOfTokenString;
+	mbase::string mModelName;
+	mbase::string mModelArchitecture;
+	mbase::string mEmbeddedSystemPrompt;
 	mbase::string mUsrStart;
-	mbase::unordered_map<mbase::string, mbase::string> mModelKvals;
 	mbase::string mSystemStart;
 	mbase::string mAssistantStart; // maybe the same if the system and assistant is the same in a program
-	mbase::string mModelPath;
+	mbase::string mSystemEnd;
+	mbase::string mAssistantEnd;
+	mbase::string mUserEnd;
+	mbase::wstring mModelPath;
 	llama_model_params mSuppliedParams;
 	inf_token mEndOfToken;
+	processor_signal mInitFailSignal;
 	processor_signal mInitMethodSignal;
 	processor_signal mDestroyMethodSignal;
 	mbase::vector<inf_token> mSystemStartTokenized;
 	mbase::vector<inf_token> mAssistantStartTokenized;
 	mbase::vector<inf_token> mUserStartTokenized;
+	U64 mModelSize;
 	U32 mOccupiedContext;
 	U32 mTotalContextSize;
+	U32 mBlockCount;
+	U32 mHeadCount;
+	U32 mEmbeddingLength;
+	F32 mQuantizationCoefficient;
+	init_fail_code mInitFailCode;
+	bool mHasEmbeddedSystemPrompt;
 };
 
 // class MBASE_API InfModelImageToText : public InfModelBase{ // possibly using llava

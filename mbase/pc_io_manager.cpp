@@ -86,7 +86,7 @@ typename PcIoManager::_sync_handle PcIoManager::_get_sync_handle()
 	return mSyncHandle;
 }
 
-PcIoManager::flags PcIoManager::register_handler(const mbase::string& in_filename, PcIoHandler& out_handler, bool in_stream_polled)
+PcIoManager::flags PcIoManager::register_handler(const mbase::wstring& in_filename, PcIoHandler& out_handler, bool in_stream_polled)
 {
 	MBASE_IOMNG_RETURN_UNINITIALIZED;
 

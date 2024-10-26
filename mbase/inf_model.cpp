@@ -1,5 +1,7 @@
 #include <mbase/inference/inf_model.h>
 #include <mbase/inference/inf_processor.h>
+#include <mbase/inference/inf_gguf_metadata_configurator.h>
+#include <mbase/inference/inf_chat_templates.h>
 #include <iostream>
 
 MBASE_BEGIN
@@ -101,12 +103,16 @@ bool InfModelBase::signal_destroying() const
 InfModelTextToText::InfModelTextToText() :
 	mModel(NULL),
 	mEndOfToken(0),
-	mModelKvals(),
-	mEndOfTokenString(),
 	mUsrStart(),
 	mSystemStart(),
 	mAssistantStart(),
-	mOccupiedContext(0)
+	mOccupiedContext(0),
+	mBlockCount(0),
+	mHeadCount(0),
+	mEmbeddingLength(0),
+	mQuantizationCoefficient(0.0f),
+	mModelSize(0),
+	mHasEmbeddedSystemPrompt(false)
 {
 
 }
@@ -147,6 +153,11 @@ bool InfModelTextToText::is_available(const U32& in_context_size)
 	return true;
 }
 
+bool InfModelTextToText::signal_init_fail_method() const
+{
+	return mInitFailSignal.get_signal();
+}
+
 bool InfModelTextToText::signal_init_method() const
 {
 	return mInitMethodSignal.get_signal();
@@ -179,46 +190,28 @@ InfModelTextToText::flags InfModelTextToText::get_special_tokens(mbase::vector<m
 InfModelTextToText::flags InfModelTextToText::get_model_name(mbase::string& out_name)
 {
 	MBASE_INF_MODEL_RETURN_UNINITIALIZED;
-	out_name = mModelKvals["general.basename"];
-	return flags::INF_MODEL_SUCCESS;
-}
-
-InfModelTextToText::flags InfModelTextToText::get_vocabulary_type(mbase::string& out_type)
-{
-	MBASE_INF_MODEL_RETURN_UNINITIALIZED;
+	out_name = mModelName;
 	return flags::INF_MODEL_SUCCESS;
 }
 
 InfModelTextToText::flags InfModelTextToText::get_architecture(mbase::string& out_architecture)
 {
 	MBASE_INF_MODEL_RETURN_UNINITIALIZED;
-	out_architecture = mModelKvals["general.architecture"];
+	out_architecture = mModelArchitecture;
 	return flags::INF_MODEL_SUCCESS;
 }
 
-InfModelTextToText::flags InfModelTextToText::get_finetune_type(mbase::string& out_type)
+InfModelTextToText::flags InfModelTextToText::get_embedding_length(U32& out_length)
 {
 	MBASE_INF_MODEL_RETURN_UNINITIALIZED;
-	out_type = mModelKvals["general.finetune"];
-	return flags::INF_MODEL_SUCCESS;
-}
-
-InfModelTextToText::flags InfModelTextToText::get_embedding_length(I32& out_length)
-{
-	MBASE_INF_MODEL_RETURN_UNINITIALIZED;
-	mbase::string outArchitecture;
-	get_architecture(outArchitecture);
-
-	mbase::string totalKey = outArchitecture + ".embedding_length";
-	mbase::string embeddingLengthString = mModelKvals[totalKey];
-	out_length = embeddingLengthString.to_i32();
+	out_length = mEmbeddingLength;
 	return flags::INF_MODEL_SUCCESS;
 }
 
 InfModelTextToText::flags InfModelTextToText::get_rope_type(mbase::string& out_type)
 {
 	MBASE_INF_MODEL_RETURN_UNINITIALIZED;
-
+	// IMPLEMENT
 	return flags::INF_MODEL_SUCCESS;
 }
 
@@ -267,21 +260,21 @@ InfModelTextToText::flags InfModelTextToText::get_usr_start(mbase::vector<inf_to
 InfModelTextToText::flags InfModelTextToText::get_sys_end(mbase::string& out_end)
 {
 	MBASE_INF_MODEL_RETURN_UNINITIALIZED;
-	out_end = mEndOfTokenString;
+	out_end = mSystemEnd;
 	return flags::INF_MODEL_SUCCESS;
 }
 
 InfModelTextToText::flags InfModelTextToText::get_assistant_end(mbase::string& out_end)
 {
 	MBASE_INF_MODEL_RETURN_UNINITIALIZED;
-	out_end = mEndOfTokenString;
+	out_end = mAssistantEnd;
 	return flags::INF_MODEL_SUCCESS;
 }
 
 InfModelTextToText::flags InfModelTextToText::get_usr_end(mbase::string& out_end)
 {
 	MBASE_INF_MODEL_RETURN_UNINITIALIZED;
-	out_end = mEndOfTokenString;
+	out_end = mUserEnd;
 	return flags::INF_MODEL_SUCCESS;
 }
 
@@ -304,20 +297,6 @@ InfModelTextToText::flags InfModelTextToText::get_vocab_count(I32& out_count)
 	MBASE_INF_MODEL_RETURN_UNINITIALIZED;
 	out_count = llama_n_vocab(mModel);
 	return flags::INF_MODEL_SUCCESS;;
-}
-
-InfModelTextToText::flags InfModelTextToText::get_model_param_count(size_type& out_count)
-{
-	MBASE_INF_MODEL_RETURN_UNINITIALIZED;
-	out_count = llama_model_meta_count(mModel);
-	return flags::INF_MODEL_SUCCESS;
-}
-
-InfModelTextToText::flags InfModelTextToText::get_model_params(mbase::unordered_map<mbase::string, mbase::string>& out_params)
-{
-	MBASE_INF_MODEL_RETURN_UNINITIALIZED;
-	out_params = mModelKvals;
-	return flags::INF_MODEL_SUCCESS;
 }
 
 InfModelTextToText::flags InfModelTextToText::get_size(size_type& out_size)
@@ -360,13 +339,6 @@ InfModelTextToText::flags InfModelTextToText::is_token_control(inf_token in_toke
 	return flags::INF_MODEL_ERR_GENERIC;
 }
 
-InfModelTextToText::flags InfModelTextToText::get_metadata_count(size_type& out_count)
-{
-	MBASE_INF_MODEL_RETURN_UNINITIALIZED;
-	out_count = mModelKvals.size();
-	return flags::INF_MODEL_SUCCESS;
-}
-
 U32 InfModelTextToText::get_total_context_size()
 {
 	return mTotalContextSize;
@@ -377,7 +349,7 @@ U32 InfModelTextToText::get_occupied_context_size()
 	return mOccupiedContext;
 }
 
-InfModelTextToText::flags InfModelTextToText::initialize_model(const mbase::string& in_path, const U32& in_total_context_size, I32 in_gpu_layers)
+InfModelTextToText::flags InfModelTextToText::initialize_model(const mbase::wstring& in_path, const U32& in_total_context_size, I32 in_gpu_layers)
 {
 	if(is_initialized())
 	{
@@ -399,7 +371,6 @@ InfModelTextToText::flags InfModelTextToText::initialize_model(const mbase::stri
 	mTotalContextSize = in_total_context_size;
 	mSuppliedParams.n_gpu_layers = in_gpu_layers;
 	mSuppliedParams.split_mode = LLAMA_SPLIT_MODE_NONE;
-
 	mModelPath = in_path;
 
 	mInitializeSignal.set_signal_with_state();
@@ -407,7 +378,7 @@ InfModelTextToText::flags InfModelTextToText::initialize_model(const mbase::stri
 	return flags::INF_MODEL_INFO_INITIALIZING_MODEL;
 }
 
-InfModelTextToText::flags InfModelTextToText::initialize_model_sync(const mbase::string& in_path, const U32& in_total_context_size, I32 in_gpu_layers)
+InfModelTextToText::flags InfModelTextToText::initialize_model_sync(const mbase::wstring& in_path, const U32& in_total_context_size, I32 in_gpu_layers)
 {
 	initialize_model(in_path, in_total_context_size, in_gpu_layers);
 
@@ -504,152 +475,52 @@ InfModelTextToText::flags InfModelTextToText::register_context_process(InfTextTo
 	return flags::INF_MODEL_INFO_REGISTERING_PROCESSOR;
 }
 
+GENERIC InfModelTextToText::on_initialize_fail(init_fail_code out_fail_code)
+{
+}
+
 GENERIC InfModelTextToText::_initialize_model()
 {
-	// TODO: INITIALIZE THE MODEL
-	mModel = llama_load_model_from_file(mModelPath.c_str(), mSuppliedParams);
-	if (!mModel)
+	mbase::GgufMetaConfigurator tempConfigurator(mModelPath);
+	
+	if(!tempConfigurator.is_open())
 	{
+		mInitFailCode = init_fail_code::PATH_NOT_FOUND;
 		mInitializeSignal.reset_signal_with_state();
+		mInitFailSignal.set_signal_with_state();
 		return;
 	}
-	size_type modelParamCount = llama_model_meta_count(mModel);
 
-	for (int i = 0; i < modelParamCount; i++)
+	if(!tempConfigurator.get_key("mbase.model_name", mModelName) 
+		|| !tempConfigurator.get_key("mbase.model_architecture", mModelArchitecture)
+		|| !tempConfigurator.get_key("mbase.quantization_coefficient", mQuantizationCoefficient)
+		|| !tempConfigurator.get_key("mbase.block_count", mBlockCount)
+		|| !tempConfigurator.get_key("mbase.head_count", mHeadCount)
+		|| !tempConfigurator.get_key("mbase.embedding_length", mEmbeddingLength)
+		|| !tempConfigurator.get_key("mbase.model_size", mModelSize))
 	{
-		char tempBuf[512] = { 0 };
-		char outValue[512] = { 0 };
-		llama_model_meta_key_by_index(mModel, i, tempBuf, 512);
-		llama_model_meta_val_str(mModel, tempBuf, outValue, 512);
-		mModelKvals.insert(mbase::pair(mbase::string(tempBuf), mbase::string(outValue)));
+		mInitFailCode = init_fail_code::MBASE_PARAMS_DONT_MATCH;
+		mInitializeSignal.reset_signal_with_state();
+		mInitFailSignal.set_signal_with_state();
+		return;
 	}
 
-	if (mModelKvals.find("general.basename") == mModelKvals.end())
+	mbase::tokenizer_align_instruct_template(mModelArchitecture,
+		mSystemStart,
+		mAssistantStart,
+		mUsrStart,
+		mSystemEnd,
+		mAssistantEnd,
+		mUserEnd
+	);
+
+	mModel = llama_load_model_from_file(mbase::to_utf8(mModelPath).c_str(), mSuppliedParams);
+	if (!mModel)
 	{
-		mModelKvals["general.basename"] = mModelKvals["general.name"];
-		if(!mModelKvals["general.basename"].size())
-		{
-			mModelKvals["general.basename"] = mModelKvals["general.base_model.0.name"];
-			// if this is also an empty string, I don't know what the fuck to do anymore...
-		}
-	}
-	
-	mbase::string& modelName = mModelKvals["general.basename"];
-	mbase::vector<inf_token> tokenList;
-	if (llama_token_eot(mModel) != -1)
-	{
-		tokenList.push_back(llama_token_eot(mModel));
-	}
-
-	if (llama_token_eos(mModel) != -1)
-	{
-		tokenList.push_back(llama_token_eos(mModel));
-	}
-
-	if (!tokenList.size())
-	{
-		// MEANS THIS IS NOT AN INSTRUCT MODEL
-	}
-	mEndOfToken = tokenList.front();
-	char outValue[512] = { 0 };
-	llama_token_to_piece(mModel, mEndOfToken, outValue, 512, 0, true);
-	mEndOfTokenString = mbase::string(outValue) + '\n';
-	mSystemStart = "SYSTEM: ";
-	mAssistantStart = "ASSISTANT: ";
-	mUsrStart = "USER: ";
-
-	mbase::vector<mbase::string> sysBosCandidates = { "<|im_start|>", "<|start_header_id|>", "<|assistant|>", "<|system|>" };
-	mbase::vector<mbase::string> mSpecialTokens;
-	for (I32 i = 0; i < llama_n_vocab(mModel); i++)
-	{
-		llama_token_attr lta = llama_token_get_attr(mModel, i);
-		
-		if (lta != LLAMA_TOKEN_ATTR_NORMAL)
-		{
-			IBYTE myChars[128] = { 0 };
-			I32 tokenLength = llama_token_to_piece(mModel, i, myChars, 128, 1, true);
-			mSpecialTokens.push_back(mbase::string(myChars, tokenLength));
-			//out_tokens.push_back(i);
-		}
-	}
-
-	for (auto& n : sysBosCandidates)
-	{
-		mbase::vector<mbase::string>::iterator foundToken = std::find(mSpecialTokens.begin(), mSpecialTokens.end(), n);
-		if (foundToken != mSpecialTokens.end())
-		{
-			mSystemStart = *foundToken;
-		}
-	}
-
-	if (mSystemStart == "<|im_start|>")
-	{
-		mSystemStart += "system\n";
-		mAssistantStart = "<|im_start|>assistant\n";
-	}
-
-	else if (mSystemStart == "<|start_header_id|>")
-	{
-		mSystemStart += "system<|end_header_id|>\n";
-		mAssistantStart = "<|start_header_id|>assistant<|end_header_id|>\n";
-	}
-
-	else if (mSystemStart == "<|system|>")
-	{
-		mAssistantStart = "<|assistant|>";
-	}
-
-	mbase::vector<mbase::string> usrBosCandidates = { "<|im_start|>", "<|user|>", "<|start_header_id|>" };
-	for (auto& n : usrBosCandidates)
-	{
-		mbase::vector<mbase::string>::iterator foundToken = std::find(mSpecialTokens.begin(), mSpecialTokens.end(), n);
-		if (foundToken != mSpecialTokens.end())
-		{
-			mUsrStart = *foundToken;
-		}
-	}
-
-	if (mUsrStart == "<|im_start|>")
-	{
-		mUsrStart += "user\n";
-		mEndOfTokenString = "<|im_end|>\n";
-	}
-
-	else if (mUsrStart == "<|start_header_id|>")
-	{
-		mUsrStart += "user<|end_header_id|>\n";
-		mEndOfTokenString = "<|eot_id|>\n";
-	}
-
-	else if (mUsrStart == "<|user|>")
-	{
-		mEndOfTokenString = "<|end|>";
-	}
-	
-
-	mbase::vector<inf_token> tokenArray(32);
-	I32 tokenCount = llama_tokenize(mModel, mSystemStart.c_str(), mSystemStart.size(), tokenArray.data(), 32, true, true);
-
-	if(tokenCount > 0)
-	{
-		tokenArray.resize(tokenCount);
-		mSystemStartTokenized = tokenArray;
-	}
-
-	tokenCount = llama_tokenize(mModel, mAssistantStart.c_str(), mAssistantStart.size(), tokenArray.data(), 32, true, true);
-
-	if(tokenCount > 0)
-	{
-		tokenArray.resize(tokenCount);
-		mAssistantStartTokenized = tokenArray;
-	}
-
-	tokenCount = llama_tokenize(mModel, mUsrStart.c_str(), mUsrStart.size(), tokenArray.data(), 32, true, true);
-
-	if(tokenCount > 0)
-	{
-		tokenArray.resize(tokenCount);
-		mUserStartTokenized = tokenArray;
+		mInitFailCode = init_fail_code::LLAMA_SYSTEM_ERROR;
+		mInitializeSignal.reset_signal_with_state();
+		mInitFailSignal.set_signal_with_state();
+		return;
 	}
 	
 	mIsInitialized = true;
@@ -669,11 +540,13 @@ GENERIC InfModelTextToText::_destroy_model()
 	}
 	llama_free_model(mModel);
 	mModel = NULL;
-	mEndOfTokenString.clear();
+	
 	mUsrStart.clear();
-	mModelKvals.clear();
 	mSystemStart.clear();
 	mAssistantStart.clear();
+	mUserEnd.clear();
+	mSystemEnd.clear();
+	mAssistantEnd.clear();
 	mModelPath.clear();
 	mEndOfToken = 0;
 	mOccupiedContext = 0;
@@ -714,6 +587,13 @@ GENERIC InfModelTextToText::_get_special_tokens(mbase::vector<mbase::string>& ou
 GENERIC InfModelTextToText::update()
 {
 	// load and unload control
+	if(signal_init_fail_method())
+	{
+		stop_processor();
+		mInitFailSignal.reset_signal_with_state();
+		on_initialize_fail(mInitFailCode);
+	}
+
 	if(signal_init_method())
 	{
 		stop_processor();
@@ -723,6 +603,7 @@ GENERIC InfModelTextToText::update()
 
 	if(signal_destroy_method())
 	{
+		stop_processor();
 		mDestroyMethodSignal.reset_signal_with_state();
 		on_destroy();
 	}

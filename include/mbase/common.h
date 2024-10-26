@@ -24,6 +24,10 @@
 	#define WIN32_LEAN_AND_MEAN
 	#endif // WINDOWS LEAN AND MEAN
 	#define MBASE_PLATFORM_NEWLINE "\r\n"
+	#ifndef UNICODE
+	#define UNICODE
+
+	#endif // !UNICODE
 #endif // MBASE_PLATFORM_WINDOWS
 
 #ifdef MBASE_PLATFORM_UNIX

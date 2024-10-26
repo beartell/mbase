@@ -7,8 +7,9 @@
 
 MBASE_BEGIN
 
-static U32 gMaipSecurityDefaultModelAccessLimit = 4;
+static U32 gMaipSecurityDefaultModelAccessLimit = 3;
 static U32 gMaipSecurityDefaultMaximumContextLength = 4096;
+static U32 gMaipSecurityDefaultAuthorityFlags = 0;
 
 #define MAIP_MODEL_LOAD_UNLOAD (1 << 0) // allow loading/unloading models
 #define MAIP_ADAPTER_LOAD_UNLOAD (1 << 1) // allow loading/unloading adapters

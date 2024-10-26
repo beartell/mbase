@@ -4,6 +4,7 @@
 #include <mbase/common.h>
 #include <mbase/maip_parser.h>
 #include <mbase/pc/pc_net_manager.h>
+#include <mbase/inference/inf_program.h>
 #include <unordered_map>
 
 MBASE_BEGIN
@@ -35,6 +36,18 @@ private:
 	GENERIC accumulated_processing(std::shared_ptr<PcNetPeerClient> out_peer, accumulation_map::iterator in_accum_iterator, CBYTEBUFFER out_data, size_type out_size);
 	GENERIC simple_processing(std::shared_ptr<PcNetPeerClient> out_peer, CBYTEBUFFER out_data, size_type out_size);
 	accumulation_map mAccumulationMap;
+};
+
+class MBASE_API InfMaipDefaultServer : public mbase::InfMaipServerBase {
+public:
+	InfMaipDefaultServer(InfProgram& in_program);
+	~InfMaipDefaultServer() = default;
+
+	GENERIC on_informatic_request(const maip_peer_request& out_request, std::shared_ptr<PcNetPeerClient> out_peer) override;
+	GENERIC on_execution_request(const maip_peer_request& out_request, std::shared_ptr<PcNetPeerClient> out_peer) override;
+	GENERIC on_custom_request(const maip_peer_request& out_request, std::shared_ptr<PcNetPeerClient> out_peer) override;
+private:
+	InfProgram* mHostProgram;
 };
 
 MBASE_END

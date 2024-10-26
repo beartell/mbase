@@ -50,12 +50,12 @@ PcConfig::flags PcConfig::get_config_param(const mbase::string& in_key, mbase::s
 	return flags::CONFIG_SUCCESS;
 }
 
-mbase::string PcConfig::get_temp_path() const noexcept
+mbase::wstring PcConfig::get_temp_path() const noexcept
 {
 	return mTempPath;
 }
 
-mbase::string PcConfig::get_data_path() const noexcept
+mbase::wstring PcConfig::get_data_path() const noexcept
 {
 	return mDataPath;
 }
@@ -70,7 +70,7 @@ bool PcConfig::is_initialized() const noexcept
 	return mIsInitialized;
 }
 
-bool PcConfig::initialize(PcDiagnostics& in_diagnostics, const mbase::string& in_temp_path, const mbase::string& in_root_path, const mbase::string& in_data_path, bool in_main_config, const mbase::string& in_config_file_name)
+bool PcConfig::initialize(PcDiagnostics& in_diagnostics, const mbase::wstring& in_temp_path, const mbase::wstring& in_root_path, const mbase::wstring& in_data_path, bool in_main_config, const mbase::wstring& in_config_file_name)
 {
 	if (is_initialized())
 	{
@@ -79,7 +79,6 @@ bool PcConfig::initialize(PcDiagnostics& in_diagnostics, const mbase::string& in
 	mDiagnosticsManager = &in_diagnostics;
 
 	on_initializing();
-	mDiagnosticsManager->log(mbase::PcDiagnostics::flags::LOGTYPE_INFO, mbase::PcDiagnostics::flags::LOGIMPORTANCE_LOW, "Initializing program config.");
 
 	mTempPath = in_temp_path;
 	mDataPath = in_data_path;
@@ -117,19 +116,21 @@ bool PcConfig::initialize(PcDiagnostics& in_diagnostics, const mbase::string& in
 
 	mConfigFileName = in_config_file_name;
 
-	mDiagnosticsManager->log(mbase::PcDiagnostics::flags::LOGTYPE_INFO, mbase::PcDiagnostics::flags::LOGIMPORTANCE_LOW, "Program temporary path: " + mTempPath);
-	mDiagnosticsManager->log(mbase::PcDiagnostics::flags::LOGTYPE_INFO, mbase::PcDiagnostics::flags::LOGIMPORTANCE_LOW, "Program data path: " + mDataPath);
-	mDiagnosticsManager->log(mbase::PcDiagnostics::flags::LOGTYPE_INFO, mbase::PcDiagnostics::flags::LOGIMPORTANCE_LOW, "Program execution path: " + mRootPath);
 	if(in_main_config)
 	{
+		mDiagnosticsManager->log(mbase::PcDiagnostics::flags::LOGTYPE_INFO, mbase::PcDiagnostics::flags::LOGIMPORTANCE_LOW, "Initializing program config.");
+		mDiagnosticsManager->log(mbase::PcDiagnostics::flags::LOGTYPE_INFO, mbase::PcDiagnostics::flags::LOGIMPORTANCE_LOW, "Program temporary path: " + mbase::to_utf8(mTempPath));
+		mDiagnosticsManager->log(mbase::PcDiagnostics::flags::LOGTYPE_INFO, mbase::PcDiagnostics::flags::LOGIMPORTANCE_LOW, "Program data path: " + mbase::to_utf8(mDataPath));
+		mDiagnosticsManager->log(mbase::PcDiagnostics::flags::LOGTYPE_INFO, mbase::PcDiagnostics::flags::LOGIMPORTANCE_LOW, "Program execution path: " + mbase::to_utf8(mRootPath));
+
 		mbase::vector<mbase::FS_FILE_INFORMATION> fileInfo;
 		mbase::get_directory(mDataPath + '*', fileInfo);
 
 		for (mbase::vector<mbase::FS_FILE_INFORMATION>::iterator It = fileInfo.begin(); It != fileInfo.end(); ++It)
 		{
-			if (It->fileName == "main_config.txt")
+			if (It->fileName == L"main_config.txt")
 			{
-				mConfigFileName = "main_config.txt";
+				mConfigFileName = L"main_config.txt";
 				mDiagnosticsManager->log(mbase::PcDiagnostics::flags::LOGTYPE_INFO, mbase::PcDiagnostics::flags::LOGIMPORTANCE_MID, "Main configuration folder found.");
 				mIsInitialized = true;
 				load_config_file(It->fileName);
@@ -149,11 +150,11 @@ bool PcConfig::initialize(PcDiagnostics& in_diagnostics, const mbase::string& in
 	return true;
 }
 
-PcConfig::flags PcConfig::set_temp_path(const mbase::string& in_path) noexcept
+PcConfig::flags PcConfig::set_temp_path(const mbase::wstring& in_path) noexcept
 {
 	MBASE_CONFIG_RETURN_UNINITIALIZED;
 
-	mDiagnosticsManager->log(mbase::PcDiagnostics::flags::LOGTYPE_INFO, mbase::PcDiagnostics::flags::LOGIMPORTANCE_LOW, "Changing temp path: " + in_path);
+	mDiagnosticsManager->log(mbase::PcDiagnostics::flags::LOGTYPE_INFO, mbase::PcDiagnostics::flags::LOGIMPORTANCE_LOW, "Changing temp path: " + mbase::to_utf8(in_path));
 
 	if (!in_path.size())
 	{
@@ -165,11 +166,11 @@ PcConfig::flags PcConfig::set_temp_path(const mbase::string& in_path) noexcept
 	return flags::CONFIG_SUCCESS;
 }
 
-PcConfig::flags PcConfig::set_data_path(const mbase::string& in_path) noexcept
+PcConfig::flags PcConfig::set_data_path(const mbase::wstring& in_path) noexcept
 {
 	MBASE_CONFIG_RETURN_UNINITIALIZED;
 
-	mDiagnosticsManager->log(mbase::PcDiagnostics::flags::LOGTYPE_INFO, mbase::PcDiagnostics::flags::LOGIMPORTANCE_LOW, "Changing root path: " + in_path);
+	mDiagnosticsManager->log(mbase::PcDiagnostics::flags::LOGTYPE_INFO, mbase::PcDiagnostics::flags::LOGIMPORTANCE_LOW, "Changing root path: " + mbase::to_utf8(in_path));
 
 	if (!in_path.size())
 	{
@@ -181,11 +182,11 @@ PcConfig::flags PcConfig::set_data_path(const mbase::string& in_path) noexcept
 	return flags::CONFIG_SUCCESS;
 }
 
-PcConfig::flags PcConfig::set_root_path(const mbase::string& in_path) noexcept
+PcConfig::flags PcConfig::set_root_path(const mbase::wstring& in_path) noexcept
 {
 	MBASE_CONFIG_RETURN_UNINITIALIZED;
 	
-	mDiagnosticsManager->log(mbase::PcDiagnostics::flags::LOGTYPE_INFO, mbase::PcDiagnostics::flags::LOGIMPORTANCE_LOW, "Changing config path: " + in_path);
+	mDiagnosticsManager->log(mbase::PcDiagnostics::flags::LOGTYPE_INFO, mbase::PcDiagnostics::flags::LOGIMPORTANCE_LOW, "Changing config path: " + mbase::to_utf8(in_path));
 
 	if (!in_path.size())
 	{
@@ -197,7 +198,7 @@ PcConfig::flags PcConfig::set_root_path(const mbase::string& in_path) noexcept
 	return flags::CONFIG_SUCCESS;
 }
 
-bool PcConfig::load_config_file(const mbase::string& in_file, config_map& out_cmap) noexcept
+bool PcConfig::load_config_file(const mbase::wstring& in_file, config_map& out_cmap) noexcept
 {
 	mbase::io_file mainConfigFile;
 	mainConfigFile.open_file(in_file, mbase::io_file::access_mode::READ_ACCESS, mbase::io_file::disposition::OPEN);
@@ -266,9 +267,9 @@ bool PcConfig::load_config_file(const mbase::string& in_file, config_map& out_cm
 	return false;
 }
 
-bool PcConfig::load_config_file(const mbase::string& in_file) noexcept
+bool PcConfig::load_config_file(const mbase::wstring& in_file) noexcept
 {
-	mConfigFileName = in_file;
+	mConfigFileName = this->get_data_path() + in_file;
 	return load_config_file(mConfigFileName, mConfigMap);
 }
 

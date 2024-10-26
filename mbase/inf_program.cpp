@@ -1,5 +1,6 @@
 #include <mbase/inference/inf_program.h>
 #include <mbase/inference/inf_sampling.h>
+#include <mbase/inference/inf_gguf_metadata_configurator.h>
 #include <mbase/maip_parser.h>
 #include <mbase/pc/pc_state.h>
 #include <mbase/filesystem.h>
@@ -15,7 +16,38 @@ if(!this->is_session_token_valid(in_session_token))\
 }\
 InfClientSession& clientSession = mSessionMap[in_session_token];
 
-#define MBASE_BUILD_CSCL_STRING mbase::string::from_format("cs%llu-cl%s", mAccClient.mCsId, mAccClient.mClid.c_str())
+class InfMaipModel : public mbase::InfModelTextToText {
+public:
+	InfMaipModel(const mbase::string& in_as_name, InfProgram& in_program);
+	GENERIC on_initialize_fail(init_fail_code out_fail_code) override;
+	GENERIC on_initialize() override;
+	GENERIC on_destroy() override;
+private:
+	mbase::string mAsName;
+	InfProgram* mAssignedProgram;
+};
+
+InfMaipModel::InfMaipModel(const mbase::string& in_as_name, InfProgram& in_program) :
+	mAsName(in_as_name),
+	mAssignedProgram(&in_program)
+{
+
+}
+
+GENERIC InfMaipModel::on_initialize_fail(init_fail_code out_fail_code)
+{
+	mAssignedProgram->get_registered_models().erase(mAsName);
+}
+
+GENERIC InfMaipModel::on_initialize()
+{
+
+}
+
+GENERIC InfMaipModel::on_destroy()
+{
+	delete this;
+}
 
 GENERIC InfMaipTunedT2TProcessor::on_initialize()
 {
@@ -30,6 +62,8 @@ GENERIC InfMaipTunedT2TProcessor::on_initialize()
 	mbase::maip_packet_builder tmpPacketBuilder;
 	mbase::string outPayload;
 	tmpPacketBuilder.set_response_message((U16)InfProgram::maip_err_code::INF_SUCCESS);
+	tmpPacketBuilder.set_kval("CTXID", mNomineeClient->mCurrentContextIndex);
+	tmpPacketBuilder.generate_payload(outPayload);
 	managerClient->mPeer->write_data(outPayload.c_str(), outPayload.size());
 	managerClient->mPeer->send_write_signal();
 	managerClient->mPeer->send_read_signal();
@@ -40,6 +74,7 @@ GENERIC InfMaipTunedT2TProcessor::on_initialize_fail(init_fail_code out_code)
 	mbase::maip_packet_builder tmpPacketBuilder;
 	mbase::string outPayload;
 	tmpPacketBuilder.set_response_message((U16)InfProgram::maip_err_code::INF_FAILED_TO_CREATE_CONTEXT);
+	tmpPacketBuilder.generate_payload(outPayload);
 	mNomineeClient->mManagerClient->mPeer->write_data(outPayload.c_str(), outPayload.size());
 	mNomineeClient->mManagerClient->mPeer->send_write_signal();
 	mNomineeClient->mManagerClient->mPeer->send_read_signal();
@@ -216,6 +251,11 @@ typename InfProgram::accepted_client_map& InfProgram::get_accepted_clients()
 	return mSessionMap;
 }
 
+typename InfProgram::registered_model_map& InfProgram::get_registered_models()
+{
+	return mRegisteredModels;
+}
+
 InfProgram::maip_err_code InfProgram::inf_access_request(const mbase::string& in_username, const mbase::string& in_access_token, mbase::string& out_session_token)
 {
 	inference_user_map::iterator It = mUserMap.find(in_username);
@@ -272,7 +312,7 @@ InfProgram::maip_err_code InfProgram::inf_get_context_ids(const mbase::string& i
 	return maip_err_code::INF_SUCCESS;
 }
 
-InfProgram::maip_err_code InfProgram::inf_create_context(const mbase::string& in_session_token, std::shared_ptr<mbase::PcNetPeerClient> in_peer, const mbase::string& in_model, const U32& in_ctsize, U64& out_ctxId, const mbase::vector<InfSamplingInput>& in_samplers)
+InfProgram::maip_err_code InfProgram::inf_create_context(const mbase::string& in_session_token, std::shared_ptr<mbase::PcNetPeerClient> in_peer, const mbase::string& in_model, const U32& in_ctsize, const mbase::vector<InfSamplingInput>& in_samplers)
 {
 	MBASE_SESSION_CONTROL;
 	
@@ -403,9 +443,34 @@ InfProgram::maip_err_code InfProgram::inf_get_program_models(const mbase::string
 	return maip_err_code::INF_SUCCESS;
 }
 
-InfProgram::maip_err_code InfProgram::inf_load_model(const mbase::string& in_session_token, const mbase::string& in_modelname)
+InfProgram::maip_err_code InfProgram::inf_load_model(const mbase::string& in_session_token, const mbase::string& in_modelname, const U32& in_total_context_size)
 {
 	MBASE_SESSION_CONTROL;
+
+	if(!clientSession.mMaipUser.is_flags_set(MAIP_MODEL_LOAD_UNLOAD))
+	{
+		return maip_err_code::INF_AUTHORIZATION_FAILED;
+	}
+
+	if(!in_total_context_size)
+	{
+		return maip_err_code::INF_INVALID_PARAMS;
+	}
+
+	mbase::wstring modelPathName = mInferenceConfigurator.get_data_path() + L"models/" + mbase::from_utf8(in_modelname);
+	
+	for(auto& n : mRegisteredModels)
+	{
+		if(n.first == in_modelname)
+		{
+			return maip_err_code::INF_SUCCESS;
+		}
+	}
+
+	InfMaipModel* newModel = new InfMaipModel(in_modelname, *this);
+
+	mRegisteredModels[in_modelname] = newModel;
+	newModel->initialize_model(modelPathName, in_total_context_size, 999);
 
 	return maip_err_code::INF_SUCCESS;
 }
@@ -413,6 +478,22 @@ InfProgram::maip_err_code InfProgram::inf_load_model(const mbase::string& in_ses
 InfProgram::maip_err_code InfProgram::inf_unload_model(const mbase::string& in_session_token, const mbase::string& in_modelname)
 {
 	MBASE_SESSION_CONTROL;
+
+	if (!clientSession.mMaipUser.is_flags_set(MAIP_MODEL_LOAD_UNLOAD))
+	{
+		return maip_err_code::INF_AUTHORIZATION_FAILED;
+	}
+
+	registered_model_map::iterator It = mRegisteredModels.find(in_modelname);
+	if(It == mRegisteredModels.end())
+	{
+		return maip_err_code::INF_SUCCESS;
+	}
+
+	InfModelTextToText* t2tModel = It->second;
+	mRegisteredModels.erase(It);
+
+	t2tModel->destroy();
 
 	return maip_err_code::INF_SUCCESS;
 }
@@ -500,37 +581,15 @@ InfProgram::maip_err_code InfProgram::inf_create_new_user(
 		}
 	}
 
-	InfMaipUser newUser;
-	newUser.add_authority_flags(authorityFlags);
-	newUser.set_username(in_username);
-	newUser.set_distinct_model_access_limit(modelAccessLimit);
-	newUser.set_maximum_context_length(maximumContextLength);
-	newUser.set_access_key(accessToken);
-
-	if(in_superuser)
+	if(in_superuser && !clientSession.mMaipUser.is_superuser())
 	{
-		// only the super user has authority to make others super user.
-		if(clientSession.mMaipUser.is_superuser())
-		{
-			newUser.make_superuser();
-		}
+		// if the client session is not super user but trying to create a super user,
+		// only super users can create super users.
+		return maip_err_code::INF_AUTHORIZATION_FAILED;
 	}
-	mUserMap[in_username] = newUser;
-	out_access_token = accessToken;
-	mbase::string userStateFile = mInferenceConfigurator.get_data_path() + "/states/users/" + in_username;
-	
-	PcState userState;
-	userState.initialize(in_username, mInferenceConfigurator.get_data_path() + "/states/users/");
-	
-	userState.set_state("authority_flags", newUser.get_authority_flags());
-	userState.set_state("model_access_limit", newUser.get_model_access_limit());
-	userState.set_state("accessible_models", newUser.get_accessible_models());
-	userState.set_state("username", newUser.get_username());
-	userState.set_state("access_key", newUser.get_access_key());
-	userState.set_state("is_super", newUser.is_superuser());
-	userState.set_state("is_auth_locked", newUser.is_authorization_locked());
 
-	userState.update();
+	create_user(in_username, modelAccessLimit, maximumContextLength, in_superuser, in_authorization_locked, accessToken, authorityFlags, true, out_access_token);
+
 	return maip_err_code::INF_SUCCESS;
 }
 
@@ -581,7 +640,7 @@ InfProgram::maip_err_code InfProgram::inf_delete_user(const mbase::string& in_se
 
 	mUserMap.erase(It);
 
-	mbase::string fileToBeDeleted = mInferenceConfigurator.get_data_path() + "states/users/" + in_username + ".mbfs";
+	mbase::wstring fileToBeDeleted = mInferenceConfigurator.get_data_path() + L"states/users/" + mbase::from_utf8(in_username) + L".mbfs";
 	mbase::delete_file(fileToBeDeleted);
 	return maip_err_code::INF_SUCCESS;
 }
@@ -726,6 +785,90 @@ GENERIC InfProgram::initialize(InfProgramInformation in_program_information)
 		&mInferenceNetManager,
 		&mMainProgramState
 	);
+
+	mbase::wstring programUsers = mInferenceConfigurator.get_data_path() + L"states/users/";
+	mbase::wstring programModels = mInferenceConfigurator.get_data_path() + L"states/models/";
+
+	mbase::create_directory(mInferenceConfigurator.get_data_path() + L"states/");
+	mbase::create_directory(programUsers);
+	mbase::create_directory(programModels);
+
+	mbase::vector<FS_FILE_INFORMATION> fileInfo;
+	mbase::get_directory(programUsers + L"*", fileInfo);
+
+	for(mbase::vector<FS_FILE_INFORMATION>::iterator It = fileInfo.begin(); It != fileInfo.end(); ++It)
+	{
+		// Reloading users from state directory
+		FS_FILE_INFORMATION fi = *It;
+		PcState myState;
+
+		myState.initialize(mbase::to_utf8(fi.fileName), programUsers);
+		
+		U32 authorityFlags;
+		U32 modelAccessLimit;
+		mbase::vector<mbase::string> accessibleModels;
+		mbase::string userName;
+		mbase::string accessKey;
+		bool superUser;
+		bool authLocked;
+
+		if(myState.get_state<U32>("authority_flags", authorityFlags) == PcState::flags::STATE_ERR_NOT_FOUND)
+		{
+			continue;
+		}
+		myState.get_state<U32>("model_access_limit", modelAccessLimit);
+		myState.get_state<mbase::vector<mbase::string>>("accessible_models", accessibleModels);
+		myState.get_state<mbase::string>("username", userName);
+		myState.get_state<mbase::string>("access_key", accessKey);
+		myState.get_state<bool>("is_super", superUser);
+		myState.get_state<bool>("is_auth_locked", authLocked);
+
+		InfMaipUser maipUser;
+		maipUser.add_authority_flags(authorityFlags);
+		maipUser.set_distinct_model_access_limit(modelAccessLimit);
+		maipUser.set_username(userName);
+		maipUser.set_access_key(accessKey);
+		if(superUser)
+		{
+			maipUser.make_superuser();
+		}
+		if(authLocked)
+		{
+			maipUser.lock_authorization();
+		}
+
+		for(mbase::vector<mbase::string>::iterator It = accessibleModels.begin(); It != accessibleModels.end(); ++It)
+		{
+			maipUser.add_accessible_model(*It);
+		}
+
+		std::cout << "Loading user: " << std::endl;
+		std::cout << "- Authority value: " << authorityFlags << std::endl;
+		std::cout << "- Model access limit: " << modelAccessLimit << std::endl;
+		std::cout << "- Username: " << userName << std::endl;
+		std::cout << "- Access key: " << accessKey << std::endl;
+		std::cout << "- Is super user:" << superUser << std::endl;
+		std::cout << "- Is authorization locked:" << authLocked << std::endl;
+		std::cout << "=======\n" << std::endl;
+		mUserMap[userName] = maipUser;
+	}
+
+	fileInfo.clear();
+	mbase::get_directory(programModels + L"*", fileInfo);
+
+	for(mbase::vector<FS_FILE_INFORMATION>::iterator It = fileInfo.begin(); It != fileInfo.end(); ++It)
+	{
+		// Querying models under the model directory
+		// general.name
+
+		mbase::GgufMetaConfigurator ggufConfigurator(It->fileName);
+
+		mbase::string modelName;
+		if(!ggufConfigurator.get_key("general.name", modelName))
+		{
+			ggufConfigurator.get_key("general.basename", modelName);
+		}
+	}
 }
 
 InfProgram::flags InfProgram::host_model(InfModelTextToText* in_model)
@@ -762,6 +905,157 @@ InfProgram::flags InfProgram::release_model(const mbase::string& in_model_name)
 		return flags::INF_PROGRAM_ERR_MODEL_NAME_MISMATCH;
 	}
 	mRegisteredModels.erase(in_model_name);
+	return flags::INF_PROGRAM_SUCCESS;
+}
+
+InfProgram::flags InfProgram::create_user(const mbase::string& in_username,
+	const U32& in_model_access_limit,
+	const U32& in_maximum_context_length,
+	const bool& in_superuser,
+	const bool& in_authorization_locked,
+	const mbase::string& in_access_token,
+	const U32& in_authority_flags,
+	const bool& in_is_permanent,
+	mbase::string& out_access_token
+)
+{
+	if(!in_username.size())
+	{
+		return flags::INF_PROGRAM_ERR_USR_NAME_NOT_GIVEN;
+	}
+
+	if(in_username.size() > 512)
+	{
+		return flags::INF_PROGRAM_ERR_USR_NAME_TOO_LONG;
+	}
+
+	if(mUserMap.find(in_username) != mUserMap.end())
+	{
+		return flags::INF_PROGRAM_ERR_USR_ALREADY_EXISTS;
+	}
+
+	U32 modelAccessLimit = gMaipSecurityDefaultModelAccessLimit;
+	U32 maximumContextLength = gMaipSecurityDefaultMaximumContextLength;
+	U32 authorityFlags = in_authority_flags;
+	mbase::string accessToken = in_access_token;
+
+	if(in_access_token.size() > 768)
+	{
+		accessToken = mbase::string::generate_uuid();
+	}
+
+	if(in_model_access_limit)
+	{
+		modelAccessLimit = in_model_access_limit;
+	}
+
+	if(in_maximum_context_length)
+	{
+		maximumContextLength = in_maximum_context_length;
+	}
+
+	InfMaipUser newUser;
+	newUser.set_distinct_model_access_limit(modelAccessLimit);
+	newUser.set_maximum_context_length(maximumContextLength);
+	newUser.set_access_key(accessToken);
+	newUser.set_username(in_username);
+	newUser.add_authority_flags(authorityFlags);
+
+	if(in_superuser)
+	{
+		newUser.make_superuser();
+	}
+
+	if(in_authorization_locked)
+	{
+		newUser.lock_authorization();
+	}
+
+	mUserMap[in_username] = newUser;
+
+	if(in_is_permanent)
+	{
+		PcState userState;
+		mbase::wstring userStateFile = mInferenceConfigurator.get_data_path() + L"states/users/";
+		
+		std::cout << "Created permanent user: " << std::endl;
+
+		std::cout << "Authority value: " << newUser.get_authority_flags() << std::endl;
+		std::cout << "Model access limit: " << newUser.get_model_access_limit() << std::endl;
+		std::cout << "Username: " << newUser.get_username() << std::endl;
+		std::cout << "Access key: " << newUser.get_access_key() << std::endl;
+		std::cout << "Is super: " << newUser.is_superuser() << std::endl;
+		std::cout << "Is auth locked: " << newUser.is_authorization_locked() << std::endl;
+
+		userState.initialize(in_username, userStateFile);
+		userState.set_state<U32>("authority_flags", newUser.get_authority_flags());
+		userState.set_state<U32>("model_access_limit", newUser.get_model_access_limit());
+		userState.set_state<mbase::vector<mbase::string>>("accessible_models", newUser.get_accessible_models());
+		userState.set_state<mbase::string>("username", newUser.get_username());
+		userState.set_state<mbase::string>("access_key", newUser.get_access_key());
+		userState.set_state<bool>("is_super", newUser.is_superuser());
+		userState.set_state<bool>("is_auth_locked", newUser.is_authorization_locked());
+
+		userState.update();
+	}
+
+	return flags::INF_PROGRAM_SUCCESS;
+}
+
+InfProgram::flags InfProgram::update_users_model_access_limit(const mbase::string& in_username, const U32& in_new_access_limit)
+{
+	inference_user_map::iterator It = mUserMap.find(in_username);
+	if (It == mUserMap.end()) 
+	{
+		return flags::INF_PROGRAM_ERR_USR_NOT_FOUND;
+	}
+
+	It->second.set_distinct_model_access_limit(in_new_access_limit);
+
+	for(auto& n : mSessionMap)
+	{
+		// update all active sessions
+		n.second.mMaipUser.set_distinct_model_access_limit(in_new_access_limit);
+	}
+
+	return flags::INF_PROGRAM_SUCCESS;
+}
+
+InfProgram::flags InfProgram::update_users_maximum_context(const mbase::string& in_username, const U32& in_new_context_length)
+{
+	inference_user_map::iterator It = mUserMap.find(in_username);
+	if (It == mUserMap.end())
+	{
+		return flags::INF_PROGRAM_ERR_USR_NOT_FOUND;
+	}
+
+	It->second.set_maximum_context_length(in_new_context_length);
+
+	for (auto& n : mSessionMap)
+	{
+		// update all active sessions
+		n.second.mMaipUser.set_maximum_context_length(in_new_context_length);
+	}
+
+	return flags::INF_PROGRAM_SUCCESS;
+}
+
+InfProgram::flags InfProgram::authorize_user_on_model(const mbase::string& in_username, const mbase::string& in_model)
+{
+	inference_user_map::iterator It = mUserMap.find(in_username);
+	if (It == mUserMap.end())
+	{
+		return flags::INF_PROGRAM_ERR_USR_NOT_FOUND;
+	}
+
+	It->second.add_accessible_model(in_model);
+
+	for (auto& n : mSessionMap)
+	{
+		// update all active sessions
+		n.second.mMaipUser.add_accessible_model(in_model);
+	}
+
 	return flags::INF_PROGRAM_SUCCESS;
 }
 

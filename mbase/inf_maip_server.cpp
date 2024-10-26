@@ -144,4 +144,250 @@ GENERIC InfMaipServerBase::simple_processing(std::shared_ptr<PcNetPeerClient> ou
 	out_peer->send_read_signal();
 }
 
+InfMaipDefaultServer::InfMaipDefaultServer(InfProgram& in_program)
+{
+	mHostProgram = &in_program;
+}
+
+GENERIC InfMaipDefaultServer::on_informatic_request(const maip_peer_request& out_request, std::shared_ptr<PcNetPeerClient> out_peer)
+{
+	const mbase::string& requestString = out_request.get_identification().mOpString;
+	
+	if(requestString == "inf_access_request")
+	{
+		mbase::string userName = out_request.get_kval<mbase::string>("USERNAME");
+		mbase::string accessToken = out_request.get_kval<mbase::string>("ACCTOKEN");
+		mbase::string outToken;
+		InfProgram::maip_err_code merr = mHostProgram->inf_access_request(userName, accessToken, outToken);
+
+		mbase::string outPayload;
+		mbase::maip_packet_builder maipPacketBuilder;
+		mbase::InfProgram::maip_err_code maipErr;
+		maipPacketBuilder.set_kval("STOK", outToken);
+		maipPacketBuilder.set_response_message((U16)merr);
+		maipPacketBuilder.generate_payload(outPayload);
+
+		out_peer->write_data(outPayload.c_str(), outPayload.size());
+		out_peer->send_write_signal();
+		out_peer->send_read_signal();
+		return;
+	}
+	// Besides access request, and access token must be supplied
+
+	if(!out_request.has_key("STOK"))
+	{
+		// Do not even go further
+		mbase::string outPayload;
+		mbase::maip_packet_builder maipPacketBuilder;
+		mbase::InfProgram::maip_err_code maipErr = mbase::InfProgram::maip_err_code::INF_SESSION_TOKEN_MISMATCH;
+		maipPacketBuilder.set_response_message((U16)maipErr);
+		maipPacketBuilder.generate_payload(outPayload);
+
+		out_peer->write_data(outPayload.c_str(), outPayload.size());
+		out_peer->send_write_signal();
+		out_peer->send_read_signal();
+		return;
+	}
+
+	else
+	{
+		mbase::string sessionToken = out_request.get_kval<mbase::string>("STOK");
+		mbase::maip_packet_builder maipPacketBuilder;
+		mbase::InfProgram::maip_err_code maipErr;
+
+		if (requestString == "inf_destroy_session")
+		{
+			maipErr = mHostProgram->inf_destroy_session(sessionToken);
+		}
+
+		else if (requestString == "inf_get_accessible_models")
+		{
+			mbase::vector<mbase::string> outModels;
+			maipErr = mHostProgram->inf_get_accessible_models(sessionToken, outModels);
+			for (mbase::vector<mbase::string>::iterator It = outModels.begin(); It != outModels.end(); ++It)
+			{
+				maipPacketBuilder.set_kval("MODEL", *It);
+			}
+		}
+
+		else if (requestString == "inf_get_context_ids")
+		{
+			mbase::vector<U64> outContextIds;
+			maipErr = mHostProgram->inf_get_context_ids(sessionToken, outContextIds);
+			for(mbase::vector<U64>::iterator It = outContextIds.begin(); It != outContextIds.end(); ++It)
+			{
+				maipPacketBuilder.set_kval("CTXID", *It);
+			}
+		}
+
+		else if(requestString == "inf_create_context")
+		{
+			// WILL ACQUIRE THE SOCKET ON SUCCESS
+			mbase::string targetModel = out_request.get_kval<mbase::string>("MODEL");
+			U32 contextSize = out_request.get_kval<U32>("CTXSIZE");
+			maipErr = mHostProgram->inf_create_context(sessionToken, out_peer, targetModel, contextSize);
+			if(maipErr == mbase::InfProgram::maip_err_code::INF_SUCCESS)
+			{
+				return;
+			}
+		}
+
+		else if(requestString == "inf_clear_context_history")
+		{
+			U32 contextId = out_request.get_kval<U32>("CTXID");
+			maipErr = mHostProgram->inf_clear_context_history(sessionToken, contextId);
+		}
+
+		else if(requestString == "inf_get_context_status")
+		{
+			U32 contextId = out_request.get_kval<U32>("CTXID");
+			maipErr = mHostProgram->inf_get_context_status(sessionToken, contextId);
+		}
+
+		else if(requestString == "inf_destroy_context")
+		{
+			U32 contextId = out_request.get_kval<U32>("CTXID");
+			maipErr = mHostProgram->inf_destroy_context(sessionToken, contextId);
+		}
+
+		else if(requestString == "inf_get_program_models")
+		{
+			mbase::vector<mbase::string> outModels;
+			maipErr = mHostProgram->inf_get_program_models(sessionToken, outModels);
+			for (mbase::vector<mbase::string>::iterator It = outModels.begin(); It != outModels.end(); ++It)
+			{
+				maipPacketBuilder.set_kval("MODEL", *It);
+			}
+		}
+
+		else if(requestString == "inf_load_model")
+		{
+			mbase::string modelName = out_request.get_kval<mbase::string>("MODEL");
+			U32 contextSize = out_request.get_kval<U32>("CTXSIZE");
+			maipErr = mHostProgram->inf_load_model(sessionToken, modelName, contextSize);
+		}
+
+		else if(requestString == "inf_unload_model")
+		{
+			mbase::string modelName = out_request.get_kval<mbase::string>("MODEL");
+			maipErr = mHostProgram->inf_unload_model(sessionToken, modelName);
+		}
+
+		else if(requestString == "inf_create_new_user")
+		{
+			mbase::string userName = out_request.get_kval<mbase::string>("USERNAME");
+			U32 modelAccessLimit = out_request.get_kval<U32>("ACCESSLIMIT");
+			U32 maximumContextLength = out_request.get_kval<U32>("CTXSIZE");
+			bool isSuperUser = out_request.get_kval<bool>("ISSUPER");
+			mbase::string userAccessToken = out_request.get_kval<mbase::string>("ACCTOKEN");
+			mbase::vector<mbase::string> authorityFlags = out_request.get_kval<mbase::vector<mbase::string>>("AUTH");
+
+			mbase::string outAccessToken;
+
+			maipErr = mHostProgram->inf_create_new_user(
+				sessionToken,
+				userName,
+				modelAccessLimit,
+				maximumContextLength,
+				isSuperUser,
+				false,
+				userAccessToken,
+				authorityFlags,
+				outAccessToken
+			);
+
+			if(maipErr == mbase::InfProgram::maip_err_code::INF_SUCCESS)
+			{
+				maipPacketBuilder.set_kval("ACCTOKEN", outAccessToken);
+			}
+		}
+
+		else if(requestString == "inf_delete_user")
+		{
+			mbase::string userName = out_request.get_kval<mbase::string>("USERNAME");
+			maipErr = mHostProgram->inf_delete_user(sessionToken, userName);
+		}
+		
+		else
+		{
+			
+		}
+		mbase::string outPayload;
+
+		maipPacketBuilder.set_response_message((U16)maipErr);
+		maipPacketBuilder.generate_payload(outPayload);
+		out_peer->write_data(outPayload.c_str(), outPayload.size());
+		out_peer->send_write_signal();
+		out_peer->send_read_signal();
+	}
+}
+
+GENERIC InfMaipDefaultServer::on_execution_request(const maip_peer_request& out_request, std::shared_ptr<PcNetPeerClient> out_peer)
+{
+	const mbase::string& requestString = out_request.get_identification().mOpString;
+	mbase::string sessionToken = out_request.get_kval<mbase::string>("STOK");
+	U64 contextId = out_request.get_kval<U64>("CTXID");
+	mbase::maip_packet_builder maipPacketBuilder;
+	mbase::InfProgram::maip_err_code maipErr;
+
+	// All operations must have a session token associated
+
+	if(requestString == "exec_set_input")
+	{
+		mbase::string contextRole = out_request.get_kval<mbase::string>("ROLE");
+		mbase::string givenPrompt(out_request.get_data().get_buffer(), out_request.get_content_length());
+		context_role ctxRole = context_role::NONE;
+
+		if(contextRole == "System")
+		{
+			ctxRole = context_role::SYSTEM;
+		}
+
+		else if(contextRole == "Assistant")
+		{
+			ctxRole = context_role::ASSISTANT;
+		}
+
+		else if(contextRole == "User")
+		{
+			ctxRole = context_role::USER;
+		}
+
+		U32 outMsgId;
+		maipErr = mHostProgram->exec_set_input(sessionToken, contextId, ctxRole, givenPrompt, outMsgId);
+		if(maipErr == mbase::InfProgram::maip_err_code::INF_SUCCESS)
+		{
+			maipPacketBuilder.set_kval("MSGID", outMsgId);
+		}
+	}
+
+	else if(requestString == "exec_execute_input")
+	{
+		mbase::vector<U32> msgIdVector = out_request.get_kval<mbase::vector<U32>>("MSGID");
+		maipErr = mHostProgram->exec_execute_input(sessionToken, contextId, msgIdVector);
+	}
+
+	else if(requestString == "exec_next")
+	{
+		// WILL ACQUIRE THE SOCKET ON SUCCESS
+		maipErr = mHostProgram->exec_next(sessionToken, out_peer, contextId);
+		if(maipErr == mbase::InfProgram::maip_err_code::EXEC_SUCCESS)
+		{
+			return;
+		}
+	}
+	mbase::string outPayload;
+	maipPacketBuilder.set_response_message((U16)maipErr);
+	maipPacketBuilder.generate_payload(outPayload);
+	out_peer->write_data(outPayload.c_str(), outPayload.size());
+	out_peer->send_write_signal();
+	out_peer->send_read_signal();
+}
+
+GENERIC InfMaipDefaultServer::on_custom_request(const maip_peer_request& out_request, std::shared_ptr<PcNetPeerClient> out_peer)
+{
+
+}
+
+
 MBASE_END
