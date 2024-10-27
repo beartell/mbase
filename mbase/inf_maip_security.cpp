@@ -24,6 +24,11 @@ bool InfMaipUser::is_flags_set(U32 in_flags)
 
 bool InfMaipUser::is_model_accessible(const mbase::string& in_modelname)
 {
+	if(is_superuser())
+	{
+		return true;
+	}
+
 	if(std::find(mAccessibleModels.begin(), mAccessibleModels.end(), in_modelname) != mAccessibleModels.end())
 	{
 		return true;

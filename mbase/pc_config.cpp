@@ -99,19 +99,19 @@ bool PcConfig::initialize(PcDiagnostics& in_diagnostics, const mbase::wstring& i
 		mRootPath = std::move(mbase::get_current_path());
 	}
 
-	if(mTempPath.back() != '\\')
+	if(mTempPath.back() != '/')
 	{
-		mTempPath.push_back('\\');
+		mTempPath.push_back('/');
 	}
 
-	if(mDataPath.back() != '\\')
+	if(mDataPath.back() != '/')
 	{
-		mDataPath.push_back('\\');
+		mDataPath.push_back('/');
 	}
 
-	if(mRootPath.back() != '\\')
+	if(mRootPath.back() != '/')
 	{
-		mRootPath.push_back('\\');
+		mRootPath.push_back('/');
 	}
 
 	mConfigFileName = in_config_file_name;

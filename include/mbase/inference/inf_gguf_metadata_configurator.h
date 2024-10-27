@@ -149,7 +149,7 @@ public:
 	using kv_map = std::unordered_map<mbase::string, I32>;
 	using size_type = SIZE_T;
 
-	enum class purification_error : U8 {
+	enum class param_application_error : U8 {
 		SUCCESS,
 		ERR_ARCH_NOT_SET,
 		ERR_BLOCK_COUNT_NOT_FOUND,
@@ -191,10 +191,10 @@ public:
 		}
 	}
 	GENERIC remove_key(const mbase::string& in_key);
-	purification_error apply_purification(const mbase::string& in_system_prompt);
+	param_application_error apply_mbase_parameter(const mbase::string& in_system_prompt);
+	GENERIC clear_context();
 
 private:
-	GENERIC _clear_context();
 	gguf_context* mGgufContext;
 	kv_map mMetadataMap;
 	bool mIsModified;

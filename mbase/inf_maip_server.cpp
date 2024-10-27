@@ -6,11 +6,12 @@ MBASE_BEGIN
 
 GENERIC InfMaipServerBase::on_accept(std::shared_ptr<PcNetPeerClient> out_peer)
 {
-
+	out_peer->send_read_signal();
 }
 
 GENERIC InfMaipServerBase::on_data(std::shared_ptr<PcNetPeerClient> out_peer, CBYTEBUFFER out_data, size_type out_size)
 {
+	mbase::string receivedData(out_data, out_size);
 	accumulation_map::iterator It = mAccumulationMap.find(out_peer->get_raw_socket());
 	if(It != mAccumulationMap.end())
 	{
@@ -24,7 +25,7 @@ GENERIC InfMaipServerBase::on_data(std::shared_ptr<PcNetPeerClient> out_peer, CB
 
 GENERIC InfMaipServerBase::on_disconnect(std::shared_ptr<PcNetPeerClient> out_peer)
 {
-
+	// Remove the peer from accumulation map if it exists
 }
 
 GENERIC InfMaipServerBase::accumulated_processing(std::shared_ptr<PcNetPeerClient> out_peer, accumulation_map::iterator in_accum_iterator, CBYTEBUFFER out_data, size_type out_size)
@@ -87,7 +88,8 @@ GENERIC InfMaipServerBase::simple_processing(std::shared_ptr<PcNetPeerClient> ou
 			else
 			{
 				// means we will accumulate
-				if (!mMaipPeerRequest.has_key("CSID") || !mMaipPeerRequest.has_key("CLID"))
+				// TODO, FIX HERE
+				if (!mMaipPeerRequest.has_key("STOK"))
 				{
 					tempGenericError = maip_generic_errors::MISSING_MANDATORY_KEYS;
 				}
@@ -96,8 +98,7 @@ GENERIC InfMaipServerBase::simple_processing(std::shared_ptr<PcNetPeerClient> ou
 				{
 					// TODO: CHECK IF THE MESSAGE CONTENT LENGTH IS BIGGER THAN 20 MB
 					// IF IT IS, RETURN PACKET TOO LARGE
-					U64 csId = mMaipPeerRequest.get_kval<U64>("CSID");
-					mbase::string clId = mMaipPeerRequest.get_kval<mbase::string>("CLID");
+					mbase::string sessionToken = mMaipPeerRequest.get_kval<mbase::string>("STOK");
 					mbase::string processedDataLength;
 					processedDataLength.reserve(messageContentLength);
 					if (messageSize)
@@ -105,7 +106,7 @@ GENERIC InfMaipServerBase::simple_processing(std::shared_ptr<PcNetPeerClient> ou
 						cs.advance();
 						processedDataLength.append(cs.get_bufferc(), messageSize - 1);
 					}
-					mAccumulationMap[out_peer->get_raw_socket()] = { messageContentLength, csId, clId, std::move(processedDataLength), mMaipPeerRequest };
+					mAccumulationMap[out_peer->get_raw_socket()] = { messageContentLength, sessionToken, std::move(processedDataLength), mMaipPeerRequest };
 					out_peer->send_read_signal();
 					return;
 				}
@@ -158,12 +159,14 @@ GENERIC InfMaipDefaultServer::on_informatic_request(const maip_peer_request& out
 		mbase::string userName = out_request.get_kval<mbase::string>("USERNAME");
 		mbase::string accessToken = out_request.get_kval<mbase::string>("ACCTOKEN");
 		mbase::string outToken;
-		InfProgram::maip_err_code merr = mHostProgram->inf_access_request(userName, accessToken, outToken);
+		InfProgram::maip_err_code merr = mHostProgram->inf_access_request(userName, accessToken, out_peer, outToken);
 
 		mbase::string outPayload;
 		mbase::maip_packet_builder maipPacketBuilder;
-		mbase::InfProgram::maip_err_code maipErr;
-		maipPacketBuilder.set_kval("STOK", outToken);
+		if(merr == InfProgram::maip_err_code::INF_SUCCESS)
+		{
+			maipPacketBuilder.set_kval("STOK", outToken);
+		}
 		maipPacketBuilder.set_response_message((U16)merr);
 		maipPacketBuilder.generate_payload(outPayload);
 
@@ -389,5 +392,14 @@ GENERIC InfMaipDefaultServer::on_custom_request(const maip_peer_request& out_req
 
 }
 
+GENERIC InfMaipDefaultServer::on_listen()
+{
+	std::cout << "Maip server started listening" << std::endl;
+}
+
+GENERIC InfMaipDefaultServer::on_stop()
+{
+
+}
 
 MBASE_END

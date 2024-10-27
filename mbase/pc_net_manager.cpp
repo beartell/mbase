@@ -316,7 +316,6 @@ GENERIC PcNetTcpServer::accept()
 		std::shared_ptr<PcNetPeerClient> connectedClient = std::make_shared<PcNetPeerClient>(PcNetPeerClient(resultClient));
 		mConnectedClientsProcessLoop.push_back(connectedClient);
 		mAcceptMutex.acquire();
-		mConnectedClients.push_back(connectedClient);
 		mAcceptClients.push_back(connectedClient);
 		mAcceptMutex.release();
 		mConnectionAccept.set_signal_with_state();
@@ -373,6 +372,7 @@ GENERIC PcNetTcpServer::update_t()
 			netPeer->_destroy_peer();
 			netPeer->mDisconnectSignal.reset_signal_with_state();
 			It = mConnectedClientsProcessLoop.erase(It);
+			continue;
 		}
 
 		if(netPeer->signal_read())

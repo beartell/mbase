@@ -514,6 +514,10 @@ GENERIC InfModelTextToText::_initialize_model()
 		mUserEnd
 	);
 
+	// Before going diving into loading model, 
+	// calculate how much memory we need to load the model 
+	// if there is not enough memory for loading the model, abort.
+
 	mModel = llama_load_model_from_file(mbase::to_utf8(mModelPath).c_str(), mSuppliedParams);
 	if (!mModel)
 	{
@@ -523,6 +527,10 @@ GENERIC InfModelTextToText::_initialize_model()
 		return;
 	}
 	
+	std::cout << mSystemStart << "You are a helpful assistant" << mSystemEnd;
+	std::cout << mUsrStart << "How are you?" << mUserEnd;
+	std::cout << mAssistantStart << "I am fine thanks!" << mAssistantEnd;
+
 	mIsInitialized = true;
 	mInitializeSignal.reset_signal_with_state();
 	mInitMethodSignal.set_signal();

@@ -30,7 +30,7 @@ GgufMetaConfigurator::GgufMetaConfigurator(const mbase::wstring in_filename) :
 
 GgufMetaConfigurator::~GgufMetaConfigurator()
 {
-	this->_clear_context();
+	this->clear_context();
 }
 
 bool GgufMetaConfigurator::is_open()
@@ -61,7 +61,7 @@ GENERIC GgufMetaConfigurator::remove_key(const mbase::string& in_key)
 	}
 }
 
-GgufMetaConfigurator::purification_error GgufMetaConfigurator::apply_purification(const mbase::string& in_system_prompt)
+GgufMetaConfigurator::param_application_error GgufMetaConfigurator::apply_mbase_parameter(const mbase::string& in_system_prompt)
 {
 	if(this->is_open())
 	{
@@ -78,12 +78,12 @@ GgufMetaConfigurator::purification_error GgufMetaConfigurator::apply_purificatio
 		if (!this->get_key("general.architecture", modelArchitecture)) 
 		{
 			// Must be successful. Abort otherwise
-			return purification_error::ERR_ARCH_NOT_SET;
+			return param_application_error::ERR_ARCH_NOT_SET;
 		} 
 
 		if(!modelArchitecture.size())
 		{
-			return purification_error::ERR_ARCH_NOT_SET;
+			return param_application_error::ERR_ARCH_NOT_SET;
 		}
 
 		if(!this->get_key("general.name", modelName))
@@ -106,17 +106,17 @@ GgufMetaConfigurator::purification_error GgufMetaConfigurator::apply_purificatio
 
 		if(!this->get_key(modelArchitecture + ".block_count", blockCount))
 		{
-			return purification_error::ERR_BLOCK_COUNT_NOT_FOUND;
+			return param_application_error::ERR_BLOCK_COUNT_NOT_FOUND;
 		}
 
 		if(!this->get_key(modelArchitecture + ".embedding_length", embeddingLength))
 		{
-			return purification_error::ERR_EMBEDDING_LENGTH_NOT_FOUND;
+			return param_application_error::ERR_EMBEDDING_LENGTH_NOT_FOUND;
 		}
 
 		if(!this->get_key(modelArchitecture + ".attention.head_count", headCount))
 		{
-			return purification_error::ERR_ATTENTION_HEAD_COUNT_NOT_FOUND;
+			return param_application_error::ERR_ATTENTION_HEAD_COUNT_NOT_FOUND;
 		}
 		
 		if(!this->get_key("general.file_type", quantizationType))
@@ -254,10 +254,10 @@ GgufMetaConfigurator::purification_error GgufMetaConfigurator::apply_purificatio
 			this->set_key<mbase::string>("mbase.embedded_system_prompt", in_system_prompt);
 		}
 	}
-	return purification_error::SUCCESS;
+	return param_application_error::SUCCESS;
 }
 
-GENERIC GgufMetaConfigurator::_clear_context()
+GENERIC GgufMetaConfigurator::clear_context()
 {
 	if(this->is_open())
 	{

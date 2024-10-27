@@ -14,8 +14,7 @@ MBASE_BEGIN
 
 struct MBASE_API InfMaipPacketAccumulator { // THIS IS NECESSARY IF THE GIVEN DATA IS BIGGER THEN 32KB
 	U64 mDataToRead;
-	U64 mCsId;
-	mbase::string mClId;
+	mbase::string mSessionToken;
 	mbase::string mAccumulatedData;
 	maip_peer_request mPeerRequest;
 };
@@ -46,6 +45,9 @@ public:
 	GENERIC on_informatic_request(const maip_peer_request& out_request, std::shared_ptr<PcNetPeerClient> out_peer) override;
 	GENERIC on_execution_request(const maip_peer_request& out_request, std::shared_ptr<PcNetPeerClient> out_peer) override;
 	GENERIC on_custom_request(const maip_peer_request& out_request, std::shared_ptr<PcNetPeerClient> out_peer) override;
+
+	GENERIC on_listen() override;
+	GENERIC on_stop() override;
 private:
 	InfProgram* mHostProgram;
 };

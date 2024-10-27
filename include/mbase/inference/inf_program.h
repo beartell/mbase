@@ -18,9 +18,6 @@
 
 MBASE_BEGIN
 
-#define MBASE_MAIP_CL_AUTH \
-const U64& in_csid, const mbase::string& in_clid\
-
 struct InfClientSession;
 class InfMaipTunedClient;
 class InfMaipTunedT2TProcessor;
@@ -76,16 +73,18 @@ struct MBASE_API InfProgramInformation {
 };
 
 struct MBASE_API InfRegisteredModelInformation {
+	mbase::wstring mModelPath;
 	mbase::string mModelName;
-	mbase::string mParamCount;
-	mbase::string mTemplateId;
+	mbase::string mModelArchitecture;
 	mbase::string mSystemPrompt;
-	U32 mEmdeddingLength;
-	U32 mBlockCount;
-	U32 mHeadCount;
+	F32 mQuantizationCoefficient = 0.0f;
+	U32 mBlockCount = 0;
+	U32 mHeadCount = 0;
+	U32 mEmdeddingLength = 0;
+	U64 mModelSize = 0;
 };
 
-class MBASE_API InfProgram : mbase::PcProgramBase {
+class MBASE_API InfProgram : public mbase::PcProgramBase {
 public:
 	using accepted_client_map = std::unordered_map<mbase::string, InfClientSession>;
 	using registered_model_map = std::unordered_map<mbase::string, InfModelTextToText*>;
@@ -143,7 +142,7 @@ public:
 	registered_model_map& get_registered_models();
 	#endif
 	
-	maip_err_code inf_access_request(const mbase::string& in_username, const mbase::string& in_access_token, mbase::string& out_session_token);
+	maip_err_code inf_access_request(const mbase::string& in_username, const mbase::string& in_access_token, std::shared_ptr<PcNetPeerClient> in_client, mbase::string& out_session_token);
 	maip_err_code inf_destroy_session(const mbase::string& in_session_token);
 	maip_err_code inf_get_accessible_models(const mbase::string& in_session_token, mbase::vector<mbase::string>& out_models);
 	maip_err_code inf_get_context_ids(const mbase::string& in_session_token, mbase::vector<U64>& out_contexts);

@@ -256,7 +256,7 @@ typename InfProgram::registered_model_map& InfProgram::get_registered_models()
 	return mRegisteredModels;
 }
 
-InfProgram::maip_err_code InfProgram::inf_access_request(const mbase::string& in_username, const mbase::string& in_access_token, mbase::string& out_session_token)
+InfProgram::maip_err_code InfProgram::inf_access_request(const mbase::string& in_username, const mbase::string& in_access_token, std::shared_ptr<PcNetPeerClient> in_client, mbase::string& out_session_token)
 {
 	inference_user_map::iterator It = mUserMap.find(in_username);
 	if(It == mUserMap.end())
@@ -270,6 +270,7 @@ InfProgram::maip_err_code InfProgram::inf_access_request(const mbase::string& in
 		out_session_token = mbase::string::generate_uuid();
 		InfClientSession newClientSession;
 		newClientSession.mMaipUser = maipUser;
+		newClientSession.mPeer = in_client;
 		mSessionMap[out_session_token] = newClientSession;
 
 		return maip_err_code::INF_SUCCESS;
@@ -435,7 +436,7 @@ InfProgram::maip_err_code InfProgram::inf_get_program_models(const mbase::string
 {
 	MBASE_SESSION_CONTROL;
 
-	for(auto& n : mRegisteredModels)
+	for(auto& n : mModelInformationMap)
 	{
 		out_models.push_back(n.first);
 	}
@@ -456,8 +457,6 @@ InfProgram::maip_err_code InfProgram::inf_load_model(const mbase::string& in_ses
 	{
 		return maip_err_code::INF_INVALID_PARAMS;
 	}
-
-	mbase::wstring modelPathName = mInferenceConfigurator.get_data_path() + L"models/" + mbase::from_utf8(in_modelname);
 	
 	for(auto& n : mRegisteredModels)
 	{
@@ -467,10 +466,16 @@ InfProgram::maip_err_code InfProgram::inf_load_model(const mbase::string& in_ses
 		}
 	}
 
-	InfMaipModel* newModel = new InfMaipModel(in_modelname, *this);
-
-	mRegisteredModels[in_modelname] = newModel;
-	newModel->initialize_model(modelPathName, in_total_context_size, 999);
+	for(auto& n : mModelInformationMap)
+	{
+		if(n.first == in_modelname)
+		{
+			InfMaipModel* newModel = new InfMaipModel(n.second.mModelName, *this);
+			newModel->initialize_model(n.second.mModelPath, in_total_context_size, 999);
+			mRegisteredModels[n.second.mModelName] = newModel;
+			return maip_err_code::INF_SUCCESS;
+		}
+	}
 
 	return maip_err_code::INF_SUCCESS;
 }
@@ -787,7 +792,7 @@ GENERIC InfProgram::initialize(InfProgramInformation in_program_information)
 	);
 
 	mbase::wstring programUsers = mInferenceConfigurator.get_data_path() + L"states/users/";
-	mbase::wstring programModels = mInferenceConfigurator.get_data_path() + L"states/models/";
+	mbase::wstring programModels = mInferenceConfigurator.get_data_path() + L"models/";
 
 	mbase::create_directory(mInferenceConfigurator.get_data_path() + L"states/");
 	mbase::create_directory(programUsers);
@@ -816,6 +821,7 @@ GENERIC InfProgram::initialize(InfProgramInformation in_program_information)
 		{
 			continue;
 		}
+
 		myState.get_state<U32>("model_access_limit", modelAccessLimit);
 		myState.get_state<mbase::vector<mbase::string>>("accessible_models", accessibleModels);
 		myState.get_state<mbase::string>("username", userName);
@@ -842,32 +848,66 @@ GENERIC InfProgram::initialize(InfProgramInformation in_program_information)
 			maipUser.add_accessible_model(*It);
 		}
 
-		std::cout << "Loading user: " << std::endl;
+		/*std::cout << "Loading user: " << std::endl;
 		std::cout << "- Authority value: " << authorityFlags << std::endl;
 		std::cout << "- Model access limit: " << modelAccessLimit << std::endl;
 		std::cout << "- Username: " << userName << std::endl;
 		std::cout << "- Access key: " << accessKey << std::endl;
 		std::cout << "- Is super user:" << superUser << std::endl;
 		std::cout << "- Is authorization locked:" << authLocked << std::endl;
-		std::cout << "=======\n" << std::endl;
+		std::cout << "=======\n" << std::endl;*/
 		mUserMap[userName] = maipUser;
 	}
 
 	fileInfo.clear();
 	mbase::get_directory(programModels + L"*", fileInfo);
-
 	for(mbase::vector<FS_FILE_INFORMATION>::iterator It = fileInfo.begin(); It != fileInfo.end(); ++It)
 	{
 		// Querying models under the model directory
 		// general.name
 
-		mbase::GgufMetaConfigurator ggufConfigurator(It->fileName);
-
+		mbase::GgufMetaConfigurator ggufConfigurator(programModels + It->fileName);
 		mbase::string modelName;
-		if(!ggufConfigurator.get_key("general.name", modelName))
+
+		if(!ggufConfigurator.get_key("mbase.model_name", modelName))
 		{
-			ggufConfigurator.get_key("general.basename", modelName);
+			std::cout << "Found GGUF file: " << mbase::to_utf8(It->fileName) << std::endl;
+			std::cout << "Applying MBASE parameters..." << std::endl;
+			ggufConfigurator.apply_mbase_parameter(""); // TODO, break if this fails
+			ggufConfigurator.clear_context();
+			std::cout << "MBASE Parameters successfully applied." << std::endl;
 		}
+		ggufConfigurator.clear_context();
+
+		// TEMPORARY SOLUTION, FIX THIS CODE ASAP
+		// IMPLEMENT initialize method on gguf configurator
+		// And make it movable if possible
+
+		mbase::GgufMetaConfigurator seriousGgufConfigurator(programModels + It->fileName);
+
+		InfRegisteredModelInformation modelInformation;
+		modelInformation.mModelPath = programModels + It->fileName;
+
+		seriousGgufConfigurator.get_key("mbase.model_name", modelInformation.mModelName);
+		seriousGgufConfigurator.get_key("mbase.model_architecture", modelInformation.mModelArchitecture);
+		seriousGgufConfigurator.get_key("mbase.quantization_coefficient", modelInformation.mQuantizationCoefficient);
+		seriousGgufConfigurator.get_key("mbase.embedded_system_prompt", modelInformation.mSystemPrompt);
+		seriousGgufConfigurator.get_key("mbase.block_count", modelInformation.mBlockCount);
+		seriousGgufConfigurator.get_key("mbase.head_count", modelInformation.mHeadCount);
+		seriousGgufConfigurator.get_key("mbase.embedding_length", modelInformation.mEmdeddingLength);
+		seriousGgufConfigurator.get_key("mbase.model_size", modelInformation.mModelSize);
+
+		std::cout << "Model name: " << modelInformation.mModelName << std::endl;
+		std::cout << "Model architecture: " << modelInformation.mModelArchitecture << std::endl;
+		std::cout << "Quantization Coefficient: " << modelInformation.mQuantizationCoefficient << std::endl;
+		std::cout << "Embedded system prompt: " << modelInformation.mSystemPrompt << std::endl;
+		std::cout << "Block count: " << modelInformation.mBlockCount << std::endl;
+		std::cout << "KV Head count: " << modelInformation.mHeadCount << std::endl;
+		std::cout << "Embedding length: " << modelInformation.mEmdeddingLength << std::endl;
+		std::cout << "====" << std::endl;
+		std::cout << std::endl;
+
+		mModelInformationMap[modelInformation.mModelName] = modelInformation;
 	}
 }
 
@@ -1061,9 +1101,19 @@ InfProgram::flags InfProgram::authorize_user_on_model(const mbase::string& in_us
 
 GENERIC InfProgram::update()
 {
-	for(auto& modelMap : mRegisteredModels)
+	for(accepted_client_map::iterator It = mSessionMap.begin(); It != mSessionMap.end();)
 	{
-		modelMap.second->update();
+		if(!It->second.mPeer->is_connected())
+		{
+			It = mSessionMap.erase(It);
+			continue;
+		}
+		++It;
+	}
+
+	for(registered_model_map::iterator It = mRegisteredModels.begin(); It != mRegisteredModels.end(); ++It)
+	{
+		It->second->update();
 	}
 }
 
