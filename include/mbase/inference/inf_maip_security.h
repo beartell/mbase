@@ -19,16 +19,6 @@ static U32 gMaipSecurityDefaultAuthorityFlags = 0;
 #define MAIP_USER_MODIFICATION (1 << 5) // name and token modification
 #define MAIP_USER_STATIC (1 << 6) // makes user group parameters unchangable besides super user access
 
-//enum class maip_authority_flags : U32 {
-//	MODEL_LOAD_UNLOAD, // Allows user group to load and unload models
-//	ADAPTER_LOAD_UNLOAD, // Allows user group to load and unload lora adapters
-//	CONTEXT_LENGTH_MODIFICATION, // Allows user group to extend or decrease the total context length
-//	USER_ACCESS_MODIFICATION, // Allows user to modify  
-//	USER_CREATE_DELETE, // Allows user to create or delete users
-//	USER_MODIFICATION, // Allows user to modify parameters of other users
-//	USER_STATIC // Makes the user groups parameters to be unchangable besides super user access
-//};
-
 class InfMaipUser { // Useless unless it is associated with MAIP Program
 public:
 	using model_name_vector = mbase::vector<mbase::string>;

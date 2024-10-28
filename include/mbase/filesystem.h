@@ -90,8 +90,12 @@ MBASE_INLINE GENERIC get_directory(const mbase::wstring& in_path, ContainerType&
 		{
 			FS_FILE_INFORMATION ffi;
 			struct stat st = {0};
-			
-			ffi.fileName = dir->d_name;
+			mbase::string fileName = dir->d_name;
+			if (fileName == '.' || fileName == "..") 
+			{
+				continue;
+			}
+			ffi.fileName = std::move(mbase::from_utf8(fileName));
 
 			if(!stat(dir->d_name, &st))
 			{
@@ -132,8 +136,12 @@ MBASE_INLINE GENERIC get_directory(const mbase::string& in_path, ContainerType& 
 		{
 			FS_FILE_INFORMATION ffi;
 			struct stat st = { 0 };
-
-			ffi.fileName = dir->d_name;
+			mbase::string fileName = dir->d_name;
+			if (fileName == '.' || fileName == "..")
+			{
+				continue;
+			}
+			ffi.fileName = std::move(fileName);
 
 			if (!stat(dir->d_name, &st))
 			{
@@ -145,8 +153,6 @@ MBASE_INLINE GENERIC get_directory(const mbase::string& in_path, ContainerType& 
 	}
 #endif
 }
-
-
 
 /* IMPLEMENTATIONS */
 
@@ -160,6 +166,21 @@ MBASE_INLINE FS_ERROR err_convert(I16 in_err) noexcept
 	case ERROR_PATH_NOT_FOUND:
 		return FS_ERROR::FS_PATH_NOT_FOUND;
 	case ERROR_ACCESS_DENIED:
+		return FS_ERROR::FS_ACCESS_DENIED;
+	default:
+		return FS_ERROR::FS_UNKNOWN_ERROR;
+	}
+#endif
+#ifdef MBASE_PLATFORM_LINUX
+	switch (in_err)
+	{
+	case EEXIST:
+		return FS_ERROR::FS_DIRECTORY_EXISTS;
+	case ENOENT:
+		return FS_ERROR::FS_PATH_NOT_FOUND;
+	case EACCES:
+		return FS_ERROR::FS_ACCESS_DENIED;
+	case EPERM:
 		return FS_ERROR::FS_ACCESS_DENIED;
 	default:
 		return FS_ERROR::FS_UNKNOWN_ERROR;

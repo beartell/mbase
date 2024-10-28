@@ -769,6 +769,7 @@ GENERIC InfTextToTextProcessor::_initialize_context()
 	ctxParams.n_threads = 32;
 	ctxParams.n_threads_batch = 32;
 	ctxParams.n_ubatch = mContextLength / 8;
+	ctxParams.flash_attn = true;
 
 	mInitializeFailSignal.reset_signal_with_state();
 

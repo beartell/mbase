@@ -8,10 +8,21 @@
 #include <ctype.h>
 
 #ifdef MBASE_PLATFORM_WINDOWS
+
 #pragma comment(lib, "rpcrt4.lib")
-#include <Windows.h>
-#include <rpc.h>
+#include <Windows.h> // For utf conversions
+#include <rpc.h> // For UUID Generation
+
 #endif // MBASE_PLATFORM_WINDOWS
+
+#ifdef MBASE_PLATFORM_UNIX
+
+#include <uuid/uuid.h> // For uuid generation
+#include <iconv.h> // For utf conversions
+#include <errno.h>
+
+#endif // MBASE_PLATFORM_UNIX
+
 
 MBASE_STD_BEGIN
 
@@ -412,6 +423,33 @@ public:
         RpcStringFreeA((RPC_CSTR*)&uuidString);
         return newUuid;
 #endif // MBASE_PLATFORM_WINDOWS
+
+#ifdef MBASE_PLATFORM_UNIX
+        // do not forget to link libuuid
+        uuid_t tmpUuid;
+        IBYTE uuidString[37];
+
+        uuid_generate(tmpUuid);
+        uuid_unparse_lower(tmpUuid, uuidString);
+
+        if (in_remove_dashes)
+        {
+            character_sequence newUuid;
+            newUuid.reserve(32);
+
+            for (I32 i = 0; uuidString[i] != '\0'; ++i)
+            {
+                if (uuidString[i] == '-')
+                {
+                    continue;
+                }
+                newUuid.push_back(uuidString[i]);
+            }
+            return newUuid;
+        }
+
+        return character_sequence(uuidString);
+#endif // MBASE_PLATFORM_LINUX
     }
     /* ===== NON-MEMBER FUNCTIONS END ===== */
 
@@ -2361,16 +2399,64 @@ MBASE_INLINE mbase::string to_utf8(const mbase::wstring& in_str)
 #ifdef MBASE_PLATFORM_WINDOWS
     I32 length = WideCharToMultiByte(CP_UTF8, 0, src, src_length, 0, 0, NULL, NULL);
     IBYTEBUFFER output_buffer = (IBYTEBUFFER)malloc((length + 1) * sizeof(IBYTE));
-    if (output_buffer) {
-        WideCharToMultiByte(CP_UTF8, 0, src, src_length, output_buffer, length, NULL, NULL);
-        output_buffer[length] = '\0';
+    if(!output_buffer)
+    {
+        return mbase::string();
     }
+    
+    WideCharToMultiByte(CP_UTF8, 0, src, src_length, output_buffer, length, NULL, NULL);
+    output_buffer[length] = '\0';
 
     mbase::string outStr(output_buffer, length);
     free(output_buffer);
 
     return outStr;
 #endif // MBASE_PLATFORM_WINDOWS
+
+#ifdef MBASE_PLATFORM_UNIX
+    // TODO: Return here for double checks
+    const wchar_t* src = in_str.c_str();
+    I32 src_length = in_str.size() * sizeof(wchar_t);
+    if (!src_length)
+    {
+        return mbase::string();
+    }
+
+    iconv_t cd = iconv_open("UTF-8", "WCHAR_T");
+    if (cd == (iconv_t)-1)
+    {
+        return mbase::string();
+    }
+
+    size_t out_size = src_length * 4 + 1;
+    IBYTEBUFFER output_buffer = (IBYTEBUFFER)malloc(out_size);
+    if (!output_buffer)
+    {
+        iconv_close(cd);
+        return mbase::string();
+    }
+
+    IBYTEBUFFER out_ptr = output_buffer;
+    IBYTEBUFFER in_ptr = (IBYTEBUFFER)src;
+    size_t out_bytes_left = out_size - 1;
+    size_t in_bytes_left = src_length;
+
+    size_t result = iconv(cd, &in_ptr, &in_bytes_left, &out_ptr, &out_bytes_left);
+    iconv_close(cd);
+
+    if (result == (size_t)-1)
+    {
+        free(output_buffer);
+        return mbase::string();
+    }
+
+    size_t length = out_size - out_bytes_left - 1;
+    output_buffer[length] = '\0';
+
+    mbase::string outStr(output_buffer, length);
+    free(output_buffer);
+    return outStr;
+#endif // MBASE_PLATFORM_UNIX
 }
 
 MBASE_INLINE mbase::wstring from_utf8(const mbase::string& in_str)
@@ -2385,6 +2471,11 @@ MBASE_INLINE mbase::wstring from_utf8(const mbase::string& in_str)
 #ifdef MBASE_PLATFORM_WINDOWS
     I32 length = MultiByteToWideChar(CP_UTF8, 0, src, src_length, 0, 0);
     wchar_t* output_buffer = (wchar_t*)malloc((length + 1) * sizeof(wchar_t));
+    if(!output_buffer)
+    {
+        return wstring();
+    }
+
     if (output_buffer) {
         MultiByteToWideChar(CP_UTF8, 0, src, src_length, output_buffer, length);
         output_buffer[length] = L'\0';
@@ -2396,6 +2487,43 @@ MBASE_INLINE mbase::wstring from_utf8(const mbase::string& in_str)
 
     return outStr;
 #endif // MBASE_PLATFORM_WINDOWS
+
+#ifdef MBASE_PLATFORM_UNIX
+    iconv_t cd = iconv_open("WCHAR_T", "UTF-8");
+    if (cd == (iconv_t)-1)
+    {
+        return mbase::wstring();
+    }
+
+    size_t out_size = (src_length + 1) * sizeof(wchar_t);
+    char* output_buffer = (char*)malloc(out_size);
+    if (!output_buffer)
+    {
+        iconv_close(cd);
+        return mbase::wstring();
+    }
+
+    char* out_ptr = output_buffer;
+    char* in_ptr = (char*)src;
+    size_t out_bytes_left = out_size - sizeof(wchar_t);
+    size_t in_bytes_left = src_length;
+
+    size_t result = iconv(cd, &in_ptr, &in_bytes_left, &out_ptr, &out_bytes_left);
+    iconv_close(cd);
+
+    if (result == (size_t)-1)
+    {
+        free(output_buffer);
+        return mbase::wstring();
+    }
+
+    size_t length = (out_size - out_bytes_left - sizeof(wchar_t)) / sizeof(wchar_t);
+    ((wchar_t*)output_buffer)[length] = L'\0';
+
+    mbase::wstring outStr((wchar_t*)output_buffer, length);
+    free(output_buffer);
+    return outStr;
+#endif
 }
 
 MBASE_STD_END

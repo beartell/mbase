@@ -650,37 +650,37 @@ InfProgram::maip_err_code InfProgram::inf_delete_user(const mbase::string& in_se
 	return maip_err_code::INF_SUCCESS;
 }
 
-InfProgram::maip_err_code InfProgram::inf_modify_user_model_access_limit(const mbase::string& in_session_token, const U32& in_new_access_limit)
+InfProgram::maip_err_code InfProgram::inf_modify_user_model_access_limit(const mbase::string& in_session_token, const mbase::string& in_username, const U32& in_new_access_limit)
 {
 	MBASE_SESSION_CONTROL;
 	return maip_err_code::INF_SUCCESS;
 }
 
-InfProgram::maip_err_code InfProgram::inf_modify_user_maximum_context_length(const mbase::string& in_session_token, const U32& in_maximum_context_length)
+InfProgram::maip_err_code InfProgram::inf_modify_user_maximum_context_length(const mbase::string& in_session_token, const mbase::string& in_username, const U32& in_maximum_context_length)
 {
 	MBASE_SESSION_CONTROL;
 	return maip_err_code::INF_SUCCESS;
 }
 
-InfProgram::maip_err_code InfProgram::inf_modify_user_make_superuser(const mbase::string& in_session_token)
+InfProgram::maip_err_code InfProgram::inf_modify_user_make_superuser(const mbase::string& in_session_token, const mbase::string& in_username, const mbase::string& in_access_token)
 {
 	MBASE_SESSION_CONTROL;
 	return maip_err_code::INF_SUCCESS;
 }
 
-InfProgram::maip_err_code InfProgram::inf_modify_user_unmake_superuser(const mbase::string & in_session_token)
+InfProgram::maip_err_code InfProgram::inf_modify_user_unmake_superuser(const mbase::string & in_session_token, const mbase::string& in_username)
 {
 	MBASE_SESSION_CONTROL;
 	return maip_err_code::INF_SUCCESS;
 }
 
-InfProgram::maip_err_code InfProgram::inf_modify_user_accept_models(const mbase::string & in_session_token, const mbase::vector<mbase::string>&in_models)
+InfProgram::maip_err_code InfProgram::inf_modify_user_accept_models(const mbase::string & in_session_token, const mbase::string& in_username, const mbase::vector<mbase::string>&in_models)
 {
 	MBASE_SESSION_CONTROL;
 	return maip_err_code::INF_SUCCESS;
 }
 
-InfProgram::maip_err_code InfProgram::inf_modify_user_set_authority_flags(const mbase::string & in_session_token, const mbase::vector<mbase::string>&in_authority_flags)
+InfProgram::maip_err_code InfProgram::inf_modify_user_set_authority_flags(const mbase::string & in_session_token, const mbase::string& in_username, const mbase::vector<mbase::string>&in_authority_flags)
 {
 	MBASE_SESSION_CONTROL;
 	return maip_err_code::INF_SUCCESS;
@@ -811,27 +811,29 @@ GENERIC InfProgram::initialize(InfProgramInformation in_program_information)
 		
 		U32 authorityFlags;
 		U32 modelAccessLimit;
+		U32 maxContextLength;
 		mbase::vector<mbase::string> accessibleModels;
 		mbase::string userName;
 		mbase::string accessKey;
 		bool superUser;
 		bool authLocked;
 
-		if(myState.get_state<U32>("authority_flags", authorityFlags) == PcState::flags::STATE_ERR_NOT_FOUND)
+		if(myState.get_state<U32>("authority_flags", authorityFlags) != PcState::flags::STATE_SUCCESS ||
+			myState.get_state<U32>("model_access_limit", modelAccessLimit) != PcState::flags::STATE_SUCCESS ||
+			myState.get_state<U32>("max_context_length", maxContextLength) != PcState::flags::STATE_SUCCESS ||
+			myState.get_state<mbase::vector<mbase::string>>("accessible_models", accessibleModels) != PcState::flags::STATE_SUCCESS ||
+			myState.get_state<mbase::string>("username", userName) != PcState::flags::STATE_SUCCESS ||
+			myState.get_state<mbase::string>("access_key", accessKey) != PcState::flags::STATE_SUCCESS ||
+			myState.get_state<bool>("is_super", superUser) != PcState::flags::STATE_SUCCESS ||
+			myState.get_state<bool>("is_auth_locked", authLocked) != PcState::flags::STATE_SUCCESS)
 		{
 			continue;
 		}
 
-		myState.get_state<U32>("model_access_limit", modelAccessLimit);
-		myState.get_state<mbase::vector<mbase::string>>("accessible_models", accessibleModels);
-		myState.get_state<mbase::string>("username", userName);
-		myState.get_state<mbase::string>("access_key", accessKey);
-		myState.get_state<bool>("is_super", superUser);
-		myState.get_state<bool>("is_auth_locked", authLocked);
-
 		InfMaipUser maipUser;
 		maipUser.add_authority_flags(authorityFlags);
 		maipUser.set_distinct_model_access_limit(modelAccessLimit);
+		maipUser.set_maximum_context_length(maxContextLength);
 		maipUser.set_username(userName);
 		maipUser.set_access_key(accessKey);
 		if(superUser)
@@ -848,14 +850,15 @@ GENERIC InfProgram::initialize(InfProgramInformation in_program_information)
 			maipUser.add_accessible_model(*It);
 		}
 
-		/*std::cout << "Loading user: " << std::endl;
+		std::cout << "Loading user: " << std::endl;
 		std::cout << "- Authority value: " << authorityFlags << std::endl;
 		std::cout << "- Model access limit: " << modelAccessLimit << std::endl;
+		std::cout << "- Maximum context size: " << maxContextLength << std::endl;
 		std::cout << "- Username: " << userName << std::endl;
 		std::cout << "- Access key: " << accessKey << std::endl;
 		std::cout << "- Is super user:" << superUser << std::endl;
 		std::cout << "- Is authorization locked:" << authLocked << std::endl;
-		std::cout << "=======\n" << std::endl;*/
+		std::cout << "=======\n" << std::endl;
 		mUserMap[userName] = maipUser;
 	}
 
@@ -1026,10 +1029,13 @@ InfProgram::flags InfProgram::create_user(const mbase::string& in_username,
 		std::cout << "Access key: " << newUser.get_access_key() << std::endl;
 		std::cout << "Is super: " << newUser.is_superuser() << std::endl;
 		std::cout << "Is auth locked: " << newUser.is_authorization_locked() << std::endl;
+		std::cout << std::endl;
+		std::cout << std::endl;
 
 		userState.initialize(in_username, userStateFile);
 		userState.set_state<U32>("authority_flags", newUser.get_authority_flags());
 		userState.set_state<U32>("model_access_limit", newUser.get_model_access_limit());
+		userState.set_state<U32>("max_context_length", newUser.get_maximum_context_length());
 		userState.set_state<mbase::vector<mbase::string>>("accessible_models", newUser.get_accessible_models());
 		userState.set_state<mbase::string>("username", newUser.get_username());
 		userState.set_state<mbase::string>("access_key", newUser.get_access_key());
