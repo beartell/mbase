@@ -442,19 +442,19 @@ InfTextToTextProcessor::flags InfTextToTextProcessor::set_inference_client(InfCl
 
 InfTextToTextProcessor::flags InfTextToTextProcessor::initialize(InfModelTextToText* in_model, U32 in_context_length, const mbase::string& in_context_id)
 {
-	if(is_registered())
-	{
-		return flags::INF_PROC_SUCCESS;
-	}
-
-	if(signal_state_initializing())
+	if (signal_state_initializing())
 	{
 		return flags::INF_PROC_INFO_INITIALIZING;
 	}
 
-	if(signal_state_destroying())
+	if (signal_state_destroying())
 	{
 		return flags::INF_PROC_INFO_DESTROYING;
+	}
+
+	if(is_registered())
+	{
+		return flags::INF_PROC_SUCCESS;
 	}
 
 	mContextIdentifier = in_context_id;
@@ -496,6 +496,7 @@ InfTextToTextProcessor::flags InfTextToTextProcessor::destroy()
 		return flags::INF_PROC_INFO_DESTROYING;
 	}
 	on_destroying();
+	start_processor();
 	mDestroySignal.set_signal_with_state();
 	return flags::INF_PROC_INFO_DESTROYING;
 }
@@ -619,14 +620,25 @@ InfTextToTextProcessor::flags InfTextToTextProcessor::add_sampler(const InfSampl
 
 GENERIC InfTextToTextProcessor::update()
 {
+	if(signal_state_destroying())
+	{
+		return;
+	}
+
+	if(signal_init_fail_method())
+	{
+		mInitializeFailSignal.reset_signal_with_state();
+		on_initialize_fail(get_last_fail_code());
+	}
+
+	if(signal_init_method())
+	{
+		mInitializeMethodSignal.reset_signal_with_state();
+		on_initialize();
+	}
+
 	if(is_registered())
 	{
-		if(signal_init_method())
-		{
-			mInitializeMethodSignal.reset_signal_with_state();
-			on_initialize();
-		}
-
 		if(signal_token_generated())
 		{
 			// do things with the generated token
@@ -660,6 +672,7 @@ GENERIC InfTextToTextProcessor::update()
 			{
 				t2tClient->on_finish(mContextCursor, mFinishState);
 			}
+			return;
 		}
 	}
 	else
@@ -667,6 +680,7 @@ GENERIC InfTextToTextProcessor::update()
 		if(signal_destroy_method())
 		{
 			mDestroyMethodSignal.reset_signal_with_state();
+			stop_processor();
 			on_destroy();
 		}
 	}
@@ -717,18 +731,13 @@ GENERIC InfTextToTextProcessor::_decode_next()
 	mGeneratedToken = llama_sampler_sample(mSamplerChain, mModelContext, -1);
 	//llama_sampler_reset(greedySampler);
 	llama_sampler_accept(mSamplerChain, mGeneratedToken);
-	//llama_sampler_accept(mSamplerChain, mGeneratedToken);
-	
-	//llama_token_data_array tokenCandidates = { mPresetCandidates.data(), mPresetCandidates.size(), false };
-	//mGeneratedToken = llama_sampler_sample(mGreedy, mModelContext, -1);
-	//llama_sampler_accept(mSamplerChain, mGeneratedToken);
 	
 	llama_batch_clear(mInputBatch);
 	
 	if (llama_token_is_eog(t2tModel->get_raw_model(), mGeneratedToken))
 	{
 		// means end of generation
-		//mSamplingOrder.clear();
+
 		mFinishState = finish_state::FINISHED;
 		llama_kv_cache_clear(mModelContext);
 		clear_token_candidates();
@@ -743,7 +752,7 @@ GENERIC InfTextToTextProcessor::_decode_next()
 		if (mContextCursor == mContextLength)
 		{
 			// means token limit is reached
-			//mSamplingOrder.clear();
+
 			mContextState = context_state::AWAITING_FOR_CURSOR_ALIGNMENT;
 			mFinishState = finish_state::TOKEN_LIMIT_REACHED;
 			llama_kv_cache_clear(mModelContext);
@@ -796,10 +805,7 @@ GENERIC InfTextToTextProcessor::_initialize_context()
 	
 	mInputBatch = llama_batch_init(mContextLength, 0, 1);
 	mContextCursor = 0;
-	mIsRunning = true;
-	mInitializeSignal.reset_signal_with_state();
-	mIsRegistered = true;
-	
+
 	/*I32 modelVocabCount = 0;
 	t2tModel->get_vocab_count(modelVocabCount);*/
 	
@@ -817,6 +823,10 @@ GENERIC InfTextToTextProcessor::_initialize_context()
 
 	llama_sampler* penaltySampler = llama_sampler_init_penalties(modelVocabCount, eotToken, nlToken, 64, 1.5, 0.5, 0.5, false, false);
 	llama_sampler_chain_add(mSamplerChain, penaltySampler);
+
+	mIsRunning = true;
+	mInitializeSignal.reset_signal_with_state();
+	mIsRegistered = true;
 
 	mInitializeMethodSignal.set_signal_with_state();
 }
@@ -855,6 +865,11 @@ GENERIC InfTextToTextProcessor::update_t()
 	{
 		if(is_registered())
 		{
+			if (signal_destroying())
+			{
+				_destroy_context();
+			}
+
 			if (is_running())
 			{
 				if (signal_input_process())
@@ -877,11 +892,6 @@ GENERIC InfTextToTextProcessor::update_t()
 					// decode is not present
 					//mbase::sleep(30); // slow down the loop
 				}
-			}
-
-			if(signal_destroying())
-			{
-				_destroy_context();
 			}
 
 			else

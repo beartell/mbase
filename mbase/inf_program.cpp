@@ -46,6 +46,7 @@ GENERIC InfMaipModel::on_initialize()
 
 GENERIC InfMaipModel::on_destroy()
 {
+	std::cout << "Model is being destroyed" << std::endl;
 	delete this;
 }
 
@@ -85,6 +86,7 @@ GENERIC InfMaipTunedT2TProcessor::on_initialize_fail(init_fail_code out_code)
 
 GENERIC InfMaipTunedT2TProcessor::on_destroy()
 {
+	std::cout << "Processor is deleted" << std::endl;
 	delete this;
 }
 
@@ -213,6 +215,7 @@ GENERIC InfMaipTunedClient::on_finish(size_type out_total_token_size, InfTextToT
 
 GENERIC InfMaipTunedClient::on_unregister() 
 {
+	std::cout << "Unregistered the client" << std::endl;
 	if(mIsSessionAlive)
 	{
 		mManagerClient->mChatSessions.erase(mCurrentContextIndex);
@@ -367,7 +370,6 @@ InfProgram::maip_err_code InfProgram::inf_create_context(const mbase::string& in
 		delete maipNewContext;
 		return maip_err_code::INF_FAILED_TO_CREATE_CONTEXT;
 	}
-
 	return maip_err_code::INF_SUCCESS;
 }
 
@@ -496,7 +498,7 @@ InfProgram::maip_err_code InfProgram::inf_unload_model(const mbase::string& in_s
 	}
 
 	InfModelTextToText* t2tModel = It->second;
-	mRegisteredModels.erase(It);
+	//mRegisteredModels.erase(It);
 
 	t2tModel->destroy();
 
@@ -760,7 +762,9 @@ InfProgram::maip_err_code InfProgram::exec_next(const mbase::string& in_session_
 	InfTextToTextProcessor* hostProcessor = NULL;
 	clientSession.mPeer = in_peer;
 	It->second->get_host_processor(hostProcessor);
-	if(hostProcessor->next() == InfProcessorBase::flags::INF_PROC_ERR_INPUT_IS_EMPTY)
+	
+	InfTextToTextProcessor::flags outRes = hostProcessor->next();
+	if(outRes != InfTextToTextProcessor::flags::INF_PROC_SUCCESS)
 	{
 		return maip_err_code::EXEC_MISSING_MESSAGE;
 	}
@@ -1117,9 +1121,15 @@ GENERIC InfProgram::update()
 		++It;
 	}
 
-	for(registered_model_map::iterator It = mRegisteredModels.begin(); It != mRegisteredModels.end(); ++It)
+	for(registered_model_map::iterator It = mRegisteredModels.begin(); It != mRegisteredModels.end();)
 	{
-		It->second->update();
+		InfModelTextToText* t2tModel = It->second;
+		if(t2tModel->signal_destroy_method())
+		{
+			mRegisteredModels.erase(It);
+		}
+		t2tModel->update();
+		++It;
 	}
 }
 

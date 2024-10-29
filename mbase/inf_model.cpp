@@ -410,6 +410,13 @@ InfModelTextToText::flags InfModelTextToText::destroy()
 		return flags::INF_MODEL_INFO_DESTROYING_MODEL;
 	}
 
+	for (context_processor_list::iterator It = mRegisteredProcessors.begin(); It != mRegisteredProcessors.end(); ++It)
+	{
+		InfTextToTextProcessor* baseProcessor = static_cast<InfTextToTextProcessor*>(*It);
+		baseProcessor->stop_processor();
+		baseProcessor->destroy();
+	}
+
 	start_processor();
 	mDestroySignal.set_signal_with_state();
 	return flags::INF_MODEL_INFO_DESTROYING_MODEL;
@@ -482,7 +489,6 @@ GENERIC InfModelTextToText::on_initialize_fail(init_fail_code out_fail_code)
 GENERIC InfModelTextToText::_initialize_model()
 {
 	mbase::GgufMetaConfigurator tempConfigurator(mModelPath);
-	
 	if(!tempConfigurator.is_open())
 	{
 		mInitFailCode = init_fail_code::PATH_NOT_FOUND;
@@ -539,12 +545,15 @@ GENERIC InfModelTextToText::_initialize_model()
 GENERIC InfModelTextToText::_destroy_model()
 {
 	mbase::lock_guard tmpListMutex(mProcessorListMutex);
-	for (context_processor_list::iterator It = mRegisteredProcessors.begin(); It != mRegisteredProcessors.end();)
+	for (context_processor_list::iterator It = mRegisteredProcessors.begin(); It != mRegisteredProcessors.end(); ++It)
 	{
 		InfProcessorBase* baseProcessor = *It;
 		InfTextToTextProcessor* t2tProcessor = static_cast<InfTextToTextProcessor*>(baseProcessor);
 		t2tProcessor->destroy();
-		It = mRegisteredProcessors.erase(It);
+		while(t2tProcessor->signal_state_destroying())
+		{
+
+		}
 	}
 	llama_free_model(mModel);
 	mModel = NULL;
@@ -565,8 +574,8 @@ GENERIC InfModelTextToText::_destroy_model()
 	mIsProcessorRunning = false;
 	mDestroySignal.reset_signal_with_state();
 
-	mIsInitialized = false;
 	mDestroyMethodSignal.set_signal();
+	mIsInitialized = false;
 }
 
 GENERIC InfModelTextToText::_get_special_tokens(mbase::vector<inf_token>& out_tokens)
@@ -595,6 +604,11 @@ GENERIC InfModelTextToText::_get_special_tokens(mbase::vector<mbase::string>& ou
 GENERIC InfModelTextToText::update()
 {
 	// load and unload control
+	if(signal_state_destroying())
+	{
+		return;
+	}
+
 	if(signal_init_fail_method())
 	{
 		stop_processor();
@@ -609,43 +623,29 @@ GENERIC InfModelTextToText::update()
 		on_initialize();
 	}
 
-	if(signal_destroy_method())
-	{
-		stop_processor();
-		mDestroyMethodSignal.reset_signal_with_state();
-		on_destroy();
-	}
-
 	mbase::lock_guard tmpListMutex(mProcessorListMutex);
 	for(context_processor_list::iterator It = mRegisteredProcessors.begin(); It != mRegisteredProcessors.end();)
 	{
 		InfProcessorBase* baseProcessor = *It;
 		InfTextToTextProcessor* t2tProcessor = static_cast<InfTextToTextProcessor*>(baseProcessor);
-		if(t2tProcessor->is_registered())
+		t2tProcessor->update();
+		if(!t2tProcessor->is_registered())
 		{
-			if(!t2tProcessor->signal_state_destroying())
-			{
-				t2tProcessor->update();
-			}
-		}
-		else
-		{
-			if(!t2tProcessor->signal_state_initializing())
+			if(!t2tProcessor->signal_initializing())
 			{
 				mOccupiedContext -= t2tProcessor->get_context_size();
-				if(t2tProcessor->signal_init_fail_method())
-				{
-					t2tProcessor->on_initialize_fail(t2tProcessor->get_last_fail_code());
-				}
-				if(t2tProcessor->signal_destroy_method())
-				{
-					t2tProcessor->update(); // one last update to invoke the destroy method
-				}
 				It = mRegisteredProcessors.erase(It);
 				continue;
 			}
 		}
 		++It;
+	}
+
+	if (signal_destroy_method())
+	{
+		stop_processor();
+		mDestroyMethodSignal.reset_signal_with_state();
+		on_destroy();
 	}
 }
 

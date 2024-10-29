@@ -91,9 +91,11 @@ public:
 	~InfModelTextToText();
 
 	bool is_available(const U32& in_context_size);
+	bool signal_initializing_method() const;
 	bool signal_init_fail_method() const;
 	bool signal_init_method() const;
 	bool signal_destroy_method() const;
+	bool signal_destroying_method() const;
 	llama_model* get_raw_model();
 	flags get_special_tokens(mbase::vector<inf_token>& out_tokens);
 	flags get_special_tokens(mbase::vector<mbase::string>& out_tokens);
@@ -159,6 +161,7 @@ private:
 	processor_signal mInitFailSignal;
 	processor_signal mInitMethodSignal;
 	processor_signal mDestroyMethodSignal;
+	processor_signal mDestroyingSignal;
 	mbase::vector<inf_token> mSystemStartTokenized;
 	mbase::vector<inf_token> mAssistantStartTokenized;
 	mbase::vector<inf_token> mUserStartTokenized;
