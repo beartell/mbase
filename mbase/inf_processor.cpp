@@ -207,8 +207,6 @@ bool InfTextToTextProcessor::has_sampler(const mbase::string& in_sampler_name, I
 	for(mbase::vector<InfSamplerMeta>::iterator It = mSamplingOrder.begin(); It != mSamplingOrder.end(); ++It)
 	{
 		InfSamplerMeta smpBase = *It;
-
-		
 		if(smpBase.mSamplerName == in_sampler_name)
 		{
 			out_sampler = smpBase;
@@ -371,6 +369,7 @@ InfTextToTextProcessor::flags InfTextToTextProcessor::execute_input(const mbase:
 		t2tModel->get_eot_token(eotId);
 		t2tModel->get_lf_token(lineFeedId);
 
+		llama_sampler_chain_add(mSamplerChain, llama_sampler_init_top_k(10));
 		llama_sampler_chain_add(mSamplerChain, llama_sampler_init_softmax());
 		llama_sampler_chain_add(mSamplerChain, llama_sampler_init_dist(seedValue));
 		llama_sampler_chain_add(mSamplerChain, llama_sampler_init_mirostat_v2(seedValue, 5.0, 0.100));
@@ -683,6 +682,8 @@ GENERIC InfTextToTextProcessor::_decode_input()
 		llama_kv_cache_clear(mModelContext);
 	}
 	
+	llama_sampler_reset(mSamplerChain);
+
 	mInputBatch = llama_batch_get_one(mTokenizedInput.data(), mTokenizedInput.size());
 
 	mContextCursor = mInputBatch.n_tokens;
@@ -708,7 +709,6 @@ GENERIC InfTextToTextProcessor::_decode_next()
 		mPresetCandidates.emplace_back(llama_token_data{ token_id, logits[token_id], 0.0f });
 	}
 	llama_token_data_array tokenCandidates = { mPresetCandidates.data(), mPresetCandidates.size(), false};
-	llama_sampler_reset(mSamplerChain);
 	llama_sampler_apply(mSamplerChain, &tokenCandidates);
 	mGeneratedToken = llama_sampler_sample(mSamplerChain, mModelContext, -1);
 	
@@ -732,7 +732,7 @@ GENERIC InfTextToTextProcessor::_decode_next()
 		if (mContextCursor == mContextLength)
 		{
 			// means token limit is reached
-
+			llama_sampler_reset(mSamplerChain);
 			mFinishState = finish_state::TOKEN_LIMIT_REACHED;
 			llama_kv_cache_clear(mModelContext);
 			mDecodeSignal.reset_signal_with_state();
