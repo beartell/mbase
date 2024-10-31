@@ -29,7 +29,10 @@ public:
 	using size_type = SIZE_T;
 	using io_participants = mbase::vector<PcIoHandler*>;
 	using registered_handlers = mbase::list<PcIoHandler*>;
+	#ifdef MBASE_PLATFORM_WINDOWS
 	using _sync_handle = HANDLE; // iocp handle
+	#endif
+	
 
 	enum class flags : U8 {
 		IO_MNG_SUCCESS,
@@ -49,7 +52,7 @@ public:
 	const io_participants* get_io_participants() const;
 	bool is_initialized() const;
 	PcStreamManager* get_stream_manager();
-	_sync_handle _get_sync_handle();
+	//_sync_handle _get_sync_handle();
 
 	flags initialize(U32 in_max_write_count = gIoManagerMaxWritesDefault, U32 in_max_read_count = gIoManagerMaxReadsDefault);
 	flags register_handler(const mbase::wstring& in_filename, PcIoHandler& out_handler, bool in_stream_polled = true);
@@ -65,7 +68,7 @@ private:
 	mbase::mutex mIoMutex;
 	mbase::mutex mRegistryMutex;
 	bool mIsInitialized = false;
-	_sync_handle mSyncHandle;
+	//_sync_handle mSyncHandle;
 };
 
 class MBASE_API PcIoHandler : public handler_base {
@@ -121,8 +124,8 @@ private:
 	mbase::char_stream* mProcessorStream;
 	io_handle_base mIoBase;
 	direction mIoDirection;
-	OVERLAPPED mOvp;
-	ULONG_PTR mIocpKey;
+	//OVERLAPPED mOvp;
+	//ULONG_PTR mIocpKey;
 	PcStreamManager::stream_handle mPolledStreamHandle;
 	PcIoManager::registered_handlers::iterator mSelfIter;
 };

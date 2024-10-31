@@ -842,7 +842,7 @@ MBASE_INLINE maip_generic_errors maip_peer_request::_parse_version(mbase::char_s
 		IBYTE versionMinor[5] = { 0 };
 		bool tempFoundDot = false;
 
-		for (versionMajorLength; versionMajorLength < 4; versionMajorLength++)
+		for (; versionMajorLength < 4; versionMajorLength++)
 		{
 			if (in_stream.getc() == '.')
 			{
@@ -877,7 +877,7 @@ MBASE_INLINE maip_generic_errors maip_peer_request::_parse_version(mbase::char_s
 			return maip_generic_errors::INVALID_IDENTIFICATION_ENDING;
 		}
 
-		for (versionMinorLength; versionMinorLength < 4; versionMinorLength++)
+		for (; versionMinorLength < 4; versionMinorLength++)
 		{
 			if (!isdigit(in_stream.getc()))
 			{
@@ -1144,7 +1144,14 @@ MBASE_INLINE maip_generic_errors maip_peer_request::_parse_message_description(m
 			if (mbase::string::is_integer(n.mStringValue))
 			{
 				n.mValType = maip_value_type::MAIP_VALTYPE_INT;
+				#ifdef MBASE_PLATFORM_WINDOWS
 				n.mIntValue = _atoi64(n.mStringValue);
+				#endif
+				
+				#ifdef MBASE_PLATFORM_UNIX
+				IBYTEBUFFER endCharacter = NULL;
+				n.mIntValue = strtoll(n.mStringValue, &endCharacter, 10);
+				#endif
 			}
 			else if (mbase::string::is_float(n.mStringValue))
 			{

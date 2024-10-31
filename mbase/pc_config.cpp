@@ -60,7 +60,7 @@ mbase::wstring PcConfig::get_data_path() const noexcept
 	return mDataPath;
 }
 
-typename const PcConfig::config_map& PcConfig::get_config_map() const noexcept
+const typename PcConfig::config_map& PcConfig::get_config_map() const noexcept
 {
 	return mConfigMap;
 }
@@ -252,7 +252,7 @@ bool PcConfig::load_config_file(const mbase::wstring& in_file, config_map& out_c
 					}
 
 					mbase::string newConfigValue;
-					for(beginIndex; beginIndex < endIndex; ++beginIndex)
+					for(; beginIndex < endIndex; ++beginIndex)
 					{
 						newConfigValue.push_back(configValue[beginIndex]);
 					}

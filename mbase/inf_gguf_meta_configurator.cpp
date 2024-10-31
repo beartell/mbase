@@ -281,8 +281,13 @@ GENERIC GgufMetaConfigurator::clear_context()
 			newGgufFile.open_file(modifiedFileName, mbase::io_file::access_mode::RW_ACCESS, mbase::io_file::disposition::APPEND);
 			newGgufFile.write_data(dcs.get_buffer(), dcs.buffer_length());
 			newGgufFile.close_file();
-			
+			#ifdef MBASE_PLATFORM_WINDOWS
 			MoveFileExW(modifiedFileName.c_str(), mGgufFile.c_str(), MOVEFILE_REPLACE_EXISTING);
+			#endif
+			
+			#ifdef MBASE_PLATFORM_UNIX
+			rename(mbase::to_utf8(modifiedFileName).c_str(), mbase::to_utf8(mGgufFile).c_str());
+			#endif
 		}
 		gguf_free(mGgufContext);
 		mGgufContext = NULL;

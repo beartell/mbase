@@ -1,7 +1,8 @@
 #ifndef MBASE_STRING_H
 #define MBASE_STRING_H
 
-#include <mbase/vector.h>
+//#include <mbase/vector.h>
+#include <mbase/char_stream.h>
 #include <mbase/type_sequence.h> // mbase::type_sequence
 #include <mbase/safe_buffer.h> // mbase::safe_buffer
 #include <stdexcept>
@@ -22,7 +23,6 @@
 #include <errno.h>
 
 #endif // MBASE_PLATFORM_UNIX
-
 
 MBASE_STD_BEGIN
 
@@ -288,21 +288,28 @@ public:
     MBASE_INLINE static character_sequence deserialize(IBYTEBUFFER in_buffer, SIZE_T in_length, SIZE_T& bytes_processed);
     
     /* ===== NON-MODIFIER METHODS BEGIN ===== */
-    template<typename SourceContainer = mbase::vector<character_sequence>>
+    template<typename SourceContainer>
     MBASE_INLINE GENERIC split(const character_sequence& in_delimiters, SourceContainer& out_strings) noexcept;
     MBASE_ND(MBASE_RESULT_IGNORE) I32 to_i32() noexcept { return SeqBase::cnv_to_i32(this->c_str()); }
     MBASE_ND(MBASE_RESULT_IGNORE) I32 to_i64() noexcept { return SeqBase::cnv_to_i64(this->c_str()); }
     MBASE_ND(MBASE_RESULT_IGNORE) F32 to_f32() noexcept { return SeqBase::cnv_to_f32(this->c_str()); }
     MBASE_ND(MBASE_RESULT_IGNORE) F64 to_f64() noexcept { return SeqBase::cnv_to_f64(this->c_str()); }
+
     MBASE_ND(MBASE_RESULT_IGNORE) static MBASE_INLINE character_sequence get_extension(character_sequence in_rhs)
     {
-        mbase::vector<character_sequence> listOfString;
-        in_rhs.split(".", listOfString);
-        if(listOfString.size())
+        for(reverse_iterator rIt = in_rhs.rbegin(); rIt != in_rhs.rend(); ++rIt)
         {
-            return listOfString[listOfString.size() - 1];
+            if(*rIt == '.')
+            {
+                character_sequence extensionString;
+                --rIt;
+                for(; rIt != in_rhs.rbegin() - 1; --rIt)
+                {
+                    extensionString.push_back(*rIt);
+                }
+                return extensionString;
+            }
         }
-
         return character_sequence();
     }
     MBASE_INLINE GENERIC serialize(char_stream& out_buffer) const;
@@ -511,12 +518,9 @@ public:
     MBASE_INLINE_EXPR friend bool operator==(const character_sequence& in_lhs, const character_sequence& in_rhs) noexcept { return traits_type::is_equal(in_lhs.mRawData, in_rhs.mRawData); }
     MBASE_INLINE_EXPR friend bool operator!=(const character_sequence& in_lhs, const character_sequence& in_rhs) noexcept { return !traits_type::is_equal(in_lhs.mRawData, in_rhs.mRawData); }
     MBASE_INLINE_EXPR friend bool operator<(const character_sequence& in_lhs, const character_sequence& in_rhs) noexcept { return std::lexicographical_compare(in_lhs.cbegin(), in_lhs.cend(), in_rhs.cbegin(), in_rhs.cend()); }
-    MBASE_INLINE_EXPR friend bool operator<=(const character_sequence& in_lhs, const character_sequence& in_rhs) noexcept { return std::lexicographical_compare(in_lhs.cbegin(), in_lhs.cend(), in_rhs.cbegin(), in_rhs.cend()) || in_lhs.is_equal(mRawData, in_rhs.mRawData); }
+    MBASE_INLINE_EXPR friend bool operator<=(const character_sequence& in_lhs, const character_sequence& in_rhs) noexcept { return std::lexicographical_compare(in_lhs.cbegin(), in_lhs.cend(), in_rhs.cbegin(), in_rhs.cend()) || in_lhs.is_equal(in_lhs.mRawData, in_rhs.mRawData); }
     MBASE_INLINE_EXPR friend bool operator>(const character_sequence& in_lhs, const character_sequence& in_rhs) noexcept { return std::lexicographical_compare(in_rhs.cbegin(), in_rhs.cend(), in_lhs.cbegin(), in_lhs.cend()); }
-    MBASE_INLINE_EXPR friend bool operator>=(const character_sequence& in_lhs, const character_sequence& in_rhs) noexcept { return std::lexicographical_compare(in_rhs.cbegin(), in_rhs.cend(), in_lhs.cbegin(), in_lhs.cend()) || in_lhs.is_equal(mRawData, in_rhs.mRawData); }
-#if MBASE_CPP_VERSION >= 20
-    MBASE_INLINE_EXPR friend bool operator<=>(const character_sequence& in_lhs, const character_sequence& in_rhs) noexcept; // IMPL
-#endif // MBASE_CPP_VERSION >= 20
+    MBASE_INLINE_EXPR friend bool operator>=(const character_sequence& in_lhs, const character_sequence& in_rhs) noexcept { return std::lexicographical_compare(in_rhs.cbegin(), in_rhs.cend(), in_lhs.cbegin(), in_lhs.cend()) || in_lhs.is_equal(in_lhs.mRawData, in_rhs.mRawData); }
     friend std::ostream& operator<<(std::ostream& os, const character_sequence& in_rhs) noexcept 
     {
         if (!in_rhs.mRawData)
@@ -2266,7 +2270,15 @@ template<typename SeqType, typename SeqBase, typename Allocator>
 template<typename ... Params>
 MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE character_sequence<SeqType, SeqBase, Allocator> character_sequence<SeqType, SeqBase, Allocator>::from_format(const_pointer in_format, Params ... in_params) noexcept
 {
+    #ifdef MBASE_PLATFORM_WINDOWS
     size_type stringLength = _scprintf(in_format, std::forward<Params>(in_params)...); // FIND THE FKIN SIZE
+    #endif
+
+    #ifdef MBASE_PLATFORM_UNIX
+    char placeholder[1] = {0};
+    size_type stringLength = snprintf(placeholder, 1, in_format, std::forward<Params>(in_params)...);
+    #endif
+    
     character_sequence newSequence;
     if (!stringLength)
     {
@@ -2415,12 +2427,7 @@ MBASE_INLINE mbase::string to_utf8(const mbase::wstring& in_str)
 
 #ifdef MBASE_PLATFORM_UNIX
     // TODO: Return here for double checks
-    const wchar_t* src = in_str.c_str();
-    I32 src_length = in_str.size() * sizeof(wchar_t);
-    if (!src_length)
-    {
-        return mbase::string();
-    }
+    src_length = in_str.size() * sizeof(wchar_t);
 
     iconv_t cd = iconv_open("UTF-8", "WCHAR_T");
     if (cd == (iconv_t)-1)
@@ -2537,7 +2544,7 @@ struct std::hash<mbase::string> {
         {
             mbase::I32 tmp;
             myVal = (myVal << 4) + (*myBuffer);
-            if(tmp = (myVal & 0xf0000000))
+            if((tmp = (myVal & 0xf0000000)))
             {
                 myVal = myVal ^ (tmp >> 24);
                 myVal = myVal ^ tmp;
@@ -2558,7 +2565,7 @@ struct std::hash<mbase::wstring> {
         {
             mbase::I32 tmp;
             myVal = (myVal << 4) + (*myBuffer);
-            if (tmp = (myVal & 0xf0000000))
+            if ((tmp = (myVal & 0xf0000000)))
             {
                 myVal = myVal ^ (tmp >> 24);
                 myVal = myVal ^ tmp;

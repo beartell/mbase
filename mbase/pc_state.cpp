@@ -1,4 +1,5 @@
 #include <mbase/pc/pc_state.h>
+#include <mbase/string.h>
 #include <mbase/traits.h>
 #include <mbase/io_file.h>
 #include <mbase/filesystem.h>
@@ -269,7 +270,8 @@ PcState::flags PcState::initialize(const mbase::string& in_object_name, const mb
 	{
 #ifdef MBASE_PLATFORM_WINDOWS
 		statePath += '\\';
-#elif MBASE_PLATFORM_UNIX
+#endif
+#ifdef MBASE_PLATFORM_UNIX
 		statePath += '/';
 #endif // MBASE_PLATFORM_WINDOWS
 
@@ -289,8 +291,10 @@ PcState::flags PcState::initialize(const mbase::string& in_object_name, const mb
 		mIsInitialized = true; // FOR NOW, IT WILL WE MARKED INITIALIZED REGARDLESS OF ALL THE PROBLEMS
 		if (ioStateFile.is_file_open())
 		{
+			std::cout << "Opened up the state file: " << mFullStateName << std::endl;
 			ioStateFile.set_file_pointer(0, mbase::io_base::move_method::MV_BEGIN);
 			size_type stateFileSize = ioStateFile.get_file_size();
+			std::cout << "State file size is: " << stateFileSize << std::endl;
 			if (stateFileSize)
 			{
 				deep_char_stream dcs(stateFileSize);
@@ -363,7 +367,8 @@ PcState::flags PcState::initialize_overwrite(const mbase::string& in_object_name
 	{
 #ifdef MBASE_PLATFORM_WINDOWS
 		statePath += '\\';
-#elif MBASE_PLATFORM_UNIX
+#endif
+#ifdef MBASE_PLATFORM_UNIX
 		statePath += '/';
 #endif // MBASE_PLATFORM_WINDOWS
 

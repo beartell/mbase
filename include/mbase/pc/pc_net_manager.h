@@ -7,7 +7,6 @@
 #include <mbase/string.h>
 #include <mbase/list.h>
 #include <mbase/vector.h>
-#include <mbase/wsa_init.h>
 #include <mbase/synchronization.h>
 #include <mbase/framework/timers.h>
 #include <mbase/framework/logical_processing.h>
@@ -38,8 +37,13 @@ struct MBASE_API PcNetPacket {
 class MBASE_API PcNetPeerClient : public non_copyable {
 public:
 	using size_type = SIZE_T;
+	#ifdef MBASE_PLATFORM_WINDOWS
 	using socket_handle = SOCKET;
+	#endif
 
+	#ifdef MBASE_PLATFORM_UNIX
+	using socket_handle = I32;
+	#endif
 	friend class PcNetServer;
 	friend class PcNetManager;
 	friend class PcNetClient;
@@ -97,7 +101,13 @@ private:
 class MBASE_API PcNetServer : public non_copymovable {
 public:
 	using size_type = SIZE_T;
+	#ifdef MBASE_PLATFORM_WINDOWS
 	using socket_handle = SOCKET;
+	#endif
+	
+	#ifdef MBASE_PLATFORM_UNIX
+	using socket_handle = I32;
+	#endif
 
 	friend class PcNetManager;
 

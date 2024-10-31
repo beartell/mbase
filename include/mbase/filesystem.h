@@ -67,6 +67,7 @@ MBASE_INLINE GENERIC get_directory(const mbase::wstring& in_path, ContainerType&
 {
 #ifdef MBASE_PLATFORM_WINDOWS
 	WIN32_FIND_DATAW findData;
+	in_path += '*';
 	HANDLE findHandle = FindFirstFileW(in_path.c_str(), &findData);
 	do {
 		FS_FILE_INFORMATION ffi;
@@ -83,7 +84,7 @@ MBASE_INLINE GENERIC get_directory(const mbase::wstring& in_path, ContainerType&
 #ifdef MBASE_PLATFORM_UNIX
 	DIR *d = nullptr;
 	struct dirent* dir = nullptr;
-	d = opendir(in_path.c_str());
+	d = opendir(mbase::to_utf8(in_path).c_str());
 	if(d)
 	{
 		while((dir = readdir(d)) != NULL)
@@ -91,7 +92,7 @@ MBASE_INLINE GENERIC get_directory(const mbase::wstring& in_path, ContainerType&
 			FS_FILE_INFORMATION ffi;
 			struct stat st = {0};
 			mbase::string fileName = dir->d_name;
-			if (fileName == '.' || fileName == "..") 
+			if (fileName == "." || fileName == "..") 
 			{
 				continue;
 			}
@@ -113,6 +114,7 @@ MBASE_INLINE GENERIC get_directory(const mbase::string& in_path, ContainerType& 
 {
 #ifdef MBASE_PLATFORM_WINDOWS
 	WIN32_FIND_DATAA findData;
+	in_path += '*';
 	HANDLE findHandle = FindFirstFileA(in_path.c_str(), &findData);
 	do {
 		FS_FILE_INFORMATIONA ffi;
@@ -137,11 +139,11 @@ MBASE_INLINE GENERIC get_directory(const mbase::string& in_path, ContainerType& 
 			FS_FILE_INFORMATION ffi;
 			struct stat st = { 0 };
 			mbase::string fileName = dir->d_name;
-			if (fileName == '.' || fileName == "..")
+			if (fileName == "." || fileName == "..")
 			{
 				continue;
 			}
-			ffi.fileName = std::move(fileName);
+			ffi.fileName = std::move(mbase::from_utf8(fileName));
 
 			if (!stat(dir->d_name, &st))
 			{
@@ -198,7 +200,7 @@ MBASE_INLINE FS_ERROR create_directory(const mbase::string& in_path) noexcept
 	}
 #endif
 #ifdef MBASE_PLATFORM_UNIX
-	if(mkdir(in_path.c_str(), 0600))
+	if(mkdir(in_path.c_str(), 0744))
 	{
 
 	}
@@ -215,7 +217,7 @@ MBASE_INLINE FS_ERROR create_directory(const mbase::wstring& in_path) noexcept
 	}
 #endif
 #ifdef MBASE_PLATFORM_UNIX
-	if (mkdir(in_path.c_str(), 0600))
+	if (mkdir(mbase::to_utf8(in_path).c_str(), 0744))
 	{
 
 	}
@@ -246,7 +248,7 @@ MBASE_INLINE FS_ERROR delete_file(const mbase::wstring& in_path) noexcept
 	}
 #endif
 #ifdef MBASE_PLATFORM_UNIX
-	remove(in_path.c_str());
+	remove(mbase::to_utf8(in_path).c_str());
 #endif
 	return FS_ERROR::FS_SUCCESS;
 }
@@ -259,7 +261,7 @@ MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE mbase::wstring get_temp_path() noexce
 	return mbase::wstring(pathString);
 #endif
 #ifdef MBASE_PLATFORM_UNIX
-	return mbase::string("/tmp/");
+	return mbase::wstring(L"/tmp/");
 #endif
 }
 
@@ -271,7 +273,7 @@ MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE mbase::wstring get_current_path() noe
 	return mbase::wstring(pathString);
 #endif
 #ifdef MBASE_PLATFORM_UNIX
-	return mbase::string(get_current_dir_name());
+	return mbase::wstring(mbase::from_utf8(get_current_dir_name()));
 #endif
 }
 
@@ -285,8 +287,8 @@ MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE mbase::wstring get_temp_file(const mb
 	return mbase::wstring(pathString);
 #endif
 #ifdef MBASE_PLATFORM_UNIX
-	mbase::string tempName = in_prefix + "XXXXXX";
-	mkstemp(tempName.data());
+	mbase::wstring tempName = in_prefix + L"XXXXXX";
+	mkstemp(mbase::to_utf8(tempName).data());
 	return tempName;
 #endif
 }

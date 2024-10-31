@@ -170,7 +170,11 @@ public:
     MBASE_ND(MBASE_RESULT_IGNORE) static MBASE_INLINE bool type_is_punctuation(const value_type& in_char) noexcept { return iswpunct(in_char); }
     MBASE_ND(MBASE_RESULT_IGNORE) static MBASE_INLINE bool type_is_print(const value_type& in_char) noexcept { return iswprint(in_char); }
     MBASE_ND(MBASE_RESULT_IGNORE) static MBASE_INLINE bool type_is_digit(const value_type& in_char) noexcept { return iswdigit(in_char); }
-    MBASE_ND(MBASE_RESULT_IGNORE) static MBASE_INLINE pointer string_token(pointer in_data, const_pointer in_delim) { return wcstok(in_data, in_delim); }
+    MBASE_ND(MBASE_RESULT_IGNORE) static MBASE_INLINE pointer string_token(pointer in_data, const_pointer in_delim) 
+    { 
+        pointer ptr;
+        return wcstok(in_data, in_delim, &ptr); 
+    }
 };
 
 MBASE_STD_END

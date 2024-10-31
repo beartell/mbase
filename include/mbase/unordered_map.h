@@ -695,9 +695,7 @@ MBASE_INLINE_EXPR GENERIC unordered_map<Key, Value, Hash, KeyEqual, Allocator>::
 template<typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator>
 typename unordered_map<Key, Value, Hash, KeyEqual, Allocator>::local_iterator unordered_map<Key, Value, Hash, KeyEqual, Allocator>::_is_key_duplicate(bucket_node_type& in_value, const Key& in_key) const noexcept
 {
-	typename bucket_node_type::iterator It = in_value.begin();
-
-	for (It; It != in_value.end(); It++)
+	for (typename bucket_node_type::iterator It = in_value.begin(); It != in_value.end(); It++)
 	{
 		if (It->first == in_key)
 		{
@@ -710,7 +708,7 @@ typename unordered_map<Key, Value, Hash, KeyEqual, Allocator>::local_iterator un
 template<typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator>
 typename unordered_map<Key, Value, Hash, KeyEqual, Allocator>::local_iterator unordered_map<Key, Value, Hash, KeyEqual, Allocator>::_is_key_duplicate(bucket_node_type& in_value, value_type& in_pair) const noexcept
 {
-	return _is_key_duplicate(in_value, in_pair.first);
+	return this->_is_key_duplicate(in_value, in_pair.first);
 }
 
 template<typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator>

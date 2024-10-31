@@ -1,4 +1,5 @@
 #include <mbase/inference/inf_maip_security.h>
+#include <algorithm>
 
 MBASE_BEGIN
 

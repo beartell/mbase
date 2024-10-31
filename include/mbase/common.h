@@ -6,6 +6,7 @@
 #include <limits>
 #include <inttypes.h>
 #include <ctype.h>
+#include <cwctype>
 
 #ifdef _WIN32
 	#define MBASE_PLATFORM_WINDOWS
@@ -100,7 +101,7 @@
 #define MBASE_STD_VERSION "1.0.0"
 #define MBASE_STD_VERSION_N 100
 
-#define MBASE_STD_BEGIN namespace mbase{
+#define MBASE_STD_BEGIN namespace mbase {
 #define MBASE_STD_END }
 
 #define MBASE_OBS_IGNORE "observation return value ignored"

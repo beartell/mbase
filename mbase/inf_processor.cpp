@@ -366,7 +366,7 @@ InfTextToTextProcessor::flags InfTextToTextProcessor::execute_input(const mbase:
 
 	if(!mIsSamplerSet)
 	{
-		I32 seedValue = 3261246819; // TODO, GET THIS FROM APPLICATION CONFIGURATION
+		I32 seedValue = 1234567; // TODO, GET THIS FROM APPLICATION CONFIGURATION
 		InfModelTextToText* t2tModel = static_cast<InfModelTextToText*>(this->mTargetModel_md_model);
 		I32 modelVocab = 0;
 		inf_token eotId = 0;
@@ -604,12 +604,6 @@ InfTextToTextProcessor::flags InfTextToTextProcessor::add_sampler(const InfSampl
 		mSamplingOrder.push_back({ "MIN_P", newSampler, true });
 	}
 
-	else if(in_sampling.mSamplerName == "TFZ")
-	{
-		newSampler = llama_sampler_init_tail_free(in_sampling.mSamplerValue, 1);
-		llama_sampler_chain_add(mSamplerChain, newSampler);
-		mSamplingOrder.push_back({ "TFZ", newSampler, true });
-	}
 	else
 	{
 		return flags::INF_PROC_ERR_SAMPLER_NAME_MISMATCH;
@@ -694,13 +688,17 @@ GENERIC InfTextToTextProcessor::_decode_input()
 		llama_kv_cache_clear(mModelContext);
 	}
 
-	llama_batch_clear(mInputBatch);
-	for (size_type i = 0; i < mTokenizedInput.size(); ++i)
-	{
-		llama_batch_add(mInputBatch, mTokenizedInput[i], i, { 0 }, false);
-	}
+	/*  old llama.cpp patch 
+		llama_batch_clear(mInputBatch);
+		for (size_type i = 0; i < mTokenizedInput.size(); ++i)
+		{
+			llama_batch_add(mInputBatch, mTokenizedInput[i], i, { 0 }, false);
+		}
+		mInputBatch.logits[mInputBatch.n_tokens - 1] = true;
+	*/
+	
+	mInputBatch = llama_batch_get_one(mTokenizedInput.data(), mTokenizedInput.size());
 
-	mInputBatch.logits[mInputBatch.n_tokens - 1] = true;
 	mContextCursor = mInputBatch.n_tokens;
 	mContextState = context_state::DECODING_INPUT;
 	mFinishState = finish_state::CONTINUE;
@@ -729,10 +727,10 @@ GENERIC InfTextToTextProcessor::_decode_next()
 	llama_sampler_reset(mSamplerChain);
 	llama_sampler_apply(mSamplerChain, &tokenCandidates);
 	mGeneratedToken = llama_sampler_sample(mSamplerChain, mModelContext, -1);
-	//llama_sampler_reset(greedySampler);
+	
 	llama_sampler_accept(mSamplerChain, mGeneratedToken);
 	
-	llama_batch_clear(mInputBatch);
+	// old patch llama_batch_clear(mInputBatch);
 	
 	if (llama_token_is_eog(t2tModel->get_raw_model(), mGeneratedToken))
 	{
@@ -761,7 +759,8 @@ GENERIC InfTextToTextProcessor::_decode_next()
 
 		else
 		{
-			llama_batch_add(mInputBatch, mGeneratedToken, mContextCursor, { 0 }, true);
+			mInputBatch = llama_batch_get_one(&mGeneratedToken, 1);
+			//llama_batch_add(mInputBatch, mGeneratedToken, mContextCursor, { 0 }, true);
 			mContextCursor++;
 			llama_decode(mModelContext, mInputBatch);
 		}

@@ -52,7 +52,7 @@ Both char_stream and deep_char_stream should be used with utmost care.
 
 class stream_cursor_out_of_bounds : public std::exception {
 public:
-	MSTRING what() const {
+	MSTRING what() const noexcept {
 		return "cursor is out of bounds";
 	}
 };
@@ -60,6 +60,7 @@ public:
 class char_stream : protected type_sequence<IBYTE> {
 public:
 	using reference = IBYTE&;
+	using const_reference = const IBYTE&;
 	using size_type = SIZE_T;
 	using difference_type = PTRDIFF;
 
@@ -106,7 +107,7 @@ public:
 	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE IBYTEBUFFER operator*() noexcept;
 	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE CBYTEBUFFER operator*() const noexcept;
 	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE reference operator[](size_type in_rhs) noexcept;
-	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE const reference operator[](size_type in_rhs) const noexcept;
+	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE const_reference operator[](size_type in_rhs) const noexcept;
 	/* ===== OPERATOR OBSERVATION METHODS END ===== */
 
 	/* ===== STATE-MODIFIER METHODS BEGIN ===== */
@@ -259,7 +260,7 @@ MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE typename char_stream::reference c
 	return mSrcBuffer[in_rhs];
 }
 
-MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE const typename char_stream::reference char_stream::operator[](size_type in_rhs) const noexcept
+MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE typename char_stream::const_reference char_stream::operator[](size_type in_rhs) const noexcept
 {
 	return mSrcBuffer[in_rhs];
 }

@@ -85,8 +85,7 @@ MBASE_INLINE event_manager::flags event_manager::dispatch_event(const mbase::str
 		}
 
 		event_group::handler_container& eventList = eventGroup.listeners;
-		event_group::handler_container::iterator It = eventList.begin();
-		for (It; It != eventList.end(); It++)
+		for (event_group::handler_container::iterator It = eventList.begin(); It != eventList.end(); It++)
 		{
 			event_handler* suppliedHandler = *It;
 			suppliedHandler->on_call(in_data);

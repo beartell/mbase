@@ -82,7 +82,7 @@ public:
 	/* ===== OBSERVATION METHODS BEGIN ===== */
 	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE bool is_file_open() const noexcept;
 	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE mbase::wstring get_file_name() const noexcept;
-	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE size_type get_file_size() const noexcept;
+	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE size_type get_file_size() noexcept;
 	/* ===== OBSERVATION METHODS END ===== */
 
 	/* ===== STATE-MODIFIER METHODS BEGIN ===== */
@@ -127,7 +127,7 @@ MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE mbase::wstring io_file::get_file_name() 
 	return mFileName;
 }
 
-MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE typename io_file::size_type io_file::get_file_size() const noexcept 
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE typename io_file::size_type io_file::get_file_size() noexcept 
 {
 	if(!mOperateReady)
 	{
@@ -140,9 +140,13 @@ MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE typename io_file::size_type io_file::get
 	return lInt.QuadPart;
 #endif
 #ifdef MBASE_PLATFORM_UNIX
-	struct stat st = {0};
-	stat(get_file_name().c_str(), &st);
-	return st.st_size;
+	size_type oldPointerPos = get_file_pointer_pos();
+	set_file_pointer(0, mbase::io_base::move_method::MV_END);
+
+	size_type fileSize = get_file_pointer_pos();
+	set_file_pointer(oldPointerPos, move_method::MV_BEGIN); // back to old position
+	
+	return fileSize;
 #endif
 }
 
@@ -174,7 +178,7 @@ MBASE_INLINE io_base::os_file_handle io_file::open_file(const mbase::wstring& in
 	}
 #endif
 #ifdef MBASE_PLATFORM_UNIX
-	I32 fHandle = open(in_filename.c_str(), (U32)in_disp | (U32)in_accmode, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP);
+	I32 fHandle = open(mbase::to_utf8(in_filename).c_str(), (U32)in_disp | (U32)in_accmode, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP);
 	if(fHandle == -1)
 	{
 		_set_last_error(errno);
@@ -207,11 +211,21 @@ MBASE_INLINE GENERIC io_file::close_file() noexcept
 
 MBASE_INLINE GENERIC io_file::clear_file() noexcept
 {
+	#ifdef MBASE_PLATFORM_WINDOWS
 	if(mRawContext.raw_handle)
 	{
 		set_file_pointer(0, mbase::io_base::move_method::MV_BEGIN);
-		SetEndOfFile(mRawContext.raw_handle);
+		SetEndOfFile(mRawContext.raw_handle);	
 	}
+	#endif
+
+	#ifdef MBASE_PLATFORM_UNIX
+	if (mRawContext.raw_handle != -1) // In Linux we typically check against -1 for invalid fd
+    {
+        lseek(mRawContext.raw_handle, 0, SEEK_SET);  // Move to beginning
+        ftruncate(mRawContext.raw_handle, 0);        // Truncate to 0 bytes
+    }
+	#endif
 }
 
 MBASE_INLINE typename io_file::size_type io_file::write_data(const IBYTEBUFFER in_src)

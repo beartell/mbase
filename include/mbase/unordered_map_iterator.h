@@ -178,7 +178,7 @@ MBASE_INLINE linear_bucket_iterator<MapContainer, BucketIterator>& linear_bucket
 	{
 		++mBucketIndex;
 		BucketIterator bucketIter;
-		for (mBucketIndex; mBucketIndex < mMapContainer->bucket_count(); ++mBucketIndex)
+		for (; mBucketIndex < mMapContainer->bucket_count(); ++mBucketIndex)
 		{
 			bucketIter = mMapContainer->begin(mBucketIndex);
 			if (bucketIter != mMapContainer->end(mBucketIndex))

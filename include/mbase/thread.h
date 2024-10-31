@@ -274,7 +274,16 @@ MBASE_INLINE thread_error thread<Func, Args...>::exit(I32 in_exit_code) noexcept
 }
 
 MBASE_INLINE GENERIC sleep(I32 in_ms) noexcept {
+	#ifdef MBASE_PLATFORM_WINDOWS
 	Sleep(in_ms);
+	#endif
+	
+	#ifdef MBASE_PLATFORM_UNIX
+	struct timespec ts;
+    ts.tv_sec = in_ms / 1000;
+    ts.tv_nsec = (in_ms % 1000) * 1000000;
+    nanosleep(&ts, nullptr);
+	#endif
 }
 
 MBASE_STD_END

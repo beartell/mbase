@@ -2,8 +2,7 @@
 #define MBASE_STD_CSH_H
 
 #include <mbase/common.h>
-#include <mbase/safe_buffer.h> // mbase::safe_buffer
-#include <mbase/char_stream.h> // mbase::char_stream
+#include <mbase/string.h>
 #include <exception> // std::exception ---> For custom exceptions
 
 MBASE_STD_BEGIN
@@ -27,14 +26,14 @@ static const SIZE_T gPairSerializeBlockLength = 8;
 
 class invalid_format : public std::exception {
 public:
-    MSTRING what() const {
+    MSTRING what() const noexcept {
         return "invalid buffer format.";
     }
 };
 
 class invalid_size : public std::exception {
 public:
-    MSTRING what() const {
+    MSTRING what() const noexcept {
         return "invalid buffer size.";
     }
 };
@@ -585,7 +584,7 @@ template<typename StringType>
 MBASE_INLINE StringType string_converter<const U64, StringType>::to_string()
 {
     IBYTE emptyString[24] = {0};
-    sprintf(emptyString, "%llu", *value);
+    sprintf(emptyString, "%lu", *value);
     return StringType(emptyString);
 }
 
@@ -740,7 +739,7 @@ MBASE_INLINE bool pair<T1, T2>::operator!=(const pair& in_rhs)
     return (first != in_rhs.first ? true : false) && (second != in_rhs.second ? true : false);
 }
 
-template<typename ConvertedType, typename StringType = mbase::string>
+template<typename ConvertedType, typename StringType = string>
 MBASE_INLINE StringType to_string(const ConvertedType& in_type)
 {
     string_converter<const ConvertedType, StringType> tempConverter;

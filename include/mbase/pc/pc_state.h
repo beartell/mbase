@@ -10,8 +10,10 @@ MBASE_BEGIN
 
 #ifdef MBASE_PLATFORM_WINDOWS
 static mbase::wstring gDefaultStateDirectory = L".\\";
-#elif MBASE_PLATFORM_UNIX
-static mbase::wstring gDefaultStateDirectory = "./";
+#endif
+
+#ifdef MBASE_PLATFORM_UNIX
+static mbase::wstring gDefaultStateDirectory = L"./";
 #endif // MBASE_PLATFORM_WINDOWS
 
 struct MBASE_API PcStateFileHeader {

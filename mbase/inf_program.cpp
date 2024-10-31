@@ -225,8 +225,7 @@ GENERIC InfMaipTunedClient::on_unregister()
 
 InfClientSession::~InfClientSession()
 {
-	chat_session_map::iterator It = mChatSessions.begin();
-	for(It; It != mChatSessions.end(); ++It)
+	for(chat_session_map::iterator It = mChatSessions.begin(); It != mChatSessions.end(); ++It)
 	{
 		It->second->mIsSessionAlive = false;
 		InfTextToTextProcessor* tProc = NULL;
@@ -632,8 +631,7 @@ InfProgram::maip_err_code InfProgram::inf_delete_user(const mbase::string& in_se
 	}
 	InfMaipUser& maipUser = It->second;
 	
-	accepted_client_map::iterator acceptedClientIt = mSessionMap.begin();
-	for(acceptedClientIt; acceptedClientIt != mSessionMap.end();)
+	for(accepted_client_map::iterator acceptedClientIt = mSessionMap.begin(); acceptedClientIt != mSessionMap.end();)
 	{
 		InfClientSession& tmpSession = acceptedClientIt->second;
 		if(tmpSession.mMaipUser.get_username() == in_username)
@@ -803,7 +801,7 @@ GENERIC InfProgram::initialize(InfProgramInformation in_program_information)
 	mbase::create_directory(programModels);
 
 	mbase::vector<FS_FILE_INFORMATION> fileInfo;
-	mbase::get_directory(programUsers + L"*", fileInfo);
+	mbase::get_directory(programUsers, fileInfo);
 
 	for(mbase::vector<FS_FILE_INFORMATION>::iterator It = fileInfo.begin(); It != fileInfo.end(); ++It)
 	{
@@ -867,7 +865,7 @@ GENERIC InfProgram::initialize(InfProgramInformation in_program_information)
 	}
 
 	fileInfo.clear();
-	mbase::get_directory(programModels + L"*", fileInfo);
+	mbase::get_directory(programModels, fileInfo);
 	for(mbase::vector<FS_FILE_INFORMATION>::iterator It = fileInfo.begin(); It != fileInfo.end(); ++It)
 	{
 		// Querying models under the model directory

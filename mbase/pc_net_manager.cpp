@@ -2,7 +2,25 @@
 #include <mbase/pc/pc_program.h>
 #include <sys/types.h>
 
+#ifdef MBASE_PLATFORM_UNIX
+#include <sys/socket.h>
+#include <sys/ioctl.h>
+#include <unistd.h>
+#include <netdb.h>
+#endif
+
 MBASE_BEGIN
+
+#ifdef MBASE_PLATFORM_WINDOWS
+#define MBASE_INVALID_SOCKET INVALID_SOCKET
+#define MBASE_SOCKET_ERROR SOCKET_ERROR
+#endif
+
+#ifdef MBASE_PLATFORM_UNIX
+#define MBASE_INVALID_SOCKET -1
+#define MBASE_SOCKET_ERROR -1
+#endif
+
 
 PcNetPacket::PcNetPacket(U16 in_min_packet_size) noexcept : mPacketContent(in_min_packet_size)
 {
@@ -47,7 +65,7 @@ PcNetPeerClient::PcNetPeerClient(PcNetPeerClient&& in_rhs) noexcept
 	mPeerSocket = in_rhs.mPeerSocket;
 	mPeerPort = in_rhs.mPeerPort;
 
-	in_rhs.mPeerSocket = INVALID_SOCKET;
+	in_rhs.mPeerSocket = MBASE_INVALID_SOCKET;
 	in_rhs.mDisconnectSignal.reset_signal_with_state();
 	in_rhs.mReadSignal.reset_signal_with_state();
 	in_rhs.mWriteSignal.reset_signal_with_state();
@@ -92,7 +110,8 @@ MBASE_ND(MBASE_OBS_IGNORE) bool PcNetPeerClient::signal_disconnect_state() const
 
 MBASE_ND(MBASE_OBS_IGNORE) bool PcNetPeerClient::is_connected() const noexcept
 {
-	if(signal_disconnect() || mPeerSocket == INVALID_SOCKET)
+	
+	if(signal_disconnect() || mPeerSocket == MBASE_INVALID_SOCKET)
 	{
 		return false;
 	}
@@ -191,13 +210,24 @@ bool PcNetPeerClient::operator!=(const PcNetPeerClient& in_rhs)
 
 GENERIC PcNetPeerClient::_destroy_peer() noexcept
 {
-	if(mPeerSocket != INVALID_SOCKET)
-	{
-		closesocket(mPeerSocket);
+	
+	#ifdef MBASE_PLATFORM_WINDOWS
+		if(mPeerSocket != INVALID_SOCKET)
+		{
+			closesocket(mPeerSocket);
+			mPeerSocket = INVALID_SOCKET;
+		}
 		mPeerSocket = INVALID_SOCKET;
-	}
-
-	mPeerSocket = INVALID_SOCKET;
+	#endif 
+	#ifdef MBASE_PLATFORM_UNIX
+		if(mPeerSocket != -1)
+		{
+			close(mPeerSocket);
+			mPeerSocket = -1;
+		}
+		mPeerSocket = -1;
+	#endif
+	
 	mDisconnectSignal.reset_signal_with_state();
 	mReadSignal.reset_signal_with_state();
 	mWriteSignal.reset_signal_with_state();
@@ -213,7 +243,7 @@ GENERIC PcNetPeerClient::_set_new_socket_handle(socket_handle in_socket) noexcep
 
 PcNetServer::PcNetServer() : 
 	mIsListening(false), 
-	mRawSocket(INVALID_SOCKET), 
+	mRawSocket(MBASE_INVALID_SOCKET),
 	mAddr(""), 
 	mPort(0)
 {
@@ -241,10 +271,19 @@ MBASE_ND(MBASE_OBS_IGNORE) I32 PcNetServer::get_port() const noexcept
 
 PcNetServer::flags PcNetServer::listen() noexcept
 {
+	#ifdef MBASE_PLATFORM_WINDOWS
 	if(mRawSocket == INVALID_SOCKET || mRawSocket == SOCKET_ERROR)
 	{
 		return flags::NET_SERVER_ERR_SOCKET_NOT_SET;
 	}
+	#endif
+
+	#ifdef MBASE_PLATFORM_UNIX
+	if(mRawSocket == -1)
+	{
+		return flags::NET_SERVER_ERR_SOCKET_NOT_SET;
+	}
+	#endif
 
 	if(mIsListening)
 	{
@@ -258,17 +297,26 @@ PcNetServer::flags PcNetServer::listen() noexcept
 
 PcNetServer::flags PcNetServer::stop() noexcept
 {
-	if (mRawSocket == INVALID_SOCKET || mRawSocket == SOCKET_ERROR)
+	#ifdef MBASE_PLATFORM_WINDOWS
+	if(mRawSocket == INVALID_SOCKET || mRawSocket == SOCKET_ERROR)
 	{
 		return flags::NET_SERVER_ERR_SOCKET_NOT_SET;
 	}
+	#endif
+
+	#ifdef MBASE_PLATFORM_UNIX
+	if(mRawSocket == -1)
+	{
+		return flags::NET_SERVER_ERR_SOCKET_NOT_SET;
+	}
+	#endif
 
 	mIsListening = false;
 	on_stop();
 	return flags::NET_SERVER_SUCCESS;
 }
 
-MBASE_ND(MBASE_OBS_IGNORE) typename const PcNetTcpServer::client_list& PcNetTcpServer::get_connected_peers() const noexcept
+MBASE_ND(MBASE_OBS_IGNORE) const typename PcNetTcpServer::client_list& PcNetTcpServer::get_connected_peers() const noexcept
 {
 	return mConnectedClients;
 }
@@ -295,9 +343,10 @@ bool PcNetTcpServer::signal_state_processing_data()
 
 GENERIC PcNetTcpServer::accept()
 {	
-	SOCKET resultClient = ::accept(mRawSocket, NULL, NULL);
-	if (resultClient == INVALID_SOCKET)
+	socket_handle resultClient = ::accept(mRawSocket, NULL, NULL);
+	if (resultClient == MBASE_INVALID_SOCKET)
 	{
+		#ifdef MBASE_PLATFORM_WINDOWS
 		I32 wsaError = WSAGetLastError();
 		if(wsaError == WSAEWOULDBLOCK || wsaError == WSAEINPROGRESS)
 		{
@@ -307,12 +356,32 @@ GENERIC PcNetTcpServer::accept()
 		{
 			// TODO: DESTROY THE ENTIRE SERVER
 		}
+		#endif
+
+		#ifdef MBASE_PLATFORM_UNIX
+		I32 socketError = errno;
+		if(socketError == EWOULDBLOCK || socketError == EAGAIN)
+		{
+			
+		}
+		else
+		{
+			// TODO: DESTROY THE ENTIRE SERVER
+		}
+		#endif 	
 	}
 	else
 	{
 		u_long ctlMode = 1;
+		
+		#ifdef MBASE_PLATFORM_WINDOWS
 		ioctlsocket(resultClient, FIONBIO, &ctlMode);
+		#endif
 
+		#ifdef MBASE_PLATFORM_UNIX
+		ioctl(resultClient, FIONBIO, ctlMode);
+		#endif
+		
 		std::shared_ptr<PcNetPeerClient> connectedClient = std::make_shared<PcNetPeerClient>(PcNetPeerClient(resultClient));
 		mConnectedClientsProcessLoop.push_back(connectedClient);
 		mAcceptMutex.acquire();
@@ -379,16 +448,36 @@ GENERIC PcNetTcpServer::update_t()
 		{
 			IBYTEBUFFER bytesToReceive = netPeer->mNetPacket.mPacketContent.data();
 			I32 rResult = recv(netPeer->mPeerSocket, bytesToReceive, gNetDefaultPacketSize, 0);
-			if(rResult == SOCKET_ERROR || !rResult)
+			if(rResult == MBASE_SOCKET_ERROR)
 			{
-				I32 socketLastError = WSAGetLastError();
-				if (socketLastError != WSAEWOULDBLOCK)
+				#ifdef MBASE_PLATFORM_WINDOWS 
+				if (WSAGetLastError() != WSAEWOULDBLOCK)
 				{
+					// Something bad happened
 					netPeer->_destroy_peer();
 					It = mConnectedClientsProcessLoop.erase(It);
 					continue;
 				}
+				#endif
+
+				#ifdef MBASE_PLATFORM_UNIX
+				if (errno != EWOULDBLOCK)
+				{
+					// Something bad happened
+					netPeer->_destroy_peer();
+					It = mConnectedClientsProcessLoop.erase(It);
+					continue;
+				}
+				#endif
 			}
+
+			else if(!rResult)
+			{
+				netPeer->_destroy_peer();
+				It = mConnectedClientsProcessLoop.erase(It);
+				continue;
+			}
+
 			else
 			{
 				netPeer->mReadSignal.set_signal_state();
@@ -400,16 +489,36 @@ GENERIC PcNetTcpServer::update_t()
 		if(netPeer->signal_write())
 		{
 			I32 sResult = send(netPeer->mPeerSocket, netPeer->mNetPacket.mWriteBuffer.c_str(), netPeer->mNetPacket.mWriteBuffer.size(), 0);
-			if(sResult == SOCKET_ERROR || !sResult)
+			if(sResult == MBASE_SOCKET_ERROR)
 			{
-				I32 socketLastError = WSAGetLastError();
-				if (socketLastError != WSAEWOULDBLOCK)
+				#ifdef MBASE_PLATFORM_WINDOWS 
+				if (WSAGetLastError() != WSAEWOULDBLOCK)
 				{
+					// Something bad happened
 					netPeer->_destroy_peer();
 					It = mConnectedClientsProcessLoop.erase(It);
 					continue;
 				}
+				#endif
+
+				#ifdef MBASE_PLATFORM_UNIX
+				if (errno != EWOULDBLOCK)
+				{
+					// Something bad happened
+					netPeer->_destroy_peer();
+					It = mConnectedClientsProcessLoop.erase(It);
+					continue;
+				}
+				#endif
 			}
+			
+			else if(!sResult)
+			{
+				netPeer->_destroy_peer();
+				It = mConnectedClientsProcessLoop.erase(It);
+				continue;
+			}
+
 			else
 			{
 				netPeer->mWriteSignal.reset_signal_with_state();
@@ -484,8 +593,13 @@ GENERIC PcNetTcpServer::update_t()
 
 PcNetManager::flags PcNetManager::create_server(const mbase::string& in_addr, I32 in_port, PcNetServer& out_server)
 {
-	SOCKET serverSocket = INVALID_SOCKET;
-	
+	#ifdef MBASE_PLATFORM_WINDOWS
+	SOCKET serverSocket = MBASE_INVALID_SOCKET;
+	#endif
+	#ifdef MBASE_PLATFORM_UNIX
+	I32 serverSocket = MBASE_INVALID_SOCKET;
+	#endif
+
 	struct addrinfo* result = NULL;
 	struct addrinfo hints = { 0 };
 
@@ -504,7 +618,7 @@ PcNetManager::flags PcNetManager::create_server(const mbase::string& in_addr, I3
 	}
 	
 	serverSocket = socket(result->ai_family, result->ai_socktype, result->ai_protocol);
-	if(serverSocket == INVALID_SOCKET)
+	if(serverSocket == MBASE_INVALID_SOCKET)
 	{
 		// TODO: ERROR CHECKING WILL BE IMPLEMENTED
 		freeaddrinfo(result);
@@ -512,26 +626,41 @@ PcNetManager::flags PcNetManager::create_server(const mbase::string& in_addr, I3
 	}
 
 	iResult = bind(serverSocket, result->ai_addr, result->ai_addrlen);
-	if (iResult == SOCKET_ERROR) 
+	if (iResult == MBASE_SOCKET_ERROR) 
 	{
 		// TODO: ERROR CHECKING WILL BE IMPLEMENTED
 		freeaddrinfo(result);
+		#ifdef MBASE_PLATFORM_WINDOWS
 		closesocket(serverSocket);
+		#endif
+		#ifdef MBASE_PLATFORM_UNIX
+		close(serverSocket);
+		#endif
 		return flags::NET_MNG_ERR_UNKNOWN;
 	}
 
 	freeaddrinfo(result);
 	
 	iResult = ::listen(serverSocket, SOMAXCONN);
-	if(iResult == SOCKET_ERROR)
+	if(iResult == MBASE_SOCKET_ERROR)
 	{
 		// TODO: ERROR CHECKING WILL BE IMPLEMENTED
+		#ifdef MBASE_PLATFORM_WINDOWS
 		closesocket(serverSocket);
+		#endif
+		#ifdef MBASE_PLATFORM_UNIX
+		close(serverSocket);
+		#endif
 		return flags::NET_MNG_ERR_UNKNOWN;
 	}
 	u_long ctlMode = 1;
 	
+	#ifdef MBASE_PLATFORM_WINDOWS
 	ioctlsocket(serverSocket, FIONBIO, &ctlMode);
+	#endif
+	#ifdef MBASE_PLATFORM_UNIX
+	ioctl(serverSocket, FIONBIO, ctlMode);
+	#endif
 
 	out_server.mRawSocket = serverSocket;
 	out_server.mAddr = in_addr;

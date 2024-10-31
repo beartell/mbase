@@ -3,7 +3,7 @@
 
 MBASE_BEGIN
 
-typename const PcDiagnostics::log_list& PcDiagnostics::get_log_list() const noexcept
+const typename PcDiagnostics::log_list& PcDiagnostics::get_log_list() const noexcept
 {
 	return mLogList;
 }
@@ -38,7 +38,7 @@ GENERIC PcDiagnostics::print_logs() const noexcept
 {
 	for (log_list::const_iterator cIt = mLogList.cbegin(); cIt != mLogList.cend(); ++cIt)
 	{
-		printf(cIt->c_str());
+		printf("%s", cIt->c_str());
 	}
 }
 

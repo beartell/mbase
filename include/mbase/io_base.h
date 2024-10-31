@@ -95,6 +95,20 @@ public:
 	MBASE_ND(MBASE_OBS_IGNORE) bool is_operate_ready() const noexcept { return mOperateReady; }
 	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) char_stream* get_is() noexcept { return mIstream; }
 	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) char_stream* get_os() noexcept { return mOstream; }
+	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) size_type get_file_pointer_pos() noexcept
+	{
+		if(mRawContext.raw_handle)
+		{
+			#ifdef MBASE_PLATFORM_WINDOWS
+			return 0; // TODO: IMPLEMENT USING WIN32
+			#endif
+
+			#ifdef MBASE_PLATFORM_UNIX
+			return lseek64(mRawContext.raw_handle, 0, (I32)move_method::MV_CURRENT);
+			#endif
+		}
+		return 0;
+	}
 	/* ===== OBSERVATION METHODS END ===== */
 
 	/* ===== STATE-MODIFIER METHODS BEGIN ===== */
@@ -123,7 +137,7 @@ public:
 			SetFilePointer(mRawContext.raw_handle, in_distance, nullptr, (DWORD)in_method);
 			#endif
 			#ifdef MBASE_PLATFORM_UNIX
-			lseek((I32)mRawContext.raw_handle, in_distance, (I32)in_method);
+			lseek64(mRawContext.raw_handle, in_distance, (I32)in_method);
 			#endif
 		}
 	}
