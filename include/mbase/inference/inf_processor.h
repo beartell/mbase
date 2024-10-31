@@ -91,13 +91,6 @@ public:
 	using inf_token = llama_token;
 	using inf_token_candidates = mbase::vector<llama_token_data>;
 
-	enum class context_state {
-		DECODING_INPUT,
-		GENERATING_OUTPUT,
-		AWAITING_FOR_INPUT,
-		AWAITING_FOR_CURSOR_ALIGNMENT
-	};
-
 	enum class finish_state {
 		FINISHED,
 		CONTINUE,
@@ -180,7 +173,6 @@ private:
 	processor_signal mInitializeMethodSignal;
 	processor_signal mDestroyMethodSignal;
 	processor_signal mInitializeFailSignal;
-	context_state mContextState;
 	finish_state mFinishState;
 	InfClientTextToText* mAssignedClient;
 	llama_sampler* mSamplerChain;

@@ -120,11 +120,9 @@ GENERIC InfProcessorBase::resume()
 
 InfTextToTextProcessor::InfTextToTextProcessor():
 	mModelContext(NULL),
-	//mPresetCandidates(),
 	mGeneratedToken(0),
 	mContextCursor(0),
 	mTokenizedInput(),
-	mContextState(context_state::AWAITING_FOR_INPUT),
 	mFinishState(finish_state::FINISHED),
 	mAssignedClient(NULL),
 	mSamplerChain(NULL),
@@ -194,11 +192,6 @@ bool InfTextToTextProcessor::signal_init_fail_method() const
 	return mInitializeFailSignal.get_signal();
 }
 
-//typename InfTextToTextProcessor::inf_token_candidates& InfTextToTextProcessor::get_token_candidates()
-//{
-//	return mPresetCandidates;
-//}
-
 U32 InfTextToTextProcessor::get_max_token_length()
 {
 	return mContextLength;
@@ -214,6 +207,8 @@ bool InfTextToTextProcessor::has_sampler(const mbase::string& in_sampler_name, I
 	for(mbase::vector<InfSamplerMeta>::iterator It = mSamplingOrder.begin(); It != mSamplingOrder.end(); ++It)
 	{
 		InfSamplerMeta smpBase = *It;
+
+		
 		if(smpBase.mSamplerName == in_sampler_name)
 		{
 			out_sampler = smpBase;
@@ -687,20 +682,10 @@ GENERIC InfTextToTextProcessor::_decode_input()
 	{
 		llama_kv_cache_clear(mModelContext);
 	}
-
-	/*  old llama.cpp patch 
-		llama_batch_clear(mInputBatch);
-		for (size_type i = 0; i < mTokenizedInput.size(); ++i)
-		{
-			llama_batch_add(mInputBatch, mTokenizedInput[i], i, { 0 }, false);
-		}
-		mInputBatch.logits[mInputBatch.n_tokens - 1] = true;
-	*/
 	
 	mInputBatch = llama_batch_get_one(mTokenizedInput.data(), mTokenizedInput.size());
 
 	mContextCursor = mInputBatch.n_tokens;
-	mContextState = context_state::DECODING_INPUT;
 	mFinishState = finish_state::CONTINUE;
 	
 	int decodeResult = llama_decode(mModelContext, mInputBatch);
@@ -710,14 +695,13 @@ GENERIC InfTextToTextProcessor::_decode_input()
 
 GENERIC InfTextToTextProcessor::_decode_next()
 {
+	// Main Decode loop
+
 	mDecodeSignal.reset_signal();
-	// if the decode signal state is set, process
-	mContextState = context_state::GENERATING_OUTPUT;
 	I32 modelVocab = 0;
 	InfModelTextToText* t2tModel = static_cast<InfModelTextToText*>(this->mTargetModel_md_model);
 	t2tModel->get_vocab_count(modelVocab);
 
-	clear_token_candidates();
 	PTRF32 logits = llama_get_logits_ith(mModelContext, mInputBatch.n_tokens - 1);
 	for (llama_token token_id = 0; token_id < modelVocab; ++token_id)
 	{
@@ -729,29 +713,26 @@ GENERIC InfTextToTextProcessor::_decode_next()
 	mGeneratedToken = llama_sampler_sample(mSamplerChain, mModelContext, -1);
 	
 	llama_sampler_accept(mSamplerChain, mGeneratedToken);
-	
-	// old patch llama_batch_clear(mInputBatch);
+
+	clear_token_candidates();
 	
 	if (llama_token_is_eog(t2tModel->get_raw_model(), mGeneratedToken))
 	{
 		// means end of generation
-
+		llama_sampler_reset(mSamplerChain);
 		mFinishState = finish_state::FINISHED;
 		llama_kv_cache_clear(mModelContext);
-		clear_token_candidates();
 		mDecodeSignal.reset_signal_with_state();
 		mTokenGeneratedSignal.set_signal();
 	}
 
 	else
 	{
-		clear_token_candidates();
 
 		if (mContextCursor == mContextLength)
 		{
 			// means token limit is reached
 
-			mContextState = context_state::AWAITING_FOR_CURSOR_ALIGNMENT;
 			mFinishState = finish_state::TOKEN_LIMIT_REACHED;
 			llama_kv_cache_clear(mModelContext);
 			mDecodeSignal.reset_signal_with_state();
@@ -802,15 +783,9 @@ GENERIC InfTextToTextProcessor::_initialize_context()
 		return;
 	}
 	
-	mInputBatch = llama_batch_init(mContextLength, 0, 1);
+	//mInputBatch = llama_batch_init(mContextLength, 0, 1);
 	mContextCursor = 0;
-
-	/*I32 modelVocabCount = 0;
-	t2tModel->get_vocab_count(modelVocabCount);*/
-	
-	//llama_sampler_chain_add(mSamplerChain, llama_sampler_init_greedy());
-	//llama_sampler_chain_add(mSamplerChain, llama_sampler_init_penalties(modelVocabCount, ));
-	
+		
 	I32 modelVocabCount = 0;
 	inf_token eotToken = 0;
 	inf_token nlToken = 0;
@@ -832,18 +807,16 @@ GENERIC InfTextToTextProcessor::_initialize_context()
 
 GENERIC InfTextToTextProcessor::_destroy_context()
 {
-	llama_batch_free(mInputBatch);
+	//llama_batch_free(mInputBatch);
 	llama_free(mModelContext);
 	mContextCursor = 0;
 	mModelContext = NULL;
 	mIsRunning = false;
 	mPresetCandidates.clear();
-	// mContextLength = 0; // WE ARE NOT DESTROYING CONTEXT LENGTH BECAUSE IT'S OBSERVATION IS NECESSARY ON MODEL'S UPDATE LOOP
 	mContextCursor = 0;
 	mTokenizedInput.clear();
 	mPenaltyList.clear();
 	mSamplingOrder.clear();
-	mContextState = context_state::AWAITING_FOR_INPUT;
 	mFinishState = finish_state::FINISHED;
 
 	clear_samplers();
@@ -873,29 +846,20 @@ GENERIC InfTextToTextProcessor::update_t()
 			{
 				if (signal_input_process())
 				{
-					_decode_input(); /* SIG_SET(decode), SIGW_STATE_RESET(input) */
+					_decode_input();
 				}
 
 				if (signal_decode_process())
 				{
 					_decode_next();
-					/*
-					* IF TOKEN END OF GENERATION --> SIG_SET(token_generated), SIGW_STATE_RESET(decode)
-					* IF NOT TOKEN END OF GENERATION --> SIG_SET(token_generated), SIG_STATE_RESET(decode)
-					*
-					*
-					*/
 				}
 				else
 				{
-					// decode is not present
-					//mbase::sleep(30); // slow down the loop
 				}
 			}
 
 			else
 			{
-				//mbase::sleep(30); // Since the context is halted, we may slow down the loop
 			}
 		}
 		else
@@ -906,7 +870,6 @@ GENERIC InfTextToTextProcessor::update_t()
 			}
 			else
 			{
-				//mbase::sleep(30); // unregistered context, we may slow down the loop
 			}
 		}
 	}

@@ -9,6 +9,9 @@
 #include <mbase/vector.h>
 #include <mbase/synchronization.h>
 #include <mbase/framework/timers.h>
+#ifdef MBASE_PLATFORM_WINDOWS
+#include <mbase/wsa_init.h>
+#endif // MBASE_PLATFORM_WINDOWS
 #include <mbase/framework/logical_processing.h>
 #include <memory>
 

@@ -67,8 +67,8 @@ MBASE_INLINE GENERIC get_directory(const mbase::wstring& in_path, ContainerType&
 {
 #ifdef MBASE_PLATFORM_WINDOWS
 	WIN32_FIND_DATAW findData;
-	in_path += '*';
-	HANDLE findHandle = FindFirstFileW(in_path.c_str(), &findData);
+	mbase::wstring myPath = in_path + '*';
+	HANDLE findHandle = FindFirstFileW(myPath.c_str(), &findData);
 	do {
 		FS_FILE_INFORMATION ffi;
 		ffi.fileName = findData.cFileName;
@@ -114,8 +114,8 @@ MBASE_INLINE GENERIC get_directory(const mbase::string& in_path, ContainerType& 
 {
 #ifdef MBASE_PLATFORM_WINDOWS
 	WIN32_FIND_DATAA findData;
-	in_path += '*';
-	HANDLE findHandle = FindFirstFileA(in_path.c_str(), &findData);
+	mbase::string myPath = in_path + '*';
+	HANDLE findHandle = FindFirstFileA(myPath.c_str(), &findData);
 	do {
 		FS_FILE_INFORMATIONA ffi;
 		ffi.fileName = findData.cFileName;
