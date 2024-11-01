@@ -369,8 +369,8 @@ InfModelTextToText::flags InfModelTextToText::initialize_model(const mbase::wstr
 
 	mSuppliedParams = llama_model_default_params();
 	mTotalContextSize = in_total_context_size;
-	mSuppliedParams.n_gpu_layers = in_gpu_layers;
-	mSuppliedParams.split_mode = LLAMA_SPLIT_MODE_NONE;
+	//mSuppliedParams.n_gpu_layers = in_gpu_layers;
+	//mSuppliedParams.split_mode = LLAMA_SPLIT_MODE_NONE;
 	mModelPath = in_path;
 
 	mInitializeSignal.set_signal_with_state();

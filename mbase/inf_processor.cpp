@@ -378,7 +378,8 @@ InfTextToTextProcessor::flags InfTextToTextProcessor::execute_input(const mbase:
 	}
 	mTokenizedInput = in_tokens;
 	mInputSignal.set_signal();
-	
+	start_processor();
+
 	return flags::INF_PROC_SUCCESS;
 }
 
@@ -572,7 +573,7 @@ InfTextToTextProcessor::flags InfTextToTextProcessor::add_sampler(const InfSampl
 	else if(in_sampling.mSamplerName == "TOP_K")
 	{
 		I32 kValue = in_sampling.mSamplerValue;
-		newSampler = llama_sampler_init_top_k((I32)in_sampling.mSamplerValue);
+		newSampler = llama_sampler_init_top_k(kValue);
 		llama_sampler_chain_add(mSamplerChain, newSampler);
 		mSamplingOrder.push_back({ "TOP_K", newSampler, true });
 	}
@@ -653,11 +654,12 @@ GENERIC InfTextToTextProcessor::update()
 
 			IBYTE tokenString[64] = { 0 };
 			I32 tokenLength = llama_token_to_piece(t2tModel->get_raw_model(), mGeneratedToken, tokenString, 64, false, true);
-			mbase::string outString(tokenString, tokenLength);
-			t2tClient->on_write(outString.c_str(), outString.size(), mGeneratedToken, isTokenControl, isFinish);
+			// TODO: Handle if llama_token_to_piece is failed
+			t2tClient->on_write(tokenString, tokenLength, mGeneratedToken, isTokenControl, isFinish);
 
 			if(isFinish)
 			{
+				stop_processor();
 				t2tClient->on_finish(mContextCursor, mFinishState);
 			}
 			return;

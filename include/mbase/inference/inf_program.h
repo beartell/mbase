@@ -124,6 +124,8 @@ public:
 		INF_CANT_DELETE_SELF = 2017,
 		INF_CONTEXT_LENGTH_EXCEEDED = 2018,
 		INF_MODEL_CONTEXT_FULL = 2019,
+		INF_USER_CONTEXT_LENGTH_EXCEEDED = 2020,
+		INF_USER_NOT_FOUND = 2021,
 		EXEC_SUCCESS = 3000,
 		EXEC_ALREADY_PROCESSING = 3001,
 		EXEC_MESSAGE_ID_MISMATCH = 3002,
@@ -196,6 +198,7 @@ public:
 	flags authorize_user_on_model(const mbase::string& in_username, const mbase::string& in_model);
 	//flags delete_user(const mbase::string& in_username);
 
+	GENERIC update_maip_user_sessions(const InfMaipUser& in_maip_user);
 	GENERIC update() override;
 
 private:

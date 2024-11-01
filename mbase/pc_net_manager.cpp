@@ -379,7 +379,7 @@ GENERIC PcNetTcpServer::accept()
 		#endif
 
 		#ifdef MBASE_PLATFORM_UNIX
-		ioctl(resultClient, FIONBIO, ctlMode);
+		ioctl(resultClient, FIONBIO, &ctlMode);
 		#endif
 		
 		std::shared_ptr<PcNetPeerClient> connectedClient = std::make_shared<PcNetPeerClient>(PcNetPeerClient(resultClient));
@@ -432,7 +432,7 @@ GENERIC PcNetTcpServer::update_t()
 	{
 		this->accept();
 	}
-	
+
 	for(client_list::iterator It = mConnectedClientsProcessLoop.begin(); It != mConnectedClientsProcessLoop.end();)
 	{
 		std::shared_ptr<PcNetPeerClient> netPeer = *It;
@@ -659,7 +659,7 @@ PcNetManager::flags PcNetManager::create_server(const mbase::string& in_addr, I3
 	ioctlsocket(serverSocket, FIONBIO, &ctlMode);
 	#endif
 	#ifdef MBASE_PLATFORM_UNIX
-	ioctl(serverSocket, FIONBIO, ctlMode);
+	ioctl(serverSocket, FIONBIO, &ctlMode);
 	#endif
 
 	out_server.mRawSocket = serverSocket;

@@ -10,7 +10,7 @@
 MBASE_BEGIN
 
 static const U32 gThreadPoolMaxThreads = 1024; // ARBITRARY NUMBER. FIND A WAY TO CALCULATE MAX THREAD COUNT
-static const U32 gThreadPoolDefaultThread = 32;
+static const U32 gThreadPoolDefaultThread = 1;
 
 class tpool : public non_copymovable {
 public:

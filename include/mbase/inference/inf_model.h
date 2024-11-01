@@ -116,7 +116,6 @@ public:
 	flags get_lf_token(inf_token& out_token);
 	flags get_vocab_count(I32& out_count);
 	flags get_size(size_type& out_size);
-	// flags get_template_identifier(mbase::string& out_identifier); ---> Will be implemented when the specification is complete
 	bool is_token_eof_generation(inf_token in_token);
 	flags is_token_special(const mbase::string& in_string);
 	flags is_token_control(inf_token in_token);

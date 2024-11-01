@@ -288,6 +288,7 @@ GENERIC GgufMetaConfigurator::clear_context()
 			#ifdef MBASE_PLATFORM_UNIX
 			rename(mbase::to_utf8(modifiedFileName).c_str(), mbase::to_utf8(mGgufFile).c_str());
 			#endif
+			
 		}
 		gguf_free(mGgufContext);
 		mGgufContext = NULL;

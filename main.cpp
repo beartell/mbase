@@ -39,8 +39,8 @@ public:
     }
     GENERIC on_write(CBYTEBUFFER out_data, size_type out_size, InfTextToTextProcessor::inf_token out_token, bool out_is_special, bool out_is_finish) override 
     {
-        mbase::string myString(out_data, out_size);
-        wprintf(L"%s", mbase::from_utf8(myString).c_str());
+        printf("%s", out_data);
+        
         InfTextToTextProcessor* txtOut;
         get_host_processor(txtOut);
         txtOut->next();
@@ -97,13 +97,14 @@ using namespace mbase;
 
 int main()
 {
-    my_model mm;
-    mm.initialize_model(L"./models/llama-3.2-1b-instruct-q8_0.gguf", 12000, 999);
-    while(1)
-    {
-        mm.update();
-    }
-    /*InfProgram mainProgram;
+    // my_model mm;
+    // mm.initialize_model(L"./models/Llama-3.2-1B-Instruct-Q4_K_M.gguf", 12000, 999);
+    // while(1)
+    // {
+    //     mm.update();
+    // }
+    
+    InfProgram mainProgram;
     mbase::InfProgramInformation programInformation;
 
     programInformation.mProgramInformation.mMbaseVersion = "1.0.0";
@@ -136,7 +137,7 @@ int main()
     {
         defaultMaipServer.update();
         mainProgram.update();
-    }*/
+    }
 
     getchar();
     return 0;

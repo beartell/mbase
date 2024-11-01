@@ -154,13 +154,13 @@ newMaipClient = MaipClient("127.0.0.1", 4553, "admin", "yumniye99")
 newMaipClient.create_client()
 
 outData = newMaipClient.get_program_models()
-
-newMaipClient.load_model("qwen2-7b-instruct", 12000)
+for i in outData.get_result_data():
+    newMaipClient.load_model(i, 12000)
 
 # print(outData.get_result_data())
 # print(outData.get_result_code())
 
-outData = newMaipClient.create_context("qwen2-7b-instruct", 2000)
+outData = newMaipClient.create_context("Llama 3.2 1B Instruct", 2000)
 print(outData.get_result_code())
 if outData.get_result_code() == 2000:
     myContext : MaipContext = outData.get_result_data()
@@ -178,43 +178,3 @@ if outData.get_result_code() == 2000:
         aiResponseText += aiResponse.get_result_data()["token"]
         aiResponse = myContext.get_next()
     print(aiResponseText)
-
-# input("Heyhey")
-
-#input("Press anything to continue.")
-# totalSystemPrompt = "" 
-# # with open("sys_prompt2.txt", encoding='utf-8') as f:
-# #     for line in f:
-# #         totalSystemPrompt += line
-
-# myClient = MaipClient("127.0.0.1")
-# callResult = myClient.create_client()
-
-# hostedModelList = myClient.get_program_models().get_result_data()
-
-# myClient.acquire_model(hostedModelList[0])
-# outputContext : MaipContext = myClient.create_context(hostedModelList[0], 4555).get_result_data()
-
-# myInput = input("Enter your prompt: ")
-
-# messageIds = []
-# start = time.time()
-
-# messageIds.append(outputContext.set_input("System", "You are a helpful assistant.").get_result_data())
-# setInputResult = outputContext.set_input("User", myInput)
-# print(setInputResult.get_result_code())
-# messageIds.append(setInputResult.get_result_data())
-
-# execResult = outputContext.execute_input(messageIds).get_result_code()
-# while execResult == 2016:
-#     execResult = outputContext.execute_input(messageIds).get_result_code()
-# print(execResult)
-# resultNext = outputContext.get_next()
-# totalMessage = ""
-# #print(resultNext.get_result_data())
-# while resultNext.get_result_code() == 3006:
-#       totalMessage += resultNext.get_result_data()["token"]
-#       resultNext = outputContext.get_next()
-# print(totalMessage)
-# outputContext.destroy_context()
-# end = time.time()

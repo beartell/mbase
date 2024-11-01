@@ -337,7 +337,7 @@ InfProgram::maip_err_code InfProgram::inf_create_context(const mbase::string& in
 
 	if(in_ctsize > clientSession.mMaipUser.get_maximum_context_length())
 	{
-		return maip_err_code::INF_CONTEXT_LENGTH_EXCEEDED;
+		return maip_err_code::INF_USER_CONTEXT_LENGTH_EXCEEDED;
 	}
 
 	InfModelTextToText* t2tModel = It->second;
@@ -363,12 +363,14 @@ InfProgram::maip_err_code InfProgram::inf_create_context(const mbase::string& in
 
 	if(t2tModel->register_context_process(maipNewContext, in_ctsize) != InfModelTextToText::flags::INF_MODEL_INFO_REGISTERING_PROCESSOR)
 	{
+		// TODO: FIX HERE
 		// means there is a problem
 		// unknown problem
 		delete maipTunedClient;
 		delete maipNewContext;
 		return maip_err_code::INF_FAILED_TO_CREATE_CONTEXT;
 	}
+
 	return maip_err_code::INF_SUCCESS;
 }
 
@@ -589,7 +591,7 @@ InfProgram::maip_err_code InfProgram::inf_create_new_user(
 
 	if(in_superuser && !clientSession.mMaipUser.is_superuser())
 	{
-		// if the client session is not super user but trying to create a super user,
+		// if the client session is not the super user but trying to create a super user, stop!
 		// only super users can create super users.
 		return maip_err_code::INF_AUTHORIZATION_FAILED;
 	}
@@ -629,6 +631,12 @@ InfProgram::maip_err_code InfProgram::inf_delete_user(const mbase::string& in_se
 			return maip_err_code::INF_AUTHORIZATION_FAILED;
 		}
 	}
+	
+	else
+	{
+		return maip_err_code::INF_USER_NOT_FOUND;
+	}
+
 	InfMaipUser& maipUser = It->second;
 	
 	for(accepted_client_map::iterator acceptedClientIt = mSessionMap.begin(); acceptedClientIt != mSessionMap.end();)
@@ -645,6 +653,10 @@ InfProgram::maip_err_code InfProgram::inf_delete_user(const mbase::string& in_se
 
 	mUserMap.erase(It);
 
+	mbase::string usernameSanitized = in_username;
+	usernameSanitized.remove_all('/'); // Reason I am doing this is if the user attempts to exploit the file path
+	usernameSanitized.remove_all('*'); // Reason I am doing this is if the user attempts to exploit the file path
+
 	mbase::wstring fileToBeDeleted = mInferenceConfigurator.get_data_path() + L"states/users/" + mbase::from_utf8(in_username) + L".mbfs";
 	mbase::delete_file(fileToBeDeleted);
 	return maip_err_code::INF_SUCCESS;
@@ -653,6 +665,28 @@ InfProgram::maip_err_code InfProgram::inf_delete_user(const mbase::string& in_se
 InfProgram::maip_err_code InfProgram::inf_modify_user_model_access_limit(const mbase::string& in_session_token, const mbase::string& in_username, const U32& in_new_access_limit)
 {
 	MBASE_SESSION_CONTROL;
+
+	if(!clientSession.mMaipUser.is_flags_set(MAIP_USER_ACCESS_MODIFICATION))
+	{
+		return maip_err_code::INF_AUTHORIZATION_FAILED;
+	}
+
+	inference_user_map::iterator It = mUserMap.find(in_username);
+	if(It == mUserMap.end())
+	{
+		return maip_err_code::INF_USER_NOT_FOUND;
+	}
+
+	InfMaipUser& maipUser = It->second;
+	if(maipUser.is_superuser() && !clientSession.mMaipUser.is_superuser())
+	{
+		return maip_err_code::INF_AUTHORIZATION_FAILED;
+	}
+
+	maipUser.set_distinct_model_access_limit(in_new_access_limit);
+
+
+
 	return maip_err_code::INF_SUCCESS;
 }
 
@@ -869,7 +903,6 @@ GENERIC InfProgram::initialize(InfProgramInformation in_program_information)
 	for(mbase::vector<FS_FILE_INFORMATION>::iterator It = fileInfo.begin(); It != fileInfo.end(); ++It)
 	{
 		// Querying models under the model directory
-		// general.name
 
 		mbase::GgufMetaConfigurator ggufConfigurator(programModels + It->fileName);
 		mbase::string modelName;
@@ -1105,6 +1138,23 @@ InfProgram::flags InfProgram::authorize_user_on_model(const mbase::string& in_us
 	}
 
 	return flags::INF_PROGRAM_SUCCESS;
+}
+
+GENERIC InfProgram::update_maip_user_sessions(const InfMaipUser& in_maip_user)
+{
+	InfMaipUser myUser = in_maip_user;
+	inference_user_map::iterator It = mUserMap.find(myUser.get_username());
+
+	if(It != mUserMap.end())
+	{
+		for(accepted_client_map::iterator It = mSessionMap.begin(); It != mSessionMap.end(); ++It)
+		{
+			if(It->second.mMaipUser.get_username() == myUser.get_username())
+			{
+				It->second.mMaipUser = myUser;
+			}
+		}
+	}
 }
 
 GENERIC InfProgram::update()

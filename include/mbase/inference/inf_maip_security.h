@@ -16,8 +16,9 @@ static U32 gMaipSecurityDefaultAuthorityFlags = 0;
 #define MAIP_CONTEXT_LENGTH_MODIFICATION (1 << 2) // context length modification
 #define MAIP_USER_ACCESS_MODIFICATION (1 << 3) // model access modification
 #define MAIP_USER_CREATE_DELETE (1 << 4) // user deletion creation 
-#define MAIP_USER_MODIFICATION (1 << 5) // name and token modification
+#define MAIP_USER_MODIFICATION (1 << 5) // username and access token modification
 #define MAIP_USER_STATIC (1 << 6) // makes user group parameters unchangable besides super user access
+#define MAIP_USER_SYS_PROMPT_MANIP (1 << 7) // allows user to overwrite embedded system prompt locally.
 
 class InfMaipUser { // Useless unless it is associated with MAIP Program
 public:
@@ -61,6 +62,7 @@ public:
 	GENERIC lock_authorization();
 	GENERIC unlock_authorization();
 
+	GENERIC update_state_file(const mbase::string& in_object_name, const mbase::wstring& in_state_path, bool in_overwrite = false);
 private:
 	U32 mAuthorityFlags = 0;
 	U32 mDistinctModelAccessLimit = 0;

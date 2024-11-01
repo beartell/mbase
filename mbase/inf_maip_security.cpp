@@ -1,4 +1,5 @@
 #include <mbase/inference/inf_maip_security.h>
+#include <mbase/pc/pc_state.h>
 #include <algorithm>
 
 MBASE_BEGIN
@@ -132,6 +133,31 @@ GENERIC InfMaipUser::lock_authorization()
 GENERIC InfMaipUser::unlock_authorization()
 {
 	mIsAuthorizationLocked = false;
+}
+
+GENERIC InfMaipUser::update_state_file(const mbase::string& in_object_name, const mbase::wstring& in_state_path, bool in_overwrite)
+{
+	mbase::PcState userState;
+	if(in_overwrite)
+	{
+		userState.initialize_overwrite(in_object_name, in_state_path);
+	}
+
+	else
+	{
+		userState.initialize(in_object_name, in_state_path);
+	}
+
+	userState.set_state<U32>("authority_flags", get_authority_flags());
+	userState.set_state<U32>("model_access_limit", get_model_access_limit());
+	userState.set_state<U32>("max_context_length", get_maximum_context_length());
+	userState.set_state<mbase::vector<mbase::string>>("accessible_models", get_accessible_models());
+	userState.set_state<mbase::string>("username", get_username());
+	userState.set_state<mbase::string>("access_key", get_access_key());
+	userState.set_state<bool>("is_super", is_superuser());
+	userState.set_state<bool>("is_auth_locked", is_authorization_locked());
+
+	userState.update();
 }
 
 MBASE_END
