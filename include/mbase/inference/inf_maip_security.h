@@ -62,7 +62,7 @@ public:
 	GENERIC lock_authorization();
 	GENERIC unlock_authorization();
 
-	GENERIC update_state_file(const mbase::string& in_object_name, const mbase::wstring& in_state_path, bool in_overwrite = false);
+	GENERIC update_state_file(const mbase::wstring& in_state_path, bool in_overwrite = false);
 private:
 	U32 mAuthorityFlags = 0;
 	U32 mDistinctModelAccessLimit = 0;

@@ -183,7 +183,7 @@ public:
 	GENERIC initialize(InfProgramInformation in_program_information);
 	flags host_model(InfModelTextToText* in_model);
 	flags release_model(const mbase::string& in_model_name);
-	flags create_user(const mbase::string& in_username,
+	flags create_user(const mbase::string& in_username, // TODO: Check if the username contains non-printable characters. Check if the username contains '/', '.', "..", '*' to avoid filesystem alterations
 		const U32& in_model_access_limit,
 		const U32& in_maximum_context_length,
 		const bool& in_superuser,
@@ -215,7 +215,8 @@ private:
 	U32 mModelHostingLimit;
 	U32 mDefaultModelAccessLimit;
 	U32 mDefaultContextLimit;
-	mbase::string mClientStateDirectory;
+	mbase::wstring mClientStateDirectory;
+	mbase::wstring mModelsDirectory;
 };
 
 MBASE_END

@@ -657,7 +657,7 @@ InfProgram::maip_err_code InfProgram::inf_delete_user(const mbase::string& in_se
 	usernameSanitized.remove_all('/'); // Reason I am doing this is if the user attempts to exploit the file path
 	usernameSanitized.remove_all('*'); // Reason I am doing this is if the user attempts to exploit the file path
 
-	mbase::wstring fileToBeDeleted = mInferenceConfigurator.get_data_path() + L"states/users/" + mbase::from_utf8(in_username) + L".mbfs";
+	mbase::wstring fileToBeDeleted = mClientStateDirectory + mbase::from_utf8(in_username) + L".mbfs";
 	mbase::delete_file(fileToBeDeleted);
 	return maip_err_code::INF_SUCCESS;
 }
@@ -685,7 +685,8 @@ InfProgram::maip_err_code InfProgram::inf_modify_user_model_access_limit(const m
 
 	maipUser.set_distinct_model_access_limit(in_new_access_limit);
 
-
+	maipUser.update_state_file(mClientStateDirectory, true);
+	update_maip_user_sessions(maipUser);
 
 	return maip_err_code::INF_SUCCESS;
 }
@@ -827,15 +828,15 @@ GENERIC InfProgram::initialize(InfProgramInformation in_program_information)
 		&mMainProgramState
 	);
 
-	mbase::wstring programUsers = mInferenceConfigurator.get_data_path() + L"states/users/";
-	mbase::wstring programModels = mInferenceConfigurator.get_data_path() + L"models/";
+	mClientStateDirectory = mInferenceConfigurator.get_data_path() + L"states/users/";
+	mModelsDirectory = mInferenceConfigurator.get_data_path() + L"models/";
 
 	mbase::create_directory(mInferenceConfigurator.get_data_path() + L"states/");
-	mbase::create_directory(programUsers);
-	mbase::create_directory(programModels);
+	mbase::create_directory(mClientStateDirectory);
+	mbase::create_directory(mModelsDirectory);
 
 	mbase::vector<FS_FILE_INFORMATION> fileInfo;
-	mbase::get_directory(programUsers, fileInfo);
+	mbase::get_directory(mClientStateDirectory, fileInfo);
 
 	for(mbase::vector<FS_FILE_INFORMATION>::iterator It = fileInfo.begin(); It != fileInfo.end(); ++It)
 	{
@@ -843,7 +844,7 @@ GENERIC InfProgram::initialize(InfProgramInformation in_program_information)
 		FS_FILE_INFORMATION fi = *It;
 		PcState myState;
 
-		myState.initialize(mbase::to_utf8(fi.fileName), programUsers);
+		myState.initialize(mbase::to_utf8(fi.fileName), mClientStateDirectory);
 		
 		U32 authorityFlags;
 		U32 modelAccessLimit;
@@ -872,10 +873,12 @@ GENERIC InfProgram::initialize(InfProgramInformation in_program_information)
 		maipUser.set_maximum_context_length(maxContextLength);
 		maipUser.set_username(userName);
 		maipUser.set_access_key(accessKey);
+
 		if(superUser)
 		{
 			maipUser.make_superuser();
 		}
+
 		if(authLocked)
 		{
 			maipUser.lock_authorization();
@@ -899,12 +902,12 @@ GENERIC InfProgram::initialize(InfProgramInformation in_program_information)
 	}
 
 	fileInfo.clear();
-	mbase::get_directory(programModels, fileInfo);
+	mbase::get_directory(mClientStateDirectory, fileInfo);
 	for(mbase::vector<FS_FILE_INFORMATION>::iterator It = fileInfo.begin(); It != fileInfo.end(); ++It)
 	{
 		// Querying models under the model directory
 
-		mbase::GgufMetaConfigurator ggufConfigurator(programModels + It->fileName);
+		mbase::GgufMetaConfigurator ggufConfigurator(mClientStateDirectory + It->fileName);
 		mbase::string modelName;
 
 		if(!ggufConfigurator.get_key("mbase.model_name", modelName))
@@ -921,10 +924,10 @@ GENERIC InfProgram::initialize(InfProgramInformation in_program_information)
 		// IMPLEMENT initialize method on gguf configurator
 		// And make it movable if possible
 
-		mbase::GgufMetaConfigurator seriousGgufConfigurator(programModels + It->fileName);
+		mbase::GgufMetaConfigurator seriousGgufConfigurator(mModelsDirectory + It->fileName);
 
 		InfRegisteredModelInformation modelInformation;
-		modelInformation.mModelPath = programModels + It->fileName;
+		modelInformation.mModelPath = mModelsDirectory + It->fileName;
 
 		seriousGgufConfigurator.get_key("mbase.model_name", modelInformation.mModelName);
 		seriousGgufConfigurator.get_key("mbase.model_architecture", modelInformation.mModelArchitecture);
@@ -1053,7 +1056,8 @@ InfProgram::flags InfProgram::create_user(const mbase::string& in_username,
 
 	if(in_is_permanent)
 	{
-		PcState userState;
+		newUser.update_state_file(mClientStateDirectory, true);
+		/*PcState userState;
 		mbase::wstring userStateFile = mInferenceConfigurator.get_data_path() + L"states/users/";
 		
 		std::cout << "Created permanent user: " << std::endl;
@@ -1077,7 +1081,20 @@ InfProgram::flags InfProgram::create_user(const mbase::string& in_username,
 		userState.set_state<bool>("is_super", newUser.is_superuser());
 		userState.set_state<bool>("is_auth_locked", newUser.is_authorization_locked());
 
-		userState.update();
+		userState.update();*/
+	}
+
+	for(auto& n : mUserMap)
+	{
+		std::cout << "Username: " << n.first << std::endl;
+
+		InfMaipUser& maipUser = n.second;
+		std::cout << "- Context length: " << maipUser.get_maximum_context_length() << std::endl;
+		std::cout << "- Model access limit: " << maipUser.get_model_access_limit() << std::endl;
+		std::cout << "- Username: " << maipUser.get_username() << std::endl;
+		std::cout << "- Access key: " << maipUser.get_access_key() << std::endl;
+		std::cout << "- Is superuser: " << maipUser.is_superuser() << std::endl;
+		std::cout << "- Is authorization locked: " << maipUser.is_authorization_locked() << std::endl;
 	}
 
 	return flags::INF_PROGRAM_SUCCESS;
