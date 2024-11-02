@@ -74,7 +74,6 @@ public:
 	GENERIC resume();
 
 protected:
-	//InfInactiveClientCleaner mClientCleaner;
 	InfModelBase* mTargetModel_md_model;
 	bool mIsRunning;
 	bool mIsRegistered;
@@ -144,12 +143,9 @@ public:
 	GENERIC clear_samplers();
 	flags add_sampler(const InfSamplingInput& in_sampling);
 
-	GENERIC update_sampler_value(const mbase::string& in_sampler_name, F32 in_common_float);
-
 	virtual GENERIC on_initializing();
 	virtual GENERIC on_initialize_fail(init_fail_code out_code);
 	virtual GENERIC on_destroying();
-
 	virtual GENERIC on_initialize() = 0;
 	virtual GENERIC on_destroy() = 0;
 

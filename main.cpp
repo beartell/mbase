@@ -10,6 +10,7 @@
 #include <mbase/inference/inf_maip_server.h>
 #include <mbase/inference/inf_gguf_metadata_configurator.h>
 #include <vector>
+#include <set>
 #include <unordered_map>
 #include <signal.h>
 
@@ -20,9 +21,9 @@ public:
     GENERIC on_register(InfTextToTextProcessor* out_processor) override 
     {
         U32 outMsgId = 0;
-        this->add_message(L"Your name is Devin and you are a professional OpenGL C++ programmer.", context_role::SYSTEM, outMsgId);
+        this->add_message(L"You are a helpful assistant. You are putting the summarization of the user message between tags [SUM_BEGIN] [SUM_END].", context_role::SYSTEM, outMsgId);
         msgIds.push_back(outMsgId);
-        this->add_message(L"Hey, how are you? What can you help me with?", context_role::USER, outMsgId);
+        this->add_message(L"What is your name?", context_role::USER, outMsgId);
         msgIds.push_back(outMsgId);
         
         mbase::vector<context_line> txtMessages;
@@ -86,7 +87,7 @@ class my_model : public mbase::InfModelTextToText {
 public:
     void on_initialize() override 
     {
-        this->register_context_process(&myContext, 4000);
+        //this->register_context_process(&myContext, 4000);
     }
     void on_destroy() override {}
 private:
@@ -97,14 +98,36 @@ using namespace mbase;
 
 int main()
 {
-    // my_model mm;
-    // mm.initialize_model(L"./models/Llama-3.2-1B-Instruct-Q4_K_M.gguf", 12000, 999);
-    // while(1)
-    // {
-    //     mm.update();
-    // }
+    mbase::GgufMetaConfigurator gmc(L"./models/Qwen2.5-7B-Instruct-Q6_K.gguf");
+    mbase::vector<mbase::string> tokenArray;
+    mbase::vector<I32> tokenTypeArr;
+
+    gmc.get_key("tokenizer.ggml.tokens", tokenArray);
+    gmc.get_key("tokenizer.ggml.token_type", tokenTypeArr);
+    std::set<int> typeSet;
+
+    for(I32 i = 0; i < tokenTypeArr.size(); ++i)
+    {
+        if(tokenTypeArr[i] == 3)
+        {
+            std::cout << tokenArray[i] << std::endl;
+        }
+        typeSet.insert(tokenTypeArr[i]);
+    }
+ 
+    for(auto &n : typeSet)
+    {
+        std::cout << n << std::endl;
+    }
+
+    /*my_model mm;
+    mm.initialize_model(L"./models/llama-3.2-1b-instruct-q8_0.gguf", 12000, 999);
+    while(1)
+    {
+        mm.update();
+    }*/
     
-    InfProgram mainProgram;
+    /*InfProgram mainProgram;
     mbase::InfProgramInformation programInformation;
 
     programInformation.mProgramInformation.mMbaseVersion = "1.0.0";
@@ -137,7 +160,7 @@ int main()
     {
         defaultMaipServer.update();
         mainProgram.update();
-    }
+    }*/
 
     getchar();
     return 0;

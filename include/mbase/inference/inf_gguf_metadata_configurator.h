@@ -3,6 +3,7 @@
 
 #include <mbase/common.h>
 #include <mbase/string.h>
+#include <mbase/vector.h>
 #include <mbase/behaviors.h>
 #include <ggml.h>
 #include <unordered_map>
@@ -77,6 +78,41 @@ struct MBASE_API gguf_value_reader<const char*> {
 	static const char* read(gguf_context* in_context, I32 in_key_id) { return gguf_get_val_str(in_context, in_key_id); }
 };
 
+template<>
+struct MBASE_API gguf_value_reader<mbase::vector<mbase::string>> {
+	static mbase::vector<mbase::string> read(gguf_context* in_context, I32 in_key_id)
+	{
+		I32 arrLength = gguf_get_arr_n(in_context, in_key_id);
+		mbase::vector<mbase::string> stringArray;
+		stringArray.reserve(arrLength);
+		for(I32 i = 0; i < arrLength; ++i)
+		{
+			mbase::string arrString = gguf_get_arr_str(in_context, in_key_id, i);
+			stringArray.push_back(arrString);
+		}
+
+		return stringArray;
+	}
+};
+
+template<>
+struct MBASE_API gguf_value_reader<mbase::vector<I32>> {
+	static mbase::vector<I32> read(gguf_context* in_context, I32 in_key_id)
+	{
+		I32 arrLength = gguf_get_arr_n(in_context, in_key_id);
+		mbase::vector<I32> numberArray;
+		numberArray.reserve(arrLength);
+
+		const I32* arrData = static_cast<const I32*>(gguf_get_arr_data(in_context, in_key_id));
+		for(I32 i = 0; i < arrLength; ++i)
+		{
+			numberArray.push_back(arrData[i]);
+		}
+
+		return numberArray;
+	}
+};
+
 template<typename T> struct MBASE_API gguf_value_writer{};
 
 template<>
@@ -142,6 +178,28 @@ struct MBASE_API gguf_value_writer<mbase::string> {
 template<>
 struct MBASE_API gguf_value_writer<const char*> {
 	static GENERIC write(gguf_context* in_context, const mbase::string& in_key, const char* in_value) { return gguf_set_val_str(in_context, in_key.c_str(), in_value); }
+};
+
+template<>
+struct MBASE_API gguf_value_writer<mbase::vector<mbase::string>> {
+	static GENERIC write(gguf_context* in_context, const mbase::string& in_key, const mbase::vector<mbase::string>& in_value)
+	{
+		mbase::vector<CBYTEBUFFER> cFormatStrArray;
+		cFormatStrArray.reserve(in_value.size());
+		for(mbase::vector<mbase::string>::const_iterator It = in_value.cbegin(); It != in_value.cend(); ++It)
+		{
+			cFormatStrArray.push_back(It->c_str());
+		}
+		gguf_set_arr_str(in_context, in_key.c_str(), cFormatStrArray.data(), cFormatStrArray.size());
+	}
+};
+
+template<>
+struct MBASE_API gguf_value_writer<mbase::vector<I32>> {
+	static GENERIC write(gguf_context* in_context, const mbase::string& in_key, const mbase::vector<I32>& in_value)
+	{
+		gguf_set_arr_data(in_context, in_key.c_str(), GGUF_TYPE_INT32, in_value.data(), in_value.size());
+	}
 };
 
 class MBASE_API GgufMetaConfigurator : public mbase::non_copymovable {
