@@ -20,6 +20,7 @@ class my_client : public mbase::InfClientTextToText {
 public:
     GENERIC on_register(InfTextToTextProcessor* out_processor) override 
     {
+        std::cout << "Client is registered" << std::endl;
         U32 outMsgId = 0;
         this->add_message(L"You are a helpful assistant. You are putting the summarization of the user message between tags [SUM_BEGIN] [SUM_END].", context_role::SYSTEM, outMsgId);
         msgIds.push_back(outMsgId);
@@ -36,12 +37,10 @@ public:
         txtOut->tokenize_input(txtMessages.data(), txtMessages.size(), tv);
         txtOut->execute_input(tv, true);
         txtOut->next();
-        
     }
     GENERIC on_write(CBYTEBUFFER out_data, size_type out_size, InfTextToTextProcessor::inf_token out_token, bool out_is_special, bool out_is_finish) override 
-    {
-        printf("%s", out_data);
-        
+    {        
+        printf(out_data);
         InfTextToTextProcessor* txtOut;
         get_host_processor(txtOut);
         txtOut->next();
@@ -87,7 +86,29 @@ class my_model : public mbase::InfModelTextToText {
 public:
     void on_initialize() override 
     {
-        //this->register_context_process(&myContext, 4000);
+        InfSamplerDescription topK;
+        InfSamplerDescription topP;
+        InfSamplerDescription minP;
+        InfSamplerDescription mirostat;
+
+        InfSamplingMirostatV2 mirostatValues;
+        mirostatValues.mTau = 5.0;
+        mirostatValues.mEta = 0.1;
+
+        topK.mTopK = 40;
+        topP.mTopP = 0.9;
+        minP.mMinP = 0.1;
+        mirostat.mMiroV2 = mirostatValues;
+
+        this->register_context_process(
+            &myContext, 
+            4000, 
+            2000, 
+            4, 
+            4, 
+            true,
+            {topK, topP, minP, mirostat}
+        );
     }
     void on_destroy() override {}
 private:
@@ -98,34 +119,13 @@ using namespace mbase;
 
 int main()
 {
-    mbase::GgufMetaConfigurator gmc(L"./models/Qwen2.5-7B-Instruct-Q6_K.gguf");
-    mbase::vector<mbase::string> tokenArray;
-    mbase::vector<I32> tokenTypeArr;
-
-    gmc.get_key("tokenizer.ggml.tokens", tokenArray);
-    gmc.get_key("tokenizer.ggml.token_type", tokenTypeArr);
-    std::set<int> typeSet;
-
-    for(I32 i = 0; i < tokenTypeArr.size(); ++i)
-    {
-        if(tokenTypeArr[i] == 3)
-        {
-            std::cout << tokenArray[i] << std::endl;
-        }
-        typeSet.insert(tokenTypeArr[i]);
-    }
- 
-    for(auto &n : typeSet)
-    {
-        std::cout << n << std::endl;
-    }
-
-    /*my_model mm;
-    mm.initialize_model(L"./models/llama-3.2-1b-instruct-q8_0.gguf", 12000, 999);
+    my_model mm;
+    mm.initialize_model(L"./Llama-3.2-1B-Instruct-Q4_K_M.gguf", 12000, 999);
     while(1)
     {
+        mbase::sleep(30);
         mm.update();
-    }*/
+    }
     
     /*InfProgram mainProgram;
     mbase::InfProgramInformation programInformation;

@@ -349,7 +349,7 @@ U32 InfModelTextToText::get_occupied_context_size()
 	return mOccupiedContext;
 }
 
-InfModelTextToText::flags InfModelTextToText::initialize_model(const mbase::wstring& in_path, const U32& in_total_context_size, I32 in_gpu_layers)
+InfModelTextToText::flags InfModelTextToText::initialize_model(const mbase::wstring& in_path, const U32& in_total_context_size, const I32& in_gpu_layers)
 {
 	if(is_initialized())
 	{
@@ -361,9 +361,11 @@ InfModelTextToText::flags InfModelTextToText::initialize_model(const mbase::wstr
 		return flags::INF_MODEL_INFO_INITIALIZING_MODEL;
 	}
 
-	if(in_gpu_layers == -1)
+	I32 inputLayers = in_gpu_layers;
+
+	if(inputLayers == -1)
 	{
-		in_gpu_layers = 0;
+		inputLayers = 0;
 	}
 	// TODO: Check if the given total context size is too small
 
@@ -382,7 +384,7 @@ InfModelTextToText::flags InfModelTextToText::initialize_model(const mbase::wstr
 	return flags::INF_MODEL_INFO_INITIALIZING_MODEL;
 }
 
-InfModelTextToText::flags InfModelTextToText::initialize_model_sync(const mbase::wstring& in_path, const U32& in_total_context_size, I32 in_gpu_layers)
+InfModelTextToText::flags InfModelTextToText::initialize_model_sync(const mbase::wstring& in_path, const U32& in_total_context_size, const I32& in_gpu_layers)
 {
 	initialize_model(in_path, in_total_context_size, in_gpu_layers);
 
@@ -444,7 +446,14 @@ InfModelTextToText::flags InfModelTextToText::destroy_sync()
 	return flags::INF_MODEL_SUCCESS;
 }
 
-InfModelTextToText::flags InfModelTextToText::register_context_process(InfTextToTextProcessor* in_processor, U32 in_context_length)
+InfModelTextToText::flags InfModelTextToText::register_context_process(InfTextToTextProcessor* in_processor, 
+		const U32& in_context_length, 
+		U32 in_batch_size,
+		U32 in_thread_count,
+		U32 in_batch_thread_count,
+		const bool& in_flash_attention,
+		const inf_sampling_set& in_sampler_set
+)
 {
 	MBASE_INF_MODEL_RETURN_UNINITIALIZED;
 	if(!in_processor || !in_context_length)
@@ -479,7 +488,36 @@ InfModelTextToText::flags InfModelTextToText::register_context_process(InfTextTo
 
 	mOccupiedContext += in_context_length;
 
-	in_processor->initialize(this, in_context_length, mbase::string::generate_uuid());
+	if(!in_batch_size)
+	{
+		in_batch_size = in_context_length / 8;
+	}
+
+	if(in_batch_size > in_context_length)
+	{
+		in_batch_size = in_context_length;
+	}
+
+	if(!in_thread_count)
+	{
+		in_thread_count = 1;
+	}
+
+	if(!in_batch_thread_count)
+	{
+		in_batch_thread_count = 1;
+	}
+
+	in_processor->initialize(
+		this, 
+		in_context_length, 
+		mbase::string::generate_uuid(),
+		in_batch_size,
+		in_thread_count,
+		in_batch_thread_count,
+		in_flash_attention,
+		in_sampler_set
+	);
 	mProcessorListMutex.acquire();
 	mRegisteredProcessors.push_back(in_processor);
 	mProcessorListMutex.release();
@@ -501,19 +539,21 @@ GENERIC InfModelTextToText::_initialize_model()
 		return;
 	}
 
-	if(!tempConfigurator.get_key("mbase.model_name", mModelName) 
-		|| !tempConfigurator.get_key("mbase.model_architecture", mModelArchitecture)
-		|| !tempConfigurator.get_key("mbase.quantization_coefficient", mQuantizationCoefficient)
-		|| !tempConfigurator.get_key("mbase.block_count", mBlockCount)
-		|| !tempConfigurator.get_key("mbase.head_count", mHeadCount)
-		|| !tempConfigurator.get_key("mbase.embedding_length", mEmbeddingLength)
-		|| !tempConfigurator.get_key("mbase.model_size", mModelSize))
-	{
-		mInitFailCode = init_fail_code::MBASE_PARAMS_DONT_MATCH;
-		mInitializeSignal.reset_signal_with_state();
-		mInitFailSignal.set_signal_with_state();
-		return;
-	}
+	// if(!tempConfigurator.get_key("mbase.model_name", mModelName) 
+	// 	|| !tempConfigurator.get_key("mbase.model_architecture", mModelArchitecture)
+	// 	|| !tempConfigurator.get_key("mbase.quantization_coefficient", mQuantizationCoefficient)
+	// 	|| !tempConfigurator.get_key("mbase.block_count", mBlockCount)
+	// 	|| !tempConfigurator.get_key("mbase.head_count", mHeadCount)
+	// 	|| !tempConfigurator.get_key("mbase.embedding_length", mEmbeddingLength)
+	// 	|| !tempConfigurator.get_key("mbase.model_size", mModelSize))
+	// {
+	// 	mInitFailCode = init_fail_code::MBASE_PARAMS_DONT_MATCH;
+	// 	mInitializeSignal.reset_signal_with_state();
+	// 	mInitFailSignal.set_signal_with_state();
+	// 	return;
+	// }
+
+	tempConfigurator.get_key("general.architecture", mModelArchitecture);
 
 	mbase::tokenizer_align_instruct_template(mModelArchitecture,
 		mSystemStart,
@@ -524,7 +564,7 @@ GENERIC InfModelTextToText::_initialize_model()
 		mUserEnd
 	);
 
-	// Before going diving into loading model, 
+	// Before diving into loading model, 
 	// calculate how much memory we need to load the model 
 	// if there is not enough memory for loading the model, abort.
 

@@ -356,20 +356,15 @@ InfProgram::maip_err_code InfProgram::inf_create_context(const mbase::string& in
 	maipTunedClient->mManagerClient = &clientSession;
 	maipNewContext->set_nominee_client(maipTunedClient);
 
-	for (mbase::vector<InfSamplingInput>::const_iterator cIt = in_samplers.cbegin(); cIt != in_samplers.cend(); ++cIt)
-	{
-		maipNewContext->add_sampler(*cIt);
-	}
-
-	if(t2tModel->register_context_process(maipNewContext, in_ctsize) != InfModelTextToText::flags::INF_MODEL_INFO_REGISTERING_PROCESSOR)
-	{
-		// TODO: FIX HERE
-		// means there is a problem
-		// unknown problem
-		delete maipTunedClient;
-		delete maipNewContext;
-		return maip_err_code::INF_FAILED_TO_CREATE_CONTEXT;
-	}
+	// if(t2tModel->register_context_process(maipNewContext, in_ctsize) != InfModelTextToText::flags::INF_MODEL_INFO_REGISTERING_PROCESSOR)
+	// {
+	// 	// TODO: FIX HERE
+	// 	// means there is a problem
+	// 	// unknown problem
+	// 	delete maipTunedClient;
+	// 	delete maipNewContext;
+	// 	return maip_err_code::INF_FAILED_TO_CREATE_CONTEXT;
+	// }
 
 	return maip_err_code::INF_SUCCESS;
 }

@@ -205,7 +205,7 @@ MBASE_INLINE set<Key, Compare, Allocator>::~set()
 template<typename Key, typename Compare, typename Allocator>
 MBASE_INLINE set<Key, Compare, Allocator>& set<Key, Compare, Allocator>::operator=(const set& in_rhs) {
 	clear();
-	iterator itBegin = in_rhs.begin();
+	const_iterator itBegin = in_rhs.begin();
 	for (itBegin; itBegin != in_rhs.end(); itBegin++)
 	{
 		insert(*itBegin);
@@ -460,7 +460,7 @@ MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE typename set<Key, Compare, Allocator>::c
 
 template<typename Key, typename Compare, typename Allocator>
 MBASE_INLINE std::pair<typename set<Key, Compare, Allocator>::iterator, bool> set<Key, Compare, Allocator>::insert(const value_type& in_value) {
-	std::pair<iterator, bool> insertResult = _node_type::insert_node<iterator>(mRootNode, in_value, mRootNode);
+	std::pair<iterator, bool> insertResult = _node_type::insert_node(mRootNode, in_value, mRootNode);
 	if (insertResult.second)
 	{
 		++mSize;
@@ -471,7 +471,7 @@ MBASE_INLINE std::pair<typename set<Key, Compare, Allocator>::iterator, bool> se
 
 template<typename Key, typename Compare, typename Allocator>
 MBASE_INLINE std::pair<typename set<Key, Compare, Allocator>::iterator, bool> set<Key, Compare, Allocator>::insert(value_type&& in_value) {
-	std::pair<iterator, bool> insertResult = _node_type::insert_node<iterator>(mRootNode, std::move(in_value), mRootNode);
+	std::pair<iterator, bool> insertResult = _node_type::insert_node(mRootNode, std::move(in_value), mRootNode);
 	if (insertResult.second)
 	{
 		++mSize;

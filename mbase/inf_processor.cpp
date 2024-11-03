@@ -119,17 +119,20 @@ GENERIC InfProcessorBase::resume()
 }
 
 InfTextToTextProcessor::InfTextToTextProcessor():
+	mSamplerChain(NULL),
 	mModelContext(NULL),
+	mPresetCandidates(),
 	mGeneratedToken(0),
 	mContextCursor(0),
-	mTokenizedInput(),
+	mBatchSize(0),
+	mThreadCount(0),
+	mBatchThreadCount(0),
 	mFinishState(finish_state::FINISHED),
 	mAssignedClient(NULL),
-	mSamplerChain(NULL),
-	mIsSamplerSet(false)
+	mLastFailCode(init_fail_code::MODEL_NOT_INITIALIZED),
+	mFlashAttention(false)
 {
-	auto sparams = llama_sampler_chain_default_params();
-	mSamplerChain = llama_sampler_chain_init(sparams);
+	
 }
 
 InfTextToTextProcessor::~InfTextToTextProcessor()
@@ -202,12 +205,12 @@ InfClientTextToText* InfTextToTextProcessor::get_assigned_client()
 	return mAssignedClient;
 }
 
-bool InfTextToTextProcessor::has_sampler(const mbase::string& in_sampler_name, InfSamplerMeta& out_sampler)
+bool InfTextToTextProcessor::has_sampler(InfSamplerDescription::SAMPLER in_sampler_type, InfSamplerDescription& out_sampler)
 {
-	for(mbase::vector<InfSamplerMeta>::iterator It = mSamplingOrder.begin(); It != mSamplingOrder.end(); ++It)
+	for(inf_sampling_set::iterator It = mSamplerDescriptions.begin(); It != mSamplerDescriptions.end(); ++It)
 	{
-		InfSamplerMeta smpBase = *It;
-		if(smpBase.mSamplerName == in_sampler_name)
+		InfSamplerDescription smpBase = *It;
+		if(smpBase.mSamplerType == in_sampler_type)
 		{
 			out_sampler = smpBase;
 			return true;
@@ -216,9 +219,9 @@ bool InfTextToTextProcessor::has_sampler(const mbase::string& in_sampler_name, I
 	return false;
 }
 
-GENERIC InfTextToTextProcessor::get_available_samplers(mbase::vector<InfSamplerMeta>& out_samplers)
+GENERIC InfTextToTextProcessor::get_available_samplers(inf_sampling_set& out_samplers)
 {
-	out_samplers = mSamplingOrder;
+	out_samplers = mSamplerDescriptions;
 }
 
 bool InfTextToTextProcessor::has_client() const
@@ -246,7 +249,7 @@ InfTextToTextProcessor::flags InfTextToTextProcessor::get_processor_status() con
 	return flags::INF_PROC_SUCCESS;
 }
 
-InfTextToTextProcessor::flags InfTextToTextProcessor::tokenize_input(CBYTEBUFFER in_data, size_type in_size, mbase::vector<inf_token>& out_tokens)
+InfTextToTextProcessor::flags InfTextToTextProcessor::tokenize_input(CBYTEBUFFER in_data, size_type in_size, inf_token_vector& out_tokens)
 {
 	MBASE_INF_PROC_RETURN_UNREGISTERED;
 	
@@ -255,7 +258,7 @@ InfTextToTextProcessor::flags InfTextToTextProcessor::tokenize_input(CBYTEBUFFER
 		return flags::INF_PROC_ERR_INPUT_IS_EMPTY;
 	}
 
-	mbase::vector<inf_token> tokenizedInput(in_size * 4);
+	inf_token_vector tokenizedInput(in_size * 4);
 	InfModelTextToText* t2tModel = static_cast<InfModelTextToText*>(this->mTargetModel_md_model);
 	I32 tokenCount = llama_tokenize(t2tModel->get_raw_model(), in_data, in_size, tokenizedInput.data(), in_size * 4, false, true);
 
@@ -269,7 +272,7 @@ InfTextToTextProcessor::flags InfTextToTextProcessor::tokenize_input(CBYTEBUFFER
 	return flags::INF_PROC_SUCCESS;
 }
 
-InfTextToTextProcessor::flags InfTextToTextProcessor::tokenize_input(context_line* in_lines, size_type in_count, mbase::vector<inf_token>& out_tokens, bool in_append_assistant_token)
+InfTextToTextProcessor::flags InfTextToTextProcessor::tokenize_input(context_line* in_lines, size_type in_count, inf_token_vector& out_tokens, bool in_append_assistant_token)
 {
 	MBASE_INF_PROC_RETURN_UNREGISTERED;
 	
@@ -324,7 +327,7 @@ InfTextToTextProcessor::flags InfTextToTextProcessor::tokenize_input(context_lin
 	return tokenize_input(totalMessage.data(), totalMessage.size(), out_tokens);
 }
 
-InfTextToTextProcessor::flags InfTextToTextProcessor::execute_input(const mbase::vector<inf_token>& in_tokens, bool in_abandon)
+InfTextToTextProcessor::flags InfTextToTextProcessor::execute_input(const inf_token_vector& in_tokens, bool in_abandon)
 {
 	MBASE_INF_PROC_RETURN_UNREGISTERED;
 
@@ -357,25 +360,6 @@ InfTextToTextProcessor::flags InfTextToTextProcessor::execute_input(const mbase:
 		mDecodeSignal.reset_signal_with_state();
 	}
 
-	if(!mIsSamplerSet)
-	{
-		I32 seedValue = 1234567; // TODO, GET THIS FROM APPLICATION CONFIGURATION
-		InfModelTextToText* t2tModel = static_cast<InfModelTextToText*>(this->mTargetModel_md_model);
-		I32 modelVocab = 0;
-		inf_token eotId = 0;
-		inf_token lineFeedId = 0;
-
-		t2tModel->get_vocab_count(modelVocab);
-		t2tModel->get_eot_token(eotId);
-		t2tModel->get_lf_token(lineFeedId);
-
-		llama_sampler_chain_add(mSamplerChain, llama_sampler_init_top_k(10));
-		llama_sampler_chain_add(mSamplerChain, llama_sampler_init_softmax());
-		llama_sampler_chain_add(mSamplerChain, llama_sampler_init_dist(seedValue));
-		llama_sampler_chain_add(mSamplerChain, llama_sampler_init_mirostat_v2(seedValue, 5.0, 0.100));
-
-		mIsSamplerSet = true;
-	}
 	mTokenizedInput = in_tokens;
 	mInputSignal.set_signal();
 	start_processor();
@@ -435,7 +419,16 @@ InfTextToTextProcessor::flags InfTextToTextProcessor::set_inference_client(InfCl
 	return flags::INF_PROC_SUCCESS;
 }
 
-InfTextToTextProcessor::flags InfTextToTextProcessor::initialize(InfModelTextToText* in_model, U32 in_context_length, const mbase::string& in_context_id)
+InfTextToTextProcessor::flags InfTextToTextProcessor::initialize(
+	InfModelTextToText* in_model, 
+	const U32& in_context_length, 
+	const mbase::string& in_context_id,
+	const U32& in_batch_size,
+	const U32& in_thread_count,
+	const U32& in_batch_thread_count,
+	const bool& in_flash_attention,
+	const inf_sampling_set& in_sampler_set
+)
 {
 	if (signal_state_initializing())
 	{
@@ -452,9 +445,13 @@ InfTextToTextProcessor::flags InfTextToTextProcessor::initialize(InfModelTextToT
 		return flags::INF_PROC_SUCCESS;
 	}
 
-	mContextIdentifier = in_context_id;
 	mTargetModel_md_model = in_model;
 	mContextLength = in_context_length;
+	mContextIdentifier = in_context_id;
+	mBatchSize = in_batch_size;
+	mThreadCount = in_thread_count;
+	mBatchThreadCount = in_batch_thread_count;
+
 	mDiagnostics.log(PcDiagnostics::flags::LOGTYPE_INFO, PcDiagnostics::flags::LOGIMPORTANCE_HIGH, "Initializing context with length (%d) and id (%s)", in_context_length, in_context_id.c_str());
 	mInitializeSignal.set_signal_with_state();
 	on_initializing();
@@ -462,9 +459,27 @@ InfTextToTextProcessor::flags InfTextToTextProcessor::initialize(InfModelTextToT
 	return flags::INF_PROC_INFO_INITIALIZING;
 }
 
-InfTextToTextProcessor::flags InfTextToTextProcessor::initialize_sync(InfModelTextToText* in_model, U32 in_context_length, const mbase::string& in_context_id)
+InfTextToTextProcessor::flags InfTextToTextProcessor::initialize_sync(
+	InfModelTextToText* in_model, 
+	const U32& in_context_length, 
+	const mbase::string& in_context_id,
+	const U32& in_batch_size,
+	const U32& in_thread_count,
+	const U32& in_batch_thread_count,
+	const bool& in_flash_attention,
+	const inf_sampling_set& in_sampler_set
+)
 {
-	initialize(in_model, in_context_length, in_context_id);
+	initialize(
+		in_model, 
+		in_context_length, 
+		in_context_id,
+		in_batch_size,
+		in_thread_count,
+		in_batch_thread_count,
+		in_flash_attention,
+		in_sampler_set
+	);
 	while(signal_state_initializing())
 	{
 
@@ -530,8 +545,7 @@ GENERIC InfTextToTextProcessor::clear_samplers()
 	if(mSamplerChain)
 	{
 		llama_sampler_free(mSamplerChain);
-		mIsSamplerSet = false;
-		mSamplingOrder.clear();
+		mSamplerDescriptions.clear();
 		mSamplerChain = NULL;
 	}
 }
@@ -549,62 +563,6 @@ GENERIC InfTextToTextProcessor::on_initialize_fail(init_fail_code out_code)
 GENERIC InfTextToTextProcessor::on_destroying()
 {
 
-}
-
-InfTextToTextProcessor::flags InfTextToTextProcessor::add_sampler(const InfSamplingInput& in_sampling)
-{
-	// TODO: Do not allow adding samplers while clearing
-
-	InfSamplerMeta tmpSampler;
-	if(has_sampler(in_sampling.mSamplerName, tmpSampler))
-	{
-		return flags::INF_PROC_SUCCESS;
-	}
-	
-	llama_sampler* newSampler = NULL;
-	
-	if(in_sampling.mSamplerName == "TEMP")
-	{
-		newSampler = llama_sampler_init_temp(in_sampling.mSamplerValue);
-		llama_sampler_chain_add(mSamplerChain, newSampler);
-		mSamplingOrder.push_back({ "TEMP", newSampler, true });
-	}
-	
-	else if(in_sampling.mSamplerName == "TOP_K")
-	{
-		I32 kValue = in_sampling.mSamplerValue;
-		newSampler = llama_sampler_init_top_k(kValue);
-		llama_sampler_chain_add(mSamplerChain, newSampler);
-		mSamplingOrder.push_back({ "TOP_K", newSampler, true });
-	}
-
-	else if(in_sampling.mSamplerName == "TYPICAL_P")
-	{
-		newSampler = llama_sampler_init_typical(in_sampling.mSamplerValue, 1);
-		llama_sampler_chain_add(mSamplerChain, newSampler);
-		mSamplingOrder.push_back({ "TYPICAL_P", newSampler, true });
-	}
-
-	else if(in_sampling.mSamplerName == "TOP_P")
-	{
-		newSampler = llama_sampler_init_top_p(in_sampling.mSamplerValue, 1);
-		llama_sampler_chain_add(mSamplerChain, newSampler);
-		mSamplingOrder.push_back({ "TOP_P", newSampler, true });
-	}
-	
-	else if(in_sampling.mSamplerName == "MIN_P")
-	{
-		newSampler = llama_sampler_init_min_p(in_sampling.mSamplerValue, 1);
-		llama_sampler_chain_add(mSamplerChain, newSampler);
-		mSamplingOrder.push_back({ "MIN_P", newSampler, true });
-	}
-
-	else
-	{
-		return flags::INF_PROC_ERR_SAMPLER_NAME_MISMATCH;
-	}
-
-	return flags::INF_PROC_SUCCESS;
 }
 
 GENERIC InfTextToTextProcessor::update()
@@ -690,7 +648,6 @@ GENERIC InfTextToTextProcessor::_decode_input()
 
 	mContextCursor = mInputBatch.n_tokens;
 	mFinishState = finish_state::CONTINUE;
-	
 	int decodeResult = llama_decode(mModelContext, mInputBatch);
 	mInputSignal.reset_signal_with_state();
 	mDecodeSignal.set_signal_state();
@@ -699,7 +656,6 @@ GENERIC InfTextToTextProcessor::_decode_input()
 GENERIC InfTextToTextProcessor::_decode_next()
 {
 	// Main Decode loop
-
 	mDecodeSignal.reset_signal();
 	I32 modelVocab = 0;
 	InfModelTextToText* t2tModel = static_cast<InfModelTextToText*>(this->mTargetModel_md_model);
@@ -757,11 +713,11 @@ GENERIC InfTextToTextProcessor::_initialize_context()
 	ctxParams.n_ctx = mContextLength;
 	ctxParams.n_batch = mContextLength;
 	ctxParams.n_seq_max = 1;
-	ctxParams.n_threads = 32;
-	ctxParams.n_threads_batch = 32;
-	ctxParams.n_ubatch = mContextLength / 8;
-	ctxParams.flash_attn = true;
-
+	ctxParams.n_threads = mThreadCount;
+	ctxParams.n_threads_batch = mBatchThreadCount;
+	ctxParams.n_ubatch = mBatchSize;
+	ctxParams.flash_attn = mFlashAttention;
+	
 	mInitializeFailSignal.reset_signal_with_state();
 
 	InfModelTextToText* t2tModel = static_cast<InfModelTextToText*>(this->mTargetModel_md_model);
@@ -785,21 +741,112 @@ GENERIC InfTextToTextProcessor::_initialize_context()
 		return;
 	}
 	
-	//mInputBatch = llama_batch_init(mContextLength, 0, 1);
 	mContextCursor = 0;
 		
 	I32 modelVocabCount = 0;
 	inf_token eotToken = 0;
 	inf_token nlToken = 0;
-	// List /usr file
+	
 	t2tModel->get_vocab_count(modelVocabCount);
 	t2tModel->get_eot_token(eotToken);
 	t2tModel->get_lf_token(nlToken);
 	I32 seedValue = 1048204757;
 
-	llama_sampler* penaltySampler = llama_sampler_init_penalties(modelVocabCount, eotToken, nlToken, 64, 1.5, 0.5, 0.5, false, false);
-	llama_sampler_chain_add(mSamplerChain, penaltySampler);
+	mSamplerChain = llama_sampler_chain_init(llama_sampler_chain_default_params());
 
+	if(!mSamplerDescriptions.size())
+	{
+		// If no sampler is present, apply greedy
+		llama_sampler_chain_add(mSamplerChain, llama_sampler_init_greedy());
+	}
+
+	else
+	{
+		for(inf_sampling_set::iterator It = mSamplerDescriptions.begin(); It != mSamplerDescriptions.end(); ++It)
+		{
+			if(It->mSamplerType == InfSamplerDescription::SAMPLER::REPETITION)
+			{
+				InfSamplingRepetition repeatSampler = It->mRepetition;
+				llama_sampler_chain_add(
+					mSamplerChain, 
+					llama_sampler_init_penalties(
+						modelVocabCount, 
+						eotToken, 
+						nlToken, 
+						repeatSampler.mPenaltyN, 
+						repeatSampler.mRepeatPenalty, 
+						repeatSampler.mPenaltyFrequency, 
+						repeatSampler.mPenaltyPresent, 
+						repeatSampler.mPenaltyLinefeed, 
+						repeatSampler.mPenaltyEos
+					)
+				);
+			}
+
+			else if(It->mSamplerType == InfSamplerDescription::SAMPLER::TOP_K)
+			{
+				U32 kValue = It->mTopK;
+				llama_sampler_chain_add(
+					mSamplerChain,
+					llama_sampler_init_top_k(kValue)
+				);
+			}
+
+			else if(It->mSamplerType == InfSamplerDescription::SAMPLER::TOP_P)
+			{
+				F32 topValue = It->mTopP;
+				llama_sampler_chain_add(
+					mSamplerChain,
+					llama_sampler_init_top_p(topValue, 1)
+				);
+			}
+
+			else if(It->mSamplerType == InfSamplerDescription::SAMPLER::MIN_P)
+			{
+				F32 minValue = It->mMinP;
+				llama_sampler_chain_add(
+					mSamplerChain,
+					llama_sampler_init_min_p(minValue, 1)
+				);
+			}
+
+			else if(It->mSamplerType == InfSamplerDescription::SAMPLER::TYPICAL_P)
+			{
+				F32 typicalValue = It->mTypicalP;
+				llama_sampler_chain_add(
+					mSamplerChain,
+					llama_sampler_init_typical(typicalValue, 1)
+				);
+			}
+
+			else if(It->mSamplerType == InfSamplerDescription::SAMPLER::TEMP)
+			{
+				F32 temperature = It->mTemp;
+				llama_sampler_chain_add(
+					mSamplerChain,
+					llama_sampler_init_temp(temperature)
+				);
+			}
+			else if(It->mSamplerType == InfSamplerDescription::SAMPLER::MIROSTAT_V2)
+			{
+				InfSamplingMirostatV2 mirostatObject = It->mMiroV2;
+				llama_sampler_chain_add(
+					mSamplerChain,
+					llama_sampler_init_mirostat_v2(
+						seedValue,
+						mirostatObject.mTau,
+						mirostatObject.mEta
+					)	
+				);
+			}
+		}
+
+		llama_sampler_chain_add(
+			mSamplerChain,
+			llama_sampler_init_dist(seedValue)
+		);
+	}
+	
 	mIsRunning = true;
 	mInitializeSignal.reset_signal_with_state();
 	mIsRegistered = true;
@@ -809,17 +856,22 @@ GENERIC InfTextToTextProcessor::_initialize_context()
 
 GENERIC InfTextToTextProcessor::_destroy_context()
 {
-	//llama_batch_free(mInputBatch);
 	llama_free(mModelContext);
-	mContextCursor = 0;
 	mModelContext = NULL;
-	mIsRunning = false;
+	// What to do with mInputBatch ?
 	mPresetCandidates.clear();
-	mContextCursor = 0;
 	mTokenizedInput.clear();
-	mPenaltyList.clear();
-	mSamplingOrder.clear();
+	mSamplerDescriptions.clear();
+	mGeneratedToken = 0;
+	mContextCursor = 0;
+	mBatchSize = 0;
+	mThreadCount = 0;
+	mBatchThreadCount = 0;
+	mFlashAttention = false;
+	mIsRunning = false;
 	mFinishState = finish_state::FINISHED;
+	mAssignedClient = NULL;
+	mLastFailCode = init_fail_code::MODEL_NOT_INITIALIZED;
 
 	clear_samplers();
 
@@ -855,13 +907,6 @@ GENERIC InfTextToTextProcessor::update_t()
 				{
 					_decode_next();
 				}
-				else
-				{
-				}
-			}
-
-			else
-			{
 			}
 		}
 		else
@@ -869,9 +914,6 @@ GENERIC InfTextToTextProcessor::update_t()
 			if(signal_initializing())
 			{
 				_initialize_context();
-			}
-			else
-			{
 			}
 		}
 	}

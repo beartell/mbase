@@ -11,6 +11,7 @@
 #include <mbase/framework/logical_processing.h>
 #include <mbase/framework/thread_pool.h>
 #include <mbase/framework/timer_loop.h>
+#include <mbase/inference/inf_sampling_set.h>
 #include <llama.h>
 
 MBASE_BEGIN
@@ -124,12 +125,20 @@ public:
 
 	static bool get_mbase_chat_template_id(const mbase::string& in_architecture, mbase::string& out_id);
 
-	flags initialize_model(const mbase::wstring& in_path, const U32& in_total_context_size, I32 in_gpu_layers = -1);
-	flags initialize_model_sync(const mbase::wstring& in_path, const U32& in_total_context_size, I32 in_gpu_layers = -1);
+	flags initialize_model(const mbase::wstring& in_path, const U32& in_total_context_size, const I32& in_gpu_layers = -1);
+	flags initialize_model_sync(const mbase::wstring& in_path, const U32& in_total_context_size, const I32& in_gpu_layers = -1);
 	flags load_model();
 	flags destroy();
 	flags destroy_sync();
-	flags register_context_process(InfTextToTextProcessor* in_processor, U32 in_context_length);
+	flags register_context_process(
+		InfTextToTextProcessor* in_processor, 
+		const U32& in_context_length,
+		U32 in_batch_size,
+		U32 in_thread_count,
+		U32 in_batch_thread_count,
+		const bool& in_flash_attention,
+		const inf_sampling_set& in_sampler_set
+	);
 
 	virtual GENERIC on_initialize_fail(init_fail_code out_fail_code);
 	virtual GENERIC on_initialize() = 0;

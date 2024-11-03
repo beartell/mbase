@@ -220,8 +220,8 @@ struct avl_node {
         k1->right = in_k2;
         k1->parent = in_k2->parent;
         in_k2->parent = k1;
-        in_k2->height = max(get_height(in_k2->left), get_height(in_k2->right)) + 1;
-        k1->height = max(get_height(k1->left), in_k2->height) + 1;
+        in_k2->height = std::max(get_height(in_k2->left), get_height(in_k2->right)) + 1;
+        k1->height = std::max(get_height(k1->left), in_k2->height) + 1;
         in_k2 = k1;
     }
 
@@ -236,8 +236,8 @@ struct avl_node {
         k1->left = in_k2;
         k1->parent = in_k2->parent;
         in_k2->parent = k1;
-        in_k2->height = max(get_height(in_k2->left), get_height(in_k2->right)) + 1;
-        k1->height = max(get_height(k1->right), in_k2->height) + 1;
+        in_k2->height = std::max(get_height(in_k2->left), get_height(in_k2->right)) + 1;
+        k1->height = std::max(get_height(k1->right), in_k2->height) + 1;
         in_k2 = k1;
     }
 
@@ -283,7 +283,7 @@ struct avl_node {
             }
         }
 
-        in_node->height = max(get_height(in_node->left), get_height(in_node->right)) + 1;
+        in_node->height = std::max(get_height(in_node->left), get_height(in_node->right)) + 1;
     }
 
     static avl_node* find_min(avl_node* in_node) {

@@ -5,11 +5,13 @@
 #include <mbase/vector.h>
 #include <mbase/list.h>
 #include <mbase/string.h>
+#include <mbase/set.h>
 #include <mbase/synchronization.h>
 #include <mbase/behaviors.h>
 #include <mbase/inference/inf_model.h>
 #include <mbase/inference/inf_context_line.h>
 #include <mbase/inference/inf_sampling.h>
+#include <mbase/inference/inf_sampling_set.h>
 #include <mbase/framework/logical_processing.h>
 #include <mbase/pc/pc_diagnostics.h>
 #include <mutex>
@@ -18,16 +20,9 @@
 MBASE_BEGIN
 
 static const U32 gProcessorMinimumTokenCount = 32;
-static const U32 gProcessorMinimumInactivityThreshold = 16; // in seconds
 
 class InfClientTextToText;
 class InfProgram;
-
-struct MBASE_API InfSamplerMeta {
-	mbase::string mSamplerName = "";
-	llama_sampler* mSamplerHandle = NULL;
-	bool mIsOwnedByChain = false;
-};
 
 class MBASE_API InfProcessorBase : public mbase::logical_processor {
 public:
@@ -89,6 +84,7 @@ class MBASE_API InfTextToTextProcessor : public mbase::InfProcessorBase {
 public:
 	using inf_token = llama_token;
 	using inf_token_candidates = mbase::vector<llama_token_data>;
+	using inf_token_vector = mbase::vector<inf_token>;
 
 	enum class finish_state {
 		FINISHED,
@@ -120,28 +116,46 @@ public:
 	#endif // MBASE_INTERNAL_API
 	U32 get_max_token_length();
 	InfClientTextToText* get_assigned_client();
-	bool has_sampler(const mbase::string& in_sampler_name, InfSamplerMeta& out_sampler);
-	GENERIC get_available_samplers(mbase::vector<InfSamplerMeta>& out_samplers);
+	bool has_sampler(InfSamplerDescription::SAMPLER in_sampler_type, InfSamplerDescription& out_sampler);
+	GENERIC get_available_samplers(inf_sampling_set& out_samplers);
 	bool has_client() const;
 	flags get_processor_status() const;
 
-	flags tokenize_input(CBYTEBUFFER in_data, size_type in_size, mbase::vector<inf_token>& out_tokens);
-	flags tokenize_input(context_line* in_lines, size_type in_count, mbase::vector<inf_token>& out_tokens, bool in_append_assistant_token = true);
-	flags execute_input(const mbase::vector<inf_token>& in_tokens, bool in_abandon = false);
+	flags tokenize_input(CBYTEBUFFER in_data, size_type in_size, inf_token_vector& out_tokens);
+	flags tokenize_input(context_line* in_lines, size_type in_count, inf_token_vector& out_tokens, bool in_append_assistant_token = true);
+	flags execute_input(const inf_token_vector& in_tokens, bool in_abandon = false);
 	flags next();
 	flags set_inference_client(InfClientTextToText* in_client);
-	flags initialize(InfModelTextToText* in_model, U32 in_context_length, const mbase::string& in_context_id);
-	flags initialize_sync(InfModelTextToText* in_model, U32 in_context_length, const mbase::string& in_context_id);
+	flags initialize(
+		InfModelTextToText* in_model, 
+		const U32& in_context_length, 
+		const mbase::string& in_context_id,
+		const U32& in_batch_size,
+		const U32& in_thread_count,
+		const U32& in_batch_thread_count,
+		const bool& in_flash_attention,
+		const inf_sampling_set& in_sampler_set
+	);
+	flags initialize_sync(
+		InfModelTextToText* in_model, 
+		const U32& in_context_length, 
+		const mbase::string& in_context_id,
+		const U32& in_batch_size,
+		const U32& in_thread_count,
+		const U32& in_batch_thread_count,
+		const bool& in_flash_attention,
+		const inf_sampling_set& in_sampler_set
+	);
 	flags destroy();
 	flags destroy_sync();
 	GENERIC release_inference_client();
 	#ifdef MBASE_INTERNAL_API
-		GENERIC clear_token_candidates();
+		
 	#endif // MBASE_INTERNAL_API
+	GENERIC clear_token_candidates();
+	GENERIC clear_samplers();
 	GENERIC update() override;
 	GENERIC update_t() override;
-	GENERIC clear_samplers();
-	flags add_sampler(const InfSamplingInput& in_sampling);
 
 	virtual GENERIC on_initializing();
 	virtual GENERIC on_initialize_fail(init_fail_code out_code);
@@ -155,14 +169,17 @@ private:
 	GENERIC _initialize_context();
 	GENERIC _destroy_context();
 
+	llama_sampler* mSamplerChain;
 	llama_context* mModelContext;
 	llama_batch mInputBatch;
 	inf_token_candidates mPresetCandidates;
+	inf_token_vector mTokenizedInput;
+	inf_sampling_set mSamplerDescriptions;
 	inf_token mGeneratedToken;
 	U32 mContextCursor; // -----> if it exceeds the context size, stop generating
-	mbase::vector<inf_token> mTokenizedInput;
-	mbase::vector<inf_token> mPenaltyList; // Unused, remove later
-	mbase::vector<InfSamplerMeta> mSamplingOrder;
+	U32 mBatchSize;
+	U32 mThreadCount;
+	U32 mBatchThreadCount;
 	processor_signal mInputSignal;
 	processor_signal mTokenGeneratedSignal;
 	processor_signal mDecodeSignal;
@@ -171,10 +188,10 @@ private:
 	processor_signal mInitializeFailSignal;
 	finish_state mFinishState;
 	InfClientTextToText* mAssignedClient;
-	llama_sampler* mSamplerChain;
-	bool mIsSamplerSet;
 	PcDiagnostics mDiagnostics;
-	init_fail_code mLastFailCode;
+	init_fail_code mLastFailCode;	
+	bool mFlashAttention;
+
 };
 
 MBASE_END
