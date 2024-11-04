@@ -2,8 +2,6 @@
 #include <mbase/inference/inf_client.h>
 #include <mbase/inference/inf_model.h>
 #include <mbase/inference/inf_sampling.h>
-#include <mbase/framework/timer_loop.h>
-#include <mbase/framework/timers.h>
 #include <common/common.h>
 
 MBASE_BEGIN
@@ -451,6 +449,7 @@ InfTextToTextProcessor::flags InfTextToTextProcessor::initialize(
 	mBatchSize = in_batch_size;
 	mThreadCount = in_thread_count;
 	mBatchThreadCount = in_batch_thread_count;
+	mSamplerDescriptions = in_sampler_set;
 
 	mDiagnostics.log(PcDiagnostics::flags::LOGTYPE_INFO, PcDiagnostics::flags::LOGIMPORTANCE_HIGH, "Initializing context with length (%d) and id (%s)", in_context_length, in_context_id.c_str());
 	mInitializeSignal.set_signal_with_state();

@@ -3,7 +3,6 @@
 
 #include <mbase/common.h>
 #include <mbase/vector.h> // mbase::vector
-#include <mbase/safe_buffer.h> // mbase::safe_buffer
 #include <mbase/stack.h> // mbase::stack
 
 MBASE_STD_BEGIN

@@ -208,13 +208,6 @@ InfModelTextToText::flags InfModelTextToText::get_embedding_length(U32& out_leng
 	return flags::INF_MODEL_SUCCESS;
 }
 
-InfModelTextToText::flags InfModelTextToText::get_rope_type(mbase::string& out_type)
-{
-	MBASE_INF_MODEL_RETURN_UNINITIALIZED;
-	// IMPLEMENT
-	return flags::INF_MODEL_SUCCESS;
-}
-
 InfModelTextToText::flags InfModelTextToText::get_sys_start(mbase::string& out_start)
 {
 	MBASE_INF_MODEL_RETURN_UNINITIALIZED;

@@ -38,17 +38,21 @@ public:
         txtOut->execute_input(tv, true);
         txtOut->next();
     }
+
     GENERIC on_write(CBYTEBUFFER out_data, size_type out_size, InfTextToTextProcessor::inf_token out_token, bool out_is_special, bool out_is_finish) override 
     {        
+        fflush(stdout);
         printf(out_data);
         InfTextToTextProcessor* txtOut;
         get_host_processor(txtOut);
         txtOut->next();
     }
+
     GENERIC on_finish(size_type out_total_token_size, InfTextToTextProcessor::finish_state out_finish_state) override 
     {
 
     }
+    
     GENERIC on_unregister() override 
     {
 
@@ -89,16 +93,30 @@ public:
         InfSamplerDescription topK;
         InfSamplerDescription topP;
         InfSamplerDescription minP;
+        InfSamplerDescription temperature;
         InfSamplerDescription mirostat;
-
-        InfSamplingMirostatV2 mirostatValues;
-        mirostatValues.mTau = 5.0;
-        mirostatValues.mEta = 0.1;
+        InfSamplerDescription repeatControl;
 
         topK.mTopK = 40;
+        topK.mSamplerType = InfSamplerDescription::SAMPLER::TOP_K;
+
         topP.mTopP = 0.9;
+        topP.mSamplerType = InfSamplerDescription::SAMPLER::TOP_P;
+
         minP.mMinP = 0.1;
-        mirostat.mMiroV2 = mirostatValues;
+        minP.mSamplerType = InfSamplerDescription::SAMPLER::MIN_P;
+
+        temperature.mTemp = 0.2;
+        temperature.mSamplerType = InfSamplerDescription::SAMPLER::TEMP;
+
+        InfSamplingRepetition repeatSampler;
+        repeatSampler.mPenaltyLinefeed = true;
+        repeatSampler.mRepeatPenalty = 1.5f;
+        repeatSampler.mPenaltyFrequency = 1.0f;
+        repeatSampler.mPenaltyPresent = 1.0f;
+
+        repeatControl.mSamplerType = InfSamplerDescription::SAMPLER::REPETITION;
+        repeatControl.mRepetition = repeatSampler;
 
         this->register_context_process(
             &myContext, 
@@ -107,7 +125,7 @@ public:
             4, 
             4, 
             true,
-            {topK, topP, minP, mirostat}
+            {topK, topP, minP, temperature, mirostat}
         );
     }
     void on_destroy() override {}
@@ -123,7 +141,6 @@ int main()
     mm.initialize_model(L"./Llama-3.2-1B-Instruct-Q4_K_M.gguf", 12000, 999);
     while(1)
     {
-        mbase::sleep(30);
         mm.update();
     }
     

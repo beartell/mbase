@@ -6,25 +6,6 @@
 
 MBASE_STD_BEGIN
 
-/*
-
-    --- CLASS INFORMATION ---
-Identification: S0C33-OBJ-UD-ST
-
-Name: safe_buffer
-
-Parent: None
-
-Behaviour List:
-- Default Constructible
-- Destructible
-- Move Constructible
-- Move Assignable
-
-Description:
-
-*/
-
 template<typename T>
 class sequence_iterator;
 

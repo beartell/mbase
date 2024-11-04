@@ -42,7 +42,6 @@ public:
 class MBASE_API InfMaipTunedT2TProcessor : public mbase::InfTextToTextProcessor {
 public:
 	GENERIC on_initialize_fail(init_fail_code out_code) override;
-
 	GENERIC on_initialize() override;
 	GENERIC on_destroy() override;
 
@@ -171,6 +170,13 @@ public:
 	maip_err_code inf_delete_user(const mbase::string& in_session_token, const mbase::string& in_username);
 	maip_err_code inf_modify_user_model_access_limit(const mbase::string& in_session_token, const mbase::string& in_username, const U32& in_new_access_limit);
 	maip_err_code inf_modify_user_maximum_context_length(const mbase::string& in_session_token, const mbase::string& in_username, const U32& in_maximum_context_length);
+	
+	maip_err_code inf_modify_user_batch_size(const mbase::string& in_session_token, const mbase::string& in_username, const U32& in_batch_size); // Implement
+	maip_err_code inf_modify_user_processor_thread_count(const mbase::string& in_session_token, const mbase::string& in_username, const U32& in_thread_count); // Implement
+	maip_err_code inf_modify_user_batch_thread_count(const mbase::string& in_session_token, const mbase::string& in_username, const U32& in_thread_count); // Implement
+	// maip_err_code inf_modify_user_sampling_set(const mbase::string& in_session_token, const mbase::string& in_username, const inf_sampling_set& in_sampling_set) /* Implement */
+	maip_err_code inf_modify_user_system_prompt(const mbase::string& in_session_token, const mbase::string& in_username, const mbase::string& in_system_prompt); // Implement
+
 	maip_err_code inf_modify_user_make_superuser(const mbase::string& in_session_token, const mbase::string& in_username, const mbase::string& in_access_token);
 	maip_err_code inf_modify_user_unmake_superuser(const mbase::string& in_session_token, const mbase::string& in_username);
 	maip_err_code inf_modify_user_accept_models(const mbase::string& in_session_token, const mbase::string& in_username, const mbase::vector<mbase::string>& in_models);

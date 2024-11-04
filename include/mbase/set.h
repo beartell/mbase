@@ -6,7 +6,6 @@
 #include <mbase/node_type.h> // mbase::avl_node
 #include <mbase/binary_iterator.h> // mbase::bst_iterator, mbase::const_bst_iterator, mbase::reverse_bst_iterator, mbase::const_reverse_bst_iterator
 #include <mbase/traits.h> // mbase::serialize_helper
-#include <mbase/safe_buffer.h> // mbase::safe_buffer
 #include <functional> // std::less
 
 MBASE_STD_BEGIN

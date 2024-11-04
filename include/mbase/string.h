@@ -4,7 +4,6 @@
 //#include <mbase/vector.h>
 #include <mbase/char_stream.h>
 #include <mbase/type_sequence.h> // mbase::type_sequence
-#include <mbase/safe_buffer.h> // mbase::safe_buffer
 #include <stdexcept>
 #include <ctype.h>
 

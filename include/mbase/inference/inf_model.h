@@ -103,7 +103,6 @@ public:
 	flags get_model_name(mbase::string& out_name);
 	flags get_architecture(mbase::string& out_architecture);
 	flags get_embedding_length(U32& out_length);
-	flags get_rope_type(mbase::string& out_type);
 	flags get_sys_start(mbase::string& out_start);
 	flags get_sys_start(mbase::vector<inf_token>& out_tokens);
 	flags get_assistant_start(mbase::string& out_start);
