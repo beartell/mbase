@@ -16,6 +16,7 @@ class MBASE_API InfClientTextToText {
 public:
 	
 	using token_vector = mbase::vector<InfTextToTextProcessor::inf_token>;
+	using chat_history_map = mbase::unordered_map<U32, context_line>;
 	using size_type = SIZE_T;
 
 	enum flags : U8 {
@@ -26,7 +27,6 @@ public:
 		INF_CLIENT_ERR_NOT_REGISTERED
 	};
 
-	using chat_history_map = mbase::unordered_map<U32, context_line>;
 
 	InfClientTextToText();
 	InfClientTextToText(const InfClientTextToText& in_rhs);

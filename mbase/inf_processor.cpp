@@ -135,7 +135,17 @@ InfTextToTextProcessor::InfTextToTextProcessor():
 
 InfTextToTextProcessor::~InfTextToTextProcessor()
 {
-	destroy_sync();
+	if(mModelContext)
+	{
+		stop_processor();
+		llama_free(mModelContext);
+		release_inference_client();
+		if(this->mTargetModel_md_model)
+		{
+			InfModelTextToText* t2tModel = static_cast<InfModelTextToText*>(this->mTargetModel_md_model);
+			t2tModel->manual_context_deletion(this);	
+		}
+	}
 }
 
 InfTextToTextProcessor::init_fail_code InfTextToTextProcessor::get_last_fail_code() const
@@ -713,7 +723,7 @@ GENERIC InfTextToTextProcessor::_initialize_context()
 	ctxParams.n_batch = mContextLength;
 	ctxParams.n_seq_max = 1;
 	ctxParams.n_threads = mThreadCount;
-	ctxParams.n_threads_batch = mBatchThreadCount;
+	ctxParams.n_threads_batch = 1;
 	ctxParams.n_ubatch = mBatchSize;
 	ctxParams.flash_attn = mFlashAttention;
 	

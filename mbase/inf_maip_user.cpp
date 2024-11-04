@@ -1,20 +1,20 @@
-#include <mbase/inference/inf_maip_security.h>
+#include <mbase/inference/inf_maip_user.h>
 #include <mbase/pc/pc_state.h>
 #include <algorithm>
 
 MBASE_BEGIN
 
-bool InfMaipUser::is_superuser()
+bool InfMaipUser::is_superuser() const noexcept
 {
 	return mIsSuperUser;
 }
 
-bool InfMaipUser::is_authorization_locked()
+bool InfMaipUser::is_static() const noexcept
 {
-	return mIsAuthorizationLocked;
+	return mIsStatic;
 }
 
-bool InfMaipUser::is_flags_set(U32 in_flags)
+bool InfMaipUser::is_flags_set(U32 in_flags) const noexcept
 {
 	if(is_superuser())
 	{
@@ -38,57 +38,57 @@ bool InfMaipUser::is_model_accessible(const mbase::string& in_modelname)
 	return false;
 }
 
-U32 InfMaipUser::get_model_access_limit()
+const U32& InfMaipUser::get_model_access_limit() const noexcept
 {
 	return mDistinctModelAccessLimit;
 }
 
-U32 InfMaipUser::get_maximum_context_length()
+const U32& InfMaipUser::get_maximum_context_length() const noexcept
 {
 	return mMaximumContextLength;
 }
 
-U32 InfMaipUser::get_batch_size()
+const U32& InfMaipUser::get_batch_size() const noexcept
 {
 	return mBatchSize;
 }
 
-U32 InfMaipUser::get_processor_thread_count()
+const U32& InfMaipUser::get_processor_max_thread_count() const noexcept
+{
+	return mMaxProcessorThreadCount;
+}
+
+const U32& InfMaipUser::get_processor_thread_count() const noexcept
 {
 	return mProcessorThreadCount;
 }
 
-U32 InfMaipUser::get_batch_thread_count()
-{
-	return mBatchThreadCount;
-}
-
-const mbase::string& InfMaipUser::get_access_key()
+const mbase::string& InfMaipUser::get_access_key() const noexcept
 {
 	return mAccessKey;
 }
 
-const mbase::string& InfMaipUser::get_username() 
+const mbase::string& InfMaipUser::get_username() const noexcept
 {
 	return mUsername;
 }
 
-const mbase::string& InfMaipUser::get_system_prompt()
+const mbase::string& InfMaipUser::get_system_prompt() const noexcept
 {
 	return mSystemPrompt;
 }
 
-const inf_sampling_set& InfMaipUser::get_sampling_set()
+const inf_sampling_set& InfMaipUser::get_sampling_set() const noexcept
 {
 	return mSamplingSet;
 }
 
-U32 InfMaipUser::get_authority_flags()
+const U32& InfMaipUser::get_authority_flags() const noexcept
 {
 	return mAuthorityFlags;
 }
 
-const typename InfMaipUser::model_name_vector& InfMaipUser::get_accessible_models()
+const typename InfMaipUser::model_name_vector& InfMaipUser::get_accessible_models() const noexcept
 {
 	return mAccessibleModels;
 }
@@ -108,14 +108,14 @@ GENERIC InfMaipUser::set_batch_size(const U32& in_batch_size)
 	mBatchSize = in_batch_size;
 }
 
+GENERIC InfMaipUser::set_processor_max_thread_count(const U32& in_thread_count)
+{
+	mMaxProcessorThreadCount = in_thread_count;
+}
+
 GENERIC InfMaipUser::set_processor_thread_count(const U32& in_thread_count)
 {
 	mProcessorThreadCount = in_thread_count;
-}
-
-GENERIC InfMaipUser::set_batch_thread_count(const U32& in_thread_count)
-{
-	mBatchThreadCount = in_thread_count;
 }
 
 GENERIC InfMaipUser::set_sampling_set(const inf_sampling_set& in_sampling_set)
@@ -175,14 +175,19 @@ GENERIC InfMaipUser::make_superuser()
 	mIsSuperUser = true;
 }
 
-GENERIC InfMaipUser::lock_authorization()
+GENERIC InfMaipUser::unmake_superuser()
 {
-	mIsAuthorizationLocked = true;
+	mIsSuperUser = false;
 }
 
-GENERIC InfMaipUser::unlock_authorization()
+GENERIC InfMaipUser::lock_user()
 {
-	mIsAuthorizationLocked = false;
+	mIsStatic = true;
+}
+
+GENERIC InfMaipUser::unlock_user()
+{
+	mIsStatic = false;
 }
 
 GENERIC InfMaipUser::update_state_file(const mbase::wstring& in_state_path, bool in_overwrite)
@@ -202,15 +207,15 @@ GENERIC InfMaipUser::update_state_file(const mbase::wstring& in_state_path, bool
 	userState.set_state<U32>("model_access_limit", get_model_access_limit());
 	userState.set_state<U32>("max_context_length", get_maximum_context_length());
 	userState.set_state<U32>("batch_size", get_batch_size());
+	userState.set_state<U32>("proc_max_thread_count", get_processor_max_thread_count());
 	userState.set_state<U32>("proc_thread_count", get_processor_thread_count());
-	userState.set_state<U32>("batch_thread_count", get_batch_thread_count());
 	userState.set_state<mbase::vector<mbase::string>>("accessible_models", get_accessible_models());
 	userState.set_state<mbase::string>("username", get_username());
 	userState.set_state<mbase::string>("access_key", get_access_key());
 	userState.set_state<mbase::string>("system_prompt", get_system_prompt());
 	/* userState.set_state<inf_sampling_set>("sampling_set", get_sampling_set()); // Fix this thing */
 	userState.set_state<bool>("is_super", is_superuser());
-	userState.set_state<bool>("is_auth_locked", is_authorization_locked());
+	userState.set_state<bool>("is_static", is_static());
 	 
 	userState.update();
 }

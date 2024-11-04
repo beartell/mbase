@@ -1,5 +1,5 @@
-#ifndef MBASE_INF_MAIP_SECURITY_H
-#define MBASE_INF_MAIP_SECURITY_H
+#ifndef MBASE_INF_MAIP_USER_H
+#define MBASE_INF_MAIP_USER_H
 
 #include <mbase/common.h>
 #include <mbase/string.h>
@@ -8,9 +8,9 @@
 
 MBASE_BEGIN
 
-static U32 gMaipSecurityDefaultModelAccessLimit = 3;
-static U32 gMaipSecurityDefaultMaximumContextLength = 4096;
-static U32 gMaipSecurityDefaultAuthorityFlags = 0;
+static U32 gMaipUserDefaultModelAccessLimit = 3;
+static U32 gMaipUserDefaultMaximumContextLength = 4096;
+static U32 gMaipUserDefaultAuthorityFlags = 0;
 
 #define MAIP_MODEL_LOAD_UNLOAD (1 << 0) // Allows user group to load and unload models on server
 #define MAIP_ADAPTER_LOAD_UNLOAD (1 << 1) // Allows user group to load and unload adapters on server
@@ -21,10 +21,11 @@ static U32 gMaipSecurityDefaultAuthorityFlags = 0;
 #define MAIP_USER_ACCESS_MODIFICATION (1 << 6) // Allows user group to modify access list of other user groups
 #define MAIP_USER_SYS_PROMPT_MODIFICATION (1 << 7) // Allows user group to modify group system prompt of another user group.
 #define MAIP_USER_SAMPLER_MODIFICATION (1 << 8) // Allows user to modify sampler order of other user groups.
-#define MAIP_USER_PROCESSOR_MODIFICATION (1 << 9) // Allows user to modify processor resource usage of other user groups.
-#define MAIP_USER_BATCH_LENGTH_MODIFICATION (1 << 10) // Allows user to modify the batch length of other user groups.
+#define MAIP_USER_MAX_PROCESSOR_THREAD_COUNT_MODIFICATION (1 << 9) // Allows user to modify maximum amount of thread usage of another user group
+#define MAIP_USER_PROCESSOR_THREAD_COUNT_MODIFICATION (1 << 10) // Allows user to modify amount of thread used by user group
+#define MAIP_USER_BATCH_LENGTH_MODIFICATION (1 << 11) // Allows user to modify the batch length of other user groups.
 
-class InfMaipUser { // Useless unless it is associated with MAIP Program
+class MBASE_API InfMaipUser { // Useless unless it is associated with MAIP Program
 public:
 	using model_name_vector = mbase::vector<mbase::string>;
 	using size_type = SIZE_T;
@@ -43,27 +44,27 @@ public:
 	InfMaipUser& operator=(const InfMaipUser& in_rhs) = default;
 	InfMaipUser& operator=(InfMaipUser&& in_rhs) = default;
 
-	bool is_superuser();
-	bool is_authorization_locked();
-	bool is_flags_set(U32 in_flags);
+	bool is_superuser() const noexcept;
+	bool is_static() const noexcept;
+	bool is_flags_set(U32 in_flags) const noexcept;
 	bool is_model_accessible(const mbase::string& in_modelname);
-	U32 get_model_access_limit();
-	U32 get_maximum_context_length();
-	U32 get_batch_size();
-	U32 get_processor_thread_count();
-	U32 get_batch_thread_count();
-	const mbase::string& get_access_key();
-	const mbase::string& get_username();
-	const mbase::string& get_system_prompt();
-	const inf_sampling_set& get_sampling_set();
-	U32 get_authority_flags();
-	const model_name_vector& get_accessible_models();
+	const U32& get_model_access_limit() const noexcept;
+	const U32& get_maximum_context_length() const noexcept;
+	const U32& get_batch_size() const noexcept;
+	const U32& get_processor_max_thread_count() const noexcept;
+	const U32& get_processor_thread_count() const noexcept;
+	const mbase::string& get_access_key() const noexcept;
+	const mbase::string& get_username() const noexcept;
+	const mbase::string& get_system_prompt() const noexcept;
+	const inf_sampling_set& get_sampling_set() const noexcept;
+	const U32& get_authority_flags() const noexcept;
+	const model_name_vector& get_accessible_models() const noexcept;
 
 	GENERIC set_distinct_model_access_limit(const U32& in_access_limit);
 	GENERIC set_maximum_context_length(const U32& in_context_length);
 	GENERIC set_batch_size(const U32& in_batch_size);
+	GENERIC set_processor_max_thread_count(const U32& in_thread_count);
 	GENERIC set_processor_thread_count(const U32& in_thread_count);
-	GENERIC set_batch_thread_count(const U32& in_thread_count);
 	GENERIC set_sampling_set(const inf_sampling_set& in_sampling_set);
 	GENERIC set_system_prompt(const mbase::string& in_system_prompt);
 	flags add_accessible_model(const mbase::string& in_modelname);
@@ -73,8 +74,9 @@ public:
 	GENERIC add_authority_flags(U32 in_flags);
 	GENERIC remove_authority_flags(U32 in_flags);
 	GENERIC make_superuser();
-	GENERIC lock_authorization();
-	GENERIC unlock_authorization();
+	GENERIC unmake_superuser();
+	GENERIC lock_user();
+	GENERIC unlock_user();
 
 	GENERIC update_state_file(const mbase::wstring& in_state_path, bool in_overwrite = false);
 private:
@@ -82,17 +84,17 @@ private:
 	U32 mDistinctModelAccessLimit = 0;
 	U32 mMaximumContextLength = 0;
 	U32 mBatchSize = 0;
+	U32 mMaxProcessorThreadCount = 0;
 	U32 mProcessorThreadCount = 0;
-	U32 mBatchThreadCount = 0;
 	model_name_vector mAccessibleModels;
 	mbase::string mUsername = "";
 	mbase::string mAccessKey = "";
 	mbase::string mSystemPrompt = "";
 	inf_sampling_set mSamplingSet;
 	bool mIsSuperUser = false;
-	bool mIsAuthorizationLocked = false; // If this is true, new clients won't be able to associate themselves with this user.
+	bool mIsStatic = false; // If this is true, new clients won't be able to associate themselves with this user.
 };
 
 MBASE_END
 
-#endif // !MBASE_INF_MAIP_SECURITY_H
+#endif // !MBASE_INF_MAIP_USER_H

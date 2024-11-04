@@ -139,6 +139,8 @@ public:
 		const inf_sampling_set& in_sampler_set
 	);
 
+	GENERIC manual_context_deletion(InfTextToTextProcessor* in_processor); // This is invoked if the processor is being destroyed on its destructor NOTE: THIS IS AN INTERNAL CALL
+
 	virtual GENERIC on_initialize_fail(init_fail_code out_fail_code);
 	virtual GENERIC on_initialize() = 0;
 	virtual GENERIC on_destroy() = 0;
@@ -158,7 +160,7 @@ private:
 	mbase::string mEmbeddedSystemPrompt;
 	mbase::string mUsrStart;
 	mbase::string mSystemStart;
-	mbase::string mAssistantStart; // maybe the same if the system and assistant is the same in a program
+	mbase::string mAssistantStart;
 	mbase::string mSystemEnd;
 	mbase::string mAssistantEnd;
 	mbase::string mUserEnd;

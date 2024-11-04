@@ -564,7 +564,7 @@ InfProgram::maip_err_code InfProgram::inf_create_new_user(
 		}
 		else if(n == "LENGTH")
 		{
-			authorityFlags |= MAIP_CONTEXT_LENGTH_MODIFICATION;
+			authorityFlags |= MAIP_USER_CONTEXT_LENGTH_MODIFICATION;
 		}
 		else if (n == "ACCESS")
 		{
@@ -600,6 +600,14 @@ InfProgram::maip_err_code InfProgram::inf_delete_user(const mbase::string& in_se
 {
 	MBASE_SESSION_CONTROL;
 
+	// 1- Check if the MAIP_USER_CREATE_DELETE flag is set. If not, INF_AUTHORIZATION_FAILED
+	// 2- Check if the deleted user is self. If so, INF_CANT_DELETE_SELF
+	// 3- Check if the deleted user is super user. If so and the current session is not a super user, INF_AUTHORIZATION_FAILED
+	// 4- Check if the specified user exists. If not, INF_USER_NOT_FOUND
+	// 5- Erase all active sessions for the given user.
+	// 6- Remove the user from the user map
+	// 7- Delete the corresponding user state file.
+
 	if(!clientSession.mMaipUser.is_flags_set(MAIP_USER_CREATE_DELETE))
 	{
 		return maip_err_code::INF_AUTHORIZATION_FAILED;
@@ -616,24 +624,19 @@ InfProgram::maip_err_code InfProgram::inf_delete_user(const mbase::string& in_se
 	}
 
 	inference_user_map::iterator It = mUserMap.find(in_username);
-	if(It != mUserMap.end())
-	{
-		InfMaipUser& maipUser = It->second;
-		if(maipUser.is_superuser() && !clientSession.mMaipUser.is_superuser())
-		{
-			// If the client attempts to delete a super user and he is not a super user, 
-			// Authorization fails.
-			return maip_err_code::INF_AUTHORIZATION_FAILED;
-		}
-	}
-	
-	else
-	{
+	if(It == mUserMap.end())
+	{		
 		return maip_err_code::INF_USER_NOT_FOUND;
 	}
 
 	InfMaipUser& maipUser = It->second;
-	
+	if(maipUser.is_superuser() && !clientSession.mMaipUser.is_superuser())
+	{
+		// If the client attempts to delete a super user and he is not a super user, 
+		// Authorization fails.
+		return maip_err_code::INF_AUTHORIZATION_FAILED;
+	}
+
 	for(accepted_client_map::iterator acceptedClientIt = mSessionMap.begin(); acceptedClientIt != mSessionMap.end();)
 	{
 		InfClientSession& tmpSession = acceptedClientIt->second;
@@ -652,16 +655,174 @@ InfProgram::maip_err_code InfProgram::inf_delete_user(const mbase::string& in_se
 	usernameSanitized.remove_all('/'); // Reason I am doing this is if the user attempts to exploit the file path
 	usernameSanitized.remove_all('*'); // Reason I am doing this is if the user attempts to exploit the file path
 
-	mbase::wstring fileToBeDeleted = mClientStateDirectory + mbase::from_utf8(in_username) + L".mbfs";
+	mbase::wstring fileToBeDeleted = mClientStateDirectory + mbase::from_utf8(usernameSanitized) + L".mbfs";
 	mbase::delete_file(fileToBeDeleted);
 	return maip_err_code::INF_SUCCESS;
 }
 
 InfProgram::maip_err_code InfProgram::inf_modify_user_model_access_limit(const mbase::string& in_session_token, const mbase::string& in_username, const U32& in_new_access_limit)
 {
+	// 1- Check if the MAIP_USER_ACCESS_MODIFICATION flag is set. If not, INF_AUTHORIZATION_FAILED
+	// 2- Check if the specified username exists. If not, INF_USER_NOT_FOUND
+	// 3- Check if the specified user is static. If so and if the current session is not superuser, INF_AUTHORIZATION_FAILED
+	// 3- Check if the specified user is superuser. If so and if the current session is not a superuser, INF_AUTHORIZATION_FAILED
+	// 4- Set model access limit for the given user
+	// 5- Update user's state file
+	// 6- Update all active sessions associated with the given user.
+
 	MBASE_SESSION_CONTROL;
 
-	if(!clientSession.mMaipUser.is_flags_set(MAIP_USER_ACCESS_MODIFICATION))
+	maip_err_code result = common_modification_control(clientSession, in_username, MAIP_USER_ACCESS_MODIFICATION);
+	if(result != maip_err_code::INF_SUCCESS)
+	{
+		return result;
+	}
+
+	InfMaipUser& maipUser = mUserMap[in_username]; // Guaranteed success
+
+	maipUser.set_distinct_model_access_limit(in_new_access_limit);
+	update_maip_user_sessions(maipUser);
+
+	return maip_err_code::INF_SUCCESS;
+}
+
+InfProgram::maip_err_code InfProgram::inf_modify_user_maximum_context_length(const mbase::string& in_session_token, const mbase::string& in_username, const U32& in_maximum_context_length)
+{
+	// 1- Check if the MAIP_USER_CONTEXT_LENGTH_MODIFICATION is set. If not, INF_AUTHORIZATION_FAILED
+	// 2- Check if the specified username exists. If not, INF_USER_NOT_FOUND
+	// 3- Check if the specified user is static. If so and if the current session is not superuser, INF_AUTHORIZATION_FAILED
+	// 3- Check if the specified user is superuser. If so and if the current session is not a superuser INF_AUTHORIZATION_FAILED
+	// 4- Set context length limit for the given user.
+	// 5- Update user's state file
+	// 6- Update all active sessions associated with the given user.
+
+	MBASE_SESSION_CONTROL;
+
+	maip_err_code result = common_modification_control(clientSession, in_username, MAIP_USER_CONTEXT_LENGTH_MODIFICATION);
+	if(result != maip_err_code::INF_SUCCESS)
+	{
+		return result;
+	}
+
+	InfMaipUser& maipUser = mUserMap[in_username];
+	maipUser.set_maximum_context_length(in_maximum_context_length);
+	update_maip_user_sessions(maipUser);
+
+	return maip_err_code::INF_SUCCESS;
+}
+
+InfProgram::maip_err_code InfProgram::inf_modify_user_batch_size(const mbase::string& in_session_token, const mbase::string& in_username, const U32& in_batch_size)
+{
+	// 1- Check if the MAIP_USER_BATCH_LENGTH_MODIFICATION is set. If not, INF_AUTHORIZATION_FAILED
+	// 2- Check if the specified username exists. If not, INF_USER_NOT_FOUND
+	// 3- Check if the specified user is static. If so and if the current session is not superuser, INF_AUTHORIZATION_FAILED
+	// 4- Check if the specified user is superuser. If so and if the current session is not a superuser INF_AUTHOIZATION_FAILED
+	// 5- Check if the given batch size is greater than context length of the group. If so, batch_length = context_length
+	// 6- Set batch size for the group.
+	// 7- Update user's state file
+	// 8- Update all active sessions associated with the given user.
+
+	MBASE_SESSION_CONTROL;
+
+	maip_err_code result = common_modification_control(clientSession, in_username, MAIP_USER_BATCH_LENGTH_MODIFICATION);
+	if(result != maip_err_code::INF_SUCCESS)
+	{
+		return result;
+	}
+
+	InfMaipUser& maipUser = mUserMap[in_username];
+	U32 tmpBatchSize = in_batch_size;
+	if(tmpBatchSize > maipUser.get_maximum_context_length())
+	{
+		tmpBatchSize = maipUser.get_maximum_context_length();
+	}
+
+	maipUser.set_batch_size(tmpBatchSize);
+	update_maip_user_sessions(maipUser);
+
+	return maip_err_code::INF_SUCCESS;
+}
+
+InfProgram::maip_err_code InfProgram::inf_modify_user_processor_thread_count(const mbase::string& in_session_token, const mbase::string& in_username, const U32& in_thread_count)
+{
+	// 1- Check if the MAIP_USER_PROCESSOR_MODIFICATION is set. If not, INF_AUTHORIZATION_FAILED
+	// 2- Check if the specified username exists. If not, INF_USER_NOT_FOUND
+	// 3- Check if the specified user is static. If so and if the current session is not superuser, INF_AUTHORIZATION_FAILED
+	// 4- Check if the specified user is superuser. If so and if the current session is not superuser, INF_AUTHORIZATION_FAILED
+	// 5- Set processor thread count for the group
+	// 6- Update user's state file
+	// 7- Update all active sessions associated with the given user.
+
+	MBASE_SESSION_CONTROL;
+
+	maip_err_code result = common_modification_control(clientSession, in_username, MAIP_USER_PROCESSOR_THREAD_COUNT_MODIFICATION);
+	if(result != maip_err_code::INF_SUCCESS)
+	{
+		return result;
+	}
+
+	InfMaipUser& maipUser = mUserMap[in_username];
+	U32 tmpThreadCount = in_thread_count;
+
+	if(tmpThreadCount > maipUser.get_processor_max_thread_count())
+	{
+		tmpThreadCount = maipUser.get_processor_max_thread_count();
+	}
+
+	maipUser.set_processor_thread_count(tmpThreadCount);
+	update_maip_user_sessions(maipUser);
+
+	return maip_err_code::INF_SUCCESS;
+}
+
+InfProgram::maip_err_code InfProgram::inf_modify_user_max_processor_thread_count(const mbase::string& in_session_token, const mbase::string& in_username, const U32& in_thread_count)
+{
+	MBASE_SESSION_CONTROL;
+
+	maip_err_code result = common_modification_control(clientSession, in_username, MAIP_USER_MAX_PROCESSOR_THREAD_COUNT_MODIFICATION);
+	if(result != maip_err_code::INF_SUCCESS)
+	{
+		return result;
+	}
+
+	InfMaipUser& maipUser = mUserMap[in_username];
+
+	maipUser.set_processor_max_thread_count(in_thread_count);
+	update_maip_user_sessions(maipUser);
+
+	return maip_err_code::INF_SUCCESS;
+}
+
+// maip_err_code inf_modify_user_sampling_set(const mbase::string& in_session_token, const mbase::string& in_username, const inf_sampling_set& in_sampling_set) /* Implement */
+InfProgram::maip_err_code InfProgram::inf_modify_user_system_prompt(const mbase::string& in_session_token, const mbase::string& in_username, const mbase::string& in_system_prompt)
+{
+	MBASE_SESSION_CONTROL;
+
+	maip_err_code result = common_modification_control(clientSession, in_username, MAIP_USER_SYS_PROMPT_MODIFICATION);
+	if(result != maip_err_code::INF_SUCCESS)
+	{
+		return result;
+	}
+
+	InfMaipUser& maipUser = mUserMap[in_username];
+
+	maipUser.set_system_prompt(in_system_prompt);
+	update_maip_user_sessions(maipUser);
+
+	return maip_err_code::INF_SUCCESS;
+}
+
+InfProgram::maip_err_code InfProgram::inf_modify_user_make_superuser(const mbase::string& in_session_token, const mbase::string& in_username, const mbase::string& in_access_token)
+{
+	// 1- Check if the current session is superuser. If not, INF_AUTHORIZATION_FAILED
+	// 2- Check if the specified username exists. If not, INF_USER_NOT_FOUND
+	// 3- Make the given user a superuser.
+	// 4- Update user's state file
+	// 5- Update all active sessions associated with the given user.
+
+	MBASE_SESSION_CONTROL;
+
+	if(!clientSession.mMaipUser.is_superuser())
 	{
 		return maip_err_code::INF_AUTHORIZATION_FAILED;
 	}
@@ -673,46 +834,68 @@ InfProgram::maip_err_code InfProgram::inf_modify_user_model_access_limit(const m
 	}
 
 	InfMaipUser& maipUser = It->second;
-	if(maipUser.is_superuser() && !clientSession.mMaipUser.is_superuser())
-	{
-		return maip_err_code::INF_AUTHORIZATION_FAILED;
-	}
 
-	maipUser.set_distinct_model_access_limit(in_new_access_limit);
-
-	maipUser.update_state_file(mClientStateDirectory, true);
+	maipUser.make_superuser();
 	update_maip_user_sessions(maipUser);
 
 	return maip_err_code::INF_SUCCESS;
 }
 
-InfProgram::maip_err_code InfProgram::inf_modify_user_maximum_context_length(const mbase::string& in_session_token, const mbase::string& in_username, const U32& in_maximum_context_length)
-{
-	MBASE_SESSION_CONTROL;
-	return maip_err_code::INF_SUCCESS;
-}
-
-InfProgram::maip_err_code InfProgram::inf_modify_user_make_superuser(const mbase::string& in_session_token, const mbase::string& in_username, const mbase::string& in_access_token)
-{
-	MBASE_SESSION_CONTROL;
-	return maip_err_code::INF_SUCCESS;
-}
-
 InfProgram::maip_err_code InfProgram::inf_modify_user_unmake_superuser(const mbase::string & in_session_token, const mbase::string& in_username)
 {
+	// 1- Check if the current session is superuser. If not, INF_AUTHORIZATION_FAILED
+	// 2- Check if the specified username exists. If not, INF_USER_NOT_FOUND
+	// 3- Take away the superuser status of the given user.
+	// 4- Update user's state file
+	// 5- Update all active sessions associated with the given user.
+
 	MBASE_SESSION_CONTROL;
+
+	if(!clientSession.mMaipUser.is_superuser())
+	{
+		return maip_err_code::INF_AUTHORIZATION_FAILED;
+	}
+
+	inference_user_map::iterator It = mUserMap.find(in_username);
+	if(It == mUserMap.end())
+	{
+		return maip_err_code::INF_USER_NOT_FOUND;
+	}
+
+	InfMaipUser& maipUser = It->second;
+	maipUser.unmake_superuser();
+	update_maip_user_sessions(maipUser);
+
 	return maip_err_code::INF_SUCCESS;
 }
 
 InfProgram::maip_err_code InfProgram::inf_modify_user_accept_models(const mbase::string & in_session_token, const mbase::string& in_username, const mbase::vector<mbase::string>&in_models)
 {
+	// 1- Check if the MAIP_USER_ACCESS_MODIFICATION flag is set. If not, INF_AUTHORIZATION_FAILED
+	// 2- Check if the specified username exists. If not, INF_USER_NOT_FOUND
+	// 3- Check if the specified user is static. If so and if the current session is not superuser, INF_AUTHORIZATION_FAILED
+	// 3- Check if the specified model already exists in the accepted models list. If so, INF_SUCCESS
+	// 4- Check if the specified model is in the model information map. If not, INF_MODEL_NAME_MISMATCH
+	// 5- Check if the user group is prohibited to access the target model. If so, INF_TARGET_MODEL_ACCESS_PROHIBITED
+	// 6- Append the given model to users model access list
+	// 7- Update user's state file
+	// 8- Update all active sessions associated with the given user.
+
 	MBASE_SESSION_CONTROL;
+
 	return maip_err_code::INF_SUCCESS;
 }
 
 InfProgram::maip_err_code InfProgram::inf_modify_user_set_authority_flags(const mbase::string & in_session_token, const mbase::string& in_username, const mbase::vector<mbase::string>&in_authority_flags)
 {
+	// 1- Check if the current session is super user. If not, INF_AUTHORIZATION_FAILED
+	// 2- Check if the specified username exists. If not, INF_USER_NOT_FOUND
+	// 3- Update user authority flags
+	// 4- Update user's state file
+	// 5- Update all active sessions associated with the given user
+
 	MBASE_SESSION_CONTROL;
+
 	return maip_err_code::INF_SUCCESS;
 }
 
@@ -876,7 +1059,7 @@ GENERIC InfProgram::initialize(InfProgramInformation in_program_information)
 
 		if(authLocked)
 		{
-			maipUser.lock_authorization();
+			maipUser.lock_user();
 		}
 
 		for(mbase::vector<mbase::string>::iterator It = accessibleModels.begin(); It != accessibleModels.end(); ++It)
@@ -1010,8 +1193,8 @@ InfProgram::flags InfProgram::create_user(const mbase::string& in_username,
 		return flags::INF_PROGRAM_ERR_USR_ALREADY_EXISTS;
 	}
 
-	U32 modelAccessLimit = gMaipSecurityDefaultModelAccessLimit;
-	U32 maximumContextLength = gMaipSecurityDefaultMaximumContextLength;
+	U32 modelAccessLimit = gMaipUserDefaultModelAccessLimit;
+	U32 maximumContextLength = gMaipUserDefaultMaximumContextLength;
 	U32 authorityFlags = in_authority_flags;
 	mbase::string accessToken = in_access_token;
 
@@ -1044,7 +1227,7 @@ InfProgram::flags InfProgram::create_user(const mbase::string& in_username,
 
 	if(in_authorization_locked)
 	{
-		newUser.lock_authorization();
+		newUser.lock_user();
 	}
 
 	mUserMap[in_username] = newUser;
@@ -1089,7 +1272,7 @@ InfProgram::flags InfProgram::create_user(const mbase::string& in_username,
 		std::cout << "- Username: " << maipUser.get_username() << std::endl;
 		std::cout << "- Access key: " << maipUser.get_access_key() << std::endl;
 		std::cout << "- Is superuser: " << maipUser.is_superuser() << std::endl;
-		std::cout << "- Is authorization locked: " << maipUser.is_authorization_locked() << std::endl;
+		std::cout << "- Is static: " << maipUser.is_static() << std::endl;
 	}
 
 	return flags::INF_PROGRAM_SUCCESS;
@@ -1152,18 +1335,51 @@ InfProgram::flags InfProgram::authorize_user_on_model(const mbase::string& in_us
 	return flags::INF_PROGRAM_SUCCESS;
 }
 
-GENERIC InfProgram::update_maip_user_sessions(const InfMaipUser& in_maip_user)
+InfProgram::maip_err_code InfProgram::common_modification_control(InfClientSession& in_session, const mbase::string& in_username, const U32& in_flags)
 {
-	InfMaipUser myUser = in_maip_user;
-	inference_user_map::iterator It = mUserMap.find(myUser.get_username());
+	// 1- Check if the flags are set. If not, INF_AUTHORIZATION_FAILED
+	// 2- Check if the specified username exists. If not, INF_USER_NOT_FOUND
+	// 3- Check if the specified user is static. If so and if the current session is not superuser, INF_AUTHORIZATION_FAILED
+	// 3- Check if the specified user is superuser. If so and if the current session is not a superuser INF_AUTHORIZATION_FAILED
+
+	if(!in_session.mMaipUser.is_flags_set(in_flags))
+	{
+		return maip_err_code::INF_AUTHORIZATION_FAILED;
+	}
+
+	inference_user_map::iterator It = mUserMap.find(in_username);
+
+	if(It == mUserMap.end())
+	{
+		return maip_err_code::INF_USER_NOT_FOUND;
+	}
+
+	InfMaipUser& maipUser = It->second;
+	if(maipUser.is_static() && !in_session.mMaipUser.is_superuser())
+	{
+		return maip_err_code::INF_AUTHORIZATION_FAILED;
+	}
+
+	if(maipUser.is_superuser() && !in_session.mMaipUser.is_superuser())
+	{
+		return maip_err_code::INF_AUTHORIZATION_FAILED;
+	}
+
+	return maip_err_code::INF_SUCCESS;
+}
+
+GENERIC InfProgram::update_maip_user_sessions(InfMaipUser& in_maip_user)
+{
+	inference_user_map::iterator It = mUserMap.find(in_maip_user.get_username());
+	in_maip_user.update_state_file(mClientStateDirectory, true);
 
 	if(It != mUserMap.end())
 	{
 		for(accepted_client_map::iterator It = mSessionMap.begin(); It != mSessionMap.end(); ++It)
 		{
-			if(It->second.mMaipUser.get_username() == myUser.get_username())
+			if(It->second.mMaipUser.get_username() == in_maip_user.get_username())
 			{
-				It->second.mMaipUser = myUser;
+				It->second.mMaipUser = in_maip_user;
 			}
 		}
 	}

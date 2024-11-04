@@ -129,6 +129,13 @@ InfModelTextToText::~InfModelTextToText()
 		while (signal_state_destroying())
 		{
 		}
+		mbase::lock_guard tmpListMutex(mProcessorListMutex);
+		for(context_processor_list::iterator It = mRegisteredProcessors.begin(); It != mRegisteredProcessors.end(); ++It)
+		{
+			InfProcessorBase* baseProcessor = *It;
+			InfTextToTextProcessor* t2tProcessor = static_cast<InfTextToTextProcessor*>(baseProcessor);
+			t2tProcessor->update(); // Update all processors
+		}
 	}
 }
 
@@ -517,6 +524,14 @@ InfModelTextToText::flags InfModelTextToText::register_context_process(InfTextTo
 	return flags::INF_MODEL_INFO_REGISTERING_PROCESSOR;
 }
 
+GENERIC InfModelTextToText::manual_context_deletion(InfTextToTextProcessor* in_processor)
+{
+	mbase::lock_guard tmpListMutex(mProcessorListMutex);
+	context_processor_list::iterator It = std::find(mRegisteredProcessors.begin(), mRegisteredProcessors.end(), in_processor);
+	// It must be present
+	mRegisteredProcessors.erase(It);
+}
+
 GENERIC InfModelTextToText::on_initialize_fail(init_fail_code out_fail_code)
 {
 }
@@ -560,7 +575,7 @@ GENERIC InfModelTextToText::_initialize_model()
 	// Before diving into loading model, 
 	// calculate how much memory we need to load the model 
 	// if there is not enough memory for loading the model, abort.
-
+	
 	mModel = llama_load_model_from_file(mbase::to_utf8(mModelPath).c_str(), mSuppliedParams);
 	if (!mModel)
 	{
@@ -626,6 +641,7 @@ GENERIC InfModelTextToText::_get_special_tokens(mbase::vector<inf_token>& out_to
 		}
 	}
 }
+
 GENERIC InfModelTextToText::_get_special_tokens(mbase::vector<mbase::string>& out_tokens)
 {
 	mbase::vector<inf_token> specialTokens;
@@ -690,7 +706,6 @@ GENERIC InfModelTextToText::update_t()
 {
 	while(is_processor_running())
 	{
-		// THIS PART IS ONLY FOR LOADING AND UNLOADING THE MODEL
 		if(is_initialized())
 		{
 			if(signal_destroying())
@@ -705,7 +720,6 @@ GENERIC InfModelTextToText::update_t()
 				_initialize_model();
 			}
 		}
-		mbase::sleep(50); // Since this loop will not be invoked much outside of (init and destroy), we may decrease its speed 
 	}
 }
 

@@ -13,7 +13,7 @@
 #include <mbase/pc/pc_program.h>
 #include <mbase/inference/inf_model.h>
 #include <mbase/inference/inf_client.h>
-#include <mbase/inference/inf_maip_security.h>
+#include <mbase/inference/inf_maip_user.h>
 #include <unordered_map>
 
 MBASE_BEGIN
@@ -125,6 +125,7 @@ public:
 		INF_MODEL_CONTEXT_FULL = 2019,
 		INF_USER_CONTEXT_LENGTH_EXCEEDED = 2020,
 		INF_USER_NOT_FOUND = 2021,
+		INF_TARGET_MODEL_ACCESS_PROHIBITED = 2022,
 		EXEC_SUCCESS = 3000,
 		EXEC_ALREADY_PROCESSING = 3001,
 		EXEC_MESSAGE_ID_MISMATCH = 3002,
@@ -170,10 +171,9 @@ public:
 	maip_err_code inf_delete_user(const mbase::string& in_session_token, const mbase::string& in_username);
 	maip_err_code inf_modify_user_model_access_limit(const mbase::string& in_session_token, const mbase::string& in_username, const U32& in_new_access_limit);
 	maip_err_code inf_modify_user_maximum_context_length(const mbase::string& in_session_token, const mbase::string& in_username, const U32& in_maximum_context_length);
-	
 	maip_err_code inf_modify_user_batch_size(const mbase::string& in_session_token, const mbase::string& in_username, const U32& in_batch_size); // Implement
 	maip_err_code inf_modify_user_processor_thread_count(const mbase::string& in_session_token, const mbase::string& in_username, const U32& in_thread_count); // Implement
-	maip_err_code inf_modify_user_batch_thread_count(const mbase::string& in_session_token, const mbase::string& in_username, const U32& in_thread_count); // Implement
+	maip_err_code inf_modify_user_max_processor_thread_count(const mbase::string& in_session_token, const mbase::string& in_username, const U32& in_thread_count); // Implement
 	// maip_err_code inf_modify_user_sampling_set(const mbase::string& in_session_token, const mbase::string& in_username, const inf_sampling_set& in_sampling_set) /* Implement */
 	maip_err_code inf_modify_user_system_prompt(const mbase::string& in_session_token, const mbase::string& in_username, const mbase::string& in_system_prompt); // Implement
 
@@ -204,7 +204,8 @@ public:
 	flags authorize_user_on_model(const mbase::string& in_username, const mbase::string& in_model);
 	//flags delete_user(const mbase::string& in_username);
 
-	GENERIC update_maip_user_sessions(const InfMaipUser& in_maip_user);
+	maip_err_code common_modification_control(InfClientSession& in_session, const mbase::string& in_username, const U32& in_flags);
+	GENERIC update_maip_user_sessions(InfMaipUser& in_maip_user);
 	GENERIC update() override;
 
 private:

@@ -12,7 +12,7 @@ MBASE_BEGIN
 #define MBASE_MAIP_INF_OP_TYPE "INF"
 #define MBASE_MAIP_EXEC_OP_TYPE "EXEC"
 
-struct MBASE_API InfMaipPacketAccumulator { // THIS IS NECESSARY IF THE GIVEN DATA IS BIGGER THEN (32 * 1024)
+struct MBASE_API InfMaipPacketAccumulator {
 	U64 mDataToRead;
 	mbase::string mSessionToken;
 	mbase::string mAccumulatedData;
