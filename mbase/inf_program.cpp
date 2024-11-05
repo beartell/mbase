@@ -837,6 +837,7 @@ InfProgram::maip_err_code InfProgram::inf_modify_user_make_superuser(const mbase
 {
 	// 1- Check if the current session is superuser. If not, INF_AUTHORIZATION_FAILED
 	// 2- Check if the specified username exists. If not, INF_USER_NOT_FOUND
+	// 3- Check if the access token match the user's access token
 	// 3- Make the given user a superuser.
 	// 4- Update user's state file
 	// 5- Update all active sessions associated with the given user.
@@ -856,13 +857,18 @@ InfProgram::maip_err_code InfProgram::inf_modify_user_make_superuser(const mbase
 
 	InfMaipUser& maipUser = It->second;
 
+	if(maipUser.get_access_key() != in_access_token)
+	{
+		return maip_err_code::INF_AUTHORIZATION_FAILED;
+	}
+
 	maipUser.make_superuser();
 	update_maip_user_sessions(maipUser);
 
 	return maip_err_code::INF_SUCCESS;
 }
 
-InfProgram::maip_err_code InfProgram::inf_modify_user_unmake_superuser(const mbase::string & in_session_token, const mbase::string& in_username)
+InfProgram::maip_err_code InfProgram::inf_modify_user_unmake_superuser(const mbase::string & in_session_token, const mbase::string& in_username, const mbase::string& in_access_token)
 {
 	// 1- Check if the current session is superuser. If not, INF_AUTHORIZATION_FAILED
 	// 2- Check if the specified username exists. If not, INF_USER_NOT_FOUND
@@ -884,6 +890,12 @@ InfProgram::maip_err_code InfProgram::inf_modify_user_unmake_superuser(const mba
 	}
 
 	InfMaipUser& maipUser = It->second;
+
+	if(maipUser.get_access_key() != in_access_token)
+	{
+		return maip_err_code::INF_AUTHORIZATION_FAILED;
+	}
+
 	maipUser.unmake_superuser();
 	update_maip_user_sessions(maipUser);
 
@@ -1028,9 +1040,30 @@ InfProgram::maip_err_code InfProgram::exec_set_input(const mbase::string& in_ses
 	{
 		return maip_err_code::INF_INVALID_PARAMS;
 	}
-
+	
 	out_msgid = outMsg;
 	return maip_err_code::INF_SUCCESS;
+}
+
+InfProgram::maip_err_code InfProgram::exec_set_input(const mbase::string& in_session_token, const U64& in_ctxId, mbase::context_role in_role, CBYTEBUFFER in_input, const size_type& in_length, U32& out_msgid)
+{
+	MBASE_SESSION_CONTROL;
+	InfClientSession::chat_session_map::iterator It = clientSession.mChatSessions.find(in_ctxId);
+	if(It == clientSession.mChatSessions.end())
+	{
+		// Couldn't find the chat session
+		return maip_err_code::INF_CONTEXT_ID_MISMATCH;
+	}
+	InfMaipTunedClient* tmpClient = It->second;
+	U32 outMsg = 0;
+	if(tmpClient->add_message(in_input, in_length, in_role, outMsg) == InfClientTextToText::flags::INF_CLIENT_ERR_MISSING_INPUT)
+	{
+		return maip_err_code::INF_INVALID_PARAMS;
+	}
+	
+	out_msgid = outMsg;
+	return maip_err_code::INF_SUCCESS;
+
 }
 
 InfProgram::maip_err_code InfProgram::exec_execute_input(const mbase::string& in_session_token, const U64& in_ctxId, mbase::vector<U32>& in_msgid)

@@ -70,7 +70,7 @@ bool PcConfig::is_initialized() const noexcept
 	return mIsInitialized;
 }
 
-bool PcConfig::initialize(PcDiagnostics& in_diagnostics, const mbase::wstring& in_temp_path, const mbase::wstring& in_root_path, const mbase::wstring& in_data_path, bool in_main_config, const mbase::wstring& in_config_file_name)
+bool PcConfig::initialize(PcDiagnostics& in_diagnostics, const mbase::wstring& in_temp_path, const mbase::wstring& in_root_path, const mbase::wstring& in_data_path, const mbase::wstring& in_config_file_name)
 {
 	if (is_initialized())
 	{
@@ -116,31 +116,28 @@ bool PcConfig::initialize(PcDiagnostics& in_diagnostics, const mbase::wstring& i
 
 	mConfigFileName = in_config_file_name;
 
-	if(in_main_config)
+	mDiagnosticsManager->log(mbase::PcDiagnostics::flags::LOGTYPE_INFO, mbase::PcDiagnostics::flags::LOGIMPORTANCE_LOW, "Initializing program config.");
+	mDiagnosticsManager->log(mbase::PcDiagnostics::flags::LOGTYPE_INFO, mbase::PcDiagnostics::flags::LOGIMPORTANCE_LOW, "Program temporary path: " + mbase::to_utf8(mTempPath));
+	mDiagnosticsManager->log(mbase::PcDiagnostics::flags::LOGTYPE_INFO, mbase::PcDiagnostics::flags::LOGIMPORTANCE_LOW, "Program data path: " + mbase::to_utf8(mDataPath));
+	mDiagnosticsManager->log(mbase::PcDiagnostics::flags::LOGTYPE_INFO, mbase::PcDiagnostics::flags::LOGIMPORTANCE_LOW, "Program execution path: " + mbase::to_utf8(mRootPath));
+
+	mbase::vector<mbase::FS_FILE_INFORMATION> fileInfo;
+	mbase::get_directory(mDataPath + '*', fileInfo);
+
+	for (mbase::vector<mbase::FS_FILE_INFORMATION>::iterator It = fileInfo.begin(); It != fileInfo.end(); ++It)
 	{
-		mDiagnosticsManager->log(mbase::PcDiagnostics::flags::LOGTYPE_INFO, mbase::PcDiagnostics::flags::LOGIMPORTANCE_LOW, "Initializing program config.");
-		mDiagnosticsManager->log(mbase::PcDiagnostics::flags::LOGTYPE_INFO, mbase::PcDiagnostics::flags::LOGIMPORTANCE_LOW, "Program temporary path: " + mbase::to_utf8(mTempPath));
-		mDiagnosticsManager->log(mbase::PcDiagnostics::flags::LOGTYPE_INFO, mbase::PcDiagnostics::flags::LOGIMPORTANCE_LOW, "Program data path: " + mbase::to_utf8(mDataPath));
-		mDiagnosticsManager->log(mbase::PcDiagnostics::flags::LOGTYPE_INFO, mbase::PcDiagnostics::flags::LOGIMPORTANCE_LOW, "Program execution path: " + mbase::to_utf8(mRootPath));
-
-		mbase::vector<mbase::FS_FILE_INFORMATION> fileInfo;
-		mbase::get_directory(mDataPath + '*', fileInfo);
-
-		for (mbase::vector<mbase::FS_FILE_INFORMATION>::iterator It = fileInfo.begin(); It != fileInfo.end(); ++It)
+		if (It->fileName == L"main_config.txt")
 		{
-			if (It->fileName == L"main_config.txt")
-			{
-				mConfigFileName = L"main_config.txt";
-				mDiagnosticsManager->log(mbase::PcDiagnostics::flags::LOGTYPE_INFO, mbase::PcDiagnostics::flags::LOGIMPORTANCE_MID, "Main configuration folder found.");
-				mIsInitialized = true;
-				load_config_file(It->fileName);
-				
-				mDiagnosticsManager->log(mbase::PcDiagnostics::flags::LOGTYPE_SUCCESS, mbase::PcDiagnostics::flags::LOGIMPORTANCE_LOW, "Config object initialized.");
+			mConfigFileName = L"main_config.txt";
+			mDiagnosticsManager->log(mbase::PcDiagnostics::flags::LOGTYPE_INFO, mbase::PcDiagnostics::flags::LOGIMPORTANCE_MID, "Main configuration folder found.");
+			mIsInitialized = true;
+			load_config_file(It->fileName);
+			
+			mDiagnosticsManager->log(mbase::PcDiagnostics::flags::LOGTYPE_SUCCESS, mbase::PcDiagnostics::flags::LOGIMPORTANCE_LOW, "Config object initialized.");
 
-				on_initialize();
+			on_initialize();
 
-				return true;
-			}
+			return true;
 		}
 	}
 	

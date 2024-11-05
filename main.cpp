@@ -24,7 +24,22 @@ public:
         U32 outMsgId = 0;
         this->add_message(L"You are a helpful assistant.", context_role::SYSTEM, outMsgId);
         msgIds.push_back(outMsgId);
-        this->add_message("Give me a 50 word essay about climate change.", context_role::USER, outMsgId);
+        mbase::io_file iof;
+        iof.open_file(L"./cmake_install.cmake", mbase::io_file::access_mode::READ_ACCESS, mbase::io_file::disposition::OPEN);
+
+        mbase::deep_char_stream dcs(iof.get_file_size());
+        iof.read_data(dcs);
+
+        if(iof.is_file_open())
+        {
+            std::cout << "File is open" << std::endl;
+        }
+ 
+        mbase::string cmakeData(dcs.get_buffer(), dcs.buffer_length());
+
+        std::cout << cmakeData << std::endl;
+
+        std::cout << (I32)this->add_message(dcs.get_buffer(), dcs.buffer_length(), context_role::USER, outMsgId) << std::endl;
         msgIds.push_back(outMsgId);
         
         mbase::vector<context_line> txtMessages;
@@ -34,14 +49,15 @@ public:
         get_host_processor(txtOut);
 
         InfClientTextToText::token_vector tv;
-        txtOut->tokenize_input(txtMessages.data(), txtMessages.size(), tv);
-        txtOut->execute_input(tv, true);
+        std::cout << (I32)txtOut->tokenize_input(txtMessages.data(), txtMessages.size(), tv) << std::endl;
+        std::cout << (I32)txtOut->execute_input(tv, true) << std::endl;
         txtOut->next();
     }
 
     GENERIC on_write(CBYTEBUFFER out_data, size_type out_size, InfTextToTextProcessor::inf_token out_token, bool out_is_special, bool out_is_finish) override 
     {        
-        
+        fflush(stdout);
+        printf("%s", out_data);
         totalMessage += out_data;
         InfTextToTextProcessor* txtOut;
         get_host_processor(txtOut);
@@ -50,8 +66,7 @@ public:
 
     GENERIC on_finish(size_type out_total_token_size, InfTextToTextProcessor::finish_state out_finish_state) override 
     {
-        fflush(stdout);
-        printf("%s \n\n\n\n", totalMessage.c_str());
+        
     }
     
     GENERIC on_unregister() override 
@@ -122,36 +137,9 @@ public:
 
         this->register_context_process(
             &myContext, 
-            16000, 
-            8000, 
-            8, 
-            4, 
-            true,
-            {topK, topP, minP, temperature, mirostat}
-        );
-        this->register_context_process(
-            &myContext1, 
-            16000, 
-            8000, 
-            8, 
-            4, 
-            true,
-            {topK, topP, minP, temperature, mirostat}
-        );
-        this->register_context_process(
-            &myContext2, 
-            16000, 
-            8000, 
-            8, 
-            4, 
-            true,
-            {topK, topP, minP, temperature, mirostat}
-        );
-        this->register_context_process(
-            &myContext3, 
-            16000, 
-            8000, 
-            8, 
+            64000, 
+            4096, 
+            16, 
             4, 
             true,
             {topK, topP, minP, temperature, mirostat}
@@ -160,9 +148,6 @@ public:
     void on_destroy() override {}
 private:
     my_context myContext;
-    my_context myContext1;
-    my_context myContext2;
-    my_context myContext3;
 };
 
 using namespace mbase;
@@ -173,7 +158,7 @@ int main()
     {
         int i = 0;
         my_model mm;
-        mm.initialize_model(L"./Llama-3.2-1B-Instruct-Q4_K_M.gguf", 120000, 999);
+        mm.initialize_model(L"./Llama-3.2-1B-Instruct-Q4_K_M.gguf", 512000, 999);
         while(1)
         {
             mm.update();

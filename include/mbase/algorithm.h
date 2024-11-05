@@ -8,7 +8,7 @@ MBASE_STD_BEGIN
 template<typename InputIt, typename Type>
 MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE InputIt find(InputIt in_first, InputIt in_last, const Type& in_value)
 {
-    for(in_first; in_first != in_last; in_first++)
+    for(; in_first != in_last; in_first++)
     {
         if(*in_first == in_value)
         {

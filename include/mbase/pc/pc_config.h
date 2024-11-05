@@ -39,10 +39,9 @@ public:
 
 	bool initialize(
 		PcDiagnostics& in_diagnostics,
-		const mbase::wstring& in_temp_path = L"", 
-		const mbase::wstring& in_root_path = L"", 
-		const mbase::wstring& in_data_path = L"",
-		bool in_main_config = false,
+		const mbase::wstring& in_temp_path, 
+		const mbase::wstring& in_root_path, 
+		const mbase::wstring& in_data_path,
 		const mbase::wstring& in_config_file_name = L""
 	);
 	flags set_temp_path(const mbase::wstring& in_path) noexcept;

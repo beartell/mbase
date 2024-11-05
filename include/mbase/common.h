@@ -19,7 +19,7 @@
 #ifdef __APPLE__
 	#define MBASE_PLATFORM_APPLE
 #endif // __APPLE__
-
+ 
 #ifdef MBASE_PLATFORM_WINDOWS
 	#ifndef WIN32_LEAN_AND_MEAN
 	#define WIN32_LEAN_AND_MEAN

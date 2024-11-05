@@ -460,6 +460,7 @@ InfTextToTextProcessor::flags InfTextToTextProcessor::initialize(
 	mThreadCount = in_thread_count;
 	mBatchThreadCount = in_batch_thread_count;
 	mSamplerDescriptions = in_sampler_set;
+	mFlashAttention = in_flash_attention;
 
 	mDiagnostics.log(PcDiagnostics::flags::LOGTYPE_INFO, PcDiagnostics::flags::LOGIMPORTANCE_HIGH, "Initializing context with length (%d) and id (%s)", in_context_length, in_context_id.c_str());
 	mInitializeSignal.set_signal_with_state();
@@ -662,7 +663,9 @@ GENERIC InfTextToTextProcessor::_decode_input()
 
 	mContextCursor = mInputBatch.n_tokens;
 	mFinishState = finish_state::CONTINUE;
+	printf("Decoding started!!!\n");
 	int decodeResult = llama_decode(mModelContext, mInputBatch);
+	printf("Decode finished with code: %d \n", decodeResult);
 	mInputSignal.reset_signal_with_state();
 	mDecodeSignal.set_signal_state();
 }
@@ -728,7 +731,7 @@ GENERIC InfTextToTextProcessor::_initialize_context()
 	ctxParams.n_batch = mContextLength;
 	ctxParams.n_seq_max = 1;
 	ctxParams.n_threads = mThreadCount;
-	ctxParams.n_threads_batch = 1;
+	ctxParams.n_threads_batch = mThreadCount;
 	ctxParams.n_ubatch = mBatchSize;
 	ctxParams.flash_attn = mFlashAttention;
 	

@@ -1,6 +1,7 @@
 #include <mbase/inference/inf_maip_server.h>
 #include <mbase/char_stream.h>
 #include <mbase/io_file.h>
+#include <set>
 
 MBASE_BEGIN
 
@@ -88,7 +89,8 @@ GENERIC InfMaipServerBase::simple_processing(std::shared_ptr<PcNetPeerClient> ou
 			else
 			{
 				// means we will accumulate
-				// TODO, FIX HERE
+				// if the client does not have a session token,
+				// accumulation is not allowed.
 				if (!mMaipPeerRequest.has_key("STOK"))
 				{
 					tempGenericError = maip_generic_errors::MISSING_MANDATORY_KEYS;
@@ -175,7 +177,7 @@ GENERIC InfMaipDefaultServer::on_informatic_request(const maip_peer_request& out
 		out_peer->send_read_signal();
 		return;
 	}
-	// Besides access request, and access token must be supplied
+	// Besides access request, access token(STOK) must be supplied
 
 	if(!out_request.has_key("STOK"))
 	{
@@ -311,6 +313,92 @@ GENERIC InfMaipDefaultServer::on_informatic_request(const maip_peer_request& out
 			maipErr = mHostProgram->inf_delete_user(sessionToken, userName);
 		}
 		
+		else if(requestString == "inf_modify_user_model_access_limit")
+		{
+			mbase::string userName = out_request.get_kval<mbase::string>("USERNAME");
+			U32 newAccessLimit = out_request.get_kval<U32>("ACCLIMIT");
+			maipErr = mHostProgram->inf_modify_user_model_access_limit(sessionToken, userName, newAccessLimit);
+		}
+
+		else if(requestString == "inf_modify_user_maximum_context_length")
+		{
+			mbase::string userName = out_request.get_kval<mbase::string>("USERNAME");
+			U32 newContextLength = out_request.get_kval<U32>("CTXLENGTH");
+			maipErr = mHostProgram->inf_modify_user_maximum_context_length(sessionToken, userName, newContextLength);
+		}
+
+		else if(requestString == "inf_modify_user_batch_size")
+		{
+			mbase::string userName = out_request.get_kval<mbase::string>("USERNAME");
+			U32 newBatchSize = out_request.get_kval<U32>("BATCH");
+			maipErr = mHostProgram->inf_modify_user_batch_size(sessionToken, userName, newBatchSize);
+		}
+
+		else if(requestString == "inf_modify_user_processor_thread_count")
+		{
+			mbase::string userName = out_request.get_kval<mbase::string>("USERNAME");
+			U32 newProcessorCount = out_request.get_kval<U32>("PROCCOUNT");
+			maipErr = mHostProgram->inf_modify_user_processor_thread_count(sessionToken, userName, newProcessorCount);
+		}
+
+		else if(requestString == "inf_modify_user_max_processor_thread_count")
+		{
+			mbase::string userName = out_request.get_kval<mbase::string>("USERNAME");
+			U32 newMaxProcessorCount = out_request.get_kval<U32>("PROCMAXCOUNT");
+			maipErr = mHostProgram->inf_modify_user_max_processor_thread_count(sessionToken, userName, newMaxProcessorCount);
+		}
+
+		// else if(requestString == "inf_modify_user_sampling_set")
+		// {
+		//		mbase::string userName = out_request.get_kval<mbase::string>("USERNAME");
+		// }
+
+		else if(requestString == "inf_modify_user_system_prompt")
+		{
+			mbase::string userName = out_request.get_kval<mbase::string>("USERNAME");
+			const mbase::char_stream& cs = out_request.get_data();
+			mbase::string newSystemPrompt(out_request.get_data().get_buffer(), out_request.get_content_length());
+			maipErr = mHostProgram->inf_modify_user_system_prompt(sessionToken, userName, newSystemPrompt);
+		}
+
+		else if(requestString == "inf_modify_user_make_superuser")
+		{
+			mbase::string userName = out_request.get_kval<mbase::string>("USERNAME");
+			mbase::string userAccessToken = out_request.get_kval<mbase::string>("ACCTOKEN");
+			maipErr = mHostProgram->inf_modify_user_make_superuser(sessionToken, userName, userAccessToken);
+		}
+
+		else if(requestString == "inf_modify_user_unmake_superuser")
+		{
+			mbase::string userName = out_request.get_kval<mbase::string>("USERNAME");
+			mbase::string userAccessToken = out_request.get_kval<mbase::string>("ACCTOKEN");
+			maipErr = mHostProgram->inf_modify_user_unmake_superuser(sessionToken, userName, userAccessToken);
+		}
+
+		else if(requestString == "inf_modify_user_accept_models")
+		{
+			mbase::string userName = out_request.get_kval<mbase::string>("USERNAME");
+			mbase::vector<mbase::string> acceptedModels = out_request.get_kval<mbase::vector<mbase::string>>("MODEL");
+			std::set<mbase::string> modelSet(acceptedModels.begin(), acceptedModels.end());
+			
+			mbase::vector<mbase::string> missingModels;
+			maipErr = mHostProgram->inf_modify_user_accept_models(sessionToken, userName, modelSet, missingModels);
+			if(maipErr == mbase::InfProgram::maip_err_code::INF_MODEL_NAME_MISMATCH)
+			{
+				for(mbase::vector<mbase::string>::const_iterator cIt = missingModels.cbegin(); cIt != missingModels.cend(); ++cIt)
+				{
+					maipPacketBuilder.set_kval("MODEL", *cIt);	
+				}
+			}
+		}
+
+		else if(requestString == "inf_modify_user_set_authority_flags")
+		{
+			mbase::string userName = out_request.get_kval<mbase::string>("USERNAME");
+			mbase::vector<mbase::string> authorityFlagList = out_request.get_kval<mbase::vector<mbase::string>>("AUTHORITY");
+			maipErr = mHostProgram->inf_modify_user_set_authority_flags(sessionToken, userName, authorityFlagList);
+		}
+
 		else
 		{
 			
@@ -333,12 +421,12 @@ GENERIC InfMaipDefaultServer::on_execution_request(const maip_peer_request& out_
 	mbase::maip_packet_builder maipPacketBuilder;
 	mbase::InfProgram::maip_err_code maipErr;
 
-	// All operations must have a session token associated
+	// All operations must have a session token associated with it
 
 	if(requestString == "exec_set_input")
 	{
 		mbase::string contextRole = out_request.get_kval<mbase::string>("ROLE");
-		mbase::string givenPrompt(out_request.get_data().get_buffer(), out_request.get_content_length());
+		//mbase::string givenPrompt(out_request.get_data().get_buffer(), out_request.get_content_length());
 		context_role ctxRole = context_role::NONE;
 
 		if(contextRole == "System")
@@ -357,7 +445,7 @@ GENERIC InfMaipDefaultServer::on_execution_request(const maip_peer_request& out_
 		}
 
 		U32 outMsgId;
-		maipErr = mHostProgram->exec_set_input(sessionToken, contextId, ctxRole, givenPrompt, outMsgId);
+		maipErr = mHostProgram->exec_set_input(sessionToken, contextId, ctxRole, out_request.get_data().get_buffer(), out_request.get_content_length(), outMsgId);
 		if(maipErr == mbase::InfProgram::maip_err_code::INF_SUCCESS)
 		{
 			maipPacketBuilder.set_kval("MSGID", outMsgId);
