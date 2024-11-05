@@ -88,7 +88,7 @@ const U32& InfMaipUser::get_authority_flags() const noexcept
 	return mAuthorityFlags;
 }
 
-const typename InfMaipUser::model_name_vector& InfMaipUser::get_accessible_models() const noexcept
+const typename InfMaipUser::model_name_set& InfMaipUser::get_accessible_models() const noexcept
 {
 	return mAccessibleModels;
 }
@@ -130,18 +130,13 @@ GENERIC InfMaipUser::set_system_prompt(const mbase::string& in_system_prompt)
 
 InfMaipUser::flags InfMaipUser::add_accessible_model(const mbase::string& in_modelname)
 {
-	model_name_vector::iterator accessibleModels = std::find(mAccessibleModels.begin(), mAccessibleModels.end(), in_modelname);
-
-	if (accessibleModels == mAccessibleModels.end())
-	{
-		mAccessibleModels.push_back(in_modelname);
-	}
+	mAccessibleModels.insert(in_modelname);
 	return flags::INF_MAIP_USER_SUCCESS;
 }
 
 InfMaipUser::flags InfMaipUser::remove_accessible_model(const mbase::string& in_modelname)
 {
-	model_name_vector::iterator accessibleModels = std::find(mAccessibleModels.begin(), mAccessibleModels.end(), in_modelname);
+	model_name_set::iterator accessibleModels = std::find(mAccessibleModels.begin(), mAccessibleModels.end(), in_modelname);
 	if(accessibleModels != mAccessibleModels.end())
 	{
 		mAccessibleModels.erase(accessibleModels);
@@ -202,6 +197,8 @@ GENERIC InfMaipUser::update_state_file(const mbase::wstring& in_state_path, bool
 	{
 		userState.initialize(get_username(), in_state_path);
 	}
+	
+	mbase::vector<mbase::string> tmpVectorizedSet(mAccessibleModels.begin(), mAccessibleModels.end()); // For file serialization
 
 	userState.set_state<U32>("authority_flags", get_authority_flags());
 	userState.set_state<U32>("model_access_limit", get_model_access_limit());
@@ -209,7 +206,7 @@ GENERIC InfMaipUser::update_state_file(const mbase::wstring& in_state_path, bool
 	userState.set_state<U32>("batch_size", get_batch_size());
 	userState.set_state<U32>("proc_max_thread_count", get_processor_max_thread_count());
 	userState.set_state<U32>("proc_thread_count", get_processor_thread_count());
-	userState.set_state<mbase::vector<mbase::string>>("accessible_models", get_accessible_models());
+	userState.set_state<mbase::vector<mbase::string>>("accessible_models", tmpVectorizedSet);
 	userState.set_state<mbase::string>("username", get_username());
 	userState.set_state<mbase::string>("access_key", get_access_key());
 	userState.set_state<mbase::string>("system_prompt", get_system_prompt());

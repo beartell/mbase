@@ -15,6 +15,7 @@
 #include <mbase/inference/inf_client.h>
 #include <mbase/inference/inf_maip_user.h>
 #include <unordered_map>
+#include <set>
 
 MBASE_BEGIN
 
@@ -179,7 +180,7 @@ public:
 
 	maip_err_code inf_modify_user_make_superuser(const mbase::string& in_session_token, const mbase::string& in_username, const mbase::string& in_access_token);
 	maip_err_code inf_modify_user_unmake_superuser(const mbase::string& in_session_token, const mbase::string& in_username);
-	maip_err_code inf_modify_user_accept_models(const mbase::string& in_session_token, const mbase::string& in_username, const mbase::vector<mbase::string>& in_models);
+	maip_err_code inf_modify_user_accept_models(const mbase::string& in_session_token, const mbase::string& in_username, const std::set<mbase::string>& in_models, mbase::vector<mbase::string>& out_missing_models);
 	maip_err_code inf_modify_user_set_authority_flags(const mbase::string& in_session_token, const mbase::string& in_username, const mbase::vector<mbase::string>& in_authority_flags);
 	
 	maip_err_code exec_set_input(const mbase::string& in_session_token, const U64& in_ctxId, mbase::context_role in_role, const mbase::string& in_input, U32& out_msgid);

@@ -139,7 +139,7 @@ InfTextToTextProcessor::~InfTextToTextProcessor()
 	{
 		stop_processor();
 		llama_free(mModelContext);
-		release_inference_client();
+		//release_inference_client();
 		if(this->mTargetModel_md_model)
 		{
 			InfModelTextToText* t2tModel = static_cast<InfModelTextToText*>(this->mTargetModel_md_model);
@@ -539,6 +539,11 @@ GENERIC InfTextToTextProcessor::release_inference_client()
 		assignedClient->_on_unregister();
 		mAssignedClient = NULL;
 	}
+}
+
+GENERIC InfTextToTextProcessor::release_inference_client_stacked()
+{
+	mAssignedClient = NULL;
 }
 
 GENERIC InfTextToTextProcessor::clear_token_candidates()

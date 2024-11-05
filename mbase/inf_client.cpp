@@ -40,9 +40,10 @@ InfClientTextToText::InfClientTextToText(const InfClientTextToText& in_rhs):
 
 InfClientTextToText::~InfClientTextToText()
 {
-	if(is_registered())
+	InfTextToTextProcessor* t2tProcessor = NULL;
+	if(get_host_processor(t2tProcessor) == flags::INF_CLIENT_SUCCESS)
 	{
-		mT2TProcessor->release_inference_client();
+		t2tProcessor->release_inference_client_stacked();
 	}
 }
 

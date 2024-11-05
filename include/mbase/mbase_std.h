@@ -2,6 +2,7 @@
 #define MBASE_STD_H
 
 #include <mbase/common.h>
+#include <mbase/algorithm.h>
 #include <mbase/allocator.h>
 #include <mbase/behaviors.h>
 #include <mbase/binary_iterator.h>

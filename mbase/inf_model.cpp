@@ -119,23 +119,28 @@ InfModelTextToText::InfModelTextToText() :
 
 InfModelTextToText::~InfModelTextToText()
 {
+	stop_processor();
 	if (!is_initialized())
 	{
 		
 	}
 	else
 	{
-		destroy();
-		while (signal_state_destroying())
-		{
-		}
 		mbase::lock_guard tmpListMutex(mProcessorListMutex);
+		for (context_processor_list::iterator It = mRegisteredProcessors.begin(); It != mRegisteredProcessors.end(); ++It)
+		{
+			InfTextToTextProcessor* baseProcessor = static_cast<InfTextToTextProcessor*>(*It);
+			baseProcessor->stop_processor();
+			baseProcessor->destroy_sync();
+		}
+		
 		for(context_processor_list::iterator It = mRegisteredProcessors.begin(); It != mRegisteredProcessors.end(); ++It)
 		{
 			InfProcessorBase* baseProcessor = *It;
 			InfTextToTextProcessor* t2tProcessor = static_cast<InfTextToTextProcessor*>(baseProcessor);
 			t2tProcessor->update(); // Update all processors
 		}
+		llama_free_model(mModel);
 	}
 }
 
@@ -528,7 +533,6 @@ GENERIC InfModelTextToText::manual_context_deletion(InfTextToTextProcessor* in_p
 {
 	mbase::lock_guard tmpListMutex(mProcessorListMutex);
 	context_processor_list::iterator It = std::find(mRegisteredProcessors.begin(), mRegisteredProcessors.end(), in_processor);
-	// It must be present
 	mRegisteredProcessors.erase(It);
 }
 

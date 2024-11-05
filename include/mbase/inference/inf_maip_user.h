@@ -5,6 +5,7 @@
 #include <mbase/string.h>
 #include <mbase/vector.h>
 #include <mbase/inference/inf_sampling_set.h>
+#include <set>
 
 MBASE_BEGIN
 
@@ -27,7 +28,7 @@ static U32 gMaipUserDefaultAuthorityFlags = 0;
 
 class MBASE_API InfMaipUser { // Useless unless it is associated with MAIP Program
 public:
-	using model_name_vector = mbase::vector<mbase::string>;
+	using model_name_set = std::set<mbase::string>;
 	using size_type = SIZE_T;
 
 	enum class flags : U8 {
@@ -58,7 +59,7 @@ public:
 	const mbase::string& get_system_prompt() const noexcept;
 	const inf_sampling_set& get_sampling_set() const noexcept;
 	const U32& get_authority_flags() const noexcept;
-	const model_name_vector& get_accessible_models() const noexcept;
+	const model_name_set& get_accessible_models() const noexcept;
 
 	GENERIC set_distinct_model_access_limit(const U32& in_access_limit);
 	GENERIC set_maximum_context_length(const U32& in_context_length);
@@ -86,7 +87,7 @@ private:
 	U32 mBatchSize = 0;
 	U32 mMaxProcessorThreadCount = 0;
 	U32 mProcessorThreadCount = 0;
-	model_name_vector mAccessibleModels;
+	model_name_set mAccessibleModels;
 	mbase::string mUsername = "";
 	mbase::string mAccessKey = "";
 	mbase::string mSystemPrompt = "";

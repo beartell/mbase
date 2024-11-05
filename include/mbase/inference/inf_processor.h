@@ -149,6 +149,7 @@ public:
 	flags destroy();
 	flags destroy_sync();
 	GENERIC release_inference_client();
+	GENERIC release_inference_client_stacked();
 	#ifdef MBASE_INTERNAL_API
 		
 	#endif // MBASE_INTERNAL_API

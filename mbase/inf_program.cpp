@@ -5,6 +5,7 @@
 #include <mbase/pc/pc_state.h>
 #include <mbase/filesystem.h>
 #include <random>
+#include <algorithm>
 #include <iostream>
 
 MBASE_BEGIN
@@ -295,7 +296,7 @@ InfProgram::maip_err_code InfProgram::inf_get_accessible_models(const mbase::str
 {
 	MBASE_SESSION_CONTROL;
 
-	const InfMaipUser::model_name_vector& accModels = clientSession.mMaipUser.get_accessible_models();
+	const InfMaipUser::model_name_set& accModels = clientSession.mMaipUser.get_accessible_models();
 	for(auto& n : accModels)
 	{
 		out_models.push_back(n);
@@ -562,25 +563,45 @@ InfProgram::maip_err_code InfProgram::inf_create_new_user(
 		{
 			authorityFlags |= MAIP_ADAPTER_LOAD_UNLOAD;
 		}
-		else if(n == "LENGTH")
-		{
-			authorityFlags |= MAIP_USER_CONTEXT_LENGTH_MODIFICATION;
-		}
-		else if (n == "ACCESS")
-		{
-			authorityFlags |= MAIP_USER_ACCESS_MODIFICATION;
-		}
-		else if(n == "CREATE")
+		else if(n == "USER_CD")
 		{
 			authorityFlags |= MAIP_USER_CREATE_DELETE;
-		}
-		else if(n == "MODIFICATION")
-		{
-			authorityFlags |= MAIP_USER_MODIFICATION;
 		}
 		else if(n == "STATIC")
 		{
 			authorityFlags |= MAIP_USER_STATIC;
+		}
+		else if(n == "USER_MODIF")
+		{
+			authorityFlags |= MAIP_USER_MODIFICATION;
+		}
+		else if(n == "CTX_MODIF")
+		{
+			authorityFlags |= MAIP_USER_CONTEXT_LENGTH_MODIFICATION;
+		}
+		else if(n == "ACCESIBILITY")
+		{
+			authorityFlags |= MAIP_USER_ACCESS_MODIFICATION;
+		}
+		else if(n == "SYS_PROMPT")
+		{
+			authorityFlags |= MAIP_USER_SYS_PROMPT_MODIFICATION;
+		}
+		else if(n == "SAMPLING_SET")
+		{
+			authorityFlags |= MAIP_USER_SAMPLER_MODIFICATION;
+		}
+		else if(n == "MAX_THREAD_SET")
+		{
+			authorityFlags |= MAIP_USER_MAX_PROCESSOR_THREAD_COUNT_MODIFICATION;
+		}
+		else if(n == "THREAD_SET")
+		{
+			authorityFlags |= MAIP_USER_PROCESSOR_THREAD_COUNT_MODIFICATION;
+		}
+		else if(n == "BATCH_SET")
+		{
+			authorityFlags |= MAIP_USER_BATCH_LENGTH_MODIFICATION;
 		}
 	}
 
@@ -869,7 +890,7 @@ InfProgram::maip_err_code InfProgram::inf_modify_user_unmake_superuser(const mba
 	return maip_err_code::INF_SUCCESS;
 }
 
-InfProgram::maip_err_code InfProgram::inf_modify_user_accept_models(const mbase::string & in_session_token, const mbase::string& in_username, const mbase::vector<mbase::string>&in_models)
+InfProgram::maip_err_code InfProgram::inf_modify_user_accept_models(const mbase::string& in_session_token, const mbase::string& in_username, const std::set<mbase::string>& in_models, mbase::vector<mbase::string>& out_missing_models)
 {
 	// 1- Check if the MAIP_USER_ACCESS_MODIFICATION flag is set. If not, INF_AUTHORIZATION_FAILED
 	// 2- Check if the specified username exists. If not, INF_USER_NOT_FOUND
@@ -883,6 +904,32 @@ InfProgram::maip_err_code InfProgram::inf_modify_user_accept_models(const mbase:
 
 	MBASE_SESSION_CONTROL;
 
+	maip_err_code result = common_modification_control(clientSession, in_username, MAIP_USER_ACCESS_MODIFICATION);
+	if(result != maip_err_code::INF_SUCCESS)
+	{
+		return result;
+	}
+
+	InfMaipUser& maipUser = mUserMap[in_username];
+	for(std::set<mbase::string>::iterator It = in_models.begin(); It != in_models.end(); It++)
+	{
+		if(mModelInformationMap.find(*It) == mModelInformationMap.end())
+		{
+			out_missing_models.push_back(*It);
+		}
+	}
+
+	if(out_missing_models.size())
+	{
+		return maip_err_code::INF_MODEL_NAME_MISMATCH;
+	}
+
+	for(std::set<mbase::string>::iterator It = in_models.begin(); It != in_models.end(); It++)
+	{
+		maipUser.add_accessible_model(*It);
+	}
+
+	update_maip_user_sessions(maipUser);
 	return maip_err_code::INF_SUCCESS;
 }
 
@@ -896,6 +943,73 @@ InfProgram::maip_err_code InfProgram::inf_modify_user_set_authority_flags(const 
 
 	MBASE_SESSION_CONTROL;
 
+	if(!clientSession.mMaipUser.is_superuser())
+	{
+		return maip_err_code::INF_AUTHORIZATION_FAILED;
+	}
+
+	inference_user_map::iterator It = mUserMap.find(in_username);
+	if(It == mUserMap.end())
+	{
+		return maip_err_code::INF_USER_NOT_FOUND;
+	}
+
+	InfMaipUser& maipUser = It->second;
+
+	for(mbase::vector<mbase::string>::const_iterator cIt = in_authority_flags.cbegin(); cIt != in_authority_flags.cend(); ++cIt)
+	{
+		const mbase::string& n = *cIt;
+		if (n == "LOAD")
+		{
+			maipUser.add_authority_flags(MAIP_MODEL_LOAD_UNLOAD);
+		}
+		else if (n == "ADAPTER")
+		{
+			maipUser.add_authority_flags(MAIP_ADAPTER_LOAD_UNLOAD);
+		}
+		else if(n == "USER_CD")
+		{
+			maipUser.add_authority_flags(MAIP_USER_CREATE_DELETE);
+		}
+		else if(n == "STATIC")
+		{
+			maipUser.add_authority_flags(MAIP_USER_STATIC);
+		}
+		else if(n == "USER_MODIF")
+		{
+			maipUser.add_authority_flags(MAIP_USER_MODIFICATION);
+		}
+		else if(n == "CTX_MODIF")
+		{
+			maipUser.add_authority_flags(MAIP_USER_CONTEXT_LENGTH_MODIFICATION);
+		}
+		else if(n == "ACCESIBILITY")
+		{
+			maipUser.add_authority_flags(MAIP_USER_ACCESS_MODIFICATION);
+		}
+		else if(n == "SYS_PROMPT")
+		{
+			maipUser.add_authority_flags(MAIP_USER_SYS_PROMPT_MODIFICATION);
+		}
+		else if(n == "SAMPLING_SET")
+		{
+			maipUser.add_authority_flags(MAIP_USER_SAMPLER_MODIFICATION);
+		}
+		else if(n == "MAX_THREAD_SET")
+		{
+			maipUser.add_authority_flags(MAIP_USER_MAX_PROCESSOR_THREAD_COUNT_MODIFICATION);
+		}
+		else if(n == "THREAD_SET")
+		{
+			maipUser.add_authority_flags(MAIP_USER_PROCESSOR_THREAD_COUNT_MODIFICATION);
+		}
+		else if(n == "BATCH_SET")
+		{
+			maipUser.add_authority_flags(MAIP_USER_BATCH_LENGTH_MODIFICATION);
+		}
+	}
+
+	update_maip_user_sessions(maipUser);
 	return maip_err_code::INF_SUCCESS;
 }
 

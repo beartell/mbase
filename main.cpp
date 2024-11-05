@@ -22,9 +22,9 @@ public:
     {
         std::cout << "Client is registered" << std::endl;
         U32 outMsgId = 0;
-        this->add_message(L"You are a helpful assistant. You are putting the summarization of the user message between tags [SUM_BEGIN] [SUM_END].", context_role::SYSTEM, outMsgId);
+        this->add_message(L"You are a helpful assistant.", context_role::SYSTEM, outMsgId);
         msgIds.push_back(outMsgId);
-        this->add_message(L"What is your name?", context_role::USER, outMsgId);
+        this->add_message("Give me a 50 word essay about climate change.", context_role::USER, outMsgId);
         msgIds.push_back(outMsgId);
         
         mbase::vector<context_line> txtMessages;
@@ -41,8 +41,8 @@ public:
 
     GENERIC on_write(CBYTEBUFFER out_data, size_type out_size, InfTextToTextProcessor::inf_token out_token, bool out_is_special, bool out_is_finish) override 
     {        
-        fflush(stdout);
-        printf(out_data);
+        
+        totalMessage += out_data;
         InfTextToTextProcessor* txtOut;
         get_host_processor(txtOut);
         txtOut->next();
@@ -50,7 +50,8 @@ public:
 
     GENERIC on_finish(size_type out_total_token_size, InfTextToTextProcessor::finish_state out_finish_state) override 
     {
-
+        fflush(stdout);
+        printf("%s \n\n\n\n", totalMessage.c_str());
     }
     
     GENERIC on_unregister() override 
@@ -59,6 +60,7 @@ public:
     }
 private:
     mbase::vector<U32> msgIds;
+    mbase::string totalMessage;
 };
 
 class my_context : public mbase::InfTextToTextProcessor {
@@ -80,7 +82,7 @@ public:
     }
     GENERIC on_destroy() override
     {
-
+        std::cout << "I am dead" << std::endl;
     }
 private:
     my_client myCl;
@@ -120,9 +122,36 @@ public:
 
         this->register_context_process(
             &myContext, 
-            4000, 
-            2000, 
+            16000, 
+            8000, 
+            8, 
             4, 
+            true,
+            {topK, topP, minP, temperature, mirostat}
+        );
+        this->register_context_process(
+            &myContext1, 
+            16000, 
+            8000, 
+            8, 
+            4, 
+            true,
+            {topK, topP, minP, temperature, mirostat}
+        );
+        this->register_context_process(
+            &myContext2, 
+            16000, 
+            8000, 
+            8, 
+            4, 
+            true,
+            {topK, topP, minP, temperature, mirostat}
+        );
+        this->register_context_process(
+            &myContext3, 
+            16000, 
+            8000, 
+            8, 
             4, 
             true,
             {topK, topP, minP, temperature, mirostat}
@@ -131,19 +160,27 @@ public:
     void on_destroy() override {}
 private:
     my_context myContext;
+    my_context myContext1;
+    my_context myContext2;
+    my_context myContext3;
 };
 
 using namespace mbase;
 
 int main()
 {
-    my_model mm;
-    mm.initialize_model(L"./Llama-3.2-1B-Instruct-Q4_K_M.gguf", 12000, 999);
     while(1)
     {
-        mm.update();
-    }
+        int i = 0;
+        my_model mm;
+        mm.initialize_model(L"./Llama-3.2-1B-Instruct-Q4_K_M.gguf", 120000, 999);
+        while(1)
+        {
+            mm.update();
+        }
     
+    }
+   
     /*InfProgram mainProgram;
     mbase::InfProgramInformation programInformation;
 
