@@ -9,6 +9,7 @@
 #include <mbase/vector.h>
 #include <mbase/synchronization.h>
 #include <mbase/framework/timers.h>
+#include <mbase/framework/object_watcher.h>
 #ifdef MBASE_PLATFORM_WINDOWS
 #include <mbase/wsa_init.h>
 #endif // MBASE_PLATFORM_WINDOWS
@@ -132,11 +133,14 @@ public:
 
 	flags listen() noexcept;
 	flags stop() noexcept;
+	GENERIC acquire_object_watcher(mbase::list_object_watcher<PcNetServer>* in_watcher);
+	GENERIC release_object_watcher();
 
 	virtual GENERIC update() = 0;
 	virtual GENERIC update_t() = 0;
 
 protected:
+	mbase::list_object_watcher<PcNetServer>* mObjectWatcher;
 	bool mIsListening;
 	socket_handle mRawSocket;
 	mbase::string mAddr;
@@ -147,6 +151,9 @@ class MBASE_API PcNetTcpServer : public PcNetServer {
 public:
 	using client_list = mbase::list<std::shared_ptr<PcNetPeerClient>>;
 	using accept_clients = mbase::list<std::shared_ptr<PcNetPeerClient>>;
+
+	PcNetTcpServer();
+	~PcNetTcpServer();
 
 	MBASE_ND(MBASE_OBS_IGNORE) const client_list& get_connected_peers() const noexcept;
 	bool signal_accepting();
@@ -172,10 +179,10 @@ private:
 	processor_signal mDataProcess;
 };
 
-
 class MBASE_API PcNetManager : public logical_processor {
 public:
-	using servers_list = mbase::list<PcNetServer*>;
+	using watcher_type = mbase::list_object_watcher<PcNetServer>;
+	using servers_list = mbase::list<watcher_type>;
 
 	enum class flags : U8 {
 		NET_MNG_SUCCESS,
@@ -190,7 +197,8 @@ public:
 		NET_MNG_PROTOCOL_UDP
 	};
 
-	PcNetManager() {}
+	PcNetManager();
+	~PcNetManager();
 	// flags create_connection(const mbase::string& in_addr, I32 in_port, PcNetClient& out_client);
 	flags create_server(const mbase::string& in_addr, I32 in_port, PcNetServer& out_server);
 
@@ -198,6 +206,7 @@ public:
 	GENERIC update_t() override;
 
 private:
+	mbase::mutex mServerReleaseLock;
 	servers_list mServers;
 };
 

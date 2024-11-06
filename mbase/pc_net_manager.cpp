@@ -316,6 +316,33 @@ PcNetServer::flags PcNetServer::stop() noexcept
 	return flags::NET_SERVER_SUCCESS;
 }
 
+GENERIC PcNetServer::acquire_object_watcher(mbase::list_object_watcher<PcNetServer>* in_watcher)
+{
+	if(in_watcher)
+	{
+		mObjectWatcher = in_watcher;
+		mObjectWatcher->mSubject = this;
+	}
+}
+
+GENERIC PcNetServer::release_object_watcher()
+{
+	if(mObjectWatcher)
+	{
+		mObjectWatcher->mSubject = NULL;
+	}
+}
+
+PcNetTcpServer::PcNetTcpServer()
+{
+
+}
+
+PcNetTcpServer::~PcNetTcpServer()
+{
+	this->release_object_watcher();
+}
+
 MBASE_ND(MBASE_OBS_IGNORE) const typename PcNetTcpServer::client_list& PcNetTcpServer::get_connected_peers() const noexcept
 {
 	return mConnectedClients;
@@ -591,6 +618,23 @@ GENERIC PcNetTcpServer::update_t()
 //	return flags::NET_MNG_SUCCESS;
 //}
 
+PcNetManager::PcNetManager()
+{
+}
+
+PcNetManager::~PcNetManager()
+{
+	stop_processor();
+	for (servers_list::iterator It = mServers.begin(); It != mServers.end(); ++It)
+	{
+		if(It->mSubject)
+		{
+			It->mSubject->release_object_watcher();
+		}
+		
+	}
+}
+
 PcNetManager::flags PcNetManager::create_server(const mbase::string& in_addr, I32 in_port, PcNetServer& out_server)
 {
 	#ifdef MBASE_PLATFORM_WINDOWS
@@ -665,30 +709,49 @@ PcNetManager::flags PcNetManager::create_server(const mbase::string& in_addr, I3
 	out_server.mRawSocket = serverSocket;
 	out_server.mAddr = in_addr;
 	out_server.mPort = in_port;
+	mServerReleaseLock.acquire();
+	
+	mServers.push_back(watcher_type());
+	watcher_type& lastWatcher = mServers.back();
+	lastWatcher.mItSelf = mServers.end_node();
+	lastWatcher.mSubject = &out_server;
+	out_server.acquire_object_watcher(&lastWatcher);
+
+	mServerReleaseLock.release();
 	start_processor();
-	mServers.push_back(&out_server);
 
 	return flags::NET_MNG_SUCCESS;
 }
 
 GENERIC PcNetManager::update()
 {
-	for (servers_list::iterator It = mServers.begin(); It != mServers.end(); ++It)
+	for (servers_list::iterator It = mServers.begin(); It != mServers.end();)
 	{
-		PcNetServer* netServer = *It;
-		netServer->update();
+		if(!It->mSubject)
+		{
+			// Means the watcher is released
+			mServerReleaseLock.acquire();
+			It = mServers.erase(It->mItSelf);
+			mServerReleaseLock.release();
+		}
+		++It;
 	}
 }
 
 GENERIC PcNetManager::update_t()
 {
-	while(1)
+	while(is_processor_running())
 	{
+		mServerReleaseLock.acquire();
 		for (servers_list::iterator It = mServers.begin(); It != mServers.end(); ++It)
 		{
-			PcNetServer* netServer = *It;
-			netServer->update_t();
+			if(It->mSubject)
+			{
+				It->mSubject->update_t();
+			}
+			
 		}
+		mServerReleaseLock.release();
 	}
 }
 

@@ -154,17 +154,26 @@ using namespace mbase;
 
 int main()
 {
+    mbase::InfProgram ifp;
+    mbase::InfMaipDefaultServer ids(ifp);
+    PcNetManager pcn;
+    pcn.create_server("127.0.0.1", 4553, ids);
+    ids.listen();
     while(1)
     {
-        int i = 0;
-        my_model mm;
-        mm.initialize_model(L"./Llama-3.2-1B-Instruct-Q4_K_M.gguf", 512000, 999);
-        while(1)
-        {
-            mm.update();
-        }
-    
+        ids.update();
     }
+    // while(1)
+    // {
+    //     int i = 0;
+    //     my_model mm;
+    //     mm.initialize_model(L"./Llama-3.2-1B-Instruct-Q4_K_M.gguf", 512000, 999);
+    //     while(1)
+    //     {
+    //         mm.update();
+    //     }
+    
+    // }
 
     /*InfProgram mainProgram;
     mbase::InfProgramInformation programInformation;

@@ -67,6 +67,7 @@ class MaipClient:
                 resultString = resultBytes.decode()
                 my_resolver = MaipResolver()
                 my_resolver.resolve(resultString)
+                print(resultString)
                 operationResult = MaipOperationResult(None, my_resolver.get_status_code())
                 if my_resolver.get_status_code() == 2000:
                     self.session_token = my_resolver.get_kval("STOK")[0]
@@ -153,28 +154,28 @@ class MaipClient:
 newMaipClient = MaipClient("127.0.0.1", 4553, "admin", "yumniye99")
 newMaipClient.create_client()
 
-outData = newMaipClient.get_program_models()
-for i in outData.get_result_data():
-    newMaipClient.load_model(i, 12000)
+# outData = newMaipClient.get_program_models()
+# for i in outData.get_result_data():
+#     newMaipClient.load_model(i, 12000)
 
-# print(outData.get_result_data())
+# # print(outData.get_result_data())
+# # print(outData.get_result_code())
+
+# outData = newMaipClient.create_context("Llama 3.2 1B Instruct", 2000)
 # print(outData.get_result_code())
-
-outData = newMaipClient.create_context("Llama 3.2 1B Instruct", 2000)
-print(outData.get_result_code())
-if outData.get_result_code() == 2000:
-    myContext : MaipContext = outData.get_result_data()
-    inputIdList = []
-    inputSetResult = myContext.set_input("System", "You are a helpful assistant and your name is Joe.")
-    inputIdList.append(inputSetResult.get_result_data())
-    outPrompt = input("Enter your prompt: ")
-    inputSetResult = myContext.set_input("User", outPrompt)
-    inputIdList.append(inputSetResult.get_result_data())
-    myContext.execute_input(inputIdList)
+# if outData.get_result_code() == 2000:
+#     myContext : MaipContext = outData.get_result_data()
+#     inputIdList = []
+#     inputSetResult = myContext.set_input("System", "You are a helpful assistant and your name is Joe.")
+#     inputIdList.append(inputSetResult.get_result_data())
+#     outPrompt = input("Enter your prompt: ")
+#     inputSetResult = myContext.set_input("User", outPrompt)
+#     inputIdList.append(inputSetResult.get_result_data())
+#     myContext.execute_input(inputIdList)
     
-    aiResponse = myContext.get_next()
-    aiResponseText = ""
-    while aiResponse.get_result_code() == 3006:
-        aiResponseText += aiResponse.get_result_data()["token"]
-        aiResponse = myContext.get_next()
-    print(aiResponseText)
+#     aiResponse = myContext.get_next()
+#     aiResponseText = ""
+#     while aiResponse.get_result_code() == 3006:
+#         aiResponseText += aiResponse.get_result_data()["token"]
+#         aiResponse = myContext.get_next()
+#     print(aiResponseText)

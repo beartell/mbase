@@ -7,6 +7,7 @@ MBASE_BEGIN
 
 GENERIC InfMaipServerBase::on_accept(std::shared_ptr<PcNetPeerClient> out_peer)
 {
+	std::cout << "Connection received" << std::endl;
 	out_peer->send_read_signal();
 }
 
@@ -27,6 +28,7 @@ GENERIC InfMaipServerBase::on_data(std::shared_ptr<PcNetPeerClient> out_peer, CB
 GENERIC InfMaipServerBase::on_disconnect(std::shared_ptr<PcNetPeerClient> out_peer)
 {
 	// Remove the peer from accumulation map if it exists
+	std::cout << "Connection left" << std::endl;
 }
 
 GENERIC InfMaipServerBase::accumulated_processing(std::shared_ptr<PcNetPeerClient> out_peer, accumulation_map::iterator in_accum_iterator, CBYTEBUFFER out_data, size_type out_size)
