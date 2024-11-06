@@ -476,7 +476,7 @@ InfProgram::maip_err_code InfProgram::inf_load_model(const mbase::string& in_ses
 		}
 	}
 
-	return maip_err_code::INF_SUCCESS;
+	return maip_err_code::INF_MODEL_NAME_MISMATCH;
 }
 
 InfProgram::maip_err_code InfProgram::inf_unload_model(const mbase::string& in_session_token, const mbase::string& in_modelname)
@@ -505,11 +505,15 @@ InfProgram::maip_err_code InfProgram::inf_unload_model(const mbase::string& in_s
 InfProgram::maip_err_code InfProgram::inf_create_new_user(
 	const mbase::string& in_session_token,
 	const mbase::string& in_username,
+	const mbase::string& in_access_token,
+	const mbase::string& in_system_prompt,
 	const U32& in_model_access_limit,
 	const U32& in_maximum_context_length,
+	const U32& in_batch_length,
+	const U32& in_max_proc_threads,
+	const U32& in_proc_threads,
 	const bool& in_superuser,
-	const bool& in_authorization_locked,
-	const mbase::string& in_access_token,
+	const bool& in_is_static,
 	const mbase::vector<mbase::string>& in_authority_flags,
 	mbase::string& out_access_token
 )
@@ -536,16 +540,6 @@ InfProgram::maip_err_code InfProgram::inf_create_new_user(
 	U32 maximumContextLength = in_maximum_context_length;
 	mbase::string accessToken = in_access_token;
 
-	if (!modelAccessLimit)
-	{
-		modelAccessLimit = mDefaultModelAccessLimit;
-	}
-
-	if(!maximumContextLength)
-	{
-		maximumContextLength = mDefaultContextLimit;
-	}
-
 	if(!accessToken.size())
 	{
 		accessToken = mbase::string::generate_uuid();
@@ -571,11 +565,11 @@ InfProgram::maip_err_code InfProgram::inf_create_new_user(
 		{
 			authorityFlags |= MAIP_USER_STATIC;
 		}
-		else if(n == "USER_MODIF")
+		else if(n == "USER_MODIFY")
 		{
 			authorityFlags |= MAIP_USER_MODIFICATION;
 		}
-		else if(n == "CTX_MODIF")
+		else if(n == "CTX_MODIFY")
 		{
 			authorityFlags |= MAIP_USER_CONTEXT_LENGTH_MODIFICATION;
 		}
@@ -612,12 +606,25 @@ InfProgram::maip_err_code InfProgram::inf_create_new_user(
 		return maip_err_code::INF_AUTHORIZATION_FAILED;
 	}
 
-	create_user(in_username, modelAccessLimit, maximumContextLength, in_superuser, in_authorization_locked, accessToken, authorityFlags, true, out_access_token);
+	create_user( // 100% success
+		in_username, 
+		accessToken,
+		in_system_prompt,
+		authorityFlags,
+		in_model_access_limit,
+		in_maximum_context_length,
+		in_batch_length,
+		in_max_proc_threads,
+		in_proc_threads,
+		in_superuser,
+		in_is_static,
+		out_access_token
+	);
 
 	return maip_err_code::INF_SUCCESS;
 }
 
-InfProgram::maip_err_code InfProgram::inf_delete_user(const mbase::string& in_session_token, const mbase::string& in_username)
+InfProgram::maip_err_code InfProgram::inf_delete_user(const mbase::string& in_session_token, const mbase::string& in_username, const mbase::string& in_access_token)
 {
 	MBASE_SESSION_CONTROL;
 
@@ -655,6 +662,12 @@ InfProgram::maip_err_code InfProgram::inf_delete_user(const mbase::string& in_se
 	{
 		// If the client attempts to delete a super user and he is not a super user, 
 		// Authorization fails.
+		return maip_err_code::INF_AUTHORIZATION_FAILED;
+	}
+
+	if(maipUser.get_access_key() != in_access_token)
+	{
+		// Means access key is invalid
 		return maip_err_code::INF_AUTHORIZATION_FAILED;
 	}
 
@@ -1124,7 +1137,14 @@ InfProgram::maip_err_code InfProgram::exec_next(const mbase::string& in_session_
 	InfTextToTextProcessor::flags outRes = hostProcessor->next();
 	if(outRes != InfTextToTextProcessor::flags::INF_PROC_SUCCESS)
 	{
-		return maip_err_code::EXEC_MISSING_MESSAGE;
+		if(outRes == InfTextToTextProcessor::flags::INF_PROC_INFO_HALTED)
+		{
+			return maip_err_code::INF_CONTEXT_HALTED;
+		}
+		else if(outRes == InfTextToTextProcessor::flags::INF_PROC_ERR_INPUT_IS_EMPTY)
+		{
+			return maip_err_code::EXEC_MISSING_MESSAGE;
+		}
 	}
 
 	return maip_err_code::EXEC_SUCCESS;
@@ -1314,15 +1334,19 @@ InfProgram::flags InfProgram::release_model(const mbase::string& in_model_name)
 	return flags::INF_PROGRAM_SUCCESS;
 }
 
-InfProgram::flags InfProgram::create_user(const mbase::string& in_username,
-	const U32& in_model_access_limit,
-	const U32& in_maximum_context_length,
-	const bool& in_superuser,
-	const bool& in_authorization_locked,
-	const mbase::string& in_access_token,
-	const U32& in_authority_flags,
-	const bool& in_is_permanent,
-	mbase::string& out_access_token
+InfProgram::flags InfProgram::create_user(
+		const mbase::string& in_username,
+		const mbase::string& in_access_token,
+		const mbase::string& in_system_prompt,
+		const U32& in_authority_flags,
+		const U32& in_model_access_limit,
+		const U32& in_maximum_context_length,
+		const U32& in_batch_length,
+		const U32& in_max_proc_threads,
+		const U32& in_proc_threads,
+		const bool& in_superuser,
+		const bool& in_is_static,
+		mbase::string& out_access_token
 )
 {
 	if(!in_username.size())
@@ -1340,74 +1364,55 @@ InfProgram::flags InfProgram::create_user(const mbase::string& in_username,
 		return flags::INF_PROGRAM_ERR_USR_ALREADY_EXISTS;
 	}
 
-	U32 modelAccessLimit = gMaipUserDefaultModelAccessLimit;
-	U32 maximumContextLength = gMaipUserDefaultMaximumContextLength;
-	U32 authorityFlags = in_authority_flags;
 	mbase::string accessToken = in_access_token;
 
-	if(in_access_token.size() > 768)
+	if(accessToken.size() > 768 || !accessToken.size())
 	{
 		accessToken = mbase::string::generate_uuid();
 	}
 
-	if(in_model_access_limit)
+	U32 batchSize = in_batch_length;
+	U32 procMaxThreads = in_max_proc_threads;
+	U32 procThreads = in_proc_threads;
+
+	if(batchSize > in_maximum_context_length)
 	{
-		modelAccessLimit = in_model_access_limit;
+		batchSize = in_maximum_context_length;
 	}
 
-	if(in_maximum_context_length)
+	if(!procMaxThreads)
 	{
-		maximumContextLength = in_maximum_context_length;
+		procMaxThreads = 1;
+	}
+
+	if(procThreads > procMaxThreads)
+	{
+		procThreads = procMaxThreads;
 	}
 
 	InfMaipUser newUser;
-	newUser.set_distinct_model_access_limit(modelAccessLimit);
-	newUser.set_maximum_context_length(maximumContextLength);
 	newUser.set_access_key(accessToken);
 	newUser.set_username(in_username);
-	newUser.add_authority_flags(authorityFlags);
+	newUser.set_system_prompt(in_system_prompt);
+	newUser.add_authority_flags(in_authority_flags);
+	newUser.set_distinct_model_access_limit(in_model_access_limit);
+	newUser.set_maximum_context_length(in_maximum_context_length);
+	newUser.set_batch_size(batchSize);
+	newUser.set_processor_max_thread_count(in_max_proc_threads);
+	newUser.set_processor_thread_count(procThreads);
 
 	if(in_superuser)
 	{
 		newUser.make_superuser();
 	}
 
-	if(in_authorization_locked)
+	if(in_is_static)
 	{
 		newUser.lock_user();
 	}
 
 	mUserMap[in_username] = newUser;
-
-	if(in_is_permanent)
-	{
-		newUser.update_state_file(mClientStateDirectory, true);
-		/*PcState userState;
-		mbase::wstring userStateFile = mInferenceConfigurator.get_data_path() + L"states/users/";
-		
-		std::cout << "Created permanent user: " << std::endl;
-
-		std::cout << "Authority value: " << newUser.get_authority_flags() << std::endl;
-		std::cout << "Model access limit: " << newUser.get_model_access_limit() << std::endl;
-		std::cout << "Username: " << newUser.get_username() << std::endl;
-		std::cout << "Access key: " << newUser.get_access_key() << std::endl;
-		std::cout << "Is super: " << newUser.is_superuser() << std::endl;
-		std::cout << "Is auth locked: " << newUser.is_authorization_locked() << std::endl;
-		std::cout << std::endl;
-		std::cout << std::endl;
-
-		userState.initialize(in_username, userStateFile);
-		userState.set_state<U32>("authority_flags", newUser.get_authority_flags());
-		userState.set_state<U32>("model_access_limit", newUser.get_model_access_limit());
-		userState.set_state<U32>("max_context_length", newUser.get_maximum_context_length());
-		userState.set_state<mbase::vector<mbase::string>>("accessible_models", newUser.get_accessible_models());
-		userState.set_state<mbase::string>("username", newUser.get_username());
-		userState.set_state<mbase::string>("access_key", newUser.get_access_key());
-		userState.set_state<bool>("is_super", newUser.is_superuser());
-		userState.set_state<bool>("is_auth_locked", newUser.is_authorization_locked());
-
-		userState.update();*/
-	}
+	newUser.update_state_file(mClientStateDirectory, true);
 
 	for(auto& n : mUserMap)
 	{
@@ -1421,6 +1426,8 @@ InfProgram::flags InfProgram::create_user(const mbase::string& in_username,
 		std::cout << "- Is superuser: " << maipUser.is_superuser() << std::endl;
 		std::cout << "- Is static: " << maipUser.is_static() << std::endl;
 	}
+
+	out_access_token = accessToken;
 
 	return flags::INF_PROGRAM_SUCCESS;
 }

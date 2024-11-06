@@ -161,15 +161,19 @@ public:
 	maip_err_code inf_create_new_user(
 		const mbase::string& in_session_token,
 		const mbase::string& in_username,
+		const mbase::string& in_access_token,
+		const mbase::string& in_system_prompt,
 		const U32& in_model_access_limit,
 		const U32& in_maximum_context_length,
+		const U32& in_batch_length,
+		const U32& in_max_proc_threads,
+		const U32& in_proc_threads,
 		const bool& in_superuser,
-		const bool& in_authorization_locked,
-		const mbase::string& in_access_token,
+		const bool& in_is_static,
 		const mbase::vector<mbase::string>& in_authority_flags,
 		mbase::string& out_access_token
 	);
-	maip_err_code inf_delete_user(const mbase::string& in_session_token, const mbase::string& in_username);
+	maip_err_code inf_delete_user(const mbase::string& in_session_token, const mbase::string& in_username, const mbase::string& in_access_token);
 	maip_err_code inf_modify_user_model_access_limit(const mbase::string& in_session_token, const mbase::string& in_username, const U32& in_new_access_limit);
 	maip_err_code inf_modify_user_maximum_context_length(const mbase::string& in_session_token, const mbase::string& in_username, const U32& in_maximum_context_length);
 	maip_err_code inf_modify_user_batch_size(const mbase::string& in_session_token, const mbase::string& in_username, const U32& in_batch_size);
@@ -191,14 +195,18 @@ public:
 	GENERIC initialize(InfProgramInformation in_program_information);
 	flags host_model(InfModelTextToText* in_model);
 	flags release_model(const mbase::string& in_model_name);
-	flags create_user(const mbase::string& in_username, // TODO: Check if the username contains non-printable characters. Check if the username contains '/', '.', "..", '*' to avoid filesystem alterations
+	flags create_user(
+		const mbase::string& in_username,
+		const mbase::string& in_access_token,
+		const mbase::string& in_system_prompt,
+		const U32& in_authority_flags,
 		const U32& in_model_access_limit,
 		const U32& in_maximum_context_length,
+		const U32& in_batch_length,
+		const U32& in_max_proc_threads,
+		const U32& in_proc_threads,
 		const bool& in_superuser,
-		const bool& in_authorization_locked,
-		const mbase::string& in_access_token,
-		const U32& in_authority_flags,
-		const bool& in_is_permanent,
+		const bool& in_is_static,
 		mbase::string& out_access_token
 	);
 	flags update_users_model_access_limit(const mbase::string& in_username, const U32& in_new_access_limit);

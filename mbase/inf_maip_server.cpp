@@ -280,37 +280,37 @@ GENERIC InfMaipDefaultServer::on_informatic_request(const maip_peer_request& out
 
 		else if(requestString == "inf_create_new_user")
 		{
-			mbase::string userName = out_request.get_kval<mbase::string>("USERNAME");
-			U32 modelAccessLimit = out_request.get_kval<U32>("ACCESSLIMIT");
-			U32 maximumContextLength = out_request.get_kval<U32>("CTXSIZE");
-			bool isSuperUser = out_request.get_kval<bool>("ISSUPER");
-			mbase::string userAccessToken = out_request.get_kval<mbase::string>("ACCTOKEN");
-			mbase::vector<mbase::string> authorityFlags = out_request.get_kval<mbase::vector<mbase::string>>("AUTH");
+			// mbase::string userName = out_request.get_kval<mbase::string>("USERNAME");
+			// U32 modelAccessLimit = out_request.get_kval<U32>("ACCESSLIMIT");
+			// U32 maximumContextLength = out_request.get_kval<U32>("CTXSIZE");
+			// bool isSuperUser = out_request.get_kval<bool>("ISSUPER");
+			// mbase::string userAccessToken = out_request.get_kval<mbase::string>("ACCTOKEN");
+			// mbase::vector<mbase::string> authorityFlags = out_request.get_kval<mbase::vector<mbase::string>>("AUTH");
 
-			mbase::string outAccessToken;
+			// mbase::string outAccessToken;
 
-			maipErr = mHostProgram->inf_create_new_user(
-				sessionToken,
-				userName,
-				modelAccessLimit,
-				maximumContextLength,
-				isSuperUser,
-				false,
-				userAccessToken,
-				authorityFlags,
-				outAccessToken
-			);
+			// maipErr = mHostProgram->inf_create_new_user(
+			// 	sessionToken,
+			// 	userName,
+			// 	modelAccessLimit,
+			// 	maximumContextLength,
+			// 	isSuperUser,
+			// 	false,
+			// 	userAccessToken,
+			// 	authorityFlags,
+			// 	outAccessToken
+			// );
 
-			if(maipErr == mbase::InfProgram::maip_err_code::INF_SUCCESS)
-			{
-				maipPacketBuilder.set_kval("ACCTOKEN", outAccessToken);
-			}
+			// if(maipErr == mbase::InfProgram::maip_err_code::INF_SUCCESS)
+			// {
+			// 	maipPacketBuilder.set_kval("ACCTOKEN", outAccessToken);
+			// }
 		}
 
 		else if(requestString == "inf_delete_user")
 		{
 			mbase::string userName = out_request.get_kval<mbase::string>("USERNAME");
-			maipErr = mHostProgram->inf_delete_user(sessionToken, userName);
+			//maipErr = mHostProgram->inf_delete_user(sessionToken, userName);
 		}
 		
 		else if(requestString == "inf_modify_user_model_access_limit")

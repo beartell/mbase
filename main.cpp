@@ -165,7 +165,7 @@ int main()
         }
     
     }
-   
+
     /*InfProgram mainProgram;
     mbase::InfProgramInformation programInformation;
 

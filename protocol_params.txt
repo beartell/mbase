@@ -1,0 +1,349 @@
+#INF inf_access_request
+#in keys:
+- USERNAME <str>
+- ACCTOK <str>
+#out keys:
+- STOK <str>
+#Response codes: 
+- INF_SUCCESS (on success)
+- INF_AUTHORIZATION_FAILED(On access token mismatch)
+
+
+#INF inf_destroy_dession
+#in keys:
+- STOK <str>
+#out keys:
+#Response codes: 
+- INF_SUCCESS (on success)
+- INF_SESSION_TOKEN_MISMATCH (on STOK mismatch)
+
+#INF inf_get_accessible_models
+#in keys:
+- STOK <str>
+#out keys:
+- MODEL <list<str>>
+#Response codes: 
+- INF_SUCCESS (on success)
+- INF_SESSION_TOKEN_MISMATCH (on STOK mismatch)
+
+
+#INF inf_get_context_ids
+#in keys:
+- STOK <str>
+#out keys:
+- CTXID <list<uint32>>
+#Response codes: 
+- INF_SUCCESS (on success)
+- INF_SESSION_TOKEN_MISMATCH (on STOK mismatch)
+
+
+#INF inf_create_context
+#in keys:
+- STOK <str>
+- MODEL <str>
+- CTXSIZE <uint32>
+#out keys:
+- CTXID <uint32>
+#Response codes:
+- INF_SUCESS (on_success)
+- INF_SESSION_TOKEN_MISMATCH (on STOK mismatch)
+- INF_MODEL_IS_NOT_ACCESSIBLE (if the session is not authorized on the model)
+- INF_INVALID_TOKEN_LIMIT (Given context size is less then the lower threshold)
+- INF_MODEL_NAME_MISMATCH (Given model may be initialized but not loaded on the inference engine)
+- INF_USER_CONTEXT_LENGTH_EXCEEDED (Given context length is greater than the group maximum context length)
+- INF_MODEL_CONTEXT_FULL (Model's cumulative context length is full)
+- INF_FAILED_TO_CREATE_CONTEXT (Either there is no memory available for context with that length)
+
+
+#INF inf_clear_context_history
+#in keys:
+- STOK <str>
+- CTXID <uint32>
+#out keys:
+#Response codes:
+- INF_SUCCESS (on success)
+- INF_SESSION_TOKEN_MISMATCH (on STOK mismatch)
+
+
+#INF inf_get_context_status
+#in keys:
+- STOK <str>
+- CTXID <uint32>
+#out keys:
+#Response codes:
+- INF_SESSION_TOKEN_MISMATCH (on STOK mismatch)
+- INF_CONTEXT_ID_MISMATCH (If the given context id is invalid)
+- INF_CONTEXT_INITIALIZING (Context is initializing)
+- INF_CONTEXT_INACTIVE (Context is inactive)
+- INF_CONTEXT_ACTIVE (Context is processing)
+
+
+#INF inf_destroy_context
+#in_keys:
+- STOK <str>
+- CTXID <uint32>
+#out_keys:
+#Response codes:
+- INF_SUCCESS (on success)
+- INF_SESSION_TOKEN_MISMATCH (on STOK mismatch)
+- INF_CONTEXT_ID_MISMATCH (If the given context id is invalid)
+
+
+#INF inf_get_program_models
+#in_keys:
+- STOK <str>
+#out_keys:
+- MODELS <list<str>>
+#Response codes:
+- INF_SUCCESS (on success)
+- INF_SESSION_TOKEN_MISMATCH (on STOK mismatch)
+
+
+#INF inf_load_model
+#in_keys:
+- STOK <str>
+- MODEL <str>
+- CTXSIZE <uint32>
+#out_keys:
+#Response codes:
+- INF_SUCCESS (on success)
+- INF_SESSION_TOKEN_MISMATCH (on STOK mismatch)
+- INF_AUTHORIZATION_FAILED (If the MODEL_LOAD_UNLOAD authority not set)
+- INF_INVALID_PARAMS (If the context size is 0)
+- INF_MODEL_NAME_MISMATCH (Given model does not exists)
+
+
+#INF inf_unload_model
+#in_keys:
+- STOK <str>
+- MODEL <str>
+#out_keys:
+#Response codes:
+- INF_SUCCESS (on success)
+- INF_SESSION_TOKEN_MISMATCH (on STOK mismatch)
+- INF_AUTHORIZATION_FAILED (If the MODEL_LOAD_UNLOAD authority not set)
+
+
+#INF inf_create_new_user
+#in_keys:
+- STOK <str>
+- USERNAME <str>
+- ACCLIMIT <uint32>
+- CTXLENGTH <uint32>
+- BATCH_SET <uint32>
+- MAX_PROC_THREADS <uint32>
+- PROC_THREADS <uint32>
+- AUTHFLAGS <list<str>>
+- ISSUPER ? <bool> (1 or 0, NOT true or false)
+- ISSTATIC ? <bool> (1 or 0, NOT true or false)
+- ACCTOK ? <str>
+- TOP_K ? <uint32>
+- TOP_P ? <f32>
+- MIN_P ? <f32>
+- TYPICAL_P ? <f32>
+- TEMP ? <f32>
+- REPEAT_N ? <uint32>
+- REPEAT_PENALTY ? <f32>
+- REPEAT_PRESENT ? <f32>
+- REPEAT_FREQUENCY ? <f32>
+- REPEAT_LF ? <bool>
+- REPEAT_EOT ? <bool?
+- MIROSTAT_V2_TAU ? <f32>
+- MIROSTAT_V2_ETA ? <f32>
+#in_data:
+'System prompt here'
+#out_keys:
+- ACCTOK <str>
+#Response codes:
+- INF_SUCCESS
+- INF_SESSION_TOKEN_MISMATCH (on STOK mismatch)
+- INF_INVALID_PARAMS
+- INF_AUTHORIZATION_FAILED
+- INF_USER_ALREADY_EXISTS
+
+
+#INF inf_delete_user
+#in_keys:
+- STOK <str>
+- USERNAME <str>
+- ACCTOK <str>
+#out_keys:
+#Response codes:
+- INF_SUCCESS
+- INF_SESSION_TOKEN_MISMATCH (on STOK mismatch)
+- INF_AUTHOIZATION_FAILED
+- INF_INVALID_PARAMS
+- INF_CANT_DELETE_SELF
+- INF_USER_NOT_FOUND
+
+
+#INF inf_modify_user_model_access_limit
+#in_keys:
+- STOK <str>
+- USERNAME <str>
+- ACCLIMIT <uint32>
+#out_keys:
+#Response codes:
+- INF_SUCCESS
+- INF_SESSION_TOKEN_MISMATCH (on STOK mismatch)
+- INF_AUTHOIZATION_FAILED
+- INF_USER_NOT_FOUND
+
+
+#INF inf_modify_user_maximum_context_length
+#in_keys:
+- STOK <str>
+- USERNAME <str>
+- CTXLENGTH <uint32>
+#out_keys:
+#Response codes:
+- INF_SUCCESS
+- INF_SESSION_TOKEN_MISMATCH (on STOK mismatch)
+- INF_AUTHOIZATION_FAILED
+- INF_USER_NOT_FOUND
+
+
+#INF inf_modify_user_batch_size
+#in_keys:
+- STOK <str>
+- USERNAME <str>
+- BATCH_SET <uint32>
+#out_keys:
+#Response codes:
+- INF_SUCCESS
+- INF_SESSION_TOKEN_MISMATCH (on STOK mismatch)
+- INF_AUTHOIZATION_FAILED
+- INF_USER_NOT_FOUND
+
+
+#INF inf_modify_user_processor_thread_count
+#in_keys:
+- STOK <str>
+- USERNAME <str>
+- PROC_THREADS <uint32>
+#out_keys:
+#Response codes:
+- INF_SUCCESS
+- INF_SESSION_TOKEN_MISMATCH (on STOK mismatch)
+- INF_AUTHOIZATION_FAILED
+- INF_USER_NOT_FOUND
+
+#INF inf_modify_user_max_processor_thread_count
+#in_keys:
+- STOK <str>
+- USERNAME <str>
+- MAX_PROC_THREADS <uint32>
+#out_keys:
+#Response codes:
+- INF_SUCCESS
+- INF_SESSION_TOKEN_MISMATCH (on STOK mismatch)
+- INF_AUTHOIZATION_FAILED
+- INF_USER_NOT_FOUND
+
+#INF inf_modify_user_system_prompt
+#in_keys:
+- STOK <str>
+- USERNAME <str>
+#in_data:
+'System prompt here'
+#out_keys:
+#Response codes:
+- INF_SUCCESS
+- INF_SESSION_TOKEN_MISMATCH (on STOK mismatch)
+- INF_AUTHOIZATION_FAILED
+- INF_USER_NOT_FOUND
+
+#INF inf_modify_user_make_superuser
+#in_keys:
+- STOK <str>
+- USERNAME <str>
+- ACCTOK <str>
+#out_keys:
+#Response codes:
+- INF_SUCCESS
+- INF_SESSION_TOKEN_MISMATCH (on STOK mismatch)
+- INF_AUTHOIZATION_FAILED
+- INF_USER_NOT_FOUND
+
+#INF inf_modify_user_unmake_superuser
+#in_keys:
+- STOK <str>
+- USERNAME <str>
+- ACCTOK <str>
+#out_keys:
+#Response codes:
+- INF_SUCCESS
+- INF_SESSION_TOKEN_MISMATCH (on STOK mismatch)
+- INF_AUTHOIZATION_FAILED
+- INF_USER_NOT_FOUND
+
+#INF inf_modify_user_accept_models
+#in_keys:
+- STOK <str>
+- USERNAME <str>
+- MODEL <list<str>>
+#out_keys:
+#Response codes:
+- INF_SUCCESS
+- INF_SESSION_TOKEN_MISMATCH (on STOK mismatch)
+- INF_AUTHOIZATION_FAILED
+- INF_USER_NOT_FOUND
+- INF_MODEL_NAME_MISMATCH
+
+#INF inf_modify_inf_modify_user_set_authority_flags
+#in_keys:
+- STOK <str>
+- USERNAME <str>
+- ACCTOK <str>
+- AUTHFLAGS <list<str>>
+#out_keys:
+#Response codes:
+- INF_SUCCESS
+- INF_SESSION_TOKEN_MISMATCH (on STOK mismatch)
+- INF_AUTHOIZATION_FAILED
+- INF_USER_NOT_FOUND
+
+#EXEC exec_set_input
+#in_keys:
+- STOK <str>
+- CTXID <str>
+- ROLE <str>
+#in_data
+'Input here'
+#out_keys:
+- MSGID <uint32>
+#Response codes:
+- INF_SUCCESS
+- INF_SESSION_TOKEN_MISMATCH (on STOK mismatch)
+- INF_CONTEXT_ID_MISMATCH
+- INF_INVALID_PARAMS
+
+#EXEC exec_execute_input
+#in_keys:
+- STOK <str>
+- CTXID <str>
+- MSGID <list<str>>
+#out_keys:
+#Response codes:
+- INF_SESSION_TOKEN_MISMATCH (on STOK mismatch)
+- INF_CONTEXT_ID_MISMATCH
+- EXEC_SUCCESS
+- EXEC_MESSAGE_ID_MISMATCH
+- EXEC_TOKENIZATION_FAILED
+- EXEC_TOKEN_LIMIT_EXCEEDED
+- EXEC_PROCESS_HALTED
+
+#EXEC exec_next
+#in_keys:
+- STOK <str>
+- CTXID <str>
+#out_keys:
+- IS_SPECIAL ? <bool>
+#out_data:
+'Output message here'
+#Response codes:
+- INF_SESSION_TOKEN_MISMATCH (on STOK mismatch)
+- INF_CONTEXT_ID_MISMATCH
+- INF_CONTEXT_HALTED
+- EXEC_MISSING_MESSAGE
+- EXEC_SUCCESS

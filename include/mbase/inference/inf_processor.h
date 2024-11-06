@@ -195,6 +195,11 @@ private:
 
 };
 
+// class MBASE_API InfTextToTextEmbedder : public InfProcessorBase {
+//public:
+//private:
+// };
+
 MBASE_END
 
 #endif // !MBASE_INF_PROCESSOR_H
