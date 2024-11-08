@@ -111,6 +111,9 @@
 #define MBASE_BEGIN MBASE_STD_BEGIN
 #define MBASE_END MBASE_STD_END
 
+#define MBASE_EXTERN_C_BEGIN extern "C" {
+#define MBASE_EXTERN_C_END }
+
 #define MBASE_NULL_CHECK(in_arg) (in_arg == nullptr)
 #define MBASE_NULL_CHECK_RETURN(in_arg) \
 if(MBASE_NULL_CHECK(in_arg))\

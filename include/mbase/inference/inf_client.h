@@ -4,7 +4,7 @@
 #include <mbase/common.h>
 #include <mbase/behaviors.h>
 #include <mbase/string.h>
-#include <mbase/inference/inf_processor.h>
+#include <mbase/inference/inf_t2t_processor.h>
 #include <mbase/unordered_map.h>
 #include <mbase/framework/handler_base.h>
 
@@ -13,16 +13,13 @@ MBASE_BEGIN
 // inheriting from InfClientBase seemed unneccesary, so I removed it.
 
 class MBASE_API InfClientTextToText {
-public:
-	
-	using token_vector = mbase::vector<InfTextToTextProcessor::inf_token>;
+public:	
 	using chat_history_map = mbase::unordered_map<U32, context_line>;
 	using size_type = SIZE_T;
 
 	enum flags : U8 {
 		INF_CLIENT_SUCCESS,
 		INF_CLIENT_ERR_MSG_ID_MISMATCH,
-		INF_CLIENT_ERR_SAMPLER_MISMATCH,
 		INF_CLIENT_ERR_MISSING_INPUT,
 		INF_CLIENT_ERR_NOT_REGISTERED
 	};
@@ -35,17 +32,18 @@ public:
 	InfClientTextToText& operator=(const InfClientTextToText& in_rhs);
 
 	bool is_registered() const;
-	flags get_host_processor(InfTextToTextProcessor*& out_processor);
+	flags get_host_processor(InfProcessorBase*& out_processor);
 	flags get_message(U32 in_msg_id, context_line& out_message);
 	flags get_message_array(PTRU32 in_msg_ids, size_type in_id_count, mbase::vector<context_line>& out_messages);
 	
 	#ifdef MBASE_INTERNAL_API
-	GENERIC _on_register(InfTextToTextProcessor* in_processor);
+	GENERIC _on_register(InfProcessorBase* in_processor);
 	GENERIC _on_unregister();
 	#endif
 	
-	virtual GENERIC on_register(InfTextToTextProcessor* out_processor) = 0;
-	virtual GENERIC on_write(CBYTEBUFFER out_data, size_type out_size, InfTextToTextProcessor::inf_token out_token, bool out_is_special, bool out_is_finish) = 0;
+	virtual GENERIC on_register(InfProcessorBase* out_processor) = 0;
+	virtual GENERIC on_embedding_data(const F32* out_data, size_type out_size);
+	virtual GENERIC on_write(CBYTEBUFFER out_data, size_type out_size, inf_text_token out_token, bool out_is_special, bool out_is_finish) = 0;
 	virtual GENERIC on_finish(size_type out_total_token_size, InfTextToTextProcessor::finish_state out_finish_state) = 0;
 	virtual GENERIC on_unregister() = 0;
 
@@ -57,7 +55,7 @@ public:
 	GENERIC clear_chat_history(); // clears the chat map
 protected:
 	
-	InfTextToTextProcessor* mT2TProcessor;
+	InfProcessorBase* mBaseProcessor;
 	chat_history_map mChatHistory;
 	U32 mMessageIndexer;
 };
@@ -101,7 +99,7 @@ protected:
 //
 //	using chat_history_map = mbase::unordered_map<U32, context_line>;
 //	using sampler_map = mbase::unordered_map<mbase::string, InfSamplingBase*>;
-//	using token_vector = mbase::vector<InfTextToTextProcessor::inf_token>;
+//	using token_vector = mbase::vector<InfTextToTextProcessor::inf_text_token>;
 //	using size_type = SIZE_T;
 //
 //	friend class InfTextToTextProcessor;
@@ -161,7 +159,7 @@ protected:
 //
 //	GENERIC _register_self_client_params(
 //		InfTextToTextProcessor* in_processor,
-//		const mbase::vector<InfTextToTextProcessor::inf_token>& in_token_vector
+//		const mbase::vector<InfTextToTextProcessor::inf_text_token>& in_token_vector
 //	);
 //
 //	InfTextToTextProcessor* mfrHostProcessor;
@@ -169,7 +167,7 @@ protected:
 //	bool mIsUnregistering;
 //	bool mIsLogicProcessed;
 //	bool mIsDataSet;
-//	mbase::vector<InfTextToTextProcessor::inf_token> mParsedTokens;
+//	mbase::vector<InfTextToTextProcessor::inf_text_token> mParsedTokens;
 //	mbase::vector<InfSamplingBase*> mSamplingOrder;
 //	mbase::unordered_map<U32, context_line> mChatHistory;
 //	sampler_map mSamplerMap;

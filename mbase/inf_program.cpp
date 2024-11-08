@@ -1,5 +1,6 @@
 #include <mbase/inference/inf_program.h>
 #include <mbase/inference/inf_sampling.h>
+#include <mbase/inference/inf_t2t_model.h>
 #include <mbase/inference/inf_gguf_metadata_configurator.h>
 #include <mbase/maip_parser.h>
 #include <mbase/pc/pc_state.h>
@@ -109,7 +110,7 @@ GENERIC InfMaipTunedClient::on_register(InfTextToTextProcessor* out_processor)
 {
 }
 
-GENERIC InfMaipTunedClient::on_write(CBYTEBUFFER out_data, size_type out_size, InfTextToTextProcessor::inf_token out_token, bool out_is_special, bool out_is_finish)
+GENERIC InfMaipTunedClient::on_write(CBYTEBUFFER out_data, size_type out_size, inf_text_token out_token, bool out_is_special, bool out_is_finish)
 {
 	if (!mManagerClient->mPeer->is_connected())
 	{
@@ -1099,7 +1100,7 @@ InfProgram::maip_err_code InfProgram::exec_execute_input(const mbase::string& in
 		return maip_err_code::EXEC_MESSAGE_ID_MISMATCH;
 	}
 
-	mbase::InfClientTextToText::token_vector tokenVector;
+	inf_text_token_vector tokenVector;
 	if(hostProcessor->tokenize_input(outMessages.data(), outMessages.size(), tokenVector) != InfProcessorBase::flags::INF_PROC_SUCCESS)
 	{
 		// This shouldn't happen

@@ -24,7 +24,7 @@ mInactivityCounter = 0;
 static U32 gSeqIdCounter = 0;
 
 InfClientTextToText::InfClientTextToText():
-	mT2TProcessor(NULL),
+	mBaseProcessor(NULL),
 	mChatHistory(),
 	mMessageIndexer(0)
 {
@@ -32,7 +32,7 @@ InfClientTextToText::InfClientTextToText():
 }
 
 InfClientTextToText::InfClientTextToText(const InfClientTextToText& in_rhs):
-	mT2TProcessor(NULL)
+	mBaseProcessor(NULL)
 {
 	mChatHistory = in_rhs.mChatHistory;
 	mMessageIndexer = in_rhs.mMessageIndexer;
@@ -40,10 +40,15 @@ InfClientTextToText::InfClientTextToText(const InfClientTextToText& in_rhs):
 
 InfClientTextToText::~InfClientTextToText()
 {
-	InfTextToTextProcessor* t2tProcessor = NULL;
-	if(get_host_processor(t2tProcessor) == flags::INF_CLIENT_SUCCESS)
+	InfProcessorBase* baseProcessor = NULL;
+	if(get_host_processor(baseProcessor) == flags::INF_CLIENT_SUCCESS)
 	{
-		t2tProcessor->release_inference_client_stacked();
+		if(baseProcessor->get_processor_type() == InfProcessorBase::processor_type::TEXT_TO_TEXT)
+		{
+			InfTextToTextProcessor* t2tProcessor = static_cast<InfTextToTextProcessor*>(baseProcessor);
+			t2tProcessor->release_inference_client_stacked();
+		}
+		//t2tProcessor->release_inference_client_stacked();
 	}
 }
 
@@ -55,14 +60,14 @@ InfClientTextToText& InfClientTextToText::operator=(const InfClientTextToText& i
 
 bool InfClientTextToText::is_registered() const
 {
-	return (mT2TProcessor != NULL);
+	return (mBaseProcessor != NULL);
 }
 
-InfClientTextToText::flags InfClientTextToText::get_host_processor(InfTextToTextProcessor * &out_processor)
+InfClientTextToText::flags InfClientTextToText::get_host_processor(InfProcessorBase * &out_processor)
 {
 	if(is_registered())
 	{
-		out_processor = mT2TProcessor;
+		out_processor = mBaseProcessor;
 		return flags::INF_CLIENT_SUCCESS;
 	}
 	return flags::INF_CLIENT_ERR_NOT_REGISTERED;
@@ -99,15 +104,20 @@ InfClientTextToText::flags InfClientTextToText::get_message_array(PTRU32 in_msg_
 	return flags::INF_CLIENT_SUCCESS;
 }
 
-GENERIC InfClientTextToText::_on_register(InfTextToTextProcessor* in_processor)
+GENERIC InfClientTextToText::on_embedding_data(const F32* out_data, size_type out_size)
 {
-	mT2TProcessor = in_processor;
-	on_register(mT2TProcessor);
+
+}
+
+GENERIC InfClientTextToText::_on_register(InfProcessorBase* in_processor)
+{
+	mBaseProcessor = in_processor;
+	on_register(mBaseProcessor);
 }
 
 GENERIC InfClientTextToText::_on_unregister()
 {
-	mT2TProcessor = NULL;
+	mBaseProcessor = NULL;
 	on_unregister();
 }
 

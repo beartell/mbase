@@ -106,6 +106,8 @@ struct InfTemplateZephyr {
 	mbase::string userEnd = "<|endoftext|>\n";
 };
 
+MBASE_EXTERN_C_BEGIN
+
 GENERIC tokenizer_align_instruct_template(const mbase::string& in_template,
 	mbase::string& out_system_start,
 	mbase::string& out_assistant_start,
@@ -226,6 +228,8 @@ GENERIC tokenizer_align_instruct_template(const mbase::string& in_template,
 		out_user_end = chatTemplate.userEnd;
 	}
 }
+
+MBASE_EXTERN_C_END
 
 MBASE_END
 
