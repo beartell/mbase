@@ -6,6 +6,9 @@
 
 MBASE_BEGIN
 
+class InfTextToTextProcessor;
+class InfEmbedderProcessor;
+
 class MBASE_API InfModelTextToText : public InfModelBase {
 public:
 	enum class flags : U8 {
@@ -86,7 +89,12 @@ public:
 		const inf_sampling_set& in_sampler_set
 	);
 	
-	GENERIC manual_context_deletion(InfTextToTextProcessor* in_processor); // This is invoked if the processor is being destroyed on its destructor NOTE: THIS IS AN INTERNAL CALL
+	flags register_context_process(
+		InfEmbedderProcessor* in_processor,
+		const U32& in_context_length,
+		U32 in_batch_size,
+		U32 in_thread_count
+	);
 
 	virtual GENERIC on_initialize_fail(init_fail_code out_fail_code);
 	virtual GENERIC on_initialize() = 0;
@@ -129,7 +137,6 @@ private:
 	U32 mEmbeddingLength;
 	F32 mQuantizationCoefficient;
 	init_fail_code mInitFailCode;
-	bool mHasEmbeddedSystemPrompt;
 	bool mIsEmbeddingModel; // Not supported if (llama_model_has_encoder(model) && llama_model_has_decoder(model) is true)
 };
 

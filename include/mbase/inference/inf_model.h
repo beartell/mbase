@@ -18,12 +18,12 @@ MBASE_BEGIN
 
 class InfModelBase;
 class InfProcessorBase;
-class InfTextToTextProcessor;
 
 class MBASE_API InfModelBase : public mbase::logical_processor {
 public:
 	using size_type = SIZE_T;
-	using context_processor_list = mbase::list<InfProcessorBase*>;
+	using watcher_type = mbase::inf_processor_watcher<InfProcessorBase>;
+	using context_processor_list = mbase::list<watcher_type>;
 	using iterator = typename context_processor_list::iterator;
 	using const_iterator = typename context_processor_list::const_iterator;
 	using reverse_iterator = typename context_processor_list::reverse_iterator;
@@ -47,6 +47,8 @@ public:
 	bool signal_state_destroying() const;
 	bool signal_initializing() const;
 	bool signal_destroying() const;
+
+	GENERIC reset_base_signals();
 protected:
 	volatile bool mIsInitialized;
 	processor_signal mInitializeSignal;

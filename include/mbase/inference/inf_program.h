@@ -29,7 +29,7 @@ public:
 	InfMaipTunedClient();
 	InfMaipTunedClient(InfClientSession& in_client);
 
-	GENERIC on_register(InfTextToTextProcessor* out_processor) override;
+	GENERIC on_register(InfProcessorBase* out_processor) override;
 	GENERIC on_write(CBYTEBUFFER out_data, size_type out_size, inf_text_token out_token, bool out_is_special, bool out_is_finish) override;
 	GENERIC on_finish(size_type out_total_token_size, InfTextToTextProcessor::finish_state out_finish_state) override;
 	GENERIC on_unregister() override;

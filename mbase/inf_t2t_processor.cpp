@@ -38,7 +38,6 @@ InfTextToTextProcessor::InfTextToTextProcessor():
 	mContextCursor(0),
 	mBatchSize(0),
 	mThreadCount(0),
-	mBatchThreadCount(0),
 	mFinishState(finish_state::FINISHED),
 	mAssignedClient(NULL),
 	mLastFailCode(init_fail_code::MODEL_NOT_INITIALIZED),
@@ -54,11 +53,13 @@ InfTextToTextProcessor::~InfTextToTextProcessor()
 		stop_processor();
 		llama_free(mModelContext);
 		//release_inference_client();
-		if(this->mTargetModel_md_model)
-		{
-			InfModelTextToText* t2tModel = static_cast<InfModelTextToText*>(this->mTargetModel_md_model);
-			t2tModel->manual_context_deletion(this);	
-		}
+		this->release_object_watcher();
+
+		// if(mAssignedClient)
+		// {
+		// 	mAssignedClient->_on_unregister();
+		// 	mAssignedClient = NULL;
+		// }
 	}
 }
 
@@ -77,11 +78,6 @@ bool InfTextToTextProcessor::is_available() const
 	return true;
 }
 
-bool InfTextToTextProcessor::signal_state_embedding_process() const
-{
-	return mEmbeddingSignal.get_signal_state();
-}
-
 bool InfTextToTextProcessor::signal_state_input_process() const
 {
 	return mInputSignal.get_signal_state();
@@ -90,11 +86,6 @@ bool InfTextToTextProcessor::signal_state_input_process() const
 bool InfTextToTextProcessor::signal_state_decode_process() const
 {
 	return mDecodeSignal.get_signal_state();
-}
-
-bool InfTextToTextProcessor::signal_embedding_process() const
-{
-	return mEmbeddingSignal.get_signal();
 }
 
 bool InfTextToTextProcessor::signal_input_process() const
@@ -192,7 +183,7 @@ InfTextToTextProcessor::flags InfTextToTextProcessor::tokenize_input(CBYTEBUFFER
 
 	inf_text_token_vector tokenizedInput(in_size * 4);
 	InfModelTextToText* t2tModel = static_cast<InfModelTextToText*>(this->mTargetModel_md_model);
-	I32 tokenCount = llama_tokenize(t2tModel->get_raw_model(), in_data, in_size, tokenizedInput.data(), in_size * 4, false, true);
+	I32 tokenCount = llama_tokenize(t2tModel->get_raw_model(), in_data, in_size, tokenizedInput.data(), in_size * 4, true, true);
 
 	if(tokenCount == -1)
 	{
@@ -294,7 +285,6 @@ InfTextToTextProcessor::flags InfTextToTextProcessor::execute_input(const inf_te
 
 	mTokenizedInput = in_tokens;
 	mInputSignal.set_signal();
-	//mEmbeddingSignal.set_signal();
 	start_processor();
 
 	return flags::INF_PROC_SUCCESS;
@@ -358,7 +348,6 @@ InfTextToTextProcessor::flags InfTextToTextProcessor::initialize(
 	const mbase::string& in_context_id,
 	const U32& in_batch_size,
 	const U32& in_thread_count,
-	const U32& in_batch_thread_count,
 	const bool& in_flash_attention,
 	const inf_sampling_set& in_sampler_set
 )
@@ -383,7 +372,6 @@ InfTextToTextProcessor::flags InfTextToTextProcessor::initialize(
 	mContextIdentifier = in_context_id;
 	mBatchSize = in_batch_size;
 	mThreadCount = in_thread_count;
-	mBatchThreadCount = in_batch_thread_count;
 	mSamplerDescriptions = in_sampler_set;
 	mFlashAttention = in_flash_attention;
 
@@ -400,7 +388,6 @@ InfTextToTextProcessor::flags InfTextToTextProcessor::initialize_sync(
 	const mbase::string& in_context_id,
 	const U32& in_batch_size,
 	const U32& in_thread_count,
-	const U32& in_batch_thread_count,
 	const bool& in_flash_attention,
 	const inf_sampling_set& in_sampler_set
 )
@@ -411,7 +398,6 @@ InfTextToTextProcessor::flags InfTextToTextProcessor::initialize_sync(
 		in_context_id,
 		in_batch_size,
 		in_thread_count,
-		in_batch_thread_count,
 		in_flash_attention,
 		in_sampler_set
 	);
@@ -505,78 +491,6 @@ GENERIC InfTextToTextProcessor::on_destroying()
 
 }
 
-GENERIC InfTextToTextProcessor::_embedding_procedure()
-{
-	if(llama_get_kv_cache_used_cells(mModelContext))
-	{
-		llama_kv_cache_clear(mModelContext);
-	}
-
-	// TODO: Check tokenizer.ggml.add_eos_token or append SEP token manually
-
-	mInputBatch = llama_batch_init(mContextLength, 0, 1);
-	for(size_type i = 0; i < mTokenizedInput.size(); ++i)
-	{
-		common_batch_add(mInputBatch, mTokenizedInput[i], i, {0}, true);
-	}
-
-	InfModelTextToText* t2tModel = static_cast<InfModelTextToText*>(this->mTargetModel_md_model);
-
-	enum llama_pooling_type pollingType = llama_pooling_type(mModelContext);
-	U32 tmpEmbedCount = 0;
-	
-	if(pollingType == LLAMA_POOLING_TYPE_NONE)
-	{
-		tmpEmbedCount = mTokenizedInput.size();
-	}
-
-	else
-	{
-		tmpEmbedCount = 1;
-	}
-
-	U32 modelEmbeddingLength = 0;
-	t2tModel->get_embedding_length(modelEmbeddingLength);
-	std::cout << "Embed count: " << tmpEmbedCount << std::endl;
-	std::cout << "Embedding length: " << modelEmbeddingLength << std::endl;
-	mbase::vector<F32> embeddingVector(tmpEmbedCount * modelEmbeddingLength, 0);
-	
-	printf("Token count is: %d\n", mInputBatch.n_tokens);
-	printf("Token count is: %d\n", mTokenizedInput.size());
-
-	I32 decodeResult = llama_decode(mModelContext, mInputBatch);
-	if(decodeResult)
-	{
-		std::cout << "Problem" << decodeResult << std::endl;
-	}
-	else
-	{
-		PTRF32 embd = llama_get_embeddings_seq(mModelContext, mInputBatch.seq_id[0][0]);
-
-		common_embd_normalize(embd, embeddingVector.data(), modelEmbeddingLength); // Default normalization
-		for(I32 j = 0; j < modelEmbeddingLength; j++)
-		{
-			printf("%f, ", embeddingVector[j]);
-		}
-
-		printf("\n\n\n");
-	}
-	llama_batch_free(mInputBatch);
-	// Batch decode params list
-	// 1- context handle
-	// 2- batch
-	// 3- embeddingVector begin
-	// 4- 
-	
-
-	// for(auto& n: embeddingVector)
-	// {
-	// 	std::cout << n << "; " << std::endl;
-	// }
-
-	mEmbeddingSignal.reset_signal_with_state();
-}
-
 GENERIC InfTextToTextProcessor::_decode_input()
 {
 	// if the input signal is set, process
@@ -586,7 +500,6 @@ GENERIC InfTextToTextProcessor::_decode_input()
 	}
 	
 	llama_sampler_reset(mSamplerChain);
-
 	mInputBatch = llama_batch_get_one(mTokenizedInput.data(), mTokenizedInput.size());
 
 	mContextCursor = mInputBatch.n_tokens;
@@ -789,19 +702,15 @@ GENERIC InfTextToTextProcessor::_initialize_context()
 			llama_sampler_init_dist(seedValue)
 		);
 	}
-	
-	mIsRunning = true;
-	mInitializeSignal.reset_signal_with_state();
-	mIsRegistered = true;
-
 	mInitializeMethodSignal.set_signal_with_state();
 }
 
 GENERIC InfTextToTextProcessor::_destroy_context()
 {
+	// CONTEXT FACTORY RESET
+
 	llama_free(mModelContext);
 	mModelContext = NULL;
-	// What to do with mInputBatch ?
 	mPresetCandidates.clear();
 	mTokenizedInput.clear();
 	mSamplerDescriptions.clear();
@@ -809,7 +718,6 @@ GENERIC InfTextToTextProcessor::_destroy_context()
 	mContextCursor = 0;
 	mBatchSize = 0;
 	mThreadCount = 0;
-	mBatchThreadCount = 0;
 	mFlashAttention = false;
 	mIsRunning = false;
 	mFinishState = finish_state::FINISHED;
@@ -817,14 +725,17 @@ GENERIC InfTextToTextProcessor::_destroy_context()
 	mLastFailCode = init_fail_code::MODEL_NOT_INITIALIZED;
 
 	clear_samplers();
+	reset_base_signals();
 
-	mInitializeSignal.reset_signal_with_state();
 	mTokenGeneratedSignal.reset_signal_with_state();
 	mDecodeSignal.reset_signal_with_state();
-	mDestroySignal.reset_signal_with_state();
+	mInitializeFailSignal.reset_signal_with_state();
+	mInitializeMethodSignal.reset_signal_with_state();
+	mInputSignal.reset_signal_with_state();
+	
 	mTargetModel_md_model = NULL;
 	mIsRegistered = false;
-
+	mDestroySignal.reset_signal_with_state();
 	mDestroyMethodSignal.set_signal_with_state();
 }
 
@@ -838,11 +749,15 @@ GENERIC InfTextToTextProcessor::update()
 	if(signal_init_fail_method())
 	{
 		mInitializeFailSignal.reset_signal_with_state();
+		this->release_object_watcher();
 		on_initialize_fail(get_last_fail_code());
 	}
 
 	if(signal_init_method())
 	{
+		mIsRunning = true;
+		mIsRegistered = true;
+		mInitializeSignal.reset_signal_with_state();
 		mInitializeMethodSignal.reset_signal_with_state();
 		on_initialize();
 	}
@@ -892,6 +807,7 @@ GENERIC InfTextToTextProcessor::update()
 		{
 			mDestroyMethodSignal.reset_signal_with_state();
 			stop_processor();
+			this->release_object_watcher();
 			on_destroy();
 		}
 	}
@@ -911,11 +827,6 @@ GENERIC InfTextToTextProcessor::update_t()
 
 			if (is_running())
 			{
-				if(signal_embedding_process())
-				{
-					_embedding_procedure();
-				}
-
 				if (signal_input_process())
 				{
 					_decode_input();

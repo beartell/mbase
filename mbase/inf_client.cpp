@@ -40,16 +40,16 @@ InfClientTextToText::InfClientTextToText(const InfClientTextToText& in_rhs):
 
 InfClientTextToText::~InfClientTextToText()
 {
-	InfProcessorBase* baseProcessor = NULL;
-	if(get_host_processor(baseProcessor) == flags::INF_CLIENT_SUCCESS)
-	{
-		if(baseProcessor->get_processor_type() == InfProcessorBase::processor_type::TEXT_TO_TEXT)
-		{
-			InfTextToTextProcessor* t2tProcessor = static_cast<InfTextToTextProcessor*>(baseProcessor);
-			t2tProcessor->release_inference_client_stacked();
-		}
-		//t2tProcessor->release_inference_client_stacked();
-	}
+	// InfProcessorBase* baseProcessor = NULL;
+	// if(get_host_processor(baseProcessor) == flags::INF_CLIENT_SUCCESS)
+	// {
+	// 	if(baseProcessor->get_processor_type() == InfProcessorBase::processor_type::TEXT_TO_TEXT)
+	// 	{
+	// 		InfTextToTextProcessor* t2tProcessor = static_cast<InfTextToTextProcessor*>(baseProcessor);
+	// 		t2tProcessor->release_inference_client_stacked();
+	// 	}
+	// 	//t2tProcessor->release_inference_client_stacked();
+	// }
 }
 
 InfClientTextToText& InfClientTextToText::operator=(const InfClientTextToText& in_rhs)

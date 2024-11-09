@@ -13,6 +13,7 @@
 #include <mbase/inference/inf_sampling.h>
 #include <mbase/inference/inf_sampling_set.h>
 #include <mbase/framework/logical_processing.h>
+#include <mbase/framework/object_watcher.h>
 #include <mbase/pc/pc_diagnostics.h>
 #include <mutex>
 #include <llama.h>
@@ -46,7 +47,6 @@ MBASE_BEGIN
     }
 */
 
-
 static const U32 gProcessorMinimumTokenCount = 32;
 
 class InfClientTextToText;
@@ -73,7 +73,8 @@ public:
 		INF_PROC_INFO_DESTROYING,
 		INF_PROC_INFO_HALTED,
 		INF_PROC_INFO_CONTINUE,
-		INF_PROC_INFO_NEED_UPDATE
+		INF_PROC_INFO_NEED_UPDATE,
+		INF_PROC_INFO_NOT_IMPLEMENTED
 	};
 
 	enum class processor_type : U8 {
@@ -105,8 +106,13 @@ public:
 	const mbase::string& get_context_identifier();
 	processor_type get_processor_type();
 
+	GENERIC acquire_object_watcher(mbase::inf_processor_watcher<InfProcessorBase>* in_watcher);
+	GENERIC release_object_watcher();
 	GENERIC halt();
 	GENERIC resume();
+	GENERIC reset_base_signals();
+	virtual flags destroy();
+	virtual flags destroy_sync();
 
 protected:
 	InfModelBase* mTargetModel_md_model;
@@ -118,6 +124,7 @@ protected:
 	U32 mContextLength;
 	U32 mInactivityThreshold;
 	mbase::string mContextIdentifier;
+	mbase::inf_processor_watcher<InfProcessorBase>* mTargetWatcher;
 }; // TODO: speech-to-text(whisper.cpp), text-to-text(llama.cpp), text-to-speech<EXPERIMENTAL>(bark.cpp), embedder
 
 // class MBASE_API InfTextToTextEmbedder : public InfProcessorBase {

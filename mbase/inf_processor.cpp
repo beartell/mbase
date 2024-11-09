@@ -106,6 +106,24 @@ InfProcessorBase::processor_type InfProcessorBase::get_processor_type()
 	return mProcessorType;
 }
 
+GENERIC InfProcessorBase::acquire_object_watcher(mbase::inf_processor_watcher<InfProcessorBase>* in_watcher)
+{
+	if(in_watcher)
+	{
+		mTargetWatcher = in_watcher;
+		mTargetWatcher->mSubject = this;
+		mTargetWatcher->mContextLength = mContextLength;
+	}
+}
+
+GENERIC InfProcessorBase::release_object_watcher()
+{
+	if(mTargetWatcher)
+	{
+		mTargetWatcher->mSubject = NULL;
+	}
+}
+
 GENERIC InfProcessorBase::halt()
 {
 	mIsRunning = false;
@@ -114,6 +132,22 @@ GENERIC InfProcessorBase::halt()
 GENERIC InfProcessorBase::resume()
 {
 	mIsRunning = true;
+}
+
+GENERIC InfProcessorBase::reset_base_signals()
+{
+	mInitializeSignal.reset_signal_with_state();
+	mDestroySignal.reset_signal_with_state();
+}
+
+InfProcessorBase::flags InfProcessorBase::destroy()
+{
+	return flags::INF_PROC_INFO_NOT_IMPLEMENTED;
+}
+
+InfProcessorBase::flags InfProcessorBase::destroy_sync()
+{
+	return flags::INF_PROC_INFO_NOT_IMPLEMENTED;
 }
 
 MBASE_END

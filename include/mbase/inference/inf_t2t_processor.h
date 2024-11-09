@@ -54,7 +54,6 @@ public:
 		const mbase::string& in_context_id,
 		const U32& in_batch_size,
 		const U32& in_thread_count,
-		const U32& in_batch_thread_count,
 		const bool& in_flash_attention,
 		const inf_sampling_set& in_sampler_set
 	);
@@ -64,12 +63,11 @@ public:
 		const mbase::string& in_context_id,
 		const U32& in_batch_size,
 		const U32& in_thread_count,
-		const U32& in_batch_thread_count,
 		const bool& in_flash_attention,
 		const inf_sampling_set& in_sampler_set
 	);
-	flags destroy();
-	flags destroy_sync();
+	flags destroy() override;
+	flags destroy_sync() override;
 	GENERIC release_inference_client();
 	GENERIC release_inference_client_stacked();
 	#ifdef MBASE_INTERNAL_API
@@ -87,7 +85,6 @@ public:
 	virtual GENERIC on_destroy() = 0;
 
 private:	
-	GENERIC _embedding_procedure();
 	GENERIC _decode_input();
 	GENERIC _decode_next();
 	GENERIC _initialize_context();
@@ -103,8 +100,6 @@ private:
 	U32 mContextCursor; // -----> if it exceeds the context size, stop generating
 	U32 mBatchSize;
 	U32 mThreadCount;
-	U32 mBatchThreadCount;
-	processor_signal mEmbeddingSignal;
 	processor_signal mInputSignal;
 	processor_signal mTokenGeneratedSignal;
 	processor_signal mDecodeSignal;
@@ -116,7 +111,6 @@ private:
 	PcDiagnostics mDiagnostics;
 	init_fail_code mLastFailCode;	
 	bool mFlashAttention;
-
 };
 
 MBASE_END

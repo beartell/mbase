@@ -100,4 +100,10 @@ bool InfModelBase::signal_destroying() const
 	return mDestroySignal.get_signal();
 }
 
+GENERIC InfModelBase::reset_base_signals()
+{
+	mInitializeSignal.reset_signal_with_state();
+	mDestroySignal.reset_signal_with_state();
+}
+
 MBASE_END

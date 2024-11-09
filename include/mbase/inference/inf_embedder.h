@@ -48,8 +48,8 @@ public:
         const U32& in_batch_size,
         const U32& in_thread_count
     );
-    flags destroy();
-    flags destroy_sync();
+    flags destroy() override;
+    flags destroy_sync() override;
     GENERIC release_inference_client();
     GENERIC update() override;
     GENERIC update_t() override;

@@ -20,8 +20,10 @@ using namespace mbase;
 
 class my_client : public mbase::InfClientTextToText {
 public:
-    GENERIC on_register(InfTextToTextProcessor* out_processor) override 
+    GENERIC on_register(InfProcessorBase* out_processor) override 
     {
+        msgIds.clear();
+        clear_chat_history();
         std::cout << "Client is registered" << std::endl;
         U32 outMsgId = 0;
         this->add_message(L"You are a helpful assistant.", context_role::SYSTEM, outMsgId);
@@ -33,9 +35,11 @@ public:
         mbase::vector<context_line> txtMessages;
         this->get_message_array(msgIds.data(), msgIds.size(), txtMessages);
         
-        InfTextToTextProcessor* txtOut;
-        get_host_processor(txtOut);
-
+        InfProcessorBase* procBase;
+        get_host_processor(procBase);
+        
+        InfTextToTextProcessor* txtOut = static_cast<InfTextToTextProcessor*>(procBase);
+        
         inf_text_token_vector tv;
         std::cout << (I32)txtOut->tokenize_input(txtMessages.data(), txtMessages.size(), tv) << std::endl;
         std::cout << (I32)txtOut->execute_input(tv, true) << std::endl;
@@ -45,10 +49,13 @@ public:
     GENERIC on_write(CBYTEBUFFER out_data, size_type out_size, inf_text_token out_token, bool out_is_special, bool out_is_finish) override 
     {        
         fflush(stdout);
-        printf("%s", out_data);
+        //printf("%s", out_data);
         totalMessage += out_data;
-        InfTextToTextProcessor* txtOut;
-        get_host_processor(txtOut);
+        InfProcessorBase* procBase;
+        get_host_processor(procBase);
+        
+        InfTextToTextProcessor* txtOut = static_cast<InfTextToTextProcessor*>(procBase);
+
         txtOut->next();
     }
 
@@ -59,7 +66,8 @@ public:
     
     GENERIC on_unregister() override 
     {
-
+        std::cout << totalMessage << std::endl;
+        totalMessage.clear();
     }
 private:
     mbase::vector<U32> msgIds;
@@ -95,6 +103,39 @@ class my_model : public mbase::InfModelTextToText {
 public:
     void on_initialize() override 
     {
+        
+    }
+    void on_destroy() override 
+    {
+        std::cout << "Model is destroyed" << std::endl;
+    }
+private:
+};
+
+using namespace mbase;
+
+int main()
+{
+    // mbase::InfProgram ifp;
+    // mbase::InfMaipDefaultServer ids(ifp);
+    // PcNetManager pcn;
+    // pcn.create_server("127.0.0.1", 4553, ids);
+    // ids.listen();
+    // while(1)
+    // {
+    //     ids.update();
+    // }
+    
+    my_context myContext;
+    my_context myContext1;
+    my_context myContext2;    
+
+    while(1)
+    {
+        int i = 0;
+        my_model mm;
+        mm.initialize_model_sync(L"./Llama-3.2-1B-Instruct-Q4_K_M.gguf", 30000, 999);
+        
         InfSamplerDescription topK;
         InfSamplerDescription topP;
         InfSamplerDescription minP;
@@ -123,7 +164,7 @@ public:
         repeatControl.mSamplerType = InfSamplerDescription::SAMPLER::REPETITION;
         repeatControl.mRepetition = repeatSampler;
 
-        this->register_context_process(
+        mm.register_context_process(
             &myContext, 
             10000, 
             2000, 
@@ -132,34 +173,44 @@ public:
             true,
             {topK, topP, minP, temperature, mirostat}
         );
-    }
-    void on_destroy() override {}
-private:
-    my_context myContext;
-};
 
-using namespace mbase;
+        mm.register_context_process(
+            &myContext1, 
+            10000, 
+            2000, 
+            16, 
+            4, 
+            true,
+            {topK, topP, minP, temperature, mirostat}
+        );
 
-int main()
-{
-    // mbase::InfProgram ifp;
-    // mbase::InfMaipDefaultServer ids(ifp);
-    // PcNetManager pcn;
-    // pcn.create_server("127.0.0.1", 4553, ids);
-    // ids.listen();
-    // while(1)
-    // {
-    //     ids.update();
-    // }
-    
-    int i = 0;
-    my_model mm;
-    mm.initialize_model(L"./Llama-3.2-1B-Instruct-Q4_K_M.gguf", 30000, 999);
-    while(1)
-    {
-        mm.update();
+        mm.register_context_process(
+            &myContext2, 
+            10000, 
+            2000, 
+            16, 
+            4, 
+            true,
+            {topK, topP, minP, temperature, mirostat}
+        );
+        
+
+        while(1)
+        {
+            if(i == 50)
+            {
+                break;
+            }
+            mm.update();
+            i++;
+            mbase::sleep(100);
+        }
+        
+        mm.destroy();
+        mbase::sleep(5000);
     }
     
+
     /*InfProgram mainProgram;
     mbase::InfProgramInformation programInformation;
 

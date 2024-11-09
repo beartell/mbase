@@ -1,5 +1,6 @@
 #include <mbase/inference/inf_t2t_model.h>
 #include <mbase/inference/inf_t2t_processor.h>
+#include <mbase/inference/inf_embedder.h>
 #include <mbase/inference/inf_gguf_metadata_configurator.h>
 #include <mbase/inference/inf_chat_templates.h>
 
@@ -31,7 +32,6 @@ InfModelTextToText::InfModelTextToText() :
 	mEmbeddingLength(0),
 	mQuantizationCoefficient(0.0f),
 	mModelSize(0),
-	mHasEmbeddedSystemPrompt(false),
 	mIsEmbeddingModel(false)
 {
 
@@ -49,16 +49,15 @@ InfModelTextToText::~InfModelTextToText()
 		mbase::lock_guard tmpListMutex(mProcessorListMutex);
 		for (context_processor_list::iterator It = mRegisteredProcessors.begin(); It != mRegisteredProcessors.end(); ++It)
 		{
-			InfTextToTextProcessor* baseProcessor = static_cast<InfTextToTextProcessor*>(*It);
-			baseProcessor->stop_processor();
-			baseProcessor->destroy_sync();
+			InfProcessorBase* baseProcessor = It->mSubject;
+			if(baseProcessor)
+			{
+				baseProcessor->stop_processor();
+				baseProcessor->destroy_sync();
+				baseProcessor->update();
+			}
 		}
 		
-		for(context_processor_list::iterator It = mRegisteredProcessors.begin(); It != mRegisteredProcessors.end(); ++It)
-		{
-			InfProcessorBase* baseProcessor = *It;
-			baseProcessor->update(); // Update all processors
-		}
 		llama_free_model(mModel);
 	}
 }
@@ -307,6 +306,7 @@ InfModelTextToText::flags InfModelTextToText::initialize_model(const mbase::wstr
 	}
 	
 	mModelPath = in_path;
+	mRegisteredProcessors.clear(); // Since the registered processors is not on the destruction list, make sure it is fresh
 
 	mInitializeSignal.set_signal_with_state();
 	start_processor();
@@ -345,15 +345,21 @@ InfModelTextToText::flags InfModelTextToText::destroy()
 		return flags::INF_MODEL_INFO_DESTROYING_MODEL;
 	}
 
-	for (context_processor_list::iterator It = mRegisteredProcessors.begin(); It != mRegisteredProcessors.end(); ++It)
+	for (context_processor_list::iterator It = mRegisteredProcessors.begin(); It != mRegisteredProcessors.end();)
 	{
-		InfTextToTextProcessor* baseProcessor = static_cast<InfTextToTextProcessor*>(*It);
+		if(!It->mSubject)
+		{
+			It = mRegisteredProcessors.erase(It->mItSelf);
+			continue;
+		}
+		InfTextToTextProcessor* baseProcessor = static_cast<InfTextToTextProcessor*>(It->mSubject);
 		baseProcessor->stop_processor();
 		baseProcessor->destroy();
+		++It;
 	}
 
-	start_processor();
 	mDestroySignal.set_signal_with_state();
+	start_processor();
 	return flags::INF_MODEL_INFO_DESTROYING_MODEL;
 }
 
@@ -375,13 +381,15 @@ InfModelTextToText::flags InfModelTextToText::destroy_sync()
 	return flags::INF_MODEL_SUCCESS;
 }
 
-InfModelTextToText::flags InfModelTextToText::register_context_process(InfTextToTextProcessor* in_processor, 
-		const U32& in_context_length, 
-		U32 in_batch_size,
-		U32 in_thread_count,
-		U32 in_batch_thread_count,
-		const bool& in_flash_attention,
-		const inf_sampling_set& in_sampler_set
+InfModelTextToText::flags InfModelTextToText::register_context_process
+(
+	InfTextToTextProcessor* in_processor, 
+	const U32& in_context_length, 
+	U32 in_batch_size,
+	U32 in_thread_count,
+	U32 in_batch_thread_count,
+	const bool& in_flash_attention,
+	const inf_sampling_set& in_sampler_set
 )
 {
 	MBASE_INF_T2T_MODEL_RETURN_UNINITIALIZED;
@@ -432,32 +440,98 @@ InfModelTextToText::flags InfModelTextToText::register_context_process(InfTextTo
 		in_thread_count = 1;
 	}
 
-	if(!in_batch_thread_count)
-	{
-		in_batch_thread_count = 1;
-	}
-
 	in_processor->initialize(
 		this, 
 		in_context_length, 
 		mbase::string::generate_uuid(),
 		in_batch_size,
 		in_thread_count,
-		in_batch_thread_count,
 		in_flash_attention,
 		in_sampler_set
-	);
+	); // 100% success
+
 	mProcessorListMutex.acquire();
-	mRegisteredProcessors.push_back(in_processor);
+	mRegisteredProcessors.push_back(watcher_type());
+	watcher_type& newWatcher = mRegisteredProcessors.back();
+	newWatcher.mItSelf = mRegisteredProcessors.end_node();
+	newWatcher.mSubject = in_processor;
+	in_processor->acquire_object_watcher(&newWatcher);
 	mProcessorListMutex.release();
 	return flags::INF_MODEL_INFO_REGISTERING_PROCESSOR;
 }
 
-GENERIC InfModelTextToText::manual_context_deletion(InfTextToTextProcessor* in_processor)
+InfModelTextToText::flags InfModelTextToText::register_context_process
+(
+	InfEmbedderProcessor* in_processor,
+	const U32& in_context_length,
+	U32 in_batch_size,
+	U32 in_thread_count
+)
 {
-	mbase::lock_guard tmpListMutex(mProcessorListMutex);
-	context_processor_list::iterator It = std::find(mRegisteredProcessors.begin(), mRegisteredProcessors.end(), in_processor);
-	mRegisteredProcessors.erase(It);
+	MBASE_INF_T2T_MODEL_RETURN_UNINITIALIZED;
+	if(!in_processor || !in_context_length)
+	{
+		return flags::INF_MODEL_ERR_INVALID_INPUT;
+	}
+	
+	if (in_processor->is_registered())
+	{
+		return flags::INF_MODEL_ERR_PROCESSOR_ALREADY_REGISTERED;
+	}
+
+	if (in_context_length < gProcessorMinimumTokenCount)
+	{
+		return flags::INF_MODEL_ERR_INVALID_CONTEXT_LENGTH;
+	}
+
+	if(in_processor->signal_state_initializing())
+	{
+		return flags::INF_MODEL_INFO_REGISTERING_PROCESSOR;
+	}
+
+	if(in_processor->signal_state_destroying())
+	{
+		return flags::INF_MODEL_INFO_PROCESSOR_IS_BEING_DESTROYED;
+	}
+	
+	if(mOccupiedContext + in_context_length > mTotalContextSize)
+	{
+		return flags::INF_MODEL_ERR_MODEL_CONTEXT_FULL;
+	}
+
+	mOccupiedContext += in_context_length;
+
+	if(!in_batch_size)
+	{
+		in_batch_size = in_context_length / 8;
+	}
+
+	if(in_batch_size > in_context_length)
+	{
+		in_batch_size = in_context_length;
+	}
+
+	if(!in_thread_count)
+	{
+		in_thread_count = 1;
+	}
+
+	in_processor->initialize(
+		this,
+		mbase::string::generate_uuid(),
+		in_context_length,
+		in_batch_size,
+		in_thread_count
+	); // 100% success
+	
+	mProcessorListMutex.acquire();
+	mRegisteredProcessors.push_back(watcher_type());
+	watcher_type& newWatcher = mRegisteredProcessors.back();
+	newWatcher.mItSelf = mRegisteredProcessors.end_node();
+	newWatcher.mSubject = in_processor;
+	in_processor->acquire_object_watcher(&newWatcher);
+	mProcessorListMutex.release();
+	return flags::INF_MODEL_INFO_REGISTERING_PROCESSOR;
 }
 
 GENERIC InfModelTextToText::on_initialize_fail(init_fail_code out_fail_code)
@@ -534,17 +608,18 @@ GENERIC InfModelTextToText::_destroy_model()
 	mbase::lock_guard tmpListMutex(mProcessorListMutex);
 	for (context_processor_list::iterator It = mRegisteredProcessors.begin(); It != mRegisteredProcessors.end(); ++It)
 	{
-		InfProcessorBase* baseProcessor = *It;
-		InfTextToTextProcessor* t2tProcessor = static_cast<InfTextToTextProcessor*>(baseProcessor);
-		t2tProcessor->destroy();
-		while(t2tProcessor->signal_state_destroying())
+		InfProcessorBase* baseProcessor = It->mSubject;
+		if(baseProcessor)
 		{
-
+			baseProcessor->destroy_sync();
 		}
 	}
+
 	llama_free_model(mModel);
 	mModel = NULL;
 	
+	mModelName.clear();
+	mModelArchitecture.clear();
 	mUsrStart.clear();
 	mSystemStart.clear();
 	mAssistantStart.clear();
@@ -556,13 +631,9 @@ GENERIC InfModelTextToText::_destroy_model()
 	mOccupiedContext = 0;
 	mModelTimer.clear_timers();
 
-	/* RESET ALL SIGNALS */
-	mInitializeSignal.reset_signal_with_state();
-	mIsProcessorRunning = false;
-	mDestroySignal.reset_signal_with_state();
-
+	/* RESETTING ALL SIGNALS ON LOGIC LOOP */
 	mDestroyMethodSignal.set_signal();
-	mIsInitialized = false;
+	mDestroySignal.reset_signal_with_state();
 }
 
 GENERIC InfModelTextToText::_get_special_tokens(mbase::vector<inf_text_token>& out_tokens)
@@ -597,6 +668,32 @@ GENERIC InfModelTextToText::update()
 		return;
 	}
 
+	if (signal_destroy_method())
+	{
+		stop_processor();
+		// Reset all signals
+		reset_base_signals();
+		mDestroyingSignal.reset_signal_with_state();
+		mDestroyMethodSignal.reset_signal_with_state();
+		mInitMethodSignal.reset_signal_with_state();
+		mInitFailSignal.reset_signal_with_state();
+
+		mbase::lock_guard tmpListMutex(mProcessorListMutex);
+		for(context_processor_list::iterator It = mRegisteredProcessors.begin(); It != mRegisteredProcessors.end(); ++It)
+		{
+			InfModelBase::watcher_type& wt = *It;
+			if(wt.mSubject)
+			{
+				InfProcessorBase* baseProcessor = wt.mSubject;
+				baseProcessor->update();
+			}
+		}
+
+		mRegisteredProcessors.clear();
+		mIsInitialized = false;
+		on_destroy();
+	}
+
 	if(signal_init_fail_method())
 	{
 		stop_processor();
@@ -614,26 +711,16 @@ GENERIC InfModelTextToText::update()
 	mbase::lock_guard tmpListMutex(mProcessorListMutex);
 	for(context_processor_list::iterator It = mRegisteredProcessors.begin(); It != mRegisteredProcessors.end();)
 	{
-		InfProcessorBase* baseProcessor = *It;
-		InfTextToTextProcessor* t2tProcessor = static_cast<InfTextToTextProcessor*>(baseProcessor);
-		t2tProcessor->update();
-		if(!t2tProcessor->is_registered())
+		InfModelBase::watcher_type& wt = *It;
+		if(!wt.mSubject)
 		{
-			if(!t2tProcessor->signal_initializing())
-			{
-				mOccupiedContext -= t2tProcessor->get_context_size();
-				It = mRegisteredProcessors.erase(It);
-				continue;
-			}
+			It = mRegisteredProcessors.erase(wt.mItSelf);
+			mOccupiedContext -= wt.mContextLength;
+			continue;
 		}
+		InfProcessorBase* baseProcessor = wt.mSubject;
+		baseProcessor->update();
 		++It;
-	}
-
-	if (signal_destroy_method())
-	{
-		stop_processor();
-		mDestroyMethodSignal.reset_signal_with_state();
-		on_destroy();
 	}
 }
 
