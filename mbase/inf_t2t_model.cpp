@@ -575,7 +575,6 @@ GENERIC InfModelTextToText::_initialize_model()
 	);
 
 	tempConfigurator.get_key(mModelArchitecture + ".embedding_length", mEmbeddingLength);
-
 	// Before diving into loading model, 
 	// calculate how much memory we need to load the model 
 	// if there is not enough memory for loading the model, abort.
@@ -588,7 +587,7 @@ GENERIC InfModelTextToText::_initialize_model()
 		mInitFailSignal.set_signal_with_state();
 		return;
 	}
-	
+
 	std::cout << mSystemStart << "You are a helpful assistant" << mSystemEnd;
 	std::cout << mUsrStart << "How are you?" << mUserEnd;
 	std::cout << mAssistantStart << "I am fine thanks!" << mAssistantEnd;
@@ -597,7 +596,33 @@ GENERIC InfModelTextToText::_initialize_model()
 	{
 		mIsEmbeddingModel = false;
 	}
-	
+
+	// This context is for finding out the pooling type of the model.
+	// If the pooling type is not NONE, mark the model as embedding model
+
+	// Another use case of this dummy context is to find the minimum memory usage of a context for a particular size. (NOT IMPLEMENTED YET)
+
+	llama_context* dummyContext = NULL;
+	llama_context_params lcp = llama_context_default_params();
+	lcp.n_ctx = 32;
+	lcp.n_batch = 32;
+	lcp.n_ubatch = 32;
+
+	dummyContext = llama_new_context_with_model(mModel, lcp);
+
+	enum llama_pooling_type lpt = llama_pooling_type(dummyContext);
+
+	if(lpt == llama_pooling_type::LLAMA_POOLING_TYPE_NONE)
+	{
+		mIsEmbeddingModel = false;
+	}
+	else
+	{
+		mIsEmbeddingModel = true;
+	}
+
+	llama_free(dummyContext);
+
 	mIsInitialized = true;
 	mInitializeSignal.reset_signal_with_state();
 	mInitMethodSignal.set_signal();

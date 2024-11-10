@@ -22,7 +22,8 @@ InfEmbedderProcessor::InfEmbedderProcessor():
     mModelContext(NULL),
     mEmbeddingLength(0),
     mBatchSize(0),
-    mThreadCount(0)
+    mThreadCount(0),
+    mAssignedClient(NULL)
 {
     mProcessorType = processor_type::EMBEDDER;
 }
@@ -299,6 +300,11 @@ GENERIC InfEmbedderProcessor::release_inference_client()
 	}
 }
 
+GENERIC InfEmbedderProcessor::release_inference_client_stacked()
+{
+    mAssignedClient = NULL;
+}
+
 GENERIC InfEmbedderProcessor::_initialize_context()
 {
     llama_context_params ctxParams = llama_context_default_params();
@@ -332,9 +338,7 @@ GENERIC InfEmbedderProcessor::_initialize_context()
     }
 
     t2tModel->get_embedding_length(mEmbeddingLength);
-    mIsRunning = true;
-    mInitializeSignal.reset_signal_with_state();
-    mIsRegistered = true;
+    mEmbeddingVector.resize(mEmbeddingLength);
 
     mInitializeMethodSignal.set_signal_with_state();
 }
@@ -399,7 +403,7 @@ GENERIC InfEmbedderProcessor::_calculate_embeddings()
             // Unable to get sequence embeddings
             // Handle this problem
         }
-
+        
         common_embd_normalize(embedd, mEmbeddingVector.data(), mEmbeddingVector.size());
         mVectorGenerated.set_signal_with_state();
     }
@@ -416,11 +420,15 @@ GENERIC InfEmbedderProcessor::update()
     if(signal_init_fail_method())
 	{
 		mInitializeFailSignal.reset_signal_with_state();
+        this->release_object_watcher();
 		on_initialize_fail(get_last_fail_code());
 	}
 
 	if(signal_init_method())
 	{
+        mIsRunning = true;
+        mIsRegistered = true;
+        mInitializeSignal.reset_signal_with_state();
 		mInitializeMethodSignal.reset_signal_with_state();
 		on_initialize();
 	}
@@ -434,6 +442,7 @@ GENERIC InfEmbedderProcessor::update()
             mVectorGenerated.reset_signal_with_state();
             if(t2tClient)
 			{    
+                stop_processor();
                 t2tClient->on_embedding_data(mEmbeddingVector.data(), mEmbeddingVector.size());
 				return;
 			}
@@ -446,6 +455,7 @@ GENERIC InfEmbedderProcessor::update()
         {
             mDestroyMethodSignal.reset_signal_with_state();
             stop_processor();
+            this->release_object_watcher();
             on_destroy();
         }
     }

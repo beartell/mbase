@@ -7,6 +7,7 @@
 #include <mbase/inference/inf_client.h>
 #include <mbase/inference/inf_processor.h>
 #include <mbase/inference/inf_t2t_processor.h>
+#include <mbase/inference/inf_embedder.h>
 #include <mbase/inference/inf_t2t_model.h>
 #include <mbase/inference/inf_program.h>
 #include <mbase/inference/inf_maip_server.h>
@@ -22,28 +23,34 @@ class my_client : public mbase::InfClientTextToText {
 public:
     GENERIC on_register(InfProcessorBase* out_processor) override 
     {
-        msgIds.clear();
-        clear_chat_history();
-        std::cout << "Client is registered" << std::endl;
-        U32 outMsgId = 0;
-        this->add_message(L"You are a helpful assistant.", context_role::SYSTEM, outMsgId);
-        msgIds.push_back(outMsgId);
+        InfEmbedderProcessor* emdProcessor = static_cast<InfEmbedderProcessor*>(out_processor);
+        mbase::string inputString = "Hey, how are you?";
 
-        std::cout << (I32)this->add_message("Hey how are you? What is your name?", context_role::USER, outMsgId) << std::endl;
-        msgIds.push_back(outMsgId);
-        
-        mbase::vector<context_line> txtMessages;
-        this->get_message_array(msgIds.data(), msgIds.size(), txtMessages);
-        
-        InfProcessorBase* procBase;
-        get_host_processor(procBase);
-        
-        InfTextToTextProcessor* txtOut = static_cast<InfTextToTextProcessor*>(procBase);
-        
-        inf_text_token_vector tv;
-        std::cout << (I32)txtOut->tokenize_input(txtMessages.data(), txtMessages.size(), tv) << std::endl;
-        std::cout << (I32)txtOut->execute_input(tv, true) << std::endl;
-        txtOut->next();
+        inf_text_token_vector tokVec;
+
+        emdProcessor->tokenize_input(inputString.c_str(), inputString.size(), tokVec);
+        std::cout << tokVec.size() << std::endl;
+        emdProcessor->execute_input(tokVec);
+    }
+
+    GENERIC on_embedding_data(const F32* out_data, size_type out_size) override
+    {
+        for(size_type i = 0; i < out_size; i++)
+        {
+            printf("%f, ", out_data[i]);
+        }
+        printf("\n\n");
+        InfProcessorBase* hostProcessor = NULL;
+        get_host_processor(hostProcessor);
+        InfEmbedderProcessor* emdProcessor = static_cast<InfEmbedderProcessor*>(hostProcessor);
+        mbase::string inputString = "Hey, how are you?";
+
+        inf_text_token_vector tokVec;
+
+        emdProcessor->tokenize_input(inputString.c_str(), inputString.size(), tokVec);
+        std::cout << tokVec.size() << std::endl;
+        emdProcessor->execute_input(tokVec);
+
     }
 
     GENERIC on_write(CBYTEBUFFER out_data, size_type out_size, inf_text_token out_token, bool out_is_special, bool out_is_finish) override 
@@ -66,15 +73,14 @@ public:
     
     GENERIC on_unregister() override 
     {
-        std::cout << totalMessage << std::endl;
-        totalMessage.clear();
+        
     }
 private:
     mbase::vector<U32> msgIds;
     mbase::string totalMessage;
 };
 
-class my_context : public mbase::InfTextToTextProcessor {
+class my_context : public mbase::InfEmbedderProcessor {
 public:
     GENERIC on_initializing() override
     {
@@ -89,7 +95,7 @@ public:
     GENERIC on_initialize() override
     {
         std::cout << "eeeee" << std::endl;
-        this->set_inference_client(&myCl);
+        printf("%d\n", this->set_inference_client(&myCl));
     }
     GENERIC on_destroy() override
     {
@@ -127,88 +133,19 @@ int main()
     // }
     
     my_context myContext;
-    my_context myContext1;
-    my_context myContext2;    
+
+    
+    int i = 0;
+    my_model mm;
+    mm.initialize_model_sync(L"./nomic-embed-text-v1.Q8_0.gguf", 30000, 999);
+    
+    mm.register_context_process(&myContext, 4096, 512, 16);
 
     while(1)
     {
-        int i = 0;
-        my_model mm;
-        mm.initialize_model_sync(L"./Llama-3.2-1B-Instruct-Q4_K_M.gguf", 30000, 999);
-        
-        InfSamplerDescription topK;
-        InfSamplerDescription topP;
-        InfSamplerDescription minP;
-        InfSamplerDescription temperature;
-        InfSamplerDescription mirostat;
-        InfSamplerDescription repeatControl;
-
-        topK.mTopK = 40;
-        topK.mSamplerType = InfSamplerDescription::SAMPLER::TOP_K;
-
-        topP.mTopP = 0.9;
-        topP.mSamplerType = InfSamplerDescription::SAMPLER::TOP_P;
-
-        minP.mMinP = 0.1;
-        minP.mSamplerType = InfSamplerDescription::SAMPLER::MIN_P;
-
-        temperature.mTemp = 0.2;
-        temperature.mSamplerType = InfSamplerDescription::SAMPLER::TEMP;
-
-        InfSamplingRepetition repeatSampler;
-        repeatSampler.mPenaltyLinefeed = true;
-        repeatSampler.mRepeatPenalty = 1.5f;
-        repeatSampler.mPenaltyFrequency = 1.0f;
-        repeatSampler.mPenaltyPresent = 1.0f;
-
-        repeatControl.mSamplerType = InfSamplerDescription::SAMPLER::REPETITION;
-        repeatControl.mRepetition = repeatSampler;
-
-        mm.register_context_process(
-            &myContext, 
-            10000, 
-            2000, 
-            16, 
-            4, 
-            true,
-            {topK, topP, minP, temperature, mirostat}
-        );
-
-        mm.register_context_process(
-            &myContext1, 
-            10000, 
-            2000, 
-            16, 
-            4, 
-            true,
-            {topK, topP, minP, temperature, mirostat}
-        );
-
-        mm.register_context_process(
-            &myContext2, 
-            10000, 
-            2000, 
-            16, 
-            4, 
-            true,
-            {topK, topP, minP, temperature, mirostat}
-        );
-        
-
-        while(1)
-        {
-            if(i == 50)
-            {
-                break;
-            }
-            mm.update();
-            i++;
-            mbase::sleep(100);
-        }
-        
-        mm.destroy();
-        mbase::sleep(5000);
+        mm.update();
     }
+    
     
 
     /*InfProgram mainProgram;

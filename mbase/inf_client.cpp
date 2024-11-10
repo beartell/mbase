@@ -1,6 +1,7 @@
 #include <mbase/inference/inf_client.h>
 #include <mbase/inference/inf_model.h>
 #include <mbase/inference/inf_sampling.h>
+#include <mbase/inference/inf_embedder.h>
 #include <mbase/io_file.h>
 #include <iostream>
 
@@ -40,16 +41,21 @@ InfClientTextToText::InfClientTextToText(const InfClientTextToText& in_rhs):
 
 InfClientTextToText::~InfClientTextToText()
 {
-	// InfProcessorBase* baseProcessor = NULL;
-	// if(get_host_processor(baseProcessor) == flags::INF_CLIENT_SUCCESS)
-	// {
-	// 	if(baseProcessor->get_processor_type() == InfProcessorBase::processor_type::TEXT_TO_TEXT)
-	// 	{
-	// 		InfTextToTextProcessor* t2tProcessor = static_cast<InfTextToTextProcessor*>(baseProcessor);
-	// 		t2tProcessor->release_inference_client_stacked();
-	// 	}
-	// 	//t2tProcessor->release_inference_client_stacked();
-	// }
+	InfProcessorBase* baseProcessor = NULL;
+	if(get_host_processor(baseProcessor) == flags::INF_CLIENT_SUCCESS)
+	{
+		if(baseProcessor->get_processor_type() == InfProcessorBase::processor_type::TEXT_TO_TEXT)
+		{
+			InfTextToTextProcessor* t2tProcessor = static_cast<InfTextToTextProcessor*>(baseProcessor);
+			t2tProcessor->release_inference_client_stacked();
+		}
+		else
+		{
+			InfEmbedderProcessor* embedProcessor = static_cast<InfEmbedderProcessor*>(baseProcessor);
+			embedProcessor->release_inference_client_stacked();
+		}
+		//t2tProcessor->release_inference_client_stacked();
+	}
 }
 
 InfClientTextToText& InfClientTextToText::operator=(const InfClientTextToText& in_rhs)
@@ -63,6 +69,16 @@ bool InfClientTextToText::is_registered() const
 	return (mBaseProcessor != NULL);
 }
 
+bool InfClientTextToText::has_message(const U32& in_msg_id) const
+{
+	if(mChatHistory.find(in_msg_id) == mChatHistory.end())
+	{
+		return false;
+	}
+
+	return true;
+}
+
 InfClientTextToText::flags InfClientTextToText::get_host_processor(InfProcessorBase * &out_processor)
 {
 	if(is_registered())
@@ -73,7 +89,7 @@ InfClientTextToText::flags InfClientTextToText::get_host_processor(InfProcessorB
 	return flags::INF_CLIENT_ERR_NOT_REGISTERED;
 }
 
-InfClientTextToText::flags InfClientTextToText::get_message(U32 in_msg_id, context_line& out_message)
+InfClientTextToText::flags InfClientTextToText::get_message(const U32& in_msg_id, context_line& out_message)
 {
 	try
 	{

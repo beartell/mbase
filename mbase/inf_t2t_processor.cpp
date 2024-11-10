@@ -52,14 +52,13 @@ InfTextToTextProcessor::~InfTextToTextProcessor()
 	{
 		stop_processor();
 		llama_free(mModelContext);
-		//release_inference_client();
 		this->release_object_watcher();
 
-		// if(mAssignedClient)
-		// {
-		// 	mAssignedClient->_on_unregister();
-		// 	mAssignedClient = NULL;
-		// }
+		if(mAssignedClient)
+		{
+			mAssignedClient->_on_unregister();
+			mAssignedClient = NULL;
+		}
 	}
 }
 
@@ -183,7 +182,7 @@ InfTextToTextProcessor::flags InfTextToTextProcessor::tokenize_input(CBYTEBUFFER
 
 	inf_text_token_vector tokenizedInput(in_size * 4);
 	InfModelTextToText* t2tModel = static_cast<InfModelTextToText*>(this->mTargetModel_md_model);
-	I32 tokenCount = llama_tokenize(t2tModel->get_raw_model(), in_data, in_size, tokenizedInput.data(), in_size * 4, true, true);
+	I32 tokenCount = llama_tokenize(t2tModel->get_raw_model(), in_data, in_size, tokenizedInput.data(), in_size * 4, false, true);
 
 	if(tokenCount == -1)
 	{
@@ -702,6 +701,7 @@ GENERIC InfTextToTextProcessor::_initialize_context()
 			llama_sampler_init_dist(seedValue)
 		);
 	}
+
 	mInitializeMethodSignal.set_signal_with_state();
 }
 

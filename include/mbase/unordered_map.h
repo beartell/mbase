@@ -562,7 +562,10 @@ MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE_EXPR Value& unordered_map<Key, Value,
 template<typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator>
 MBASE_INLINE_EXPR GENERIC unordered_map<Key, Value, Hash, KeyEqual, Allocator>::clear() noexcept
 {
-	mBucket = std::move(bucket_type(mBucketCount, bucket_node_type()));
+	for(size_type i = 0; i < mSize; i++)
+	{
+		mBucket[i].clear();
+	}
 	mSize = 0;
 }
 

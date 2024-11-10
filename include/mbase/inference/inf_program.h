@@ -7,10 +7,12 @@
 #include <mbase/list.h>
 #include <mbase/unordered_map.h>
 #include <mbase/traits.h>
+#include <mbase/queue.h>
 #include <mbase/pc/pc_net_manager.h>
 #include <mbase/pc/pc_config.h>
 #include <mbase/pc/pc_state.h>
 #include <mbase/pc/pc_program.h>
+#include <mbase/inference/inf_embedder.h>
 #include <mbase/inference/inf_model.h>
 #include <mbase/inference/inf_client.h>
 #include <mbase/inference/inf_maip_user.h>
@@ -27,33 +29,50 @@ class InfProgram;
 class MBASE_API InfMaipTunedClient : public mbase::InfClientTextToText {
 public:
 	InfMaipTunedClient();
-	InfMaipTunedClient(InfClientSession& in_client);
+	GENERIC set_session(InfClientSession& in_session);
+	GENERIC set_embedder_message_queue(mbase::vector<U32>& in_msg_ids);
+	bool proc_next_embedding();
 
-	GENERIC on_register(InfProcessorBase* out_processor) override;
+	GENERIC on_register(InfProcessorBase* out_processor) override; // 100% called if the proc init is successful
+	GENERIC on_embedding_data(const F32* out_data, size_type out_size) override; // For embedder models
 	GENERIC on_write(CBYTEBUFFER out_data, size_type out_size, inf_text_token out_token, bool out_is_special, bool out_is_finish) override;
 	GENERIC on_finish(size_type out_total_token_size, InfTextToTextProcessor::finish_state out_finish_state) override;
-	GENERIC on_unregister() override;
-
+	GENERIC on_unregister() override; // 100% called if the proc destroy is called either in stack or heap
+private:
+	mbase::queue<U32> mEmbeddingMessageIndexes;
 	mbase::string lastToken;
 	InfClientSession* mManagerClient;
 	U64 mCurrentContextIndex;
-	bool mIsSessionAlive;
 };
 
 class MBASE_API InfMaipTunedT2TProcessor : public mbase::InfTextToTextProcessor {
 public:
+	InfMaipTunedT2TProcessor(InfClientSession& in_client);
+
 	GENERIC on_initialize_fail(init_fail_code out_code) override;
 	GENERIC on_initialize() override;
 	GENERIC on_destroy() override;
 
-	GENERIC set_nominee_client(InfMaipTunedClient* in_nominee);
+private:
+	InfClientSession* mManagerClient;
+	InfMaipTunedClient mProcessorClient;
+};
+
+class MBASE_API InfMaipTunedEmbedderProcessor : public mbase::InfEmbedderProcessor {
+public:
+	InfMaipTunedEmbedderProcessor(InfClientSession& in_client);
+
+	GENERIC on_initialize_fail(init_fail_code out_code) override;
+	GENERIC on_initialize() override;
+	GENERIC on_destroy() override;
 
 private:
-	InfMaipTunedClient* mNomineeClient = NULL;
+	InfClientSession* mManagerClient;
+	InfMaipTunedClient mProcessorClient;
 };
 
 struct MBASE_API InfClientSession {
-	using chat_session_map = std::unordered_map<U64, InfMaipTunedClient*>;
+	using chat_session_map = std::unordered_map<U64, InfProcessorBase*>;
 	using size_type = SIZE_T;
 
 	InfClientSession() = default;
@@ -127,6 +146,7 @@ public:
 		INF_USER_CONTEXT_LENGTH_EXCEEDED = 2020,
 		INF_USER_NOT_FOUND = 2021,
 		INF_TARGET_MODEL_ACCESS_PROHIBITED = 2022,
+		INF_NOT_ENOUGH_MEMORY = 2023,
 		EXEC_SUCCESS = 3000,
 		EXEC_ALREADY_PROCESSING = 3001,
 		EXEC_MESSAGE_ID_MISMATCH = 3002,

@@ -51,6 +51,7 @@ public:
     flags destroy() override;
     flags destroy_sync() override;
     GENERIC release_inference_client();
+    GENERIC release_inference_client_stacked();
     GENERIC update() override;
     GENERIC update_t() override;
 
