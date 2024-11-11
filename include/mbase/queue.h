@@ -100,6 +100,7 @@ template<typename T, typename SourceContainer>
 MBASE_INLINE queue<T, SourceContainer>& queue<T, SourceContainer>::operator=(queue&& in_rhs) noexcept 
 {
 	_Sc = std::move(in_rhs._Sc);
+	return *this;
 }
 
 template<typename T, typename SourceContainer>

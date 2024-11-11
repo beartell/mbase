@@ -127,6 +127,7 @@ int main()
     mbase::InfMaipModelDescription modelDescription;
 
     modelDescription.load_from_state_file("cuser.mbsf", L"./");
+
     // modelDescription.set_custom_name("cuser");
     // modelDescription.set_embedding(false);
     // modelDescription.set_maximum_context_length(12000);
@@ -146,7 +147,7 @@ int main()
     //     ids.update();
     // }
 
-    mbase::string customName = modelDescription.get_custom_name();
+    /*mbase::string customName = modelDescription.get_custom_name();
     mbase::string description = modelDescription.get_description();
     bool isEmbedder = modelDescription.get_embedding();
     U32 maxContextLength = modelDescription.get_maximum_context_length();
@@ -166,7 +167,7 @@ int main()
     for(auto& n : tags)
     {
         std::cout << "- " << n << std::endl; 
-    }
+    }*/
 
     /*InfProgram mainProgram;
     mbase::InfProgramInformation programInformation;

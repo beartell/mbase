@@ -220,6 +220,8 @@ struct avl_node {
         k1->right = in_k2;
         k1->parent = in_k2->parent;
         in_k2->parent = k1;
+#undef max
+#undef min
         in_k2->height = mbase::max(get_height(in_k2->left), get_height(in_k2->right)) + 1;
         k1->height = mbase::max(get_height(k1->left), in_k2->height) + 1;
         in_k2 = k1;

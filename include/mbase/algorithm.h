@@ -17,12 +17,14 @@ MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE InputIt find(InputIt in_first, InputIt i
     }
 }
 
+#undef max
 template<typename Type>
 MBASE_INLINE_EXPR const Type& max(const Type& in_left, const Type& in_right)
 {
     return in_left > in_right ? in_left : in_right;
 }
 
+#undef min
 template<typename Type>
 MBASE_INLINE_EXPR const Type& min(const Type& in_left, const Type& in_right)
 {
