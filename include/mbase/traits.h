@@ -256,7 +256,7 @@ MBASE_INLINE typename serialize_helper<bool>::value_type serialize_helper<bool>:
     {
         throw mbase::invalid_size();
     }
-    bytes_processed += sizeof(value_type);
+    bytes_processed = sizeof(value_type);
     PTR8 bf = reinterpret_cast<PTR8>(in_src);
     return *bf != 0;
 }
@@ -280,7 +280,7 @@ MBASE_INLINE typename serialize_helper<I8>::value_type serialize_helper<I8>::des
     {
         throw mbase::invalid_size();
     }
-    bytes_processed += sizeof(value_type);
+    bytes_processed = sizeof(value_type);
     PTR8 bf = reinterpret_cast<PTR8>(in_src);
     return *bf;
 }
@@ -304,7 +304,7 @@ MBASE_INLINE typename serialize_helper<I16>::value_type serialize_helper<I16>::d
     {
         throw mbase::invalid_size();
     }
-    bytes_processed += sizeof(value_type);
+    bytes_processed = sizeof(value_type);
     PTR16 bf = reinterpret_cast<PTR16>(in_src);
     return *bf;
 }
@@ -328,7 +328,7 @@ MBASE_INLINE typename serialize_helper<I32>::value_type serialize_helper<I32>::d
     {
         throw mbase::invalid_size();
     }
-    bytes_processed += sizeof(value_type);
+    bytes_processed = sizeof(value_type);
     PTR32 bf = reinterpret_cast<PTR32>(in_src);
     return *bf;
 }
@@ -352,7 +352,7 @@ MBASE_INLINE typename serialize_helper<I64>::value_type serialize_helper<I64>::d
     {
         throw mbase::invalid_size();
     }
-    bytes_processed += sizeof(value_type);
+    bytes_processed = sizeof(value_type);
     PTR64 bf = reinterpret_cast<PTR64>(in_src);
     return *bf;
 }
@@ -376,7 +376,7 @@ MBASE_INLINE typename serialize_helper<U8>::value_type serialize_helper<U8>::des
     {
         throw mbase::invalid_size();
     }
-    bytes_processed += sizeof(value_type);
+    bytes_processed = sizeof(value_type);
     PTRU8 bf = reinterpret_cast<PTRU8>(in_src);
     return *bf;
 }
@@ -400,7 +400,7 @@ MBASE_INLINE typename serialize_helper<U16>::value_type serialize_helper<U16>::d
     {
         throw mbase::invalid_size();
     }
-    bytes_processed += sizeof(value_type);
+    bytes_processed = sizeof(value_type);
     PTRU16 bf = reinterpret_cast<PTRU16>(in_src);
     return *bf;
 }
@@ -424,7 +424,7 @@ MBASE_INLINE typename serialize_helper<U32>::value_type serialize_helper<U32>::d
     {
         throw mbase::invalid_size();
     }
-    bytes_processed += sizeof(value_type);
+    bytes_processed = sizeof(value_type);
     PTRU32 bf = reinterpret_cast<PTRU32>(in_src);
     return *bf;
 }
@@ -448,7 +448,7 @@ MBASE_INLINE typename serialize_helper<U64>::value_type serialize_helper<U64>::d
     {
         throw mbase::invalid_size();
     }
-    bytes_processed += sizeof(value_type);
+    bytes_processed = sizeof(value_type);
     PTRU64 bf = reinterpret_cast<PTRU64>(in_src);
     return *bf;
 }
@@ -715,14 +715,19 @@ MBASE_INLINE pair<T1, T2> pair<T1, T2>::deserialize(IBYTEBUFFER in_src, SIZE_T i
         throw mbase::invalid_size();
     }
 
+    SIZE_T bytesProcessed = 0;
+    SIZE_T tmpBytesProcessed = 0;
     SIZE_T blockLength = cs.get_datan<SIZE_T>();
-    bytes_processed += sizeof(SIZE_T);
-    first_type ft(std::move(mbase::deserialize<first_type>(cs.get_bufferc(), blockLength, bytes_processed)));
+    bytesProcessed += sizeof(SIZE_T);
+    first_type ft(std::move(mbase::deserialize<first_type>(cs.get_bufferc(), blockLength, tmpBytesProcessed)));
+    bytesProcessed += tmpBytesProcessed;
+    tmpBytesProcessed = 0;
 
     cs.advance(blockLength);
     blockLength = cs.get_datan<SIZE_T>();
-    bytes_processed += sizeof(SIZE_T);
-    second_type st(std::move(mbase::deserialize<second_type>(cs.get_bufferc(), blockLength, bytes_processed)));
+    bytesProcessed += sizeof(SIZE_T);
+    second_type st(std::move(mbase::deserialize<second_type>(cs.get_bufferc(), blockLength, tmpBytesProcessed)));
+    bytesProcessed += tmpBytesProcessed;
 
     return { std::move(ft), std::move(st) };
 }

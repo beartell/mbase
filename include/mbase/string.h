@@ -2261,7 +2261,9 @@ template<typename SeqType, typename SeqBase, typename Allocator>
 MBASE_INLINE character_sequence<SeqType, SeqBase, Allocator> character_sequence<SeqType, SeqBase, Allocator>::deserialize(IBYTEBUFFER in_buffer, SIZE_T in_length, SIZE_T& bytes_processed)
 {
     character_sequence cs(in_buffer, in_length);
-    bytes_processed += in_length + 1;
+    size_type bytesProcessed = 0;
+    bytesProcessed += in_length + 1;
+    bytes_processed = bytesProcessed;
     return std::move(cs);
 }
 

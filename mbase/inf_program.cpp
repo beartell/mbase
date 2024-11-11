@@ -491,6 +491,7 @@ InfProgram::maip_err_code InfProgram::inf_get_context_status(const mbase::string
 	// {
 	// 	return maip_err_code::INF_CONTEXT_ACTIVE;
 	// }
+	return maip_err_code::INF_CONTEXT_ACTIVE;
 }
 
 InfProgram::maip_err_code InfProgram::inf_destroy_context(const mbase::string& in_session_token, const U64& in_ctxId)
@@ -1556,7 +1557,7 @@ InfProgram::flags InfProgram::create_user(
 	}
 
 	mUserMap[in_username] = newUser;
-	newUser.update_state_file(mClientStateDirectory, true);
+	newUser.update_state_file(mClientStateDirectory);
 
 	for(auto& n : mUserMap)
 	{
@@ -1669,7 +1670,7 @@ InfProgram::maip_err_code InfProgram::common_modification_control(InfClientSessi
 GENERIC InfProgram::update_maip_user_sessions(InfMaipUser& in_maip_user)
 {
 	inference_user_map::iterator It = mUserMap.find(in_maip_user.get_username());
-	in_maip_user.update_state_file(mClientStateDirectory, true);
+	in_maip_user.update_state_file(mClientStateDirectory);
 
 	if(It != mUserMap.end())
 	{

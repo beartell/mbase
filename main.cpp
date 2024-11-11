@@ -12,6 +12,7 @@
 #include <mbase/inference/inf_program.h>
 #include <mbase/inference/inf_maip_server.h>
 #include <mbase/inference/inf_gguf_metadata_configurator.h>
+#include <mbase/inference/inf_maip_model_description.h>
 #include <vector>
 #include <set>
 #include <unordered_map>
@@ -95,8 +96,9 @@ public:
     GENERIC on_initialize() override
     {
         std::cout << "eeeee" << std::endl;
-        printf("%d\n", this->set_inference_client(&myCl));
+        this->set_inference_client(&myCl);
     }
+
     GENERIC on_destroy() override
     {
         std::cout << "I am dead" << std::endl;
@@ -122,6 +124,18 @@ using namespace mbase;
 
 int main()
 {
+    mbase::InfMaipModelDescription modelDescription;
+
+    modelDescription.load_from_state_file("cuser.mbsf", L"./");
+    // modelDescription.set_custom_name("cuser");
+    // modelDescription.set_embedding(false);
+    // modelDescription.set_maximum_context_length(12000);
+    // modelDescription.set_original_name("Qwen 2.5 Instruct");
+    // modelDescription.set_tags({"SQL"});
+
+    // modelDescription.update_state_file(L"./");
+    // modelDescription.update_state_file(L"./", true);
+
     // mbase::InfProgram ifp;
     // mbase::InfMaipDefaultServer ids(ifp);
     // PcNetManager pcn;
@@ -131,22 +145,28 @@ int main()
     // {
     //     ids.update();
     // }
-    
-    my_context myContext;
 
-    
-    int i = 0;
-    my_model mm;
-    mm.initialize_model_sync(L"./nomic-embed-text-v1.Q8_0.gguf", 30000, 999);
-    
-    mm.register_context_process(&myContext, 4096, 512, 16);
+    mbase::string customName = modelDescription.get_custom_name();
+    mbase::string description = modelDescription.get_description();
+    bool isEmbedder = modelDescription.get_embedding();
+    U32 maxContextLength = modelDescription.get_maximum_context_length();
+    mbase::string modelFile = modelDescription.get_model_file();
+    mbase::string originalName = modelDescription.get_original_name();
+    mbase::string systemPrompt = modelDescription.get_system_prompt();
+    mbase::vector<mbase::string> tags = modelDescription.get_tags();
 
-    while(1)
+    std::cout << "Custom name: " << customName << std::endl;
+    std::cout << "Description: " << description << std::endl;
+    std::cout << "Is embedder: " << isEmbedder << std::endl;
+    std::cout << "Max context length: " << maxContextLength << std::endl;
+    std::cout << "Model file: " << modelFile << std::endl;
+    std::cout << "Original name: " << originalName << std::endl;
+    std::cout << "System prompt: " << systemPrompt << std::endl;
+    std::cout << "Tags: " << std::endl;
+    for(auto& n : tags)
     {
-        mm.update();
+        std::cout << "- " << n << std::endl; 
     }
-    
-    
 
     /*InfProgram mainProgram;
     mbase::InfProgramInformation programInformation;

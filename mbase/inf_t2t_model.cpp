@@ -393,11 +393,17 @@ InfModelTextToText::flags InfModelTextToText::register_context_process
 )
 {
 	MBASE_INF_T2T_MODEL_RETURN_UNINITIALIZED;
+
+	if(is_embedding_model())
+	{
+		return flags::INF_MODEL_ERR_PROC_UNMATCH;
+	}
+
 	if(!in_processor || !in_context_length)
 	{
 		return flags::INF_MODEL_ERR_INVALID_INPUT;
 	}
-	
+
 	if (in_processor->is_registered())
 	{
 		return flags::INF_MODEL_ERR_PROCESSOR_ALREADY_REGISTERED;
@@ -469,6 +475,12 @@ InfModelTextToText::flags InfModelTextToText::register_context_process
 )
 {
 	MBASE_INF_T2T_MODEL_RETURN_UNINITIALIZED;
+
+	if(!is_embedding_model())
+	{
+		return flags::INF_MODEL_ERR_PROC_UNMATCH;
+	}
+
 	if(!in_processor || !in_context_length)
 	{
 		return flags::INF_MODEL_ERR_INVALID_INPUT;
@@ -612,6 +624,7 @@ GENERIC InfModelTextToText::_initialize_model()
 
 	enum llama_pooling_type lpt = llama_pooling_type(dummyContext);
 
+	// Looking at the pooling type to check of the model is embedding model or not may be problematic...
 	if(lpt == llama_pooling_type::LLAMA_POOLING_TYPE_NONE)
 	{
 		mIsEmbeddingModel = false;

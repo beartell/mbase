@@ -943,7 +943,8 @@ MBASE_INLINE_EXPR mbase::vector<T, Allocator> mbase::vector<T, Allocator>::deser
 
 	char_stream inBuffer(in_src, in_length);
 	size_type inSize = inBuffer.get_datan<size_type>();
-	
+	size_type bytes_processed = 0;
+
 	for(size_type i = 0; i < inSize; ++i)
 	{
 		size_type blockLength = 0;
@@ -954,12 +955,16 @@ MBASE_INLINE_EXPR mbase::vector<T, Allocator> mbase::vector<T, Allocator>::deser
 		else
 		{
 			blockLength = inBuffer.get_datan<size_type>();
-			bytesProcessed += sizeof(size_type);
+			bytes_processed += sizeof(size_type);
 		}
 		IBYTEBUFFER blockData = inBuffer.get_bufferc();
-		deserializedVec.push_back(std::move(mbase::deserialize<value_type>(blockData, blockLength, bytesProcessed)));
+		size_type tmpBytesProcessed = 0;
+		deserializedVec.push_back(std::move(mbase::deserialize<value_type>(blockData, blockLength, tmpBytesProcessed)));
+		bytes_processed += tmpBytesProcessed;
 		inBuffer.advance(blockLength);
 	}
+
+	bytesProcessed = bytes_processed;
 
 	return deserializedVec;
 }

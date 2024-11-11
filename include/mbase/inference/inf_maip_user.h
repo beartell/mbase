@@ -57,6 +57,7 @@ public:
 	const mbase::string& get_access_key() const noexcept;
 	const mbase::string& get_username() const noexcept;
 	const mbase::string& get_system_prompt() const noexcept;
+	const mbase::string& get_assistant_prefix() const noexcept;
 	const inf_sampling_set& get_sampling_set() const noexcept;
 	const U32& get_authority_flags() const noexcept;
 	const model_name_set& get_accessible_models() const noexcept;
@@ -68,6 +69,7 @@ public:
 	GENERIC set_processor_thread_count(const U32& in_thread_count);
 	GENERIC set_sampling_set(const inf_sampling_set& in_sampling_set);
 	GENERIC set_system_prompt(const mbase::string& in_system_prompt);
+	GENERIC set_assistant_prefix(const mbase::string& in_prefix);
 	flags add_accessible_model(const mbase::string& in_modelname);
 	flags remove_accessible_model(const mbase::string& in_modelname);
 	GENERIC set_username(const mbase::string& in_username);
@@ -79,7 +81,8 @@ public:
 	GENERIC lock_user();
 	GENERIC unlock_user();
 
-	GENERIC update_state_file(const mbase::wstring& in_state_path, bool in_overwrite = false);
+	GENERIC load_from_state_file(const mbase::string& in_object_name, const mbase::wstring& in_state_path);
+	GENERIC update_state_file(const mbase::wstring& in_state_path);
 private:
 	U32 mAuthorityFlags = 0;
 	U32 mDistinctModelAccessLimit = 0;
@@ -91,6 +94,7 @@ private:
 	mbase::string mUsername = "";
 	mbase::string mAccessKey = "";
 	mbase::string mSystemPrompt = "";
+	mbase::string mAssistantPrefix = "";
 	inf_sampling_set mSamplingSet;
 	bool mIsSuperUser = false;
 	bool mIsStatic = false; // If this is true, new clients won't be able to associate themselves with this user.

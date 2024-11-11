@@ -78,6 +78,11 @@ const mbase::string& InfMaipUser::get_system_prompt() const noexcept
 	return mSystemPrompt;
 }
 
+const mbase::string& InfMaipUser::get_assistant_prefix() const noexcept
+{
+	return mAssistantPrefix;
+}
+
 const inf_sampling_set& InfMaipUser::get_sampling_set() const noexcept
 {
 	return mSamplingSet;
@@ -126,6 +131,11 @@ GENERIC InfMaipUser::set_sampling_set(const inf_sampling_set& in_sampling_set)
 GENERIC InfMaipUser::set_system_prompt(const mbase::string& in_system_prompt)
 {
 	mSystemPrompt = in_system_prompt;
+}
+
+GENERIC InfMaipUser::set_assistant_prefix(const mbase::string& in_prefix)
+{
+	mAssistantPrefix = in_prefix;
 }
 
 InfMaipUser::flags InfMaipUser::add_accessible_model(const mbase::string& in_modelname)
@@ -185,34 +195,57 @@ GENERIC InfMaipUser::unlock_user()
 	mIsStatic = false;
 }
 
-GENERIC InfMaipUser::update_state_file(const mbase::wstring& in_state_path, bool in_overwrite)
+GENERIC InfMaipUser::load_from_state_file(const mbase::string& in_object_name, const mbase::wstring& in_state_path)
+{
+	PcState userState;
+
+	userState.initialize(in_object_name, in_state_path);
+
+	mbase::vector<mbase::string> tmpVectorizedSet;
+
+	userState.get_state("authority_flags", mAuthorityFlags);
+	userState.get_state("model_access_limit", mDistinctModelAccessLimit);
+	userState.get_state("max_context_length", mMaximumContextLength);
+	userState.get_state("batch_size", mBatchSize);
+	userState.get_state("proc_max_thread_count", mMaxProcessorThreadCount);
+	userState.get_state("proc_thread_count", mProcessorThreadCount);
+	userState.get_state("accessible_models", tmpVectorizedSet);
+	userState.get_state("username", mUsername);
+	userState.get_state("access_key", mAccessKey);
+	userState.get_state("system_prompt", mSystemPrompt);
+	userState.get_state("is_super", mIsSuperUser);
+	userState.get_state("is_static", mIsStatic);
+
+	mAccessibleModels.insert(tmpVectorizedSet.begin(), tmpVectorizedSet.end());
+
+	// TODO, DO FOR THE SAMPLING SET TOO
+}
+
+GENERIC InfMaipUser::update_state_file(const mbase::wstring& in_state_path)
 {
 	mbase::PcState userState;
-	if(in_overwrite)
+	
+	if(!get_username().size())
 	{
-		userState.initialize_overwrite(get_username(), in_state_path);
+		return;
 	}
 
-	else
-	{
-		userState.initialize(get_username(), in_state_path);
-	}
-	
+	userState.initialize_overwrite(get_username(), in_state_path);
 	mbase::vector<mbase::string> tmpVectorizedSet(mAccessibleModels.begin(), mAccessibleModels.end()); // For file serialization
 
-	userState.set_state<U32>("authority_flags", get_authority_flags());
-	userState.set_state<U32>("model_access_limit", get_model_access_limit());
-	userState.set_state<U32>("max_context_length", get_maximum_context_length());
-	userState.set_state<U32>("batch_size", get_batch_size());
-	userState.set_state<U32>("proc_max_thread_count", get_processor_max_thread_count());
-	userState.set_state<U32>("proc_thread_count", get_processor_thread_count());
-	userState.set_state<mbase::vector<mbase::string>>("accessible_models", tmpVectorizedSet);
-	userState.set_state<mbase::string>("username", get_username());
-	userState.set_state<mbase::string>("access_key", get_access_key());
-	userState.set_state<mbase::string>("system_prompt", get_system_prompt());
+	userState.set_state("authority_flags", get_authority_flags());
+	userState.set_state("model_access_limit", get_model_access_limit());
+	userState.set_state("max_context_length", get_maximum_context_length());
+	userState.set_state("batch_size", get_batch_size());
+	userState.set_state("proc_max_thread_count", get_processor_max_thread_count());
+	userState.set_state("proc_thread_count", get_processor_thread_count());
+	userState.set_state("accessible_models", tmpVectorizedSet);
+	userState.set_state("username", get_username());
+	userState.set_state("access_key", get_access_key());
+	userState.set_state("system_prompt", get_system_prompt());
 	/* userState.set_state<inf_sampling_set>("sampling_set", get_sampling_set()); // Fix this thing */
-	userState.set_state<bool>("is_super", is_superuser());
-	userState.set_state<bool>("is_static", is_static());
+	userState.set_state("is_super", is_superuser());
+	userState.set_state("is_static", is_static());
 	 
 	userState.update();
 }

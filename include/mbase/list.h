@@ -996,6 +996,7 @@ MBASE_INLINE mbase::list<T, Allocator> list<T, Allocator>::deserialize(IBYTEBUFF
 
 	char_stream inBuffer(in_src, in_length);
 	size_type inSize = inBuffer.get_datan<size_type>();
+	size_type bytesProcessed = 0;
 
 	for (size_type i = 0; i < inSize; ++i)
 	{
@@ -1007,13 +1008,19 @@ MBASE_INLINE mbase::list<T, Allocator> list<T, Allocator>::deserialize(IBYTEBUFF
 		else
 		{
 			blockLength = inBuffer.get_datan<size_type>();
-			bytes_processed += sizeof(size_type);
+			bytesProcessed += sizeof(size_type);
 		}
 		IBYTEBUFFER blockData = inBuffer.get_bufferc();
 		//deserializedList.push_back(mbase::deserialize<value_type>(blockData, blockLength, bytes_processed));
-		deserializedList.push_back(std::move(mbase::deserialize<value_type>(blockData, blockLength, bytes_processed)));
+		size_type tmpBytesProcessed = 0;
+		deserializedList.push_back(std::move(mbase::deserialize<value_type>(blockData, blockLength, tmpBytesProcessed)));
+
+		bytesProcessed += tmpBytesProcessed;
+
 		inBuffer.advance(blockLength);
 	}
+
+	bytes_processed = bytesProcessed;
 
 	return deserializedList;
 }

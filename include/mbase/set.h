@@ -605,6 +605,7 @@ template<typename Key, typename Compare, typename Allocator>
 MBASE_INLINE mbase::set<Key, Compare, Allocator> set<Key, Compare, Allocator>::deserialize(IBYTEBUFFER in_src, SIZE_T in_length, SIZE_T& bytes_processed)
 {
 	mbase::set<Key, Compare, Allocator> deserializedContainer;
+	size_type bytesProcessed = 0;
 	if (in_length)
 	{
 		char_stream inBuffer(in_src, in_length);
@@ -618,12 +619,19 @@ MBASE_INLINE mbase::set<Key, Compare, Allocator> set<Key, Compare, Allocator>::d
 		while (inBuffer.get_bufferc() < eofBuffer)
 		{
 			I32 blockLength = inBuffer.get_datan<I32>();
-			bytes_processed += blockLength;
+			bytesProcessed += blockLength;
 			IBYTEBUFFER blockData = inBuffer.get_bufferc();
-			deserializedContainer.insert(std::move(mbase::deserialize<value_type>(blockData, blockLength, bytes_processed)));
+
+			size_type tmpBytesProcessed = 0;
+
+			deserializedContainer.insert(std::move(mbase::deserialize<value_type>(blockData, blockLength, tmpBytesProcessed)));
+			bytesProcessed += tmpBytesProcessed;
+
 			inBuffer.advance(blockLength);
 		}
 	}
+
+	bytes_processed = bytesProcessed;
 
 	return deserializedContainer;
 }
