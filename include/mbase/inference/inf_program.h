@@ -201,12 +201,62 @@ public:
 	maip_err_code inf_modify_user_max_processor_thread_count(const mbase::string& in_session_token, const mbase::string& in_username, const U32& in_thread_count);
 	// maip_err_code inf_modify_user_sampling_set(const mbase::string& in_session_token, const mbase::string& in_username, const inf_sampling_set& in_sampling_set) /* Implement */
 	maip_err_code inf_modify_user_system_prompt(const mbase::string& in_session_token, const mbase::string& in_username, const mbase::string& in_system_prompt);
-
 	maip_err_code inf_modify_user_make_superuser(const mbase::string& in_session_token, const mbase::string& in_username, const mbase::string& in_access_token);
 	maip_err_code inf_modify_user_unmake_superuser(const mbase::string& in_session_token, const mbase::string& in_username, const mbase::string& in_access_token);
 	maip_err_code inf_modify_user_accept_models(const mbase::string& in_session_token, const mbase::string& in_username, const std::set<mbase::string>& in_models, mbase::vector<mbase::string>& out_missing_models);
 	maip_err_code inf_modify_user_set_authority_flags(const mbase::string& in_session_token, const mbase::string& in_username, const mbase::vector<mbase::string>& in_authority_flags);
 	
+	maip_err_code inf_create_model_description(
+		const mbase::string& in_session_token,
+		const mbase::string& in_original_name,
+		const mbase::string& in_custom_name,
+		const mbase::string& in_description,
+		const mbase::string& in_system_prompt,
+		const mbase::string& in_model_file,
+		const mbase::vector<mbase::string>& in_tags,
+		const mbase::string& in_category,
+		const bool& in_is_embedding_model,
+		const bool& in_force_system_prompt,
+		const U32& in_total_context_length
+	); // IMPLEMENT
+	maip_err_code inf_modify_original_model_name(
+		const mbase::string& in_session_token,
+		const mbase::string& in_model_target,
+		const mbase::string& in_name
+	);
+	maip_err_code inf_modify_custom_model_name(
+		const mbase::string& in_session_token,
+		const mbase::string& in_model_target,
+		const mbase::string& in_name
+	);
+	maip_err_code inf_modify_model_description(
+		const mbase::string& in_session_token,
+		const mbase::string& in_model_target,
+		const mbase::string& in_description
+	);
+	maip_err_code inf_modify_model_system_prompt(
+		const mbase::string& in_session_token,
+		const mbase::string& in_model_target,
+		const mbase::string& in_system_prompt
+	);
+	maip_err_code inf_modify_model_model_file(
+		const mbase::string& in_session_token,
+		const mbase::string& in_model_target,
+		const mbase::string& in_model_file,
+		const bool& in_is_embedding,
+		const mbase::string& in_model_category
+	);
+	maip_err_code inf_modify_model_tags(
+		const mbase::string& in_session_token,
+		const mbase::string& in_model_target,
+		const mbase::vector<mbase::string>& in_tags
+	);
+	maip_err_code inf_modify_model_context_length(
+		const mbase::string& in_session_token,
+		const mbase::string& in_model_target,
+		const U32& in_maximum_context
+	);
+
 	maip_err_code exec_set_input(const mbase::string& in_session_token, const U64& in_ctxId, mbase::context_role in_role, const mbase::string& in_input, U32& out_msgid);
 	maip_err_code exec_set_input(const mbase::string& in_session_token, const U64& in_ctxId, mbase::context_role in_role, CBYTEBUFFER in_input, const size_type& in_length, U32& out_msgid);
 	maip_err_code exec_execute_input(const mbase::string& in_session_token, const U64& in_ctxId, mbase::vector<U32>& in_msgid); // TODO: CHANGE CONTENT

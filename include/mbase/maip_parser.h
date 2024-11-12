@@ -202,6 +202,7 @@ public:
 	MBASE_INLINE size_type generate_payload(mbase::string& out_payload, mbase::char_stream& in_stream);
 	MBASE_INLINE size_type generate_payload(mbase::string& out_payload, mbase::string in_string);
 	MBASE_INLINE size_type generate_payload(mbase::string& out_payload, mbase::wstring in_string);
+	MBASE_INLINE GENERIC clear_kvals();
 
 private:
 	mbase::string mVersionString = "MAIP1.0 ";
@@ -622,6 +623,11 @@ MBASE_INLINE typename maip_packet_builder::size_type maip_packet_builder::genera
 	mbase::string utfString = std::move(mbase::to_utf8(in_string));
 	mbase::char_stream cs(utfString.data(), utfString.size());
 	return generate_payload(out_payload, cs);
+}
+
+MBASE_INLINE GENERIC maip_packet_builder::clear_kvals()
+{
+	mDescriptionKVals.clear();
 }
 
 MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE typename maip_peer_request::iterator maip_peer_request::begin() noexcept

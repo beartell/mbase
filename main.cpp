@@ -13,6 +13,7 @@
 #include <mbase/inference/inf_maip_server.h>
 #include <mbase/inference/inf_gguf_metadata_configurator.h>
 #include <mbase/inference/inf_maip_model_description.h>
+#include <mbase/maip_client.h>
 #include <vector>
 #include <set>
 #include <unordered_map>
@@ -124,6 +125,13 @@ using namespace mbase;
 
 int main()
 {
+    mbase::maip_client mm;
+    mbase::string myOutput;
+
+    mm.access_request("sql_agent", "12345678", myOutput);
+
+    std::cout << myOutput << std::endl;
+
     mbase::InfMaipModelDescription modelDescription;
 
     modelDescription.load_from_state_file("cuser.mbsf", L"./");

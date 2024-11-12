@@ -110,6 +110,17 @@ struct string_converter {
 };
 
 template<typename StringType>
+struct string_converter<const bool, StringType> {
+    using value_type = const bool;
+    using size_type = SIZE_T;
+	using pointer = std::add_pointer_t<value_type>;
+    
+	pointer value;
+
+    MBASE_INLINE StringType to_string();
+};
+
+template<typename StringType>
 struct string_converter<const I8, StringType> {
     using value_type = const I8;
     using size_type = SIZE_T;
@@ -524,9 +535,16 @@ MBASE_INLINE StringType string_converter<ConvertedType, StringType>::to_string()
 }
 
 template<typename StringType>
+MBASE_INLINE StringType string_converter<const bool, StringType>::to_string()
+{
+    IBYTE emptyString[2] = {0};
+    sprintf(emptyString, "%hhd", *value);
+    return StringType(emptyString);
+}
+
+template<typename StringType>
 MBASE_INLINE StringType string_converter<const I8, StringType>::to_string()
 {
-
     IBYTE emptyString[4] = {0};
     sprintf(emptyString, "%hhd", *value);
     return StringType(emptyString);
