@@ -125,16 +125,8 @@ using namespace mbase;
 
 int main()
 {
-    mbase::maip_client mm;
-    mbase::string myOutput;
-
-    mm.access_request("sql_agent", "12345678", myOutput);
-
-    std::cout << myOutput << std::endl;
-
-    mbase::InfMaipModelDescription modelDescription;
-
-    modelDescription.load_from_state_file("cuser.mbsf", L"./");
+    InfProgram ifp;
+    InfMaipDefaultServer IDS(ifp);
 
     // modelDescription.set_custom_name("cuser");
     // modelDescription.set_embedding(false);

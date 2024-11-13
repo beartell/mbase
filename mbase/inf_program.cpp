@@ -19,6 +19,13 @@ if(!this->is_session_token_valid(in_session_token))\
 }\
 InfClientSession& clientSession = mSessionMap[in_session_token];
 
+#define MBASE_DESC_MODIF_CONTROL \
+maip_err_code result = common_description_modification_control(clientSession, in_model_target);\
+if(result != maip_err_code::INF_SUCCESS)\
+{\
+	return result;\
+}
+
 class InfMaipModel : public mbase::InfModelTextToText {
 public:
 	InfMaipModel(const mbase::string& in_as_name, InfProgram& in_program);
@@ -514,7 +521,7 @@ InfProgram::maip_err_code InfProgram::inf_get_program_models(const mbase::string
 {
 	MBASE_SESSION_CONTROL;
 
-	for(auto& n : mModelInformationMap)
+	for(auto& n : mModelDescriptionMap)
 	{
 		out_models.push_back(n.first);
 	}
@@ -544,13 +551,13 @@ InfProgram::maip_err_code InfProgram::inf_load_model(const mbase::string& in_ses
 		}
 	}
 
-	for(auto& n : mModelInformationMap)
+	for(auto& n : mModelDescriptionMap)
 	{
 		if(n.first == in_modelname)
 		{
-			InfMaipModel* newModel = new InfMaipModel(n.second.mModelName, *this);
-			newModel->initialize_model(n.second.mModelPath, in_total_context_size, 999);
-			mRegisteredModels[n.second.mModelName] = newModel;
+			InfMaipModel* newModel = new InfMaipModel(n.second.get_custom_name(), *this);
+			newModel->initialize_model(mbase::from_utf8(n.second.get_model_file()), in_total_context_size, 999);
+			mRegisteredModels[n.second.get_custom_name()] = newModel;
 			return maip_err_code::INF_SUCCESS;
 		}
 	}
@@ -1017,7 +1024,7 @@ InfProgram::maip_err_code InfProgram::inf_modify_user_accept_models(const mbase:
 	InfMaipUser& maipUser = mUserMap[in_username];
 	for(std::set<mbase::string>::iterator It = in_models.begin(); It != in_models.end(); It++)
 	{
-		if(mModelInformationMap.find(*It) == mModelInformationMap.end())
+		if(mModelDescriptionMap.find(*It) == mModelDescriptionMap.end())
 		{
 			out_missing_models.push_back(*It);
 		}
@@ -1115,6 +1122,255 @@ InfProgram::maip_err_code InfProgram::inf_modify_user_set_authority_flags(const 
 
 	update_maip_user_sessions(maipUser);
 	return maip_err_code::INF_SUCCESS;
+}
+
+InfProgram::maip_err_code InfProgram::inf_create_model_description(
+		const mbase::string& in_session_token,
+		const mbase::string& in_original_name,
+		const mbase::string& in_custom_name,
+		const mbase::string& in_description,
+		const mbase::string& in_system_prompt,
+		const mbase::string& in_model_file,
+		const mbase::vector<mbase::string>& in_tags,
+		const mbase::string& in_category,
+		const bool& in_is_embedding_model,
+		const bool& in_force_system_prompt,
+		const U32& in_total_context_length
+)
+{
+	MBASE_SESSION_CONTROL;
+
+	maip_err_code result = common_modification_control(clientSession, clientSession.mMaipUser.get_username(), MAIP_MODEL_LOAD_UNLOAD);
+	if(result != maip_err_code::INF_SUCCESS)
+	{
+		return result;
+	}
+
+	if(!in_original_name.size() || !in_model_file.size())
+	{
+		return maip_err_code::INF_INVALID_PARAMS;
+	}
+
+	mbase::string tmpCustomName = in_custom_name;
+	InfMaipModelDescription::CATEGORY ctg;
+	if(!tmpCustomName.size())
+	{
+		// If the custom name does not exists,
+		// custom name is equal to the original name
+		tmpCustomName = in_original_name;
+	}
+
+	if(in_category == "T2T")
+	{
+		ctg = InfMaipModelDescription::CATEGORY::TEXT_TO_TEXT;
+	}
+
+	else if(in_category == "EMBD")
+	{
+		ctg = InfMaipModelDescription::CATEGORY::EMBEDDING;
+	}
+
+	else 
+	{
+		return maip_err_code::INF_INVALID_PARAMS;
+	}
+
+	if(mModelDescriptionMap.find(tmpCustomName) != mModelDescriptionMap.end())
+	{
+		return maip_err_code::INF_DESCRIPTION_ALREADY_EXISTS;
+	}
+
+	InfMaipModelDescription imd;
+	imd.set_original_name(in_original_name);
+	imd.set_custom_name(in_custom_name);
+	imd.set_description(in_description);
+	imd.set_system_prompt(in_system_prompt);
+	imd.set_model_file(in_model_file);
+	imd.set_tags(in_tags);
+	imd.set_category(ctg);
+	imd.set_embedding(in_is_embedding_model);
+	imd.set_force_system_prompt(in_force_system_prompt);
+	imd.set_maximum_context_length(in_total_context_length);
+	imd.update_state_file(mDescriptionDirectory);
+
+	return maip_err_code::INF_SUCCESS;
+}
+
+InfProgram::maip_err_code InfProgram::inf_modify_original_model_name(
+	const mbase::string& in_session_token,
+	const mbase::string& in_model_target,
+	const mbase::string& in_name
+)
+{
+	MBASE_SESSION_CONTROL;
+
+	if(!in_name.size())
+	{
+		return maip_err_code::INF_INVALID_PARAMS;
+	}
+
+	MBASE_DESC_MODIF_CONTROL;
+
+	InfMaipModelDescription& currentDescription = mModelDescriptionMap[in_model_target];
+	currentDescription.set_original_name(in_name);
+	currentDescription.update_state_file(mDescriptionDirectory);
+
+	return maip_err_code::INF_SUCCESS;
+}
+
+InfProgram::maip_err_code InfProgram::inf_modify_custom_model_name(
+	const mbase::string& in_session_token,
+	const mbase::string& in_model_target,
+	const mbase::string& in_name
+)
+{
+	MBASE_SESSION_CONTROL;
+
+	if(!in_name.size())
+	{
+		return maip_err_code::INF_INVALID_PARAMS;
+	}
+
+	MBASE_DESC_MODIF_CONTROL;
+	
+	InfMaipModelDescription& currentDescription = mModelDescriptionMap[in_model_target];
+	if(in_name == currentDescription.get_custom_name())
+	{
+		return maip_err_code::INF_SUCCESS;
+	}
+
+	currentDescription.set_custom_name(in_name);
+	mbase::delete_file(mDescriptionDirectory + mbase::from_utf8(in_name)); // Delete the old description file
+	currentDescription.update_state_file(mDescriptionDirectory);
+
+	InfMaipModelDescription newDescription = currentDescription;
+	mModelDescriptionMap.erase(in_model_target);
+	mModelDescriptionMap[in_name] = newDescription;
+
+	return maip_err_code::INF_SUCCESS;
+}
+
+InfProgram::maip_err_code InfProgram::inf_modify_model_description(
+	const mbase::string& in_session_token,
+	const mbase::string& in_model_target,
+	const mbase::string& in_description
+)
+{
+	MBASE_SESSION_CONTROL;
+	MBASE_DESC_MODIF_CONTROL;
+
+	InfMaipModelDescription& currentDescription = mModelDescriptionMap[in_model_target];
+	if(currentDescription.get_description() == in_description)
+	{
+		return maip_err_code::INF_SUCCESS;
+	}
+
+	currentDescription.set_description(in_description);
+	currentDescription.update_state_file(mDescriptionDirectory);
+
+	return maip_err_code::INF_SUCCESS;
+}
+
+InfProgram::maip_err_code InfProgram::inf_modify_model_system_prompt(
+	const mbase::string& in_session_token,
+	const mbase::string& in_model_target,
+	const mbase::string& in_system_prompt
+)
+{
+	MBASE_SESSION_CONTROL;
+	MBASE_DESC_MODIF_CONTROL;
+
+	InfMaipModelDescription& currentDescription = mModelDescriptionMap[in_model_target];
+	if(currentDescription.get_system_prompt() == in_system_prompt)
+	{
+		return maip_err_code::INF_SUCCESS;
+	}
+
+	currentDescription.set_system_prompt(in_system_prompt);
+	currentDescription.update_state_file(mDescriptionDirectory);
+
+	return maip_err_code::INF_SUCCESS;
+}
+
+InfProgram::maip_err_code InfProgram::inf_modify_model_model_file(
+	const mbase::string& in_session_token,
+	const mbase::string& in_model_target,
+	const mbase::string& in_model_file,
+	const bool& in_is_embedding,
+	const mbase::string& in_model_category
+)
+{
+	MBASE_SESSION_CONTROL;
+	MBASE_DESC_MODIF_CONTROL;
+
+	if(!in_model_file.size())
+	{
+		return maip_err_code::INF_INVALID_PARAMS;
+	}
+
+	InfMaipModelDescription::CATEGORY ctg;
+	if(in_model_category == "T2T")
+	{
+		ctg = InfMaipModelDescription::CATEGORY::TEXT_TO_TEXT;
+	}
+
+	else if(in_model_category == "EMBD")
+	{
+		ctg = InfMaipModelDescription::CATEGORY::EMBEDDING;
+	}
+
+	else
+	{
+		return maip_err_code::INF_INVALID_PARAMS;
+	}
+
+	InfMaipModelDescription& currentDescription = mModelDescriptionMap[in_model_target];
+	currentDescription.set_model_file(in_model_file);
+	currentDescription.set_category(ctg);
+	currentDescription.set_embedding(in_is_embedding);
+	currentDescription.update_state_file(mDescriptionDirectory);
+
+	return maip_err_code::INF_SUCCESS;
+}
+
+InfProgram::maip_err_code InfProgram::inf_modify_model_tags(
+	const mbase::string& in_session_token,
+	const mbase::string& in_model_target,
+	const mbase::vector<mbase::string>& in_tags
+)
+{
+	MBASE_SESSION_CONTROL;
+	MBASE_DESC_MODIF_CONTROL;
+
+	InfMaipModelDescription& currentDescription = mModelDescriptionMap[in_model_target];
+	currentDescription.set_tags(in_tags);
+	currentDescription.update_state_file(mDescriptionDirectory);
+
+	return maip_err_code::INF_SUCCESS;
+}
+
+InfProgram::maip_err_code InfProgram::inf_modify_model_context_length(
+	const mbase::string& in_session_token,
+	const mbase::string& in_model_target,
+	const U32& in_maximum_context
+)
+{
+	MBASE_SESSION_CONTROL;
+	MBASE_DESC_MODIF_CONTROL;
+
+	if(in_maximum_context < 64)
+	{
+		return maip_err_code::INF_INVALID_PARAMS;
+	}
+
+	InfMaipModelDescription& currentDescription = mModelDescriptionMap[in_model_target];
+	currentDescription.set_maximum_context_length(in_maximum_context);
+	currentDescription.update_state_file(mDescriptionDirectory);
+
+	// TODO: UPDATE LOADED MODELS CONTEXT LENGTH
+
+	return maip_err_code::INF_SUCCESS;
+
 }
 
 InfProgram::maip_err_code InfProgram::exec_set_input(const mbase::string& in_session_token, const U64& in_ctxId, mbase::context_role in_role, const mbase::string& in_input, U32& out_msgid)
@@ -1319,11 +1575,11 @@ GENERIC InfProgram::initialize(InfProgramInformation in_program_information)
 	);
 
 	mClientStateDirectory = mInferenceConfigurator.get_data_path() + L"states/users/";
-	mModelsDirectory = mInferenceConfigurator.get_data_path() + L"models/";
+	mDescriptionDirectory = mInferenceConfigurator.get_data_path() + L"states/descriptions/";
 
 	mbase::create_directory(mInferenceConfigurator.get_data_path() + L"states/");
 	mbase::create_directory(mClientStateDirectory);
-	mbase::create_directory(mModelsDirectory);
+	mbase::create_directory(mDescriptionDirectory);
 
 	mbase::vector<FS_FILE_INFORMATION> fileInfo;
 	mbase::get_directory(mClientStateDirectory, fileInfo);
@@ -1392,54 +1648,7 @@ GENERIC InfProgram::initialize(InfProgramInformation in_program_information)
 	}
 
 	fileInfo.clear();
-	mbase::get_directory(mClientStateDirectory, fileInfo);
-	for(mbase::vector<FS_FILE_INFORMATION>::iterator It = fileInfo.begin(); It != fileInfo.end(); ++It)
-	{
-		// Querying models under the model directory
-
-		mbase::GgufMetaConfigurator ggufConfigurator(mClientStateDirectory + It->fileName);
-		mbase::string modelName;
-
-		if(!ggufConfigurator.get_key("mbase.model_name", modelName))
-		{
-			std::cout << "Found GGUF file: " << mbase::to_utf8(It->fileName) << std::endl;
-			std::cout << "Applying MBASE parameters..." << std::endl;
-			ggufConfigurator.apply_mbase_parameter(""); // TODO, break if this fails
-			ggufConfigurator.clear_context();
-			std::cout << "MBASE Parameters successfully applied." << std::endl;
-		}
-		ggufConfigurator.clear_context();
-
-		// TEMPORARY SOLUTION, FIX THIS CODE ASAP
-		// IMPLEMENT initialize method on gguf configurator
-		// And make it movable if possible
-
-		mbase::GgufMetaConfigurator seriousGgufConfigurator(mModelsDirectory + It->fileName);
-
-		InfRegisteredModelInformation modelInformation;
-		modelInformation.mModelPath = mModelsDirectory + It->fileName;
-
-		seriousGgufConfigurator.get_key("mbase.model_name", modelInformation.mModelName);
-		seriousGgufConfigurator.get_key("mbase.model_architecture", modelInformation.mModelArchitecture);
-		seriousGgufConfigurator.get_key("mbase.quantization_coefficient", modelInformation.mQuantizationCoefficient);
-		seriousGgufConfigurator.get_key("mbase.embedded_system_prompt", modelInformation.mSystemPrompt);
-		seriousGgufConfigurator.get_key("mbase.block_count", modelInformation.mBlockCount);
-		seriousGgufConfigurator.get_key("mbase.head_count", modelInformation.mHeadCount);
-		seriousGgufConfigurator.get_key("mbase.embedding_length", modelInformation.mEmdeddingLength);
-		seriousGgufConfigurator.get_key("mbase.model_size", modelInformation.mModelSize);
-
-		std::cout << "Model name: " << modelInformation.mModelName << std::endl;
-		std::cout << "Model architecture: " << modelInformation.mModelArchitecture << std::endl;
-		std::cout << "Quantization Coefficient: " << modelInformation.mQuantizationCoefficient << std::endl;
-		std::cout << "Embedded system prompt: " << modelInformation.mSystemPrompt << std::endl;
-		std::cout << "Block count: " << modelInformation.mBlockCount << std::endl;
-		std::cout << "KV Head count: " << modelInformation.mHeadCount << std::endl;
-		std::cout << "Embedding length: " << modelInformation.mEmdeddingLength << std::endl;
-		std::cout << "====" << std::endl;
-		std::cout << std::endl;
-
-		mModelInformationMap[modelInformation.mModelName] = modelInformation;
-	}
+	_reload_model_descriptions();
 }
 
 InfProgram::flags InfProgram::host_model(InfModelTextToText* in_model)
@@ -1662,6 +1871,43 @@ InfProgram::maip_err_code InfProgram::common_modification_control(InfClientSessi
 	if(maipUser.is_superuser() && !in_session.mMaipUser.is_superuser())
 	{
 		return maip_err_code::INF_AUTHORIZATION_FAILED;
+	}
+
+	return maip_err_code::INF_SUCCESS;
+}
+
+GENERIC InfProgram::_reload_model_descriptions()
+{
+	mbase::vector<FS_FILE_INFORMATION> fileInfo;
+	mbase::get_directory(mClientStateDirectory, fileInfo);
+
+	for(mbase::vector<FS_FILE_INFORMATION>::iterator It = fileInfo.begin(); It != fileInfo.end(); ++It)
+	{
+		// Querying model descriptions
+
+		mbase::string stateObjectName = mbase::to_utf8(It->fileName);
+		InfMaipModelDescription modelDescriptionObject;
+		
+		modelDescriptionObject.load_from_state_file(stateObjectName, mClientStateDirectory);
+		if(modelDescriptionObject.get_original_name().size())
+		{
+			mModelDescriptionMap[modelDescriptionObject.get_original_name()] = modelDescriptionObject;
+		}
+	}
+}
+
+InfProgram::maip_err_code InfProgram::common_description_modification_control(InfClientSession& in_session, const mbase::string& in_model_target)
+{
+	maip_err_code result = common_modification_control(in_session, in_session.mMaipUser.get_username(), MAIP_MODEL_LOAD_UNLOAD);
+	if(result != maip_err_code::INF_SUCCESS)
+	{
+		return result;
+	}
+
+	model_description_map::iterator It = mModelDescriptionMap.find(in_model_target);
+	if(It == mModelDescriptionMap.end())
+	{
+		return maip_err_code::INF_MODEL_NAME_MISMATCH;
 	}
 
 	return maip_err_code::INF_SUCCESS;

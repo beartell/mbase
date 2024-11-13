@@ -16,6 +16,7 @@
 #include <mbase/inference/inf_model.h>
 #include <mbase/inference/inf_client.h>
 #include <mbase/inference/inf_maip_user.h>
+#include <mbase/inference/inf_maip_model_description.h>
 #include <unordered_map>
 #include <set>
 
@@ -91,23 +92,11 @@ struct MBASE_API InfProgramInformation {
 	mbase::wstring mTempPath;
 };
 
-struct MBASE_API InfRegisteredModelInformation {
-	mbase::wstring mModelPath;
-	mbase::string mModelName;
-	mbase::string mModelArchitecture;
-	mbase::string mSystemPrompt;
-	F32 mQuantizationCoefficient = 0.0f;
-	U32 mBlockCount = 0;
-	U32 mHeadCount = 0;
-	U32 mEmdeddingLength = 0;
-	U64 mModelSize = 0;
-};
-
 class MBASE_API InfProgram : public mbase::PcProgramBase {
 public:
 	using accepted_client_map = std::unordered_map<mbase::string, InfClientSession>;
 	using registered_model_map = std::unordered_map<mbase::string, InfModelTextToText*>;
-	using model_information_map = std::unordered_map<mbase::string, InfRegisteredModelInformation>;
+	using model_description_map = std::unordered_map<mbase::string, InfMaipModelDescription>;
 	using inference_user_map = std::unordered_map<mbase::string, InfMaipUser>;
 
 	enum class flags : U8 {
@@ -147,6 +136,7 @@ public:
 		INF_USER_NOT_FOUND = 2021,
 		INF_TARGET_MODEL_ACCESS_PROHIBITED = 2022,
 		INF_NOT_ENOUGH_MEMORY = 2023,
+		INF_DESCRIPTION_ALREADY_EXISTS = 2024,
 		EXEC_SUCCESS = 3000,
 		EXEC_ALREADY_PROCESSING = 3001,
 		EXEC_MESSAGE_ID_MISMATCH = 3002,
@@ -176,8 +166,6 @@ public:
 	maip_err_code inf_get_program_models(const mbase::string& in_session_token, mbase::vector<mbase::string>& out_models);
 	maip_err_code inf_load_model(const mbase::string& in_session_token, const mbase::string& in_modelname, const U32& in_total_context_size);
 	maip_err_code inf_unload_model(const mbase::string& in_session_token, const mbase::string& in_modelname);
-	//maip_err_code inf_load_adapter(const mbase::string& in_session_token, const mbase::string& in_adapter_name);
-	//maip_err_code inf_unload_adapter(const mbase::string& in_session_token, const mbase::string& in_adapter_name);
 	maip_err_code inf_create_new_user(
 		const mbase::string& in_session_token,
 		const mbase::string& in_username,
@@ -205,7 +193,6 @@ public:
 	maip_err_code inf_modify_user_unmake_superuser(const mbase::string& in_session_token, const mbase::string& in_username, const mbase::string& in_access_token);
 	maip_err_code inf_modify_user_accept_models(const mbase::string& in_session_token, const mbase::string& in_username, const std::set<mbase::string>& in_models, mbase::vector<mbase::string>& out_missing_models);
 	maip_err_code inf_modify_user_set_authority_flags(const mbase::string& in_session_token, const mbase::string& in_username, const mbase::vector<mbase::string>& in_authority_flags);
-	
 	maip_err_code inf_create_model_description(
 		const mbase::string& in_session_token,
 		const mbase::string& in_original_name,
@@ -218,7 +205,7 @@ public:
 		const bool& in_is_embedding_model,
 		const bool& in_force_system_prompt,
 		const U32& in_total_context_length
-	); // IMPLEMENT
+	);
 	maip_err_code inf_modify_original_model_name(
 		const mbase::string& in_session_token,
 		const mbase::string& in_model_target,
@@ -285,10 +272,13 @@ public:
 	//flags delete_user(const mbase::string& in_username);
 
 	maip_err_code common_modification_control(InfClientSession& in_session, const mbase::string& in_username, const U32& in_flags);
+	maip_err_code common_description_modification_control(InfClientSession& in_session, const mbase::string& in_model_target);
 	GENERIC update_maip_user_sessions(InfMaipUser& in_maip_user);
 	GENERIC update() override;
 
 private:
+	GENERIC _reload_model_descriptions();
+
 	PcDiagnostics mInferenceDiagnostics;
 	PcConfig mInferenceConfigurator;
 	PcNetManager mInferenceNetManager;
@@ -296,14 +286,14 @@ private:
 
 	accepted_client_map mSessionMap;
 	registered_model_map mRegisteredModels;
-	model_information_map mModelInformationMap;
+	model_description_map mModelDescriptionMap;
 	inference_user_map mUserMap;
 	U64 mClientSessionIdCounter = 0;
 	U32 mModelHostingLimit;
 	U32 mDefaultModelAccessLimit;
 	U32 mDefaultContextLimit;
 	mbase::wstring mClientStateDirectory;
-	mbase::wstring mModelsDirectory;
+	mbase::wstring mDescriptionDirectory;
 };
 
 MBASE_END

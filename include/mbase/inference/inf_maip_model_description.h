@@ -24,6 +24,7 @@ public:
     const mbase::string& get_model_file();
     const mbase::vector<mbase::string>& get_tags();
     const bool& get_embedding();
+    const bool& get_forced_system_prompt();
     const CATEGORY& get_category_value();
     const U32& get_maximum_context_length();
 
@@ -34,6 +35,7 @@ public:
     GENERIC set_model_file(const mbase::string& in_model_file);
     GENERIC set_tags(const mbase::vector<mbase::string>& in_tags);
     GENERIC set_embedding(const bool& in_value);
+    GENERIC set_force_system_prompt(const bool& in_value);
     GENERIC set_category(const CATEGORY& in_category);
     GENERIC set_maximum_context_length(const U32& in_maximum_context);
 
@@ -48,6 +50,7 @@ private:
     mbase::string mModelFile;
     mbase::vector<mbase::string> mTags;
     bool mIsEmbeddingModel;
+    bool mForceSystemPrompt;
     CATEGORY mCategory;
     U32 mMaximumAllowedContext; // MUST (MUST)
 };

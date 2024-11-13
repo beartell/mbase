@@ -1,4 +1,5 @@
 #include <mbase/inference/inf_maip_server.h>
+#include <mbase/inference/inf_maip_callbacks.h>
 #include <mbase/char_stream.h>
 #include <mbase/io_file.h>
 #include <set>
@@ -29,6 +30,11 @@ GENERIC InfMaipServerBase::on_disconnect(std::shared_ptr<PcNetPeerClient> out_pe
 {
 	// Remove the peer from accumulation map if it exists
 	std::cout << "Connection left" << std::endl;
+}
+
+GENERIC InfMaipServerBase::register_request_callback(const mbase::string& in_operation, maip_request_callback in_callback)
+{
+	mRequestCbMap[in_operation] = in_callback;
 }
 
 GENERIC InfMaipServerBase::accumulated_processing(std::shared_ptr<PcNetPeerClient> out_peer, accumulation_map::iterator in_accum_iterator, CBYTEBUFFER out_data, size_type out_size)
@@ -151,13 +157,73 @@ GENERIC InfMaipServerBase::simple_processing(std::shared_ptr<PcNetPeerClient> ou
 
 InfMaipDefaultServer::InfMaipDefaultServer(InfProgram& in_program)
 {
+	register_request_callback("inf_access_request", access_request_cb);
+	register_request_callback("inf_destroy_session", destroy_session_cb);
+	register_request_callback("inf_get_accessible_models", get_accessible_models_cb);
+	register_request_callback("inf_get_context_ids", get_context_ids_cb);
+	register_request_callback("inf_create_context", create_context_cb);
+	register_request_callback("inf_clear_context_history", clear_context_history_cb);
+	register_request_callback("inf_get_context_status", get_context_status_cb);
+	register_request_callback("inf_destroy_context", destroy_context_cb);
+	register_request_callback("inf_get_program_models", get_program_models_cb);
+	register_request_callback("inf_load_model", load_model_cb);
+	register_request_callback("inf_unload_model", unload_model_cb);
+	register_request_callback("inf_create_new_user", create_new_user_cb);
+	register_request_callback("inf_delete_user", delete_user_cb);
+	register_request_callback("inf_modify_user_model_access_limit", modify_user_model_access_limit_cb);
+	register_request_callback("inf_modify_user_maximum_context_length", modify_user_maximum_context_length_cb);
+	register_request_callback("inf_modify_user_batch_size", modify_user_batch_size_cb);
+	register_request_callback("inf_modify_user_processor_thread_count", modify_user_processor_thread_count_cb);
+	register_request_callback("inf_modify_user_max_processor_thread_count", modify_user_max_processor_thread_count_cb);
+	register_request_callback("inf_modify_user_system_prompt", modify_user_system_prompt_cb);
+	register_request_callback("inf_modify_user_make_superuser", modify_user_make_superuser_cb);
+	register_request_callback("inf_modify_user_unmake_superuser", modify_user_unmake_superuser_cb);
+	register_request_callback("inf_modify_user_accept_models", modify_user_accept_models_cb);
+	register_request_callback("inf_modify_inf_modify_user_set_authority_flags", modify_user_set_authority_flags_cb);
+	register_request_callback("inf_create_model_description", create_model_description_cb);
+	register_request_callback("inf_modify_original_model_name", modify_model_original_model_name_cb);
+	register_request_callback("inf_modify_custom_model_name", modify_model_custom_model_name_cb);
+	register_request_callback("inf_modify_model_description", modify_model_description_cb);
+	register_request_callback("inf_modify_model_system_prompt", modify_model_system_prompt_cb);
+	register_request_callback("inf_modify_model_model_file", modify_model_model_file_cb);
+	register_request_callback("inf_modify_model_tags", modify_model_tags_cb);
+	register_request_callback("inf_modify_model_context_length", modify_model_context_length_cb);
+	register_request_callback("exec_set_input", execution_set_input_cb);
+	register_request_callback("exec_execute_input", execution_execute_input_cb);
+	register_request_callback("exec_next", execution_next_cb);	
+
 	mHostProgram = &in_program;
 }
 
 GENERIC InfMaipDefaultServer::on_informatic_request(const maip_peer_request& out_request, std::shared_ptr<PcNetPeerClient> out_peer)
 {
 	const mbase::string& requestString = out_request.get_identification().mOpString;
-	
+	request_callback_map::iterator cbIt = mRequestCbMap.find(requestString);
+	if(cbIt == mRequestCbMap.end())
+	{
+		std::cout << "Operation name mismatch." << std::endl;
+		return;
+	}
+	else
+	{
+		maip_packet_builder packetBuilder;
+		packetBuilder.set_version(1, 0); // TODO: Get the version from macros
+		if(!cbIt->second(out_peer, out_request, out_request.get_kval<mbase::string>("STOK"), packetBuilder))
+		{
+			// If this is the case, the underlying operation is responsible for network operations for the given client
+			return;
+		}
+		else
+		{
+			mbase::string outPayload;
+			packetBuilder.generate_payload(outPayload);
+			out_peer->write_data(outPayload.c_str(), outPayload.size());
+			out_peer->send_write_signal();
+			out_peer->send_read_signal();
+		}
+		return;
+	}
+
 	if(requestString == "inf_access_request")
 	{
 		mbase::string userName = out_request.get_kval<mbase::string>("USERNAME");

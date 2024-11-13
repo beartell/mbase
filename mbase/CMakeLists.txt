@@ -49,6 +49,7 @@ add_library(mb_inference SHARED inf_client.cpp
     inf_t2t_model.cpp 
     inf_embedder.cpp
     inf_maip_model_description.cpp
+    inf_maip_callbacks.cpp
 )
 
 target_include_directories(mb_core PUBLIC ${external_includes})

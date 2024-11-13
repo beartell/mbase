@@ -11,6 +11,7 @@ InfMaipModelDescription::InfMaipModelDescription() :
     mModelFile(""),
     mTags(),
     mIsEmbeddingModel(false),
+    mForceSystemPrompt(false),
     mCategory(CATEGORY::TEXT_TO_TEXT),
     mMaximumAllowedContext(0)
 {
@@ -53,6 +54,11 @@ const mbase::vector<mbase::string>& InfMaipModelDescription::get_tags()
 const bool& InfMaipModelDescription::get_embedding()
 {
     return mIsEmbeddingModel;
+}
+
+const bool& InfMaipModelDescription::get_forced_system_prompt()
+{
+    return mForceSystemPrompt;
 }
 
 const InfMaipModelDescription::CATEGORY& InfMaipModelDescription::get_category_value()
@@ -98,6 +104,11 @@ GENERIC InfMaipModelDescription::set_tags(const mbase::vector<mbase::string>& in
 GENERIC InfMaipModelDescription::set_embedding(const bool& in_value)
 {
     mIsEmbeddingModel = in_value;
+}
+
+GENERIC InfMaipModelDescription::set_force_system_prompt(const bool& in_value)
+{
+    mForceSystemPrompt = in_value;
 }
 
 GENERIC InfMaipModelDescription::set_category(const CATEGORY& in_category)
