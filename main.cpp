@@ -125,8 +125,23 @@ using namespace mbase;
 
 int main()
 {
-    InfProgram ifp;
-    InfMaipDefaultServer IDS(ifp);
+    mbase::maip_client mc;
+    mbase::string outPayload;
+    mc.create_model_description(
+        "Llama 3.2 1b",
+        "MBASE Sql query tuned model",
+        "This model provides a query interface using LLM",
+        "llama3.2-1b-instruct-q8_0.gguf",
+        {"Sql", "Instruct", "Tooling"},
+        "T2T",
+        true,
+        false,
+        "",
+        outPayload
+    );
+    std::cout << outPayload << std::endl;
+    // InfProgram ifp;
+    // InfMaipDefaultServer IDS(ifp);
 
     // modelDescription.set_custom_name("cuser");
     // modelDescription.set_embedding(false);

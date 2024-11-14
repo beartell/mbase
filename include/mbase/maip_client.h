@@ -39,6 +39,14 @@ enum class maip_operation {
 	MODIFY_USER_AUTHORITY,
 	MAKE_SUPERUSER,
 	UNMAKE_SUPERUSER,
+	CREATE_MODEL_DESCRIPTION,
+	MODIFY_MODEL_ORIGINAL_NAME,
+	MODIFY_MODEL_CUSTOM_NAME,
+	MODIFY_MODEL_DESCRIPTION,
+	MODIFY_MODEL_SYSTEM_PROMPT,
+	MODIFY_MODEL_MODEL_FILE,
+	MODIFY_MODEL_TAGS,
+	MODIFY_MODEL_CONTEXT_LENGTH,
 	SET_INPUT,
 	EXECUTE_INPUT,
 	NEXT
@@ -86,6 +94,31 @@ public:
 	bool modify_user_system_prompt(const mbase::string& in_username, const mbase::string& in_system_prompt, mbase::string& out_payload);
 	bool modify_user_make_superuser(const mbase::string& in_username, const mbase::string& in_access_token, mbase::string& out_payload);
 	bool modify_user_unmake_superuser(const mbase::string& in_username, const mbase::string& in_access_token, mbase::string& out_payload);
+	bool create_model_description(
+		const mbase::string& in_original_name,
+		const mbase::string& in_custom_name,
+		const mbase::string& in_description,
+		const mbase::string& in_model_file,
+		const mbase::vector<mbase::string>& in_tags,
+		const mbase::string& in_category,
+		const bool& in_embedding,
+		const bool& in_force_prompt,
+		const mbase::string& in_system_prompt,
+		mbase::string& out_payload
+	);
+	bool modify_original_model_name(const mbase::string& in_model, const mbase::string& in_original_name, mbase::string& out_payload);
+	bool modify_custom_model_name(const mbase::string& in_model, const mbase::string& in_custom_name, mbase::string& out_payload);
+	bool modify_model_description(const mbase::string& in_model, const mbase::string& in_description, mbase::string& out_payload);
+	bool modify_model_system_prompt(const mbase::string& in_model, const mbase::string& in_system_prompt, mbase::string& out_payload);
+	bool modify_model_model_file(
+		const mbase::string& in_model, 
+		const mbase::string& in_model_file, 
+		const mbase::string& in_category,
+		const bool& in_is_embedding,
+		mbase::string& out_payload
+	);
+	bool modify_model_tags(const mbase::string& in_model, const mbase::vector<mbase::string>& in_tags, mbase::string& out_payload);
+	bool modify_model_context_length(const mbase::string& in_model, const U32& in_ctx_length, mbase::string& out_payload);
 
 	GENERIC resolve_packet(CBYTEBUFFER in_data, size_type in_size);
 	virtual GENERIC	on_resolve(const maip_operation& out_last_operation, const maip_peer_request& out_result);
@@ -382,6 +415,127 @@ bool maip_client::modify_user_unmake_superuser(const mbase::string& in_username,
 	packetBuilder.generate_payload(out_payload);
 
 	mLastOperation = maip_operation::UNMAKE_SUPERUSER;
+	return true;
+}
+
+bool maip_client::create_model_description(
+	const mbase::string& in_original_name,
+	const mbase::string& in_custom_name,
+	const mbase::string& in_description,
+	const mbase::string& in_model_file,
+	const mbase::vector<mbase::string>& in_tags,
+	const mbase::string& in_category,
+	const bool& in_embedding,
+	const bool& in_force_prompt,
+	const mbase::string& in_system_prompt, 
+	mbase::string& out_payload
+)
+{
+	MBASE_MAIP_CLIENT_CHECK_SESSION;
+
+	packetBuilder.set_request_message("INF", "inf_create_model_description");
+	packetBuilder.set_kval("ORIGINAL", in_original_name);
+	packetBuilder.set_kval("CUSTOM", in_custom_name);
+	packetBuilder.set_kval("DESC", in_description);
+	packetBuilder.set_kval("FILE", in_model_file);
+
+	for(mbase::vector<mbase::string>::const_iterator cIt = in_tags.cbegin(); cIt != in_tags.cend(); ++cIt)
+	{
+		packetBuilder.set_kval("TAGS", *cIt);
+	}
+
+	packetBuilder.set_kval("CATEGORY", in_category);
+	packetBuilder.set_kval("IS_EMBEDDING", in_embedding);
+	packetBuilder.set_kval("IS_FORCE_PROMPT", in_force_prompt);
+	packetBuilder.generate_payload(out_payload, in_system_prompt);
+	mLastOperation = maip_operation::CREATE_MODEL_DESCRIPTION;
+	return true;
+}
+
+bool maip_client::modify_original_model_name(const mbase::string& in_model, const mbase::string& in_original_name, mbase::string& out_payload)
+{
+	MBASE_MAIP_CLIENT_CHECK_SESSION;
+	packetBuilder.set_request_message("INF", "inf_modify_original_model_name");
+	packetBuilder.set_kval("MODEL", in_model);
+	packetBuilder.set_kval("ORIGINAL", in_original_name);
+	packetBuilder.generate_payload(out_payload);
+	mLastOperation = maip_operation::MODIFY_MODEL_ORIGINAL_NAME;
+	return true;
+}
+
+bool maip_client::modify_custom_model_name(const mbase::string& in_model, const mbase::string& in_custom_name, mbase::string& out_payload)
+{
+	MBASE_MAIP_CLIENT_CHECK_SESSION;
+	packetBuilder.set_request_message("INF", "inf_modify_custom_model_name");
+	packetBuilder.set_kval("MODEL", in_model);
+	packetBuilder.set_kval("CUSTOM", in_custom_name);
+	packetBuilder.generate_payload(out_payload);
+	mLastOperation = maip_operation::MODIFY_MODEL_CUSTOM_NAME;
+	return true;
+}
+
+bool maip_client::modify_model_description(const mbase::string& in_model, const mbase::string& in_description, mbase::string& out_payload)
+{
+	MBASE_MAIP_CLIENT_CHECK_SESSION;
+	packetBuilder.set_request_message("INF", "inf_modify_model_description");
+	packetBuilder.set_kval("MODEL", in_model);
+	packetBuilder.set_kval("DESC", in_description);
+	packetBuilder.generate_payload(out_payload);
+	mLastOperation = maip_operation::MODIFY_MODEL_DESCRIPTION;
+	return true;
+}
+
+bool maip_client::modify_model_system_prompt(const mbase::string& in_model, const mbase::string& in_system_prompt, mbase::string& out_payload)
+{
+	MBASE_MAIP_CLIENT_CHECK_SESSION;
+	packetBuilder.set_request_message("INF", "inf_modify_model_system_prompt");
+	packetBuilder.set_kval("MODEL", in_model);
+	packetBuilder.generate_payload(out_payload, in_system_prompt);
+	mLastOperation = maip_operation::MODIFY_MODEL_SYSTEM_PROMPT;
+	return true;
+}
+
+bool maip_client::modify_model_model_file(
+	const mbase::string& in_model, 
+	const mbase::string& in_model_file, 
+	const mbase::string& in_category,
+	const bool& in_is_embedding,
+	mbase::string& out_payload
+)
+{
+	MBASE_MAIP_CLIENT_CHECK_SESSION;
+	packetBuilder.set_request_message("INF", "inf_modify_model_model_file");
+	packetBuilder.set_kval("MODEL", in_model);
+	packetBuilder.set_kval("CATEGORY", in_category);
+	packetBuilder.set_kval("IS_EMBEDDING", in_is_embedding);
+	packetBuilder.set_kval("FILE", in_model_file);
+	packetBuilder.generate_payload(out_payload);
+	mLastOperation = maip_operation::MODIFY_MODEL_MODEL_FILE;
+	return true;
+}
+
+bool maip_client::modify_model_tags(const mbase::string& in_model, const mbase::vector<mbase::string>& in_tags, mbase::string& out_payload)
+{
+	MBASE_MAIP_CLIENT_CHECK_SESSION;
+	packetBuilder.set_request_message("INF", "inf_modify_model_tags");
+	packetBuilder.set_kval("MODEL", in_model);
+	for(mbase::vector<mbase::string>::const_iterator cIt = in_tags.cbegin(); cIt != in_tags.cend(); ++cIt)
+	{
+		packetBuilder.set_kval("TAGS", *cIt);
+	}
+	packetBuilder.generate_payload(out_payload);
+	mLastOperation = maip_operation::MODIFY_MODEL_TAGS;
+	return true;
+}
+
+bool maip_client::modify_model_context_length(const mbase::string& in_model, const U32& in_ctx_length, mbase::string& out_payload)
+{
+	MBASE_MAIP_CLIENT_CHECK_SESSION;
+	packetBuilder.set_request_message("INF", "inf_modify_model_context_length");
+	packetBuilder.set_kval("MODEL", in_model);
+	packetBuilder.set_kval("CTXLENGTH", in_ctx_length);
+	packetBuilder.generate_payload(out_payload);
+	mLastOperation = maip_operation::MODIFY_MODEL_CONTEXT_LENGTH;
 	return true;
 }
 

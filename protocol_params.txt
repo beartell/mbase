@@ -93,7 +93,7 @@
 #in_keys:
 - STOK <str>
 #out_keys:
-- MODELS <list<str>>
+- MODEL <list<str>>
 #Response codes:
 - INF_SUCCESS (on success)
 - INF_SESSION_TOKEN_MISMATCH (on STOK mismatch)
@@ -288,6 +288,7 @@
 - USERNAME <str>
 - MODEL <list<str>>
 #out_keys:
+- MODEL <list<str>> (This is a list of missing models)
 #Response codes:
 - INF_SUCCESS
 - INF_SESSION_TOKEN_MISMATCH (on STOK mismatch)
@@ -300,7 +301,6 @@
 #in_keys:
 - STOK <str>
 - USERNAME <str>
-- ACCTOK <str>
 - AUTHFLAGS <list<str>>
 #out_keys:
 #Response codes:

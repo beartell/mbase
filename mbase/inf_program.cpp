@@ -352,6 +352,16 @@ typename InfProgram::registered_model_map& InfProgram::get_registered_models()
 
 InfProgram::maip_err_code InfProgram::inf_access_request(const mbase::string& in_username, const mbase::string& in_access_token, std::shared_ptr<PcNetPeerClient> in_client, mbase::string& out_session_token)
 {
+	// === Writing behavior of the method verbally to detect bugs or problems === 
+	// *** inf_access_request ***
+	// 1- Looking for a given username in inference_user_map structure
+	// 2- If the user does not exists, return INF_AUTHORIZATION_FAILED(2008)
+	// 3- Checking if the supplied access token match the access token of the user group.
+	// 4- If it does not match the user group's access token, return INF_AUTHORIZATION_FAILED(2008)
+	// 5- Creating a new InfClientSession.
+	
+	// CHECK NOTE: DO NOT NEED TO CHECK ANYMORE, IT WORKS AS INTENDED
+
 	inference_user_map::iterator It = mUserMap.find(in_username);
 	if(It == mUserMap.end())
 	{
@@ -375,6 +385,14 @@ InfProgram::maip_err_code InfProgram::inf_access_request(const mbase::string& in
 
 InfProgram::maip_err_code InfProgram::inf_destroy_session(const mbase::string& in_session_token)
 {
+	// === Writing behavior of the method verbally to detect bugs or problems === 
+	// *** inf_destroy_session ***
+	// 1- Checking if the supplied session token matche any InfClientSession
+	// 2- If it matches, erase the corresponding session from the session map
+	// 3- If it does not match, return INF_SUCCESS without doing anything
+
+	// CHECK NOTE: DO NOT NEED TO CHECK ANYMORE, IT WORKS AS INTENDED
+
 	if(this->is_session_token_valid(in_session_token))
 	{
 		// It will destroy context in its destructor
@@ -386,6 +404,12 @@ InfProgram::maip_err_code InfProgram::inf_destroy_session(const mbase::string& i
 InfProgram::maip_err_code InfProgram::inf_get_accessible_models(const mbase::string& in_session_token, mbase::vector<mbase::string>& out_models)
 {
 	MBASE_SESSION_CONTROL;
+
+	// === Writing behavior of the method verbally to detect bugs or problems ===
+	// *** inf_get_accessible_models ***
+	// 1- Get accessible models set and push it to the out models vector
+	
+	// CHECK NOTE: DO NOT NEED TO CHECK ANYMORE, IT WORKS AS INTENDED
 
 	const InfMaipUser::model_name_set& accModels = clientSession.mMaipUser.get_accessible_models();
 	for(auto& n : accModels)
@@ -399,6 +423,12 @@ InfProgram::maip_err_code InfProgram::inf_get_context_ids(const mbase::string& i
 {
 	MBASE_SESSION_CONTROL;
 	
+	// === Writing behavior of the method verbally to detect bugs or problems ===
+	// *** inf_get_accessible_models ***
+	// 1- Iterating over chat session map and push each 'key(context id)' to the U64 vector
+	
+	// CHECK NOTE: DO NOT NEED TO CHECK ANYMORE, IT WORKS AS INTENDED
+
 	for(auto& n : clientSession.mChatSessions)
 	{
 		out_contexts.push_back(n.first);
@@ -411,6 +441,19 @@ InfProgram::maip_err_code InfProgram::inf_create_context(const mbase::string& in
 {
 	MBASE_SESSION_CONTROL;
 	
+	// === Writing behavior of the method verbally to detect bugs or problems ===
+	// *** inf_create_context ***
+	// 1- Check if the requested model is in the accessible models list of the user
+	// 2- If not, return INF_MODEL_IS_NOT_ACCESSIBLE(2014)
+	// 3- Check if the given context size is less then the minimum threshold(32 in this case)
+	// 4- If it is, return INF_INVALID_TOKEN_LIMIT(2006)
+	// 5- Check if the given model name exists in registered_model_map.
+	// 6- If not, return INF_MODEL_NAME_MISMATCH(2004)
+	// 7- Check if the given context size is greater than the user group's context size limit
+	// 8- If it is, return INF_USER_CONTEXT_LENGTH_EXCEEDED(2020)
+	// 9- Check if the available context length of the model is sufficent to create the given context
+	// 10- If not, return INF_MODEL_CONTEXT_FULL(2019)
+
 	if(!clientSession.mMaipUser.is_model_accessible(in_model))
 	{
 		return maip_err_code::INF_MODEL_IS_NOT_ACCESSIBLE;
@@ -441,7 +484,25 @@ InfProgram::maip_err_code InfProgram::inf_create_context(const mbase::string& in
 	// means the model is available
 	// we can create the context
     clientSession.mPeer = in_peer;
+
+	if(t2tModel->is_embedding_model())
+	{
+		InfMaipTunedEmbedderProcessor* maipEmbedderContext = new InfMaipTunedEmbedderProcessor(clientSession);
+		t2tModel->register_context_process(
+			maipEmbedderContext,
+			in_ctsize,
+			clientSession.mMaipUser.get_batch_size(),
+			clientSession.mMaipUser.get_processor_thread_count()
+		); // IF THIS RETURNS SOMETHING PROBLEMATIC, CRASH
+	}
+	else
+	{
+
+	}
+
 	InfMaipTunedT2TProcessor* maipNewContext = new InfMaipTunedT2TProcessor(clientSession);
+
+
 
 	// if(t2tModel->register_context_process(maipNewContext, in_ctsize) != InfModelTextToText::flags::INF_MODEL_INFO_REGISTERING_PROCESSOR)
 	// {
@@ -547,7 +608,7 @@ InfProgram::maip_err_code InfProgram::inf_load_model(const mbase::string& in_ses
 	{
 		if(n.first == in_modelname)
 		{
-			return maip_err_code::INF_SUCCESS;
+			return maip_err_code::INF_MODEL_ALREADY_LOADED;
 		}
 	}
 

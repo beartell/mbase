@@ -15,7 +15,7 @@ MBASE_BEGIN
 class InfMaipServerBase;
 class InfMaipDefaultServer;
 
-typedef bool (*maip_request_callback)(std::shared_ptr<PcNetPeerClient>, const maip_peer_request&, const mbase::string&, maip_packet_builder&);
+typedef bool (*maip_request_callback)(InfProgram&, std::shared_ptr<PcNetPeerClient>, const maip_peer_request&, const mbase::string&, maip_packet_builder&);
 
 struct MBASE_API InfMaipPacketAccumulator {
 	U64 mDataToRead;

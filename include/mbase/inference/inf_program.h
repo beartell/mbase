@@ -137,6 +137,7 @@ public:
 		INF_TARGET_MODEL_ACCESS_PROHIBITED = 2022,
 		INF_NOT_ENOUGH_MEMORY = 2023,
 		INF_DESCRIPTION_ALREADY_EXISTS = 2024,
+		INF_MODEL_ALREADY_LOADED = 2025,
 		EXEC_SUCCESS = 3000,
 		EXEC_ALREADY_PROCESSING = 3001,
 		EXEC_MESSAGE_ID_MISMATCH = 3002,
@@ -250,6 +251,9 @@ public:
 	maip_err_code exec_next(const mbase::string& in_session_token, std::shared_ptr<mbase::PcNetPeerClient> in_peer, const U64& in_ctxId);
 
 	GENERIC initialize(InfProgramInformation in_program_information);
+	GENERIC update() override;
+
+private:
 	flags host_model(InfModelTextToText* in_model);
 	flags release_model(const mbase::string& in_model_name);
 	flags create_user(
@@ -269,14 +273,9 @@ public:
 	flags update_users_model_access_limit(const mbase::string& in_username, const U32& in_new_access_limit);
 	flags update_users_maximum_context(const mbase::string& in_username, const U32& in_new_context_length);
 	flags authorize_user_on_model(const mbase::string& in_username, const mbase::string& in_model);
-	//flags delete_user(const mbase::string& in_username);
-
 	maip_err_code common_modification_control(InfClientSession& in_session, const mbase::string& in_username, const U32& in_flags);
 	maip_err_code common_description_modification_control(InfClientSession& in_session, const mbase::string& in_model_target);
 	GENERIC update_maip_user_sessions(InfMaipUser& in_maip_user);
-	GENERIC update() override;
-
-private:
 	GENERIC _reload_model_descriptions();
 
 	PcDiagnostics mInferenceDiagnostics;

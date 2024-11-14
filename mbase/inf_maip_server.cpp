@@ -199,286 +199,29 @@ GENERIC InfMaipDefaultServer::on_informatic_request(const maip_peer_request& out
 {
 	const mbase::string& requestString = out_request.get_identification().mOpString;
 	request_callback_map::iterator cbIt = mRequestCbMap.find(requestString);
+	maip_packet_builder packetBuilder;
+	packetBuilder.set_version(1, 0); // TODO: Get the version from macros
+	
+	// TODO: Add timestamp fields to protocol parameters
+
 	if(cbIt == mRequestCbMap.end())
 	{
-		std::cout << "Operation name mismatch." << std::endl;
-		return;
+		packetBuilder.set_response_message((U16)maip_generic_errors::UNDEFINED_OP_STRING);
 	}
 	else
 	{
-		maip_packet_builder packetBuilder;
-		packetBuilder.set_version(1, 0); // TODO: Get the version from macros
-		if(!cbIt->second(out_peer, out_request, out_request.get_kval<mbase::string>("STOK"), packetBuilder))
+		if(!cbIt->second(*mHostProgram, out_peer, out_request, out_request.get_kval<mbase::string>("STOK"), packetBuilder))
 		{
 			// If this is the case, the underlying operation is responsible for network operations for the given client
 			return;
 		}
-		else
-		{
-			mbase::string outPayload;
-			packetBuilder.generate_payload(outPayload);
-			out_peer->write_data(outPayload.c_str(), outPayload.size());
-			out_peer->send_write_signal();
-			out_peer->send_read_signal();
-		}
-		return;
 	}
 
-	if(requestString == "inf_access_request")
-	{
-		mbase::string userName = out_request.get_kval<mbase::string>("USERNAME");
-		mbase::string accessToken = out_request.get_kval<mbase::string>("ACCTOKEN");
-		mbase::string outToken;
-		InfProgram::maip_err_code merr = mHostProgram->inf_access_request(userName, accessToken, out_peer, outToken);
-
-		mbase::string outPayload;
-		mbase::maip_packet_builder maipPacketBuilder;
-		if(merr == InfProgram::maip_err_code::INF_SUCCESS)
-		{
-			maipPacketBuilder.set_kval("STOK", outToken);
-		}
-		maipPacketBuilder.set_response_message((U16)merr);
-		maipPacketBuilder.generate_payload(outPayload);
-
-		out_peer->write_data(outPayload.c_str(), outPayload.size());
-		out_peer->send_write_signal();
-		out_peer->send_read_signal();
-		return;
-	}
-	// Besides access request, access token(STOK) must be supplied
-
-	if(!out_request.has_key("STOK"))
-	{
-		// Do not even go further
-		mbase::string outPayload;
-		mbase::maip_packet_builder maipPacketBuilder;
-		mbase::InfProgram::maip_err_code maipErr = mbase::InfProgram::maip_err_code::INF_SESSION_TOKEN_MISMATCH;
-		maipPacketBuilder.set_response_message((U16)maipErr);
-		maipPacketBuilder.generate_payload(outPayload);
-
-		out_peer->write_data(outPayload.c_str(), outPayload.size());
-		out_peer->send_write_signal();
-		out_peer->send_read_signal();
-		return;
-	}
-
-	else
-	{
-		mbase::string sessionToken = out_request.get_kval<mbase::string>("STOK");
-		mbase::maip_packet_builder maipPacketBuilder;
-		mbase::InfProgram::maip_err_code maipErr;
-
-		if (requestString == "inf_destroy_session")
-		{
-			maipErr = mHostProgram->inf_destroy_session(sessionToken);
-		}
-
-		else if (requestString == "inf_get_accessible_models")
-		{
-			mbase::vector<mbase::string> outModels;
-			maipErr = mHostProgram->inf_get_accessible_models(sessionToken, outModels);
-			for (mbase::vector<mbase::string>::iterator It = outModels.begin(); It != outModels.end(); ++It)
-			{
-				maipPacketBuilder.set_kval("MODEL", *It);
-			}
-		}
-
-		else if (requestString == "inf_get_context_ids")
-		{
-			mbase::vector<U64> outContextIds;
-			maipErr = mHostProgram->inf_get_context_ids(sessionToken, outContextIds);
-			for(mbase::vector<U64>::iterator It = outContextIds.begin(); It != outContextIds.end(); ++It)
-			{
-				maipPacketBuilder.set_kval("CTXID", *It);
-			}
-		}
-
-		else if(requestString == "inf_create_context")
-		{
-			// WILL ACQUIRE THE SOCKET ON SUCCESS
-			mbase::string targetModel = out_request.get_kval<mbase::string>("MODEL");
-			U32 contextSize = out_request.get_kval<U32>("CTXSIZE");
-			maipErr = mHostProgram->inf_create_context(sessionToken, out_peer, targetModel, contextSize);
-			if(maipErr == mbase::InfProgram::maip_err_code::INF_SUCCESS)
-			{
-				return;
-			}
-		}
-
-		else if(requestString == "inf_clear_context_history")
-		{
-			U32 contextId = out_request.get_kval<U32>("CTXID");
-			maipErr = mHostProgram->inf_clear_context_history(sessionToken, contextId);
-		}
-
-		else if(requestString == "inf_get_context_status")
-		{
-			U32 contextId = out_request.get_kval<U32>("CTXID");
-			maipErr = mHostProgram->inf_get_context_status(sessionToken, contextId);
-		}
-
-		else if(requestString == "inf_destroy_context")
-		{
-			U32 contextId = out_request.get_kval<U32>("CTXID");
-			maipErr = mHostProgram->inf_destroy_context(sessionToken, contextId);
-		}
-
-		else if(requestString == "inf_get_program_models")
-		{
-			mbase::vector<mbase::string> outModels;
-			maipErr = mHostProgram->inf_get_program_models(sessionToken, outModels);
-			for (mbase::vector<mbase::string>::iterator It = outModels.begin(); It != outModels.end(); ++It)
-			{
-				maipPacketBuilder.set_kval("MODEL", *It);
-			}
-		}
-
-		else if(requestString == "inf_load_model")
-		{
-			mbase::string modelName = out_request.get_kval<mbase::string>("MODEL");
-			U32 contextSize = out_request.get_kval<U32>("CTXSIZE");
-			maipErr = mHostProgram->inf_load_model(sessionToken, modelName, contextSize);
-		}
-
-		else if(requestString == "inf_unload_model")
-		{
-			mbase::string modelName = out_request.get_kval<mbase::string>("MODEL");
-			maipErr = mHostProgram->inf_unload_model(sessionToken, modelName);
-		}
-
-		else if(requestString == "inf_create_new_user")
-		{
-			// mbase::string userName = out_request.get_kval<mbase::string>("USERNAME");
-			// U32 modelAccessLimit = out_request.get_kval<U32>("ACCESSLIMIT");
-			// U32 maximumContextLength = out_request.get_kval<U32>("CTXSIZE");
-			// bool isSuperUser = out_request.get_kval<bool>("ISSUPER");
-			// mbase::string userAccessToken = out_request.get_kval<mbase::string>("ACCTOKEN");
-			// mbase::vector<mbase::string> authorityFlags = out_request.get_kval<mbase::vector<mbase::string>>("AUTH");
-
-			// mbase::string outAccessToken;
-
-			// maipErr = mHostProgram->inf_create_new_user(
-			// 	sessionToken,
-			// 	userName,
-			// 	modelAccessLimit,
-			// 	maximumContextLength,
-			// 	isSuperUser,
-			// 	false,
-			// 	userAccessToken,
-			// 	authorityFlags,
-			// 	outAccessToken
-			// );
-
-			// if(maipErr == mbase::InfProgram::maip_err_code::INF_SUCCESS)
-			// {
-			// 	maipPacketBuilder.set_kval("ACCTOKEN", outAccessToken);
-			// }
-		}
-
-		else if(requestString == "inf_delete_user")
-		{
-			mbase::string userName = out_request.get_kval<mbase::string>("USERNAME");
-			//maipErr = mHostProgram->inf_delete_user(sessionToken, userName);
-		}
-		
-		else if(requestString == "inf_modify_user_model_access_limit")
-		{
-			mbase::string userName = out_request.get_kval<mbase::string>("USERNAME");
-			U32 newAccessLimit = out_request.get_kval<U32>("ACCLIMIT");
-			maipErr = mHostProgram->inf_modify_user_model_access_limit(sessionToken, userName, newAccessLimit);
-		}
-
-		else if(requestString == "inf_modify_user_maximum_context_length")
-		{
-			mbase::string userName = out_request.get_kval<mbase::string>("USERNAME");
-			U32 newContextLength = out_request.get_kval<U32>("CTXLENGTH");
-			maipErr = mHostProgram->inf_modify_user_maximum_context_length(sessionToken, userName, newContextLength);
-		}
-
-		else if(requestString == "inf_modify_user_batch_size")
-		{
-			mbase::string userName = out_request.get_kval<mbase::string>("USERNAME");
-			U32 newBatchSize = out_request.get_kval<U32>("BATCH");
-			maipErr = mHostProgram->inf_modify_user_batch_size(sessionToken, userName, newBatchSize);
-		}
-
-		else if(requestString == "inf_modify_user_processor_thread_count")
-		{
-			mbase::string userName = out_request.get_kval<mbase::string>("USERNAME");
-			U32 newProcessorCount = out_request.get_kval<U32>("PROCCOUNT");
-			maipErr = mHostProgram->inf_modify_user_processor_thread_count(sessionToken, userName, newProcessorCount);
-		}
-
-		else if(requestString == "inf_modify_user_max_processor_thread_count")
-		{
-			mbase::string userName = out_request.get_kval<mbase::string>("USERNAME");
-			U32 newMaxProcessorCount = out_request.get_kval<U32>("PROCMAXCOUNT");
-			maipErr = mHostProgram->inf_modify_user_max_processor_thread_count(sessionToken, userName, newMaxProcessorCount);
-		}
-
-		// else if(requestString == "inf_modify_user_sampling_set")
-		// {
-		//		mbase::string userName = out_request.get_kval<mbase::string>("USERNAME");
-		// }
-
-		else if(requestString == "inf_modify_user_system_prompt")
-		{
-			mbase::string userName = out_request.get_kval<mbase::string>("USERNAME");
-			const mbase::char_stream& cs = out_request.get_data();
-			mbase::string newSystemPrompt(out_request.get_data().get_buffer(), out_request.get_content_length());
-			maipErr = mHostProgram->inf_modify_user_system_prompt(sessionToken, userName, newSystemPrompt);
-		}
-
-		else if(requestString == "inf_modify_user_make_superuser")
-		{
-			mbase::string userName = out_request.get_kval<mbase::string>("USERNAME");
-			mbase::string userAccessToken = out_request.get_kval<mbase::string>("ACCTOKEN");
-			maipErr = mHostProgram->inf_modify_user_make_superuser(sessionToken, userName, userAccessToken);
-		}
-
-		else if(requestString == "inf_modify_user_unmake_superuser")
-		{
-			mbase::string userName = out_request.get_kval<mbase::string>("USERNAME");
-			mbase::string userAccessToken = out_request.get_kval<mbase::string>("ACCTOKEN");
-			maipErr = mHostProgram->inf_modify_user_unmake_superuser(sessionToken, userName, userAccessToken);
-		}
-
-		else if(requestString == "inf_modify_user_accept_models")
-		{
-			mbase::string userName = out_request.get_kval<mbase::string>("USERNAME");
-			mbase::vector<mbase::string> acceptedModels = out_request.get_kval<mbase::vector<mbase::string>>("MODEL");
-			std::set<mbase::string> modelSet(acceptedModels.begin(), acceptedModels.end());
-			
-			mbase::vector<mbase::string> missingModels;
-			maipErr = mHostProgram->inf_modify_user_accept_models(sessionToken, userName, modelSet, missingModels);
-			if(maipErr == mbase::InfProgram::maip_err_code::INF_MODEL_NAME_MISMATCH)
-			{
-				for(mbase::vector<mbase::string>::const_iterator cIt = missingModels.cbegin(); cIt != missingModels.cend(); ++cIt)
-				{
-					maipPacketBuilder.set_kval("MODEL", *cIt);	
-				}
-			}
-		}
-
-		else if(requestString == "inf_modify_user_set_authority_flags")
-		{
-			mbase::string userName = out_request.get_kval<mbase::string>("USERNAME");
-			mbase::vector<mbase::string> authorityFlagList = out_request.get_kval<mbase::vector<mbase::string>>("AUTHORITY");
-			maipErr = mHostProgram->inf_modify_user_set_authority_flags(sessionToken, userName, authorityFlagList);
-		}
-
-		else
-		{
-			
-		}
-		mbase::string outPayload;
-
-		maipPacketBuilder.set_response_message((U16)maipErr);
-		maipPacketBuilder.generate_payload(outPayload);
-		out_peer->write_data(outPayload.c_str(), outPayload.size());
-		out_peer->send_write_signal();
-		out_peer->send_read_signal();
-	}
+	mbase::string outPayload;
+	packetBuilder.generate_payload(outPayload);
+	out_peer->write_data(outPayload.c_str(), outPayload.size());
+	out_peer->send_write_signal();
+	out_peer->send_read_signal();
 }
 
 GENERIC InfMaipDefaultServer::on_execution_request(const maip_peer_request& out_request, std::shared_ptr<PcNetPeerClient> out_peer)
