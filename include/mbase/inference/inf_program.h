@@ -36,7 +36,7 @@ public:
 
 	GENERIC on_register(InfProcessorBase* out_processor) override; // 100% called if the proc init is successful
 	GENERIC on_embedding_data(const F32* out_data, size_type out_size) override; // For embedder models
-	GENERIC on_write(CBYTEBUFFER out_data, size_type out_size, inf_text_token out_token, bool out_is_special, bool out_is_finish) override;
+	GENERIC on_write(const inf_text_token_vector& out_token, bool out_is_finish) override;
 	GENERIC on_finish(size_type out_total_token_size, InfTextToTextProcessor::finish_state out_finish_state) override;
 	GENERIC on_unregister() override; // 100% called if the proc destroy is called either in stack or heap
 private:
@@ -50,7 +50,7 @@ class MBASE_API InfMaipTunedT2TProcessor : public mbase::InfTextToTextProcessor 
 public:
 	InfMaipTunedT2TProcessor(InfClientSession& in_client);
 
-	GENERIC on_initialize_fail(init_fail_code out_code) override;
+	GENERIC on_initialize_fail(last_fail_code out_code) override;
 	GENERIC on_initialize() override;
 	GENERIC on_destroy() override;
 

@@ -152,6 +152,7 @@ MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE typename io_file::size_type io_file::get
 
 MBASE_INLINE io_base::os_file_handle io_file::open_file(const mbase::wstring& in_filename, access_mode in_accmode, disposition in_disp, bool is_async) noexcept
 {
+	close_file();
 #ifdef MBASE_PLATFORM_WINDOWS
 	DWORD fileAttrs = FILE_ATTRIBUTE_NORMAL;
 	if (is_async) 

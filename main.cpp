@@ -18,6 +18,7 @@
 #include <set>
 #include <unordered_map>
 #include <signal.h>
+#include <string>
 
 using namespace mbase;
 
@@ -26,12 +27,14 @@ public:
     GENERIC on_register(InfProcessorBase* out_processor) override 
     {
         InfTextToTextProcessor* t2tProcessor = static_cast<InfTextToTextProcessor*>(out_processor);
-        mbase::string inputString = "Hey, how are you?";
+        mbase::string inputString;
 
         U32 outMsgId = 0;
-        this->add_message("You are a helpful assistant", mbase::context_role::SYSTEM, outMsgId);
+        this->add_message("You are a helpful assistant.", mbase::context_role::SYSTEM, outMsgId);
         msgIds.push_back(outMsgId);
-        this->add_message(inputString, mbase::context_role::USER, outMsgId);
+        std::string prompt;
+        std::getline(std::cin, prompt);
+        this->add_message(prompt.c_str(), prompt.size(), mbase::context_role::USER, outMsgId);
         msgIds.push_back(outMsgId);
 
         mbase::vector<mbase::context_line> msgArray;
@@ -39,36 +42,76 @@ public:
         
         inf_text_token_vector tokenVector;
 
+        decodeBehavior.mTokenAtMost = 1;
+        decodeBehavior.mHaltOnWrite = false;
+
         t2tProcessor->tokenize_input(msgArray.data(), msgArray.size(), tokenVector);
         t2tProcessor->execute_input(tokenVector);
-        t2tProcessor->next();
+        t2tProcessor->next(decodeBehavior);
     }
 
-    GENERIC on_write(CBYTEBUFFER out_data, size_type out_size, inf_text_token out_token, bool out_is_special, bool out_is_finish) override 
+    GENERIC on_write(const inf_text_token_vector& out_token_vector, bool out_is_finish) override 
     {        
         InfProcessorBase* procBase;
         get_host_processor(procBase);
         
         InfTextToTextProcessor* txtOut = static_cast<InfTextToTextProcessor*>(procBase);
-        totalMessage += out_data;
         fflush(stdout);
-        printf("%s", out_data);
-
-        txtOut->next();
+        mbase::vector<inf_token_description> tokenDesc;
+        txtOut->tokens_to_description_vector(out_token_vector, tokenDesc);
+        for(auto& n : tokenDesc)
+        {
+            if(!n.mIsSpecial)
+            {
+                totalMessage += n.mTokenString;
+            }
+            
+            printf("%s", n.mTokenString.c_str());
+        }
+        if(!out_is_finish)
+        {
+            txtOut->next(decodeBehavior);
+        }
+        
     }
 
     GENERIC on_finish(size_type out_total_token_size, InfTextToTextProcessor::finish_state out_finish_state) override 
-    {
-        fflush(stdout);
-        printf("%s\n", totalMessage.c_str());
-        std::cout << "\n" << std::endl;
-    }
+    {   
+        std::cout << std::endl;
+        U32 outMsgId = 0;
+        this->add_message(totalMessage, mbase::context_role::ASSISTANT, outMsgId);
+        msgIds.push_back(outMsgId);
+
+        std::string prompt;
+        std::getline(std::cin, prompt);
+        this->add_message(prompt.c_str(), prompt.size(), mbase::context_role::USER, outMsgId);
+        msgIds.push_back(outMsgId);
+
+        totalMessage.clear();
+
+        InfProcessorBase* procBase;
+        get_host_processor(procBase);
+        
+        InfTextToTextProcessor* t2tProcessor = static_cast<InfTextToTextProcessor*>(procBase);
+        mbase::vector<mbase::context_line> msgArray;
+        get_message_array(msgIds.data(), msgIds.size(), msgArray);
+        
+        inf_text_token_vector tokenVector;
+
+        decodeBehavior.mTokenAtMost = 1;
+        decodeBehavior.mHaltOnWrite = false;
+
+        t2tProcessor->tokenize_input(msgArray.data(), msgArray.size(), tokenVector);
+        t2tProcessor->execute_input(tokenVector);
+        t2tProcessor->next(decodeBehavior);
+    }   
     
     GENERIC on_unregister() override 
     {
-        printf("Proc released me\n");
+
     }
 private:
+    decode_behavior_description decodeBehavior;
     mbase::vector<U32> msgIds;
     mbase::string totalMessage;
 };
@@ -80,7 +123,7 @@ public:
         std::cout << "WE ARE INITIALZINING!!" << std::endl;
     }
 
-    GENERIC on_initialize_fail(init_fail_code out_code) override
+    GENERIC on_initialize_fail(last_fail_code out_code) override
     {
         std::cout << "INITIALIZE FAILED ;(" << std::endl;
     }
@@ -104,9 +147,7 @@ class my_model : public mbase::InfModelTextToText {
 public:
     void on_initialize() override 
     {
-        register_context_process(&c1, 4000, 512, 16, true, {});
-        register_context_process(&c2, 4000, 512, 16, true, {});
-        register_context_process(&c3, 4000, 512, 16, true, {});
+        register_context_process(&c1, 12000, 512, 16, true, {});
     }
     void on_destroy() override 
     {
@@ -125,29 +166,15 @@ using namespace mbase;
 
 int main()
 {
+    
+    my_model sampleModel;
+    sampleModel.initialize_model(L"./Llama-3.2-1B-Instruct-Q4_K_M.gguf", 36000, 999);
+
     while(1)
     {
-        my_model sampleModel;
-        sampleModel.initialize_model(L"./Llama-3.2-1B-Instruct-Q4_K_M.gguf", 36000, 999);
-
-        int i = 0;
-        while(1)
-        {
-            if(i == 120)
-            {
-                break;        
-            }
-            sampleModel.update();
-            mbase::sleep(30);
-            i++;
-        }
-
-        sampleModel.destroy();
-        mbase::sleep(2000);
         sampleModel.update();
     }
     
-
     // InfProgram ifp;
     // InfMaipDefaultServer IDS(ifp);
 

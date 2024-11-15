@@ -33,13 +33,12 @@ InfTextToTextProcessor::InfTextToTextProcessor():
 	mSamplerChain(NULL),
 	mModelContext(NULL),
 	mPresetCandidates(),
-	mGeneratedToken(0),
 	mContextCursor(0),
 	mBatchSize(0),
 	mThreadCount(0),
 	mFinishState(finish_state::FINISHED),
 	mAssignedClient(NULL),
-	mLastFailCode(init_fail_code::MODEL_NOT_INITIALIZED),
+	mLastFailCode(last_fail_code::MODEL_NOT_INITIALIZED),
 	mFlashAttention(false),
 	mIsInitializeFailed(false)
 {
@@ -62,7 +61,7 @@ InfTextToTextProcessor::~InfTextToTextProcessor()
 	}
 }
 
-InfTextToTextProcessor::init_fail_code InfTextToTextProcessor::get_last_fail_code() const
+InfTextToTextProcessor::last_fail_code InfTextToTextProcessor::get_last_fail_code() const
 {
 	return mLastFailCode;
 }
@@ -159,6 +158,51 @@ InfTextToTextProcessor::flags InfTextToTextProcessor::get_processor_status() con
 	}
 
 	return flags::INF_PROC_INFO_NEED_UPDATE;
+}
+
+InfTextToTextProcessor::flags InfTextToTextProcessor::token_to_description(const inf_text_token& in_token, inf_token_description& out_description)
+{
+	MBASE_INF_T2T_PROC_RETURN_UNREGISTERED;
+	InfModelTextToText* t2tModel = static_cast<InfModelTextToText*>(this->mTargetModel_md_model);
+
+	IBYTE tokenString[64] = {0};
+	I32 tokenLength = llama_token_to_piece(t2tModel->get_raw_model(), in_token, tokenString, 64, false, true);
+
+	if(!tokenLength)
+	{
+		// UNKNOWN ERROR
+		// GO BACK HERE LATER
+	}
+
+	out_description.mTokenString = std::move(mbase::string(tokenString, tokenLength));
+	
+	if(t2tModel->is_token_control(in_token) == InfModelTextToText::flags::INF_MODEL_SUCCESS)
+	{
+		out_description.mIsSpecial = true;
+	}
+
+	return flags::INF_PROC_SUCCESS;
+}
+
+InfTextToTextProcessor::flags InfTextToTextProcessor::tokens_to_description_vector(const mbase::vector<inf_text_token>& in_tokens, mbase::vector<inf_token_description>& out_descriptions)
+{
+	MBASE_INF_T2T_PROC_RETURN_UNREGISTERED;
+	InfModelTextToText* t2tModel = static_cast<InfModelTextToText*>(this->mTargetModel_md_model);
+
+	for(mbase::vector<inf_text_token>::const_iterator cIt = in_tokens.cbegin(); cIt != in_tokens.cend(); ++cIt)
+	{
+		const inf_text_token& cvTokenRef = *cIt;
+		IBYTE tokenString[64] = {0};
+		I32 tokenLength = llama_token_to_piece(t2tModel->get_raw_model(), cvTokenRef, tokenString, 64, false, true);
+		if(t2tModel->is_token_control(cvTokenRef) == InfModelTextToText::flags::INF_MODEL_SUCCESS)
+		{
+			out_descriptions.push_back({std::move(mbase::string(tokenString, tokenLength)), true});
+			continue;
+		}
+		out_descriptions.push_back({std::move(mbase::string(tokenString, tokenLength)), false});
+	}
+
+	return flags::INF_PROC_SUCCESS;
 }
 
 InfTextToTextProcessor::flags InfTextToTextProcessor::tokenize_input(CBYTEBUFFER in_data, size_type in_size, inf_text_token_vector& out_tokens)
@@ -279,26 +323,30 @@ InfTextToTextProcessor::flags InfTextToTextProcessor::execute_input(const inf_te
 	return flags::INF_PROC_SUCCESS;
 }
 
-InfTextToTextProcessor::flags InfTextToTextProcessor::next()
+InfTextToTextProcessor::flags InfTextToTextProcessor::next(const decode_behavior_description& in_description)
 {
 	MBASE_INF_T2T_PROC_RETURN_UNREGISTERED;
 
-	// if(!signal_state_input_process())
-	// {
-	// 	return flags::INF_PROC_ERR_INPUT_IS_EMPTY;
-	// }
+	if(signal_decode_process())
+	{
+		// If it is already processing, ignore the request
+		return flags::INF_PROC_SUCCESS;
+	}
 
 	if(!is_running())
 	{
 		return flags::INF_PROC_INFO_HALTED;
 	}
 
+	start_processor();
+	mGeneratedTokenVector.clear();
+	mDecodeBehavior = in_description;
 	mDecodeSignal.set_signal();
 	
 	return flags::INF_PROC_SUCCESS;
 }
 
-InfTextToTextProcessor::flags InfTextToTextProcessor::next_sync()
+InfTextToTextProcessor::flags InfTextToTextProcessor::next_sync(const decode_behavior_description& in_description)
 {
 	MBASE_INF_T2T_PROC_RETURN_UNREGISTERED;
 
@@ -306,15 +354,9 @@ InfTextToTextProcessor::flags InfTextToTextProcessor::next_sync()
 	// {
 	// 	return flags::INF_PROC_ERR_INPUT_IS_EMPTY;
 	// }
-	next();
-	if(!is_running())
-	{
-		return flags::INF_PROC_INFO_HALTED;
-	}
-	
-	while(signal_decode_process()){}
+	while(signal_input_process()){}
 
-	return flags::INF_PROC_INFO_NEED_UPDATE;
+	return next(in_description);
 }
 
 InfTextToTextProcessor::flags InfTextToTextProcessor::set_inference_client(InfClientTextToText* in_client)
@@ -487,7 +529,7 @@ GENERIC InfTextToTextProcessor::on_initializing()
 
 }
 
-GENERIC InfTextToTextProcessor::on_initialize_fail(init_fail_code out_code)
+GENERIC InfTextToTextProcessor::on_initialize_fail(last_fail_code out_code)
 {
 
 }
@@ -518,47 +560,51 @@ GENERIC InfTextToTextProcessor::_decode_input()
 GENERIC InfTextToTextProcessor::_decode_next()
 {
 	// Main Decode loop
-	
-	I32 modelVocab = 0;
-	InfModelTextToText* t2tModel = static_cast<InfModelTextToText*>(this->mTargetModel_md_model);
-	t2tModel->get_vocab_count(modelVocab);
-
-	PTRF32 logits = llama_get_logits_ith(mModelContext, mInputBatch.n_tokens - 1);
-	for (llama_token token_id = 0; token_id < modelVocab; ++token_id)
+	for(U32 i = 0; i < mDecodeBehavior.mTokenAtMost; i++)
 	{
-		mPresetCandidates.emplace_back(llama_token_data{ token_id, logits[token_id], 0.0f });
-	}
-	llama_token_data_array tokenCandidates = { mPresetCandidates.data(), mPresetCandidates.size(), false};
-	llama_sampler_apply(mSamplerChain, &tokenCandidates);
-	mGeneratedToken = llama_sampler_sample(mSamplerChain, mModelContext, -1);
-	
-	llama_sampler_accept(mSamplerChain, mGeneratedToken);
+		I32 modelVocab = 0;
+		InfModelTextToText* t2tModel = static_cast<InfModelTextToText*>(this->mTargetModel_md_model);
+		t2tModel->get_vocab_count(modelVocab);
 
-	clear_token_candidates();
-	
-	if (llama_token_is_eog(t2tModel->get_raw_model(), mGeneratedToken))
-	{
-		// means end of generation
-		llama_sampler_reset(mSamplerChain);
-		mFinishState = finish_state::FINISHED;
-		llama_kv_cache_clear(mModelContext);
-	}
-
-	else
-	{
-		if (mContextCursor == mContextLength)
+		PTRF32 logits = llama_get_logits_ith(mModelContext, mInputBatch.n_tokens - 1);
+		for (llama_token token_id = 0; token_id < modelVocab; ++token_id)
 		{
-			// means token limit is reached
+			mPresetCandidates.emplace_back(llama_token_data{ token_id, logits[token_id], 0.0f });
+		}
+		llama_token_data_array tokenCandidates = { mPresetCandidates.data(), mPresetCandidates.size(), false};
+		llama_sampler_apply(mSamplerChain, &tokenCandidates);
+		inf_text_token tmpGeneratedToken = llama_sampler_sample(mSamplerChain, mModelContext, -1);
+		
+		llama_sampler_accept(mSamplerChain, tmpGeneratedToken);
+		mGeneratedTokenVector.push_back(tmpGeneratedToken);
+		clear_token_candidates();
+		
+		if (llama_token_is_eog(t2tModel->get_raw_model(), tmpGeneratedToken))
+		{
+			// means end of generation
 			llama_sampler_reset(mSamplerChain);
-			mFinishState = finish_state::TOKEN_LIMIT_REACHED;
+			mFinishState = finish_state::FINISHED;
 			llama_kv_cache_clear(mModelContext);
+			break;
 		}
 
 		else
 		{
-			mInputBatch = llama_batch_get_one(&mGeneratedToken, 1);
-			mContextCursor++;
-			llama_decode(mModelContext, mInputBatch); // Handle error here
+			if (mContextCursor == mContextLength)
+			{
+				// means token limit is reached
+				llama_sampler_reset(mSamplerChain);
+				mFinishState = finish_state::TOKEN_LIMIT_REACHED;
+				llama_kv_cache_clear(mModelContext);
+				break;
+			}
+
+			else
+			{
+				mInputBatch = llama_batch_get_one(&tmpGeneratedToken, 1);
+				mContextCursor++;
+				llama_decode(mModelContext, mInputBatch); // Handle error here
+			}
 		}
 	}
 
@@ -581,7 +627,7 @@ GENERIC InfTextToTextProcessor::_initialize_context()
 	if(!t2tModel || !t2tModel->is_initialized())
 	{
 		clear_samplers();
-		mLastFailCode = init_fail_code::MODEL_NOT_INITIALIZED;
+		mLastFailCode = last_fail_code::MODEL_NOT_INITIALIZED;
 		mIsInitializeFailed = true;
 		mInitializeSignal.set_signal_finished();
 		return;
@@ -591,7 +637,7 @@ GENERIC InfTextToTextProcessor::_initialize_context()
 	if (!mModelContext)
 	{
 		clear_samplers();
-		mLastFailCode = init_fail_code::NOT_ENOUGH_MEMORY;
+		mLastFailCode = last_fail_code::NOT_ENOUGH_MEMORY;
 		mIsInitializeFailed = true;
 		mInitializeSignal.set_signal_finished();
 		return;
@@ -715,7 +761,7 @@ GENERIC InfTextToTextProcessor::_destroy_context()
 	mPresetCandidates.clear();
 	mTokenizedInput.clear();
 	mSamplerDescriptions.clear();
-	mGeneratedToken = 0;
+	mGeneratedTokenVector.clear();
 	mContextCursor = 0;
 	mBatchSize = 0;
 	mThreadCount = 0;
@@ -724,7 +770,7 @@ GENERIC InfTextToTextProcessor::_destroy_context()
 	mIsInitializeFailed = false;
 	mFinishState = finish_state::FINISHED;
 	mAssignedClient = NULL;
-	mLastFailCode = init_fail_code::MODEL_NOT_INITIALIZED;
+	mLastFailCode = last_fail_code::MODEL_NOT_INITIALIZED;
 
 	clear_samplers();
 	
@@ -777,15 +823,8 @@ GENERIC InfTextToTextProcessor::update()
 		mDecodeSignal.reset_signal_state();
 		
 		InfModelTextToText* t2tModel = static_cast<InfModelTextToText*>(this->mTargetModel_md_model);
-
-		bool isTokenControl = false;
 		bool isFinish = false;
 
-		if(t2tModel->is_token_control(mGeneratedToken) == InfModelTextToText::flags::INF_MODEL_SUCCESS)
-		{
-			isTokenControl = true;
-		}
-		
 		if(mFinishState != finish_state::CONTINUE)
 		{
 			isFinish = true;
@@ -801,9 +840,13 @@ GENERIC InfTextToTextProcessor::update()
 
 		if(t2tClient)
 		{
-			IBYTE tokenString[64] = { 0 };
-			I32 tokenLength = llama_token_to_piece(t2tModel->get_raw_model(), mGeneratedToken, tokenString, 64, false, true);
-			t2tClient->on_write(tokenString, tokenLength, mGeneratedToken, isTokenControl, isFinish);
+			inf_text_token_vector tokenVector = mGeneratedTokenVector;
+			if(mDecodeBehavior.mHaltOnWrite)
+			{
+				stop_processor();
+			}
+
+			t2tClient->on_write(tokenVector, isFinish);
 			if(isFinish)
 			{
 				t2tClient->on_finish(mContextCursor, mFinishState);

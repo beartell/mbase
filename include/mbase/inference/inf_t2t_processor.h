@@ -6,13 +6,18 @@
 
 MBASE_BEGIN
 
+struct decode_behavior_description {
+	U32 mTokenAtMost = 1;
+	bool mHaltOnWrite = false;
+};
+
 class InfModelTextToText;
 
 class MBASE_API InfTextToTextProcessor : public mbase::InfProcessorBase {
 public:
 	using inf_text_token_candidates = mbase::vector<llama_token_data>;
 
-	enum class init_fail_code {
+	enum class last_fail_code {
 		MODEL_NOT_INITIALIZED,
 		NOT_ENOUGH_MEMORY,
 		INVALID_MODEL_TYPE
@@ -21,7 +26,7 @@ public:
 	InfTextToTextProcessor();
 	~InfTextToTextProcessor();
 
-	init_fail_code get_last_fail_code() const;
+	last_fail_code get_last_fail_code() const;
 	bool is_init_failed() const;
 	bool is_available() const;
 	bool signal_state_input_process() const;
@@ -37,12 +42,13 @@ public:
 	GENERIC get_available_samplers(inf_sampling_set& out_samplers);
 	bool has_client() const;
 	flags get_processor_status() const;
-
+	flags token_to_description(const inf_text_token& in_token, inf_token_description& out_description);
+	flags tokens_to_description_vector(const mbase::vector<inf_text_token>& in_tokens, mbase::vector<inf_token_description>& out_descriptions);
 	flags tokenize_input(CBYTEBUFFER in_data, size_type in_size, inf_text_token_vector& out_tokens);
 	flags tokenize_input(context_line* in_lines, size_type in_count, inf_text_token_vector& out_tokens, bool in_append_assistant_token = true);
 	flags execute_input(const inf_text_token_vector& in_tokens, bool in_abandon = false);
-	flags next();
-	flags next_sync();
+	flags next(const decode_behavior_description& in_description);
+	flags next_sync(const decode_behavior_description& in_description);
 	flags set_inference_client(InfClientTextToText* in_client);
 	flags initialize(
 		InfModelTextToText* in_model, 
@@ -75,7 +81,7 @@ public:
 	GENERIC update_t() override;
 
 	virtual GENERIC on_initializing();
-	virtual GENERIC on_initialize_fail(init_fail_code out_code);
+	virtual GENERIC on_initialize_fail(last_fail_code out_code);
 	virtual GENERIC on_destroying();
 	virtual GENERIC on_initialize() = 0;
 	virtual GENERIC on_destroy() = 0;
@@ -91,8 +97,8 @@ private:
 	llama_batch mInputBatch;
 	inf_text_token_candidates mPresetCandidates;
 	inf_text_token_vector mTokenizedInput;
+	inf_text_token_vector mGeneratedTokenVector;
 	inf_sampling_set mSamplerDescriptions;
-	inf_text_token mGeneratedToken;
 	U32 mContextCursor; // -----> if it exceeds the context size, stop generating
 	U32 mBatchSize;
 	U32 mThreadCount;
@@ -101,9 +107,10 @@ private:
 	finish_state mFinishState;
 	InfClientTextToText* mAssignedClient;
 	PcDiagnostics mDiagnostics;
-	init_fail_code mLastFailCode;	
+	last_fail_code mLastFailCode;	
 	bool mFlashAttention;
 	bool mIsInitializeFailed;
+	decode_behavior_description mDecodeBehavior;
 };
 
 MBASE_END

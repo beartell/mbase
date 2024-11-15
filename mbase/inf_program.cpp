@@ -71,7 +71,7 @@ GENERIC InfMaipTunedT2TProcessor::on_initialize()
 	set_inference_client(&mProcessorClient);
 }
 
-GENERIC InfMaipTunedT2TProcessor::on_initialize_fail(init_fail_code out_code)
+GENERIC InfMaipTunedT2TProcessor::on_initialize_fail(last_fail_code out_code)
 {
 	mbase::maip_packet_builder tmpPacketBuilder;
 	mbase::string outPayload;
@@ -226,48 +226,48 @@ GENERIC InfMaipTunedClient::on_embedding_data(const F32* out_data, size_type out
 	mManagerClient->mPeer->send_read_signal();
 }
 
-GENERIC InfMaipTunedClient::on_write(CBYTEBUFFER out_data, size_type out_size, inf_text_token out_token, bool out_is_special, bool out_is_finish)
+GENERIC InfMaipTunedClient::on_write(const inf_text_token_vector& out_token, bool out_is_finish)
 {	
-	mbase::string outData(out_data, out_size);
-	mbase::maip_packet_builder tmpPacketBuilder;
+	// mbase::string outData(out_data, out_size);
+	// mbase::maip_packet_builder tmpPacketBuilder;
 	
-	if(!out_is_finish)
-	{
-		tmpPacketBuilder.set_response_message((U16)InfProgram::maip_err_code::EXEC_MESSAGE_CONTINUE);
-	}
+	// if(!out_is_finish)
+	// {
+	// 	tmpPacketBuilder.set_response_message((U16)InfProgram::maip_err_code::EXEC_MESSAGE_CONTINUE);
+	// }
 
-	else
-	{
-		// on_finish will be called
-		lastToken = outData;
-		return;
-	}
+	// else
+	// {
+	// 	// on_finish will be called
+	// 	lastToken = outData;
+	// 	return;
+	// }
 
-	mbase::string outPayload;
+	// mbase::string outPayload;
 
-	if(out_is_special)
-	{
-		tmpPacketBuilder.set_kval("SPECIAL", 1);
-	}
+	// if(out_is_special)
+	// {
+	// 	tmpPacketBuilder.set_kval("SPECIAL", 1);
+	// }
 
-	else
-	{
-		tmpPacketBuilder.set_kval("SPECIAL", 0);
-	}
+	// else
+	// {
+	// 	tmpPacketBuilder.set_kval("SPECIAL", 0);
+	// }
 
-	if(outData.size())
-	{
-		tmpPacketBuilder.generate_payload(outPayload, outData);
-	}
+	// if(outData.size())
+	// {
+	// 	tmpPacketBuilder.generate_payload(outPayload, outData);
+	// }
 
-	else
-	{
-		tmpPacketBuilder.generate_payload(outPayload);
-	}
+	// else
+	// {
+	// 	tmpPacketBuilder.generate_payload(outPayload);
+	// }
 
-	mManagerClient->mPeer->write_data(outPayload.c_str(), outPayload.size());
-	mManagerClient->mPeer->send_write_signal();
-	mManagerClient->mPeer->send_read_signal();
+	// mManagerClient->mPeer->write_data(outPayload.c_str(), outPayload.size());
+	// mManagerClient->mPeer->send_write_signal();
+	// mManagerClient->mPeer->send_read_signal();
 }
 
 GENERIC InfMaipTunedClient::on_finish(size_type out_total_token_size, InfTextToTextProcessor::finish_state out_finish_state)
@@ -456,6 +456,8 @@ InfProgram::maip_err_code InfProgram::inf_create_context(const mbase::string& in
 	// 11- If the model is embedding model, create and register embedder processor
 	// 12- If the model is not embedding model, create and register T2T processor
 
+	// CHECK NOTE: CHECK THE handlers on_initialize and on_initialize_fail then come back here again.
+
 	if(!clientSession.mMaipUser.is_model_accessible(in_model))
 	{
 		return maip_err_code::INF_MODEL_IS_NOT_ACCESSIBLE;
@@ -561,6 +563,15 @@ InfProgram::maip_err_code InfProgram::inf_destroy_context(const mbase::string& i
 {
 	MBASE_SESSION_CONTROL;
 
+	// === Writing behavior of the method verbally to detect bugs or problems ===
+	// *** inf_destroy_context ***
+	// 1- Check if the given context id match any chat session
+	// 2- If not, return INF_CONTEXT_ID_MISMATCH(2005)
+	// 3- Delete the corresponding processor
+	// 4- Erase that context id from chat_session_map
+
+	// CHECK NOTE: DO NOT NEED TO CHECK ANYMORE, IT WORKS AS INTENDED
+
 	InfClientSession::chat_session_map::iterator It = clientSession.mChatSessions.find(in_ctxId);
 	if (It == clientSession.mChatSessions.end())
 	{
@@ -577,6 +588,8 @@ InfProgram::maip_err_code InfProgram::inf_get_program_models(const mbase::string
 {
 	MBASE_SESSION_CONTROL;
 
+	// CHECK NOTE: DO NOT NEED TO CHECK ANYMORE, IT WORKS AS INTENDED
+
 	for(auto& n : mModelDescriptionMap)
 	{
 		out_models.push_back(n.first);
@@ -588,6 +601,17 @@ InfProgram::maip_err_code InfProgram::inf_get_program_models(const mbase::string
 InfProgram::maip_err_code InfProgram::inf_load_model(const mbase::string& in_session_token, const mbase::string& in_modelname, const U32& in_total_context_size)
 {
 	MBASE_SESSION_CONTROL;
+
+	// === Writing behavior of the method verbally to detect bugs or problems ===
+	// *** inf_load_model ***
+	// 1- Check if the client user have an authority to load/unload models
+	// 2- If not, return INF_AUTHORIZATION_FAILED(2008)
+	// 3- If the total context size is not supplied, return INF_INVALID_PARAMS(2016)
+	// 4- Check if the given model name is in the registered models map
+	// 5- If so, return INF_MODEL_ALREADY_LOADED(2025)
+	// 6- If the given model name is not found in the model description map, return INF_MODEL_NAME_MISMATCH(2004)
+
+	// CHECK NOTE: This method must own the client socket, implement that and come back here again
 
 	if(!clientSession.mMaipUser.is_flags_set(MAIP_MODEL_LOAD_UNLOAD))
 	{
@@ -625,6 +649,13 @@ InfProgram::maip_err_code InfProgram::inf_unload_model(const mbase::string& in_s
 {
 	MBASE_SESSION_CONTROL;
 
+	// === Writing behavior of the method verbally to detect bugs or problems ===
+	// *** inf_unload_model ***
+	// 1- Check if the client user have an authority to load/unload models
+	// 2- If not, return INF_AUTHORIZATION_FAILED(2008)
+
+	// CHECK NOTE: Works fine, do not come back
+
 	if (!clientSession.mMaipUser.is_flags_set(MAIP_MODEL_LOAD_UNLOAD))
 	{
 		return maip_err_code::INF_AUTHORIZATION_FAILED;
@@ -637,8 +668,6 @@ InfProgram::maip_err_code InfProgram::inf_unload_model(const mbase::string& in_s
 	}
 
 	InfModelTextToText* t2tModel = It->second;
-	//mRegisteredModels.erase(It);
-
 	t2tModel->destroy();
 
 	return maip_err_code::INF_SUCCESS;
@@ -661,6 +690,16 @@ InfProgram::maip_err_code InfProgram::inf_create_new_user(
 )
 {
 	MBASE_SESSION_CONTROL;
+
+	// === Writing behavior of the method verbally to detect bugs or problems ===
+	// *** inf_create_user ***
+	// 1- If the username is not given, return INF_INVALID_PARAMS(2016)
+	// 2- If the client have no authority to create/delete users, return INF_AUTHORIZATION_FAILED(2008)
+	// 3- If the given username already exists on the user map, reutrn INF_USER_ALREADY_EXISTS(2015)
+	// 4- If the access token is not supplied, generate a uuid and assign it as an access token
+	// 5- If the in_superuser is set and the client is not a superuser, return INF_AUTHORIZATION_FAILED(2008)
+
+	// CHECK NOTE: Works fine, do not come back
 
 	if(!in_username.size())
 	{
@@ -1574,18 +1613,18 @@ InfProgram::maip_err_code InfProgram::exec_next(const mbase::string& in_session_
     if(tmpProc->get_processor_type() == InfProcessorBase::processor_type::TEXT_TO_TEXT)
     {
         InfTextToTextProcessor* t2tProc = static_cast<InfTextToTextProcessor*>(tmpProc);
-        InfProcessorBase::flags outRes = t2tProc->next();  
-        if(outRes != InfTextToTextProcessor::flags::INF_PROC_SUCCESS)
-        {
-            if(outRes == InfTextToTextProcessor::flags::INF_PROC_INFO_HALTED)
-            {
-                return maip_err_code::INF_CONTEXT_HALTED;
-            }
-            else if(outRes == InfTextToTextProcessor::flags::INF_PROC_ERR_INPUT_IS_EMPTY)
-            {
-                return maip_err_code::EXEC_MISSING_MESSAGE;
-            }
-        }
+        //InfProcessorBase::flags outRes = t2tProc->next();  
+        // if(outRes != InfTextToTextProcessor::flags::INF_PROC_SUCCESS)
+        // {
+        //     if(outRes == InfTextToTextProcessor::flags::INF_PROC_INFO_HALTED)
+        //     {
+        //         return maip_err_code::INF_CONTEXT_HALTED;
+        //     }
+        //     else if(outRes == InfTextToTextProcessor::flags::INF_PROC_ERR_INPUT_IS_EMPTY)
+        //     {
+        //         return maip_err_code::EXEC_MISSING_MESSAGE;
+        //     }
+        // }
     }
 
     else if(tmpProc->get_processor_type() == InfProcessorBase::processor_type::EMBEDDER)
@@ -1998,16 +2037,28 @@ GENERIC InfProgram::update()
 		++It;
 	}
 
-	// for(registered_model_map::iterator It = mRegisteredModels.begin(); It != mRegisteredModels.end();)
-	// {
-	// 	InfModelTextToText* t2tModel = It->second;
-	// 	if(t2tModel->signal_destroy_method())
-	// 	{
-	// 		mRegisteredModels.erase(It);
-	// 	}
-	// 	t2tModel->update();
-	// 	++It;
-	// }
+	for(registered_model_map::iterator It = mRegisteredModels.begin(); It != mRegisteredModels.end();)
+	{
+		InfModelTextToText* t2tModel = It->second;
+		t2tModel->update();
+		if(!t2tModel->is_initialized())
+		{
+			// If the model is not initialized,
+			// and it is not even initializing now
+			// remove it
+			if(t2tModel->signal_destroying())
+			{
+				
+			}
+			else if(!t2tModel->signal_initializing())
+			{
+				delete t2tModel; // Since the model object's memory managed by the program
+				It = mRegisteredModels.erase(It);
+				continue;
+			}
+		}
+		++It;
+	}
 }
 
 MBASE_END

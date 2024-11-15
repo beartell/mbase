@@ -21,6 +21,12 @@ struct inf_processor_watcher {
     TargetObject* mSubject = NULL;
     U32 mContextLength = 0;
 };
+
+struct inf_token_description {
+    mbase::string mTokenString = "";
+    bool mIsSpecial = false;
+};
+
 MBASE_END
 
 #endif // MBASE_INF_COMMON_H
