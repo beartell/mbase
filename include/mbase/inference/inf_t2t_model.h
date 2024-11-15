@@ -42,13 +42,9 @@ public:
 	InfModelTextToText();
 	~InfModelTextToText();
 
+	bool is_initialize_failed() const;
 	bool is_available(const U32& in_context_size) const;
 	bool is_embedding_model() const;
-	bool signal_initializing_method() const;
-	bool signal_init_fail_method() const;
-	bool signal_init_method() const;
-	bool signal_destroy_method() const;
-	bool signal_destroying_method() const;
 	llama_model* get_raw_model();
 	flags get_special_tokens(mbase::vector<inf_text_token>& out_tokens);
 	flags get_special_tokens(mbase::vector<mbase::string>& out_tokens);
@@ -85,7 +81,6 @@ public:
 		const U32& in_context_length,
 		U32 in_batch_size,
 		U32 in_thread_count,
-		U32 in_batch_thread_count,
 		const bool& in_flash_attention,
 		const inf_sampling_set& in_sampler_set
 	);
@@ -123,10 +118,6 @@ private:
 	mbase::wstring mModelPath;
 	llama_model_params mSuppliedParams;
 	inf_text_token mEndOfToken;
-	processor_signal mInitFailSignal;
-	processor_signal mInitMethodSignal;
-	processor_signal mDestroyMethodSignal;
-	processor_signal mDestroyingSignal;
 	mbase::vector<inf_text_token> mSystemStartTokenized;
 	mbase::vector<inf_text_token> mAssistantStartTokenized;
 	mbase::vector<inf_text_token> mUserStartTokenized;
@@ -138,6 +129,7 @@ private:
 	U32 mEmbeddingLength;
 	F32 mQuantizationCoefficient;
 	init_fail_code mInitFailCode;
+	bool mIsInitFailed;
 	bool mIsEmbeddingModel; // Not supported if (llama_model_has_encoder(model) && llama_model_has_decoder(model) is true)
 };
 

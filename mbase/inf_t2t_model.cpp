@@ -7,17 +7,17 @@
 MBASE_BEGIN
 
 #define MBASE_INF_T2T_MODEL_RETURN_UNINITIALIZED \
-if(this->signal_state_initializing())\
+if(this->signal_destroying())\
+{\
+	return flags::INF_MODEL_INFO_DESTROYING_MODEL;\
+}\
+if(this->signal_initializing())\
 {\
 	return flags::INF_MODEL_INFO_INITIALIZING_MODEL;\
 }\
 if(!this->is_initialized())\
 {\
 	return flags::INF_MODEL_ERR_NOT_INITIALIZED;\
-}\
-if(this->signal_state_destroying())\
-{\
-	return flags::INF_MODEL_INFO_DESTROYING_MODEL;\
 }
 
 InfModelTextToText::InfModelTextToText() :
@@ -32,7 +32,8 @@ InfModelTextToText::InfModelTextToText() :
 	mEmbeddingLength(0),
 	mQuantizationCoefficient(0.0f),
 	mModelSize(0),
-	mIsEmbeddingModel(false)
+	mIsEmbeddingModel(false),
+	mIsInitFailed(false)
 {
 
 }
@@ -62,6 +63,11 @@ InfModelTextToText::~InfModelTextToText()
 	}
 }
 
+bool InfModelTextToText::is_initialize_failed() const
+{
+	return mIsInitFailed;
+}
+
 bool InfModelTextToText::is_available(const U32& in_context_size) const
 {
 	if (this->signal_state_initializing())
@@ -86,21 +92,6 @@ bool InfModelTextToText::is_available(const U32& in_context_size) const
 bool InfModelTextToText::is_embedding_model() const
 {
 	return mIsEmbeddingModel;
-}
-
-bool InfModelTextToText::signal_init_fail_method() const
-{
-	return mInitFailSignal.get_signal();
-}
-
-bool InfModelTextToText::signal_init_method() const
-{
-	return mInitMethodSignal.get_signal();
-}
-
-bool InfModelTextToText::signal_destroy_method() const
-{
-	return mDestroyMethodSignal.get_signal();
 }
 
 llama_model* InfModelTextToText::get_raw_model()
@@ -284,7 +275,7 @@ InfModelTextToText::flags InfModelTextToText::initialize_model(const mbase::wstr
 		return flags::INF_MODEL_SUCCESS;
 	}
 
-	if(signal_state_initializing())
+	if(signal_initializing())
 	{
 		return flags::INF_MODEL_INFO_INITIALIZING_MODEL;
 	}
@@ -317,7 +308,7 @@ InfModelTextToText::flags InfModelTextToText::initialize_model_sync(const mbase:
 {
 	initialize_model(in_path, in_total_context_size, in_gpu_layers);
 
-	while(signal_state_initializing())
+	while(signal_initializing())
 	{
 		
 	}
@@ -326,9 +317,6 @@ InfModelTextToText::flags InfModelTextToText::initialize_model_sync(const mbase:
 	{
 		return flags::INF_MODEL_ERR_CANT_LOAD_MODEL;
 	}
-
-	mInitMethodSignal.reset_signal_with_state();
-	on_initialize();
 
 	return flags::INF_MODEL_INFO_INITIALIZING_MODEL;
 }
@@ -340,7 +328,7 @@ InfModelTextToText::flags InfModelTextToText::destroy()
 		return flags::INF_MODEL_SUCCESS;
 	}
 
-	if(signal_state_destroying())
+	if(signal_destroying())
 	{
 		return flags::INF_MODEL_INFO_DESTROYING_MODEL;
 	}
@@ -358,7 +346,7 @@ InfModelTextToText::flags InfModelTextToText::destroy()
 		++It;
 	}
 
-	mDestroySignal.set_signal_with_state();
+	mDestroySignal.set_signal();
 	start_processor();
 	return flags::INF_MODEL_INFO_DESTROYING_MODEL;
 }
@@ -371,12 +359,9 @@ InfModelTextToText::flags InfModelTextToText::destroy_sync()
 	}
 
 	destroy();
-	while(signal_state_destroying())
+	while(signal_destroying())
 	{
 	}
-	
-	mDestroyMethodSignal.reset_signal_with_state();
-	on_destroy();
 
 	return flags::INF_MODEL_SUCCESS;
 }
@@ -387,7 +372,6 @@ InfModelTextToText::flags InfModelTextToText::register_context_process
 	const U32& in_context_length, 
 	U32 in_batch_size,
 	U32 in_thread_count,
-	U32 in_batch_thread_count,
 	const bool& in_flash_attention,
 	const inf_sampling_set& in_sampler_set
 )
@@ -556,8 +540,8 @@ GENERIC InfModelTextToText::_initialize_model()
 	if(!tempConfigurator.is_open())
 	{
 		mInitFailCode = init_fail_code::PATH_NOT_FOUND;
-		mInitializeSignal.reset_signal_with_state();
-		mInitFailSignal.set_signal_with_state();
+		mInitializeSignal.set_signal_finished();
+		mIsInitFailed = true;
 		return;
 	}
 
@@ -595,8 +579,8 @@ GENERIC InfModelTextToText::_initialize_model()
 	if (!mModel)
 	{
 		mInitFailCode = init_fail_code::LLAMA_SYSTEM_ERROR;
-		mInitializeSignal.reset_signal_with_state();
-		mInitFailSignal.set_signal_with_state();
+		mInitializeSignal.set_signal_finished();
+		mIsInitFailed = true;
 		return;
 	}
 
@@ -637,8 +621,7 @@ GENERIC InfModelTextToText::_initialize_model()
 	llama_free(dummyContext);
 
 	mIsInitialized = true;
-	mInitializeSignal.reset_signal_with_state();
-	mInitMethodSignal.set_signal();
+	mInitializeSignal.set_signal_finished();
 }
 
 GENERIC InfModelTextToText::_destroy_model()
@@ -670,8 +653,7 @@ GENERIC InfModelTextToText::_destroy_model()
 	mModelTimer.clear_timers();
 
 	/* RESETTING ALL SIGNALS ON LOGIC LOOP */
-	mDestroyMethodSignal.set_signal();
-	mDestroySignal.reset_signal_with_state();
+	mDestroySignal.set_signal_finished();
 }
 
 GENERIC InfModelTextToText::_get_special_tokens(mbase::vector<inf_text_token>& out_tokens)
@@ -701,20 +683,16 @@ GENERIC InfModelTextToText::_get_special_tokens(mbase::vector<mbase::string>& ou
 GENERIC InfModelTextToText::update()
 {
 	// load and unload control
-	if(signal_state_destroying())
+	if(signal_destroying() || signal_initializing())
 	{
 		return;
 	}
 
-	if (signal_destroy_method())
+	if(signal_state_destroying())
 	{
+		// Means destruction finished
 		stop_processor();
-		// Reset all signals
 		reset_base_signals();
-		mDestroyingSignal.reset_signal_with_state();
-		mDestroyMethodSignal.reset_signal_with_state();
-		mInitMethodSignal.reset_signal_with_state();
-		mInitFailSignal.reset_signal_with_state();
 
 		mbase::lock_guard tmpListMutex(mProcessorListMutex);
 		for(context_processor_list::iterator It = mRegisteredProcessors.begin(); It != mRegisteredProcessors.end(); ++It)
@@ -730,20 +708,25 @@ GENERIC InfModelTextToText::update()
 		mRegisteredProcessors.clear();
 		mIsInitialized = false;
 		on_destroy();
+		return;
 	}
 
-	if(signal_init_fail_method())
+	if(signal_state_initializing())
 	{
+		// Means init finished
 		stop_processor();
-		mInitFailSignal.reset_signal_with_state();
-		on_initialize_fail(mInitFailCode);
-	}
+		reset_base_signals();
 
-	if(signal_init_method())
-	{
-		stop_processor();
-		mInitMethodSignal.reset_signal_with_state();
-		on_initialize();
+		if(is_initialize_failed())
+		{
+			on_initialize_fail(mInitFailCode);
+		}
+		else
+		{
+			mIsInitialized = true;
+			on_initialize();
+		}
+		return;
 	}
 
 	mbase::lock_guard tmpListMutex(mProcessorListMutex);

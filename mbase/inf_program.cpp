@@ -453,6 +453,8 @@ InfProgram::maip_err_code InfProgram::inf_create_context(const mbase::string& in
 	// 8- If it is, return INF_USER_CONTEXT_LENGTH_EXCEEDED(2020)
 	// 9- Check if the available context length of the model is sufficent to create the given context
 	// 10- If not, return INF_MODEL_CONTEXT_FULL(2019)
+	// 11- If the model is embedding model, create and register embedder processor
+	// 12- If the model is not embedding model, create and register T2T processor
 
 	if(!clientSession.mMaipUser.is_model_accessible(in_model))
 	{
@@ -493,27 +495,20 @@ InfProgram::maip_err_code InfProgram::inf_create_context(const mbase::string& in
 			in_ctsize,
 			clientSession.mMaipUser.get_batch_size(),
 			clientSession.mMaipUser.get_processor_thread_count()
-		); // IF THIS RETURNS SOMETHING PROBLEMATIC, CRASH
+		); // 100% SUCCESS
 	}
 	else
 	{
-
+		InfMaipTunedT2TProcessor* maipT2tContext = new InfMaipTunedT2TProcessor(clientSession);
+		t2tModel->register_context_process(
+			maipT2tContext,
+			in_ctsize,
+			clientSession.mMaipUser.get_batch_size(),
+			clientSession.mMaipUser.get_processor_thread_count(),
+			true,
+			{}
+		); // 100% SUCCESS
 	}
-
-	InfMaipTunedT2TProcessor* maipNewContext = new InfMaipTunedT2TProcessor(clientSession);
-
-
-
-	// if(t2tModel->register_context_process(maipNewContext, in_ctsize) != InfModelTextToText::flags::INF_MODEL_INFO_REGISTERING_PROCESSOR)
-	// {
-	// 	// TODO: FIX HERE
-	// 	// means there is a problem
-	// 	// unknown problem
-	// 	delete maipTunedClient;
-	// 	delete maipNewContext;
-	// 	return maip_err_code::INF_FAILED_TO_CREATE_CONTEXT;
-	// }
-
 	return maip_err_code::INF_SUCCESS;
 }
 
@@ -2003,16 +1998,16 @@ GENERIC InfProgram::update()
 		++It;
 	}
 
-	for(registered_model_map::iterator It = mRegisteredModels.begin(); It != mRegisteredModels.end();)
-	{
-		InfModelTextToText* t2tModel = It->second;
-		if(t2tModel->signal_destroy_method())
-		{
-			mRegisteredModels.erase(It);
-		}
-		t2tModel->update();
-		++It;
-	}
+	// for(registered_model_map::iterator It = mRegisteredModels.begin(); It != mRegisteredModels.end();)
+	// {
+	// 	InfModelTextToText* t2tModel = It->second;
+	// 	if(t2tModel->signal_destroy_method())
+	// 	{
+	// 		mRegisteredModels.erase(It);
+	// 	}
+	// 	t2tModel->update();
+	// 	++It;
+	// }
 }
 
 MBASE_END

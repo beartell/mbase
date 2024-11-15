@@ -25,64 +25,55 @@ class my_client : public mbase::InfClientTextToText {
 public:
     GENERIC on_register(InfProcessorBase* out_processor) override 
     {
-        InfEmbedderProcessor* emdProcessor = static_cast<InfEmbedderProcessor*>(out_processor);
+        InfTextToTextProcessor* t2tProcessor = static_cast<InfTextToTextProcessor*>(out_processor);
         mbase::string inputString = "Hey, how are you?";
 
-        inf_text_token_vector tokVec;
+        U32 outMsgId = 0;
+        this->add_message("You are a helpful assistant", mbase::context_role::SYSTEM, outMsgId);
+        msgIds.push_back(outMsgId);
+        this->add_message(inputString, mbase::context_role::USER, outMsgId);
+        msgIds.push_back(outMsgId);
 
-        emdProcessor->tokenize_input(inputString.c_str(), inputString.size(), tokVec);
-        std::cout << tokVec.size() << std::endl;
-        emdProcessor->execute_input(tokVec);
-    }
+        mbase::vector<mbase::context_line> msgArray;
+        get_message_array(msgIds.data(), msgIds.size(), msgArray);
+        
+        inf_text_token_vector tokenVector;
 
-    GENERIC on_embedding_data(const F32* out_data, size_type out_size) override
-    {
-        for(size_type i = 0; i < out_size; i++)
-        {
-            printf("%f, ", out_data[i]);
-        }
-        printf("\n\n");
-        InfProcessorBase* hostProcessor = NULL;
-        get_host_processor(hostProcessor);
-        InfEmbedderProcessor* emdProcessor = static_cast<InfEmbedderProcessor*>(hostProcessor);
-        mbase::string inputString = "Hey, how are you?";
-
-        inf_text_token_vector tokVec;
-
-        emdProcessor->tokenize_input(inputString.c_str(), inputString.size(), tokVec);
-        std::cout << tokVec.size() << std::endl;
-        emdProcessor->execute_input(tokVec);
-
+        t2tProcessor->tokenize_input(msgArray.data(), msgArray.size(), tokenVector);
+        t2tProcessor->execute_input(tokenVector);
+        t2tProcessor->next();
     }
 
     GENERIC on_write(CBYTEBUFFER out_data, size_type out_size, inf_text_token out_token, bool out_is_special, bool out_is_finish) override 
     {        
-        fflush(stdout);
-        //printf("%s", out_data);
-        totalMessage += out_data;
         InfProcessorBase* procBase;
         get_host_processor(procBase);
         
         InfTextToTextProcessor* txtOut = static_cast<InfTextToTextProcessor*>(procBase);
+        totalMessage += out_data;
+        fflush(stdout);
+        printf("%s", out_data);
 
         txtOut->next();
     }
 
     GENERIC on_finish(size_type out_total_token_size, InfTextToTextProcessor::finish_state out_finish_state) override 
     {
-        
+        fflush(stdout);
+        printf("%s\n", totalMessage.c_str());
+        std::cout << "\n" << std::endl;
     }
     
     GENERIC on_unregister() override 
     {
-        
+        printf("Proc released me\n");
     }
 private:
     mbase::vector<U32> msgIds;
     mbase::string totalMessage;
 };
 
-class my_context : public mbase::InfEmbedderProcessor {
+class my_context : public mbase::InfTextToTextProcessor {
 public:
     GENERIC on_initializing() override
     {
@@ -106,40 +97,57 @@ public:
     }
 private:
     my_client myCl;
+    
 };
 
 class my_model : public mbase::InfModelTextToText {
 public:
     void on_initialize() override 
     {
-        
+        register_context_process(&c1, 4000, 512, 16, true, {});
+        register_context_process(&c2, 4000, 512, 16, true, {});
+        register_context_process(&c3, 4000, 512, 16, true, {});
     }
     void on_destroy() override 
     {
         std::cout << "Model is destroyed" << std::endl;
     }
 private:
+    my_context c1;
+    my_context c2;
+    my_context c3;
+    my_context c4;
+    my_context c5;
+    my_context c6;
 };
 
 using namespace mbase;
 
 int main()
 {
-    mbase::maip_client mc;
-    mbase::string outPayload;
-    mc.create_model_description(
-        "Llama 3.2 1b",
-        "MBASE Sql query tuned model",
-        "This model provides a query interface using LLM",
-        "llama3.2-1b-instruct-q8_0.gguf",
-        {"Sql", "Instruct", "Tooling"},
-        "T2T",
-        true,
-        false,
-        "",
-        outPayload
-    );
-    std::cout << outPayload << std::endl;
+    while(1)
+    {
+        my_model sampleModel;
+        sampleModel.initialize_model(L"./Llama-3.2-1B-Instruct-Q4_K_M.gguf", 36000, 999);
+
+        int i = 0;
+        while(1)
+        {
+            if(i == 120)
+            {
+                break;        
+            }
+            sampleModel.update();
+            mbase::sleep(30);
+            i++;
+        }
+
+        sampleModel.destroy();
+        mbase::sleep(2000);
+        sampleModel.update();
+    }
+    
+
     // InfProgram ifp;
     // InfMaipDefaultServer IDS(ifp);
 

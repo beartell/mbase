@@ -22,17 +22,12 @@ public:
 	~InfTextToTextProcessor();
 
 	init_fail_code get_last_fail_code() const;
+	bool is_init_failed() const;
 	bool is_available() const;
-	bool signal_state_embedding_process() const;
 	bool signal_state_input_process() const;
 	bool signal_state_decode_process() const;
-	bool signal_embedding_process() const;
 	bool signal_input_process() const;
 	bool signal_decode_process() const;
-	bool signal_token_generated() const;
-	bool signal_init_method() const;
-	bool signal_destroy_method() const;
-	bool signal_init_fail_method() const;
 	#ifdef MBASE_INTERNAL_API
 		inf_text_token_candidates& get_token_candidates();
 	#endif // MBASE_INTERNAL_API
@@ -47,6 +42,7 @@ public:
 	flags tokenize_input(context_line* in_lines, size_type in_count, inf_text_token_vector& out_tokens, bool in_append_assistant_token = true);
 	flags execute_input(const inf_text_token_vector& in_tokens, bool in_abandon = false);
 	flags next();
+	flags next_sync();
 	flags set_inference_client(InfClientTextToText* in_client);
 	flags initialize(
 		InfModelTextToText* in_model, 
@@ -101,16 +97,13 @@ private:
 	U32 mBatchSize;
 	U32 mThreadCount;
 	processor_signal mInputSignal;
-	processor_signal mTokenGeneratedSignal;
 	processor_signal mDecodeSignal;
-	processor_signal mInitializeMethodSignal;
-	processor_signal mDestroyMethodSignal;
-	processor_signal mInitializeFailSignal;
 	finish_state mFinishState;
 	InfClientTextToText* mAssignedClient;
 	PcDiagnostics mDiagnostics;
 	init_fail_code mLastFailCode;	
 	bool mFlashAttention;
+	bool mIsInitializeFailed;
 };
 
 MBASE_END
