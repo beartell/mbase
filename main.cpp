@@ -13,6 +13,7 @@
 #include <mbase/inference/inf_maip_server.h>
 #include <mbase/inference/inf_gguf_metadata_configurator.h>
 #include <mbase/inference/inf_maip_model_description.h>
+#include <mbase/smart_conversion.h>
 #include <mbase/maip_client.h>
 #include <vector>
 #include <set>
@@ -166,14 +167,16 @@ using namespace mbase;
 
 int main()
 {
-    
-    my_model sampleModel;
-    sampleModel.initialize_model(L"./Llama-3.2-1B-Instruct-Q4_K_M.gguf", 36000, 999);
+    F32 conversionResult = mbase::smart_conversion<F32>::apply("15");
+    printf("%f\n", conversionResult);
+    std::cout << conversionResult << std::endl;
+    // my_model sampleModel;
+    // sampleModel.initialize_model(L"./Llama-3.2-1B-Instruct-Q4_K_M.gguf", 36000, 999);
 
-    while(1)
-    {
-        sampleModel.update();
-    }
+    // while(1)
+    // {
+    //     sampleModel.update();
+    // }
     
     // InfProgram ifp;
     // InfMaipDefaultServer IDS(ifp);
