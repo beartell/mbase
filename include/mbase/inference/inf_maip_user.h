@@ -83,6 +83,7 @@ public:
 
 	GENERIC load_from_state_file(const mbase::string& in_object_name, const mbase::wstring& in_state_path);
 	GENERIC update_state_file(const mbase::wstring& in_state_path);
+
 private:
 	U32 mAuthorityFlags = 0;
 	U32 mDistinctModelAccessLimit = 0;

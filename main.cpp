@@ -13,7 +13,7 @@
 #include <mbase/inference/inf_maip_server.h>
 #include <mbase/inference/inf_gguf_metadata_configurator.h>
 #include <mbase/inference/inf_maip_model_description.h>
-#include <mbase/smart_conversion.h>
+#include <mbase/argument_get_value.h>
 #include <mbase/maip_client.h>
 #include <vector>
 #include <set>
@@ -165,11 +165,13 @@ private:
 
 using namespace mbase;
 
-int main()
+int main(int argc, char** argv)
 {
-    F32 conversionResult = mbase::smart_conversion<F32>::apply("15");
-    printf("%f\n", conversionResult);
-    std::cout << conversionResult << std::endl;
+    mbase::string hostValue = "";
+    mbase::argument_get<mbase::string>::value(0, argc, argv, hostValue);
+    
+    std::cout << hostValue << std::endl;
+
     // my_model sampleModel;
     // sampleModel.initialize_model(L"./Llama-3.2-1B-Instruct-Q4_K_M.gguf", 36000, 999);
 
