@@ -41,7 +41,7 @@ struct argument_get_string {
 template<typename Type>
 struct argument_get {
     using get_type = std::conditional_t<std::is_same_v<Type, mbase::string>, argument_get_string, argument_get_numeric<Type>>;
-    static bool value(const U32& in_index, const I32& in_argc, IBYTEBUFFER* in_argv, mbase::string& out_value)
+    static bool value(const U32& in_index, const I32& in_argc, IBYTEBUFFER* in_argv, Type& out_value)
     {
         return get_type::value(in_index, in_argc, in_argv, out_value);
     }
