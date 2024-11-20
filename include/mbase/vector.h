@@ -187,10 +187,10 @@ private:
 	}
 	/* ===== STATE-MODIFIER METHODS END ===== */
 
-	Allocator mExternalAllocator;
 	pointer mRawData;
-	SIZE_T mSize;
-	SIZE_T mCapacity;
+	size_type mSize;
+	size_type mCapacity;
+	Allocator mExternalAllocator;
 };
 
 template<typename T, typename Allocator>
@@ -214,7 +214,7 @@ MBASE_INLINE_EXPR vector<T, Allocator>::vector(size_type in_size, const T& in_va
 		return;
 	}
 	build_vector(calculate_capacity(in_size));
-	for(difference_type i = 0; i < in_size; i++)
+	for(size_type i = 0; i < in_size; i++)
 	{
 		push_back(in_value);
 	}
@@ -264,7 +264,7 @@ MBASE_INLINE_EXPR vector<T, Allocator>::vector(const vector& in_rhs) noexcept : 
 	}
 
 	build_vector(mCapacity);
-	for (difference_type i = 0; i < in_rhs.mSize; i++)
+	for (size_type i = 0; i < in_rhs.mSize; i++)
 	{
 		push_back(in_rhs[i]);
 	}
@@ -279,7 +279,7 @@ MBASE_INLINE_EXPR vector<T, Allocator>::vector(const vector& in_rhs, const Alloc
 	}
 
 	build_vector(mCapacity);
-	for (difference_type i = 0; i < in_rhs.mSize; i++)
+	for (size_type i = 0; i < in_rhs.mSize; i++)
 	{
 		push_back(in_rhs[i]);
 	}
@@ -326,7 +326,7 @@ MBASE_INLINE_EXPR vector<T, Allocator>& vector<T, Allocator>::operator=(const ve
 
 	build_vector(mCapacity);
 
-	for (difference_type i = 0; i < in_rhs.mSize; i++)
+	for (size_type i = 0; i < in_rhs.mSize; i++)
 	{
 		push_back(in_rhs[i]);
 	}
@@ -552,7 +552,7 @@ template<typename T, typename Allocator>
 MBASE_INLINE_EXPR GENERIC vector<T, Allocator>::assign(size_type in_size, const T& in_value) 
 {
 	clear();
-	for (difference_type i = 0; i < in_size; i++)
+	for (size_type i = 0; i < in_size; i++)
 	{
 		push_back(in_value);
 	}
@@ -592,11 +592,11 @@ MBASE_INLINE_EXPR GENERIC vector<T, Allocator>::deep_clear() noexcept
 {
 	if (mRawData)
 	{
-		for (difference_type i = 0; i < mSize; i++)
+		for (size_type i = 0; i < mSize; i++)
 		{
 			mRawData[i].~value_type();
 		}
-		mExternalAllocator.deallocate(mRawData, 0);
+		mExternalAllocator.deallocate(mRawData);
 		mRawData = nullptr;
 	}
 	mSize = 0;
@@ -617,7 +617,7 @@ MBASE_INLINE_EXPR GENERIC vector<T, Allocator>::resize(size_type in_size) noexce
 	{
 		reserve(in_size * 2);
 	}
-	I32 sizeDifference = mSize - in_size;
+	difference_type sizeDifference = mSize - in_size;
 	for(difference_type i = 0; i < sizeDifference; i++)
 	{
 		pop_back();
@@ -654,13 +654,13 @@ MBASE_INLINE_EXPR GENERIC vector<T, Allocator>::reserve(size_type in_capacity) n
 	}
 
 	pointer new_data = mExternalAllocator.allocate(in_capacity);
-	for (difference_type i = 0; i < mSize; i++)
+	for (size_type i = 0; i < mSize; i++)
 	{
 		mExternalAllocator.construct(new_data + i, std::move(*(mRawData + i)));
 		mRawData[i].~value_type();
 	}
 
-	mExternalAllocator.deallocate(mRawData, 0);
+	mExternalAllocator.deallocate(mRawData);
 
 	mCapacity = in_capacity;
 	mRawData = new_data;

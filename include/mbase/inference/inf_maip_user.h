@@ -9,10 +9,6 @@
 
 MBASE_BEGIN
 
-static U32 gMaipUserDefaultModelAccessLimit = 3;
-static U32 gMaipUserDefaultMaximumContextLength = 4096;
-static U32 gMaipUserDefaultAuthorityFlags = 0;
-
 #define MAIP_MODEL_LOAD_UNLOAD (1 << 0) // Allows user group to load and unload models on server
 #define MAIP_ADAPTER_LOAD_UNLOAD (1 << 1) // Allows user group to load and unload adapters on server
 #define MAIP_USER_CREATE_DELETE (1 << 2) // Allows user group to create and delete new users

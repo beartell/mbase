@@ -7,7 +7,6 @@
 
 // If llama.cpp is defined macro should be placed here
 #include <llama.h>
-#include <common/common.h>
 
 MBASE_BEGIN
 
@@ -26,6 +25,24 @@ struct inf_token_description {
     mbase::string mTokenString = "";
     bool mIsSpecial = false;
 };
+
+// The rest is common functionality inspired from llama.cpp common library for examples
+// The set of functions will be populated as new needs are found
+
+GENERIC inf_common_batch_add(
+    llama_batch& in_batch,
+    inf_text_token in_id,
+    I32 in_pos,
+    const mbase::vector<llama_seq_id>& in_seq_ids,
+    bool in_logits
+);
+
+GENERIC inf_common_embd_normalize(
+    const PTRF32 in_inp, 
+    PTRF32 out_normalized, 
+    const SIZE_T& in_n
+);
+
 
 MBASE_END
 

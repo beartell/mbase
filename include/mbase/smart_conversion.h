@@ -99,6 +99,24 @@ struct smart_conversion<F64, StringType>{
     }
 };
 
+template<typename StringType>
+struct smart_conversion<mbase::string, StringType>{
+    using string_type = std::conditional_t<std::is_same_v<StringType, mbase::string>, mbase::string, mbase::wstring>;
+    static mbase::string apply(string_type::const_pointer in_string)
+    {
+        return in_string;
+    }
+};
+
+template<typename StringType>
+struct smart_conversion<mbase::wstring, StringType>{
+    using string_type = std::conditional_t<std::is_same_v<StringType, mbase::string>, mbase::string, mbase::wstring>;
+    static mbase::wstring apply(string_type::const_pointer in_string)
+    {
+        return in_string;
+    }
+};
+
 MBASE_STD_END
 
 #endif // MBASE_SMART_CONVERSION_H

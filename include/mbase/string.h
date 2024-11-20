@@ -507,13 +507,13 @@ public:
     MBASE_INLINE_EXPR friend character_sequence operator+(value_type in_lhs, const character_sequence& in_rhs) {
         return character_sequence(1, in_lhs) + in_rhs;
     }
-    MBASE_INLINE_EXPR friend character_sequence operator+(character_sequence&& in_lhs, character_sequence&& in_rhs) { return std::move(in_lhs + in_rhs); }
-    MBASE_INLINE_EXPR friend character_sequence operator+(character_sequence&& in_lhs, const character_sequence& in_rhs) { return std::move(in_lhs + in_rhs); }
-    MBASE_INLINE_EXPR friend character_sequence operator+(character_sequence&& in_lhs, const_pointer in_rhs) { return std::move(in_lhs + character_sequence(in_rhs)); }
-    MBASE_INLINE_EXPR friend character_sequence operator+(character_sequence&& in_lhs, value_type in_rhs) { return std::move(in_lhs + character_sequence(1, in_rhs)); }
-    MBASE_INLINE_EXPR friend character_sequence operator+(const character_sequence& in_lhs, character_sequence&& in_rhs) { return std::move(in_lhs + in_rhs); }
-    MBASE_INLINE_EXPR friend character_sequence operator+(const_pointer in_lhs, character_sequence&& in_rhs) { return std::move(in_lhs + in_rhs); }
-    MBASE_INLINE_EXPR friend character_sequence operator+(value_type in_lhs, character_sequence&& in_rhs) { return std::move(character_sequence(1, in_lhs) + in_rhs); }
+    MBASE_INLINE_EXPR friend character_sequence operator+(character_sequence&& in_lhs, character_sequence&& in_rhs) { return in_lhs + in_rhs; }
+    MBASE_INLINE_EXPR friend character_sequence operator+(character_sequence&& in_lhs, const character_sequence& in_rhs) { return in_lhs + in_rhs; }
+    MBASE_INLINE_EXPR friend character_sequence operator+(character_sequence&& in_lhs, const_pointer in_rhs) { return in_lhs + character_sequence(in_rhs); }
+    MBASE_INLINE_EXPR friend character_sequence operator+(character_sequence&& in_lhs, value_type in_rhs) { return in_lhs + character_sequence(1, in_rhs); }
+    MBASE_INLINE_EXPR friend character_sequence operator+(const character_sequence& in_lhs, character_sequence&& in_rhs) { return in_lhs + in_rhs; }
+    MBASE_INLINE_EXPR friend character_sequence operator+(const_pointer in_lhs, character_sequence&& in_rhs) { return in_lhs + in_rhs; }
+    MBASE_INLINE_EXPR friend character_sequence operator+(value_type in_lhs, character_sequence&& in_rhs) { return character_sequence(1, in_lhs) + in_rhs; }
     MBASE_INLINE_EXPR friend bool operator==(const character_sequence& in_lhs, const character_sequence& in_rhs) noexcept { return traits_type::is_equal(in_lhs.mRawData, in_rhs.mRawData); }
     MBASE_INLINE_EXPR friend bool operator!=(const character_sequence& in_lhs, const character_sequence& in_rhs) noexcept { return !traits_type::is_equal(in_lhs.mRawData, in_rhs.mRawData); }
     MBASE_INLINE_EXPR friend bool operator<(const character_sequence& in_lhs, const character_sequence& in_rhs) noexcept { return std::lexicographical_compare(in_lhs.cbegin(), in_lhs.cend(), in_rhs.cbegin(), in_rhs.cend()); }
@@ -546,10 +546,10 @@ private:
     MBASE_INLINE GENERIC _clear_self() noexcept;
     /* ===== STATE-MODIFIER METHODS END ===== */
 
-    allocator_type mExternalAllocator;
     pointer mRawData;
-    size_type mCapacity;
     size_type mSize;
+    size_type mCapacity;
+    allocator_type mExternalAllocator;
 };
 
 template<typename SeqType, typename SeqBase, typename Allocator>
@@ -744,7 +744,7 @@ MBASE_INLINE_EXPR character_sequence<SeqType, SeqBase, Allocator>::~character_se
 {
     if(mRawData)
     {
-        mExternalAllocator.deallocate(mRawData, 0);
+        mExternalAllocator.deallocate(mRawData);
         mRawData = nullptr;
         mSize = 0;
         mCapacity = 0;
@@ -2271,26 +2271,32 @@ template<typename SeqType, typename SeqBase, typename Allocator>
 template<typename ... Params>
 MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE character_sequence<SeqType, SeqBase, Allocator> character_sequence<SeqType, SeqBase, Allocator>::from_format(const_pointer in_format, Params ... in_params) noexcept
 {
+    if(!in_format)
+    {
+        return character_sequence();
+    }
+
     #ifdef MBASE_PLATFORM_WINDOWS
     size_type stringLength = _scprintf(in_format, std::forward<Params>(in_params)...); // FIND THE FKIN SIZE
     #endif
 
     #ifdef MBASE_PLATFORM_UNIX
-    char placeholder[1] = {0};
-    size_type stringLength = snprintf(placeholder, 1, in_format, std::forward<Params>(in_params)...);
+    size_type stringLength = snprintf(NULL, 0, in_format, std::forward<Params>(in_params)...);
     #endif
     
     character_sequence newSequence;
     if (!stringLength)
     {
-        return newSequence;
+        return character_sequence();
     }
 
     pointer mString = newSequence.mExternalAllocator.allocate(stringLength + 1, true);
     newSequence.fill(mString, 0, stringLength + 1);
+    
     sprintf(mString, in_format, std::forward<Params>(in_params)...);
-    newSequence = std::move(character_sequence(mString));
-    newSequence.mExternalAllocator.deallocate(mString, 0);
+
+    newSequence = character_sequence(mString);
+    newSequence.mExternalAllocator.deallocate(mString);
 
     return newSequence;
 }
@@ -2330,16 +2336,16 @@ MBASE_INLINE GENERIC character_sequence<SeqType, SeqBase, Allocator>::_resize(si
         size_type newCap = _calculate_capacity(in_size);
         pointer new_data = mExternalAllocator.allocate(newCap, true);
         this->copy_bytes(new_data, mRawData, mSize);
-        mExternalAllocator.deallocate(mRawData, 0);
+        mExternalAllocator.deallocate(mRawData);
         mRawData = new_data;
         mSize = in_size;
         mCapacity = newCap;
     }
     else
     {
-        size_type expectedSize = mSize - in_size;
+        difference_type expectedSize = mSize - in_size;
         reverse_iterator rit = rbegin();
-        for (I32 i = 0; i < expectedSize; i++)
+        for (difference_type i = 0; i < expectedSize; i++)
         {
             *rit = SeqBase::null_value;
             rit++;
@@ -2390,7 +2396,7 @@ MBASE_INLINE GENERIC character_sequence<SeqType, SeqBase, Allocator>::_clear_sel
 {
     if(mRawData)
     {
-        mExternalAllocator.deallocate(mRawData, 0);
+        mExternalAllocator.deallocate(mRawData);
         mRawData = nullptr;
         mSize = 0;
         mCapacity = 0;

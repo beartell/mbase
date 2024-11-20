@@ -45,7 +45,7 @@ private:
 	I32 mManagerId;
 };
 
-MBASE_INLINE event_handler::event_handler() : handler_base(), mEventType(flags::EVENT_ON), mSelfIter(nullptr), mEventName(""), mManagerId(-1), mStatus(flags::EVENT_UNREGISTERED)
+MBASE_INLINE event_handler::event_handler() : handler_base(), mSelfIter(nullptr), mEventName(""), mEventType(flags::EVENT_ON), mStatus(flags::EVENT_UNREGISTERED), mManagerId(-1)
 {
 }
 

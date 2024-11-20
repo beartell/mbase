@@ -33,7 +33,7 @@ public:
 
 	bool is_registered() const;
 	bool has_message(const U32& in_msg_id) const;
-	flags get_host_processor(InfProcessorBase*& out_processor);
+	InfProcessorBase* get_host_processor();
 	flags get_message(const U32& in_msg_id, context_line& out_message);
 	flags get_message_array(PTRU32 in_msg_ids, size_type in_id_count, mbase::vector<context_line>& out_messages);
 	

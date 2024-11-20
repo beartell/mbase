@@ -19,8 +19,8 @@ public:
 
 	/* ===== BUILDER METHODS BEGIN ===== */
 	MBASE_INLINE linear_bucket_iterator() noexcept;
-	MBASE_INLINE linear_bucket_iterator(MapContainer* in_map, I64 in_bucket_index) noexcept;
-	MBASE_INLINE linear_bucket_iterator(MapContainer* in_map, I64 in_bucket_index, BucketIterator in_iterator) noexcept;
+	MBASE_INLINE linear_bucket_iterator(MapContainer* in_map, size_type in_bucket_index) noexcept;
+	MBASE_INLINE linear_bucket_iterator(MapContainer* in_map, size_type in_bucket_index, BucketIterator in_iterator) noexcept;
 	MBASE_INLINE linear_bucket_iterator(const linear_bucket_iterator& in_rhs) noexcept;
 	/* ===== BUILDER METHODS END ===== */
 
@@ -32,7 +32,7 @@ public:
 	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE pointer get() noexcept;
 	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE reference operator*() noexcept;
 	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE pointer operator->() noexcept;
-	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE I64 get_bucket_index() const noexcept;
+	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE size_type get_bucket_index() const noexcept;
 	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE BucketIterator& get_bucket_iterator() noexcept;
 	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE const BucketIterator& get_bucket_iterator() const noexcept;
 	/* ===== OBSERVATION METHODS END ===== */
@@ -51,7 +51,7 @@ public:
 private:
 	MapContainer* mMapContainer;
 	BucketIterator mBucketListIterator;
-	I64 mBucketIndex;
+	size_type mBucketIndex;
 };
 
 template<typename MapContainer, typename BucketIterator>
@@ -68,8 +68,8 @@ public:
 
 	/* ===== BUILDER METHODS BEGIN ===== */
 	MBASE_INLINE const_linear_bucket_iterator() noexcept;
-	MBASE_INLINE const_linear_bucket_iterator(MapContainer* in_map, I64 in_bucket_index) noexcept;
-	MBASE_INLINE const_linear_bucket_iterator(MapContainer* in_map, I64 in_bucket_index, BucketIterator in_iterator) noexcept;
+	MBASE_INLINE const_linear_bucket_iterator(MapContainer* in_map, size_type in_bucket_index) noexcept;
+	MBASE_INLINE const_linear_bucket_iterator(MapContainer* in_map, size_type in_bucket_index, BucketIterator in_iterator) noexcept;
 	MBASE_INLINE const_linear_bucket_iterator(const const_linear_bucket_iterator& in_rhs) noexcept;
 	MBASE_INLINE const_linear_bucket_iterator(const linear_bucket_iterator<MapContainer, BucketIterator>& in_rhs) noexcept;
 	/* ===== BUILDER METHODS END ===== */
@@ -83,7 +83,7 @@ public:
 	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE const_pointer get() const noexcept;
 	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE const_reference operator*() const noexcept;
 	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE const_pointer operator->() const noexcept;
-	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE I64 get_bucket_index() const noexcept;
+	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE size_type get_bucket_index() const noexcept;
 	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE const BucketIterator& get_bucket_iterator() const noexcept;
 	/* ===== OBSERVATION METHODS END ===== */
 
@@ -101,7 +101,7 @@ public:
 private:
 	MapContainer* mMapContainer;
 	BucketIterator mBucketListIterator;
-	I64 mBucketIndex;
+	size_type mBucketIndex;
 };
 
 template<typename MapContainer, typename BucketIterator>
@@ -110,12 +110,12 @@ MBASE_INLINE linear_bucket_iterator<MapContainer, BucketIterator>::linear_bucket
 }
 
 template<typename MapContainer, typename BucketIterator>
-MBASE_INLINE linear_bucket_iterator<MapContainer, BucketIterator>::linear_bucket_iterator(MapContainer* in_map, I64 in_bucket_index) noexcept : mMapContainer(in_map), mBucketListIterator(), mBucketIndex(in_bucket_index)
+MBASE_INLINE linear_bucket_iterator<MapContainer, BucketIterator>::linear_bucket_iterator(MapContainer* in_map, size_type in_bucket_index) noexcept : mMapContainer(in_map), mBucketListIterator(), mBucketIndex(in_bucket_index)
 {
 }
 
 template<typename MapContainer, typename BucketIterator>
-MBASE_INLINE linear_bucket_iterator<MapContainer, BucketIterator>::linear_bucket_iterator(MapContainer* in_map, I64 in_bucket_index, BucketIterator in_iterator) noexcept : mMapContainer(in_map), mBucketListIterator(in_iterator), mBucketIndex(in_bucket_index)
+MBASE_INLINE linear_bucket_iterator<MapContainer, BucketIterator>::linear_bucket_iterator(MapContainer* in_map, size_type in_bucket_index, BucketIterator in_iterator) noexcept : mMapContainer(in_map), mBucketListIterator(in_iterator), mBucketIndex(in_bucket_index)
 {
 }
 
@@ -153,7 +153,7 @@ MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE typename linear_bucket_iterator<M
 }
 
 template<typename MapContainer, typename BucketIterator>
-MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE I64 linear_bucket_iterator<MapContainer, BucketIterator>::get_bucket_index() const noexcept
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE typename linear_bucket_iterator<MapContainer, BucketIterator>::size_type linear_bucket_iterator<MapContainer, BucketIterator>::get_bucket_index() const noexcept
 {
 	return mBucketIndex;
 }
@@ -249,12 +249,12 @@ MBASE_INLINE const_linear_bucket_iterator<MapContainer, BucketIterator>::const_l
 }
 
 template<typename MapContainer, typename BucketIterator>
-MBASE_INLINE const_linear_bucket_iterator<MapContainer, BucketIterator>::const_linear_bucket_iterator(MapContainer* in_map, I64 in_bucket_index) noexcept : mMapContainer(in_map), mBucketListIterator(), mBucketIndex(in_bucket_index)
+MBASE_INLINE const_linear_bucket_iterator<MapContainer, BucketIterator>::const_linear_bucket_iterator(MapContainer* in_map, size_type in_bucket_index) noexcept : mMapContainer(in_map), mBucketListIterator(), mBucketIndex(in_bucket_index)
 {
 }
 
 template<typename MapContainer, typename BucketIterator>
-MBASE_INLINE const_linear_bucket_iterator<MapContainer, BucketIterator>::const_linear_bucket_iterator(MapContainer* in_map, I64 in_bucket_index, BucketIterator in_iterator) noexcept : mMapContainer(in_map), mBucketListIterator(in_iterator), mBucketIndex(in_bucket_index)
+MBASE_INLINE const_linear_bucket_iterator<MapContainer, BucketIterator>::const_linear_bucket_iterator(MapContainer* in_map, size_type in_bucket_index, BucketIterator in_iterator) noexcept : mMapContainer(in_map), mBucketListIterator(in_iterator), mBucketIndex(in_bucket_index)
 {
 }
 
@@ -305,7 +305,7 @@ MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE typename const_linear_bucket_iter
 }
 
 template<typename MapContainer, typename BucketIterator>
-MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE I64 const_linear_bucket_iterator<MapContainer, BucketIterator>::get_bucket_index() const noexcept
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE typename const_linear_bucket_iterator<MapContainer, BucketIterator>::size_type const_linear_bucket_iterator<MapContainer, BucketIterator>::get_bucket_index() const noexcept
 {
 	return mBucketIndex;
 }

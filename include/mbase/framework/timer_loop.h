@@ -64,13 +64,13 @@ protected:
 	U32 mTimerLimit;
 	U32 mTimerIdCounter;
 	U64 mPrevTime;
-	I32 mTimerLoopId;
+	U32 mTimerLoopId;
 	bool mIsRunning;
 	timer_container mRegisteredTimers;
 	mbase::tpool mThreadPool;
 };
 
-MBASE_INLINE timer_loop::timer_loop() : mTimerLimit(gDefaultTimerLimit), mTimerIdCounter(0), mPrevTime(0), mIsRunning(false), mTimerLoopId(0)
+MBASE_INLINE timer_loop::timer_loop() : mTimerLimit(gDefaultTimerLimit), mTimerIdCounter(0), mPrevTime(0), mTimerLoopId(0), mIsRunning(false)
 {
 	mTimerLoopId = ++gTimerLoopIdCounter;
 	#ifdef MBASE_PLATFORM_WINDOWS

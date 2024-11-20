@@ -36,6 +36,7 @@ public:
         std::string prompt;
         std::getline(std::cin, prompt);
         this->add_message(prompt.c_str(), prompt.size(), mbase::context_role::USER, outMsgId);
+        
         msgIds.push_back(outMsgId);
 
         mbase::vector<mbase::context_line> msgArray;
@@ -49,14 +50,12 @@ public:
         t2tProcessor->tokenize_input(msgArray.data(), msgArray.size(), tokenVector);
         t2tProcessor->execute_input(tokenVector);
         t2tProcessor->next(decodeBehavior);
+
     }
 
     GENERIC on_write(const inf_text_token_vector& out_token_vector, bool out_is_finish) override 
     {        
-        InfProcessorBase* procBase;
-        get_host_processor(procBase);
-        
-        InfTextToTextProcessor* txtOut = static_cast<InfTextToTextProcessor*>(procBase);
+        InfTextToTextProcessor* txtOut = static_cast<InfTextToTextProcessor*>(get_host_processor());
         fflush(stdout);
         mbase::vector<inf_token_description> tokenDesc;
         txtOut->tokens_to_description_vector(out_token_vector, tokenDesc);
@@ -89,11 +88,8 @@ public:
         msgIds.push_back(outMsgId);
 
         totalMessage.clear();
-
-        InfProcessorBase* procBase;
-        get_host_processor(procBase);
         
-        InfTextToTextProcessor* t2tProcessor = static_cast<InfTextToTextProcessor*>(procBase);
+        InfTextToTextProcessor* t2tProcessor = static_cast<InfTextToTextProcessor*>(get_host_processor());
         mbase::vector<mbase::context_line> msgArray;
         get_message_array(msgIds.data(), msgIds.size(), msgArray);
         
@@ -167,18 +163,16 @@ using namespace mbase;
 
 int main(int argc, char** argv)
 {
-    mbase::string hostValue = "";
-    mbase::argument_get<mbase::string>::value(0, argc, argv, hostValue);
-    
-    std::cout << hostValue << std::endl;
+    //mbase::tpool tp(8);
 
-    // my_model sampleModel;
-    // sampleModel.initialize_model(L"./Llama-3.2-1B-Instruct-Q4_K_M.gguf", 36000, 999);
 
-    // while(1)
-    // {
-    //     sampleModel.update();
-    // }
+    my_model sampleModel;
+    sampleModel.initialize_model(L"./Llama-3.2-1B-Instruct-Q4_K_M.gguf", 36000, 999);
+
+    while(1)
+    {
+        sampleModel.update();
+    }
     
     // InfProgram ifp;
     // InfMaipDefaultServer IDS(ifp);

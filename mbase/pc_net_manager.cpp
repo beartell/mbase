@@ -54,9 +54,9 @@ PcNetPacket& PcNetPacket::operator=(PcNetPacket&& in_rhs) noexcept
 
 PcNetPeerClient::PcNetPeerClient(socket_handle in_socket) :
 	mPeerSocket(in_socket), 
-	mNetPacket(), 
 	mPeerAddr(), 
-	mPeerPort(0)
+	mPeerPort(0),
+	mNetPacket()
 {
 }
 
@@ -645,12 +645,16 @@ PcNetManager::flags PcNetManager::create_server(const mbase::string& in_addr, I3
 	#endif
 
 	struct addrinfo* result = NULL;
-	struct addrinfo hints = { 0 };
-
-	hints.ai_family = AF_INET;
-	hints.ai_protocol = IPPROTO_TCP;
-	hints.ai_socktype = SOCK_STREAM;
-	//hints.ai_flags = AI_PASSIVE;
+	struct addrinfo hints = {
+		.ai_flags = 0,
+		.ai_family = AF_INET,
+		.ai_socktype = SOCK_STREAM,
+		.ai_protocol = IPPROTO_TCP,
+		.ai_addrlen = 0,
+		.ai_addr = NULL,
+		.ai_canonname = NULL,
+		.ai_next = NULL
+	};
 
 	mbase::string portString = mbase::string::from_format("%d", in_port);
 

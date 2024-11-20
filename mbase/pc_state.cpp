@@ -205,23 +205,30 @@ PcSerializedStateStruct PcSerializedStateStruct::deserialize(IBYTEBUFFER in_src,
 PcState::PcState() :
 	mIsInitialized(false),
 	mIsModified(false),
+	mKvMap(),
+	mObjectName(),
+	mStateFileSuffix(),
+	mFullStateName(),
 	mVersionMajor(0),
 	mVersionMinor(0)
 {
 }
 
 PcState::PcState(PcState&& in_rhs) noexcept :
+	mIsInitialized(in_rhs.mIsInitialized),
+	mIsModified(in_rhs.mIsModified),
 	mKvMap(std::move(in_rhs.mKvMap)),
-	mFullStateName(std::move(in_rhs.mFullStateName)),
 	mObjectName(std::move(in_rhs.mObjectName)),
 	mStateFileSuffix(std::move(in_rhs.mStateFileSuffix)),
-	mIsModified(in_rhs.mIsModified),
-	mIsInitialized(in_rhs.mIsInitialized),
+	mFullStateName(std::move(in_rhs.mFullStateName)),
 	mVersionMajor(in_rhs.mVersionMajor),
 	mVersionMinor(in_rhs.mVersionMinor)
 {
-	mIsModified = false;
-	mIsInitialized = false;
+	in_rhs.mIsModified = false;
+	in_rhs.mIsInitialized = false;
+
+	in_rhs.mVersionMajor = 0;
+	in_rhs.mVersionMinor = 0;
 }
 
 PcState::~PcState()
@@ -316,7 +323,7 @@ PcState::flags PcState::initialize(const mbase::string& in_object_name, const mb
 				for (size_type i = 0; i < stateFileHeader.mStateStructCount; ++i)
 				{
 					size_type stateStructSize = 0;
-					if (dcs.get_difference() < 0)
+					if (!dcs.get_difference())
 					{
 						break;
 					}

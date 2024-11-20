@@ -472,12 +472,6 @@ MBASE_INLINE_EXPR GENERIC char_stream::put_datan(const T& in_data, size_type in_
 
 MBASE_INLINE_EXPR GENERIC char_stream::set_cursor_pos(size_type in_pos) noexcept
 {
-	if (in_pos < 0)
-	{
-		mStreamCursor = 0;
-		return;
-	}
-
 	mStreamCursor = in_pos;
 }
 

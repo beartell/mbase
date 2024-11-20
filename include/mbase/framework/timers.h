@@ -17,7 +17,8 @@ public:
 		TIMER_POLICY_ASYNC = 5,
 		TIMER_STATUS_REGISTERED = 6,
 		TIMER_STATUS_UNREGISTERED = 7,
-		TIMER_STATUS_ABANDONED = 8
+		TIMER_STATUS_ABANDONED = 8,
+		TIMER_UNDEFINED_FLAG = 9
 	};
 
 	using user_data = PTRGENERIC;
@@ -63,7 +64,6 @@ private:
 class timeout : public timer_base {
 public:
 	MBASE_INLINE timeout() noexcept;
-	virtual GENERIC on_call(user_data in_data) override { /* Do nothing literally */ }
 
 	friend class timer_loop;
 };
@@ -76,7 +76,6 @@ public:
 	MBASE_INLINE GENERIC reset_tick_counter() noexcept;
 	MBASE_INLINE U32 get_tick_count() const noexcept;
 
-	virtual GENERIC on_call(user_data in_data) override { /* Do nothing literally */ }
 	friend class timer_loop;
 
 private:
@@ -84,11 +83,11 @@ private:
 	U32 mTickLimit;
 };
 
-MBASE_INLINE timer_base::timer_base() noexcept : handler_base(), mCurrentTime(0), mTargetTime(0), mPolicy(flags::TIMER_POLICY_IMMEDIATE), mLoopId(0), mSelfIter(nullptr), mStatus(flags::TIMER_STATUS_UNREGISTERED)
+MBASE_INLINE timer_base::timer_base() noexcept : handler_base(), mTimerType(flags::TIMER_UNDEFINED_FLAG), mPolicy(flags::TIMER_POLICY_IMMEDIATE), mStatus(flags::TIMER_STATUS_UNREGISTERED), mLoopId(0), mCurrentTime(0), mTargetTime(0), mSelfIter(nullptr)
 {
 }
 
-MBASE_INLINE timer_base::timer_base(user_data in_data) noexcept : mCurrentTime(0), mTargetTime(0), mPolicy(flags::TIMER_POLICY_IMMEDIATE), mLoopId(0), mSelfIter(nullptr), mStatus(flags::TIMER_STATUS_UNREGISTERED)
+MBASE_INLINE timer_base::timer_base(user_data in_data) noexcept : handler_base(), mTimerType(flags::TIMER_UNDEFINED_FLAG), mPolicy(flags::TIMER_POLICY_IMMEDIATE), mStatus(flags::TIMER_STATUS_UNREGISTERED), mLoopId(0), mCurrentTime(0), mTargetTime(0), mSelfIter(nullptr)
 {
 	mSuppliedData = in_data;
 }

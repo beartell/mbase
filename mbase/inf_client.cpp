@@ -1,6 +1,5 @@
 #include <mbase/inference/inf_client.h>
 #include <mbase/inference/inf_model.h>
-#include <mbase/inference/inf_sampling.h>
 #include <mbase/inference/inf_embedder.h>
 #include <mbase/io_file.h>
 #include <iostream>
@@ -20,16 +19,12 @@ if(is_processing() || is_data_set())\
 {\
 	return flags::INF_CLIENT_ERR_PROCESSING;\
 }\
-mInactivityCounter = 0;
-
-static U32 gSeqIdCounter = 0;
 
 InfClientTextToText::InfClientTextToText():
 	mBaseProcessor(NULL),
 	mChatHistory(),
 	mMessageIndexer(0)
 {
-
 }
 
 InfClientTextToText::InfClientTextToText(const InfClientTextToText& in_rhs):
@@ -41,8 +36,8 @@ InfClientTextToText::InfClientTextToText(const InfClientTextToText& in_rhs):
 
 InfClientTextToText::~InfClientTextToText()
 {
-	InfProcessorBase* baseProcessor = NULL;
-	if(get_host_processor(baseProcessor) == flags::INF_CLIENT_SUCCESS)
+	InfProcessorBase* baseProcessor = get_host_processor();
+	if(baseProcessor)
 	{
 		if(baseProcessor->get_processor_type() == InfProcessorBase::processor_type::TEXT_TO_TEXT)
 		{
@@ -60,7 +55,10 @@ InfClientTextToText::~InfClientTextToText()
 
 InfClientTextToText& InfClientTextToText::operator=(const InfClientTextToText& in_rhs)
 {
-	// todo, implement
+	// TODO, IMPLEMENTED HERE
+	// IT IS NOT COMPLETE
+	mChatHistory = in_rhs.mChatHistory;
+	mMessageIndexer = in_rhs.mMessageIndexer;
 	return *this;
 }
 
@@ -79,14 +77,9 @@ bool InfClientTextToText::has_message(const U32& in_msg_id) const
 	return true;
 }
 
-InfClientTextToText::flags InfClientTextToText::get_host_processor(InfProcessorBase * &out_processor)
+InfProcessorBase* InfClientTextToText::get_host_processor()
 {
-	if(is_registered())
-	{
-		out_processor = mBaseProcessor;
-		return flags::INF_CLIENT_SUCCESS;
-	}
-	return flags::INF_CLIENT_ERR_NOT_REGISTERED;
+	return mBaseProcessor;
 }
 
 InfClientTextToText::flags InfClientTextToText::get_message(const U32& in_msg_id, context_line& out_message)

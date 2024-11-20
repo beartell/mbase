@@ -1,7 +1,6 @@
 #include <mbase/inference/inf_t2t_processor.h>
 #include <mbase/inference/inf_t2t_model.h>
 #include <mbase/inference/inf_client.h>
-#include <common/common.h>
 
 MBASE_BEGIN
 
@@ -213,11 +212,9 @@ InfTextToTextProcessor::flags InfTextToTextProcessor::tokenize_input(CBYTEBUFFER
 	{
 		return flags::INF_PROC_ERR_INPUT_IS_EMPTY;
 	}
-
 	inf_text_token_vector tokenizedInput(in_size * 4);
 	InfModelTextToText* t2tModel = static_cast<InfModelTextToText*>(this->mTargetModel_md_model);
 	I32 tokenCount = llama_tokenize(t2tModel->get_raw_model(), in_data, in_size, tokenizedInput.data(), in_size * 4, false, true);
-
 	if(tokenCount == -1)
 	{
 		return flags::INF_PROC_ERR_UNABLE_TO_TOKENIZE_INPUT;
@@ -262,7 +259,7 @@ InfTextToTextProcessor::flags InfTextToTextProcessor::tokenize_input(context_lin
 			t2tModel->get_usr_start(roleString);
 			t2tModel->get_usr_end(endString);
 		}
-
+		
 		totalMessage += (roleString + tmpLine->mMessage + endString);
 	}
 	
@@ -375,8 +372,7 @@ InfTextToTextProcessor::flags InfTextToTextProcessor::set_inference_client(InfCl
 
 	if(in_client->is_registered())
 	{
-		InfProcessorBase* clientProc = NULL;
-		in_client->get_host_processor(clientProc);
+		InfProcessorBase* clientProc = in_client->get_host_processor();
 		if(clientProc != this)
 		{
 			return flags::INF_PROC_ERR_BELONGS_TO_ANOTHER_PROCESSOR;

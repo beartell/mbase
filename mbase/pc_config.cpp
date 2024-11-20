@@ -12,13 +12,9 @@ if(!is_initialized())\
 MBASE_BEGIN
 
 PcConfig::PcConfig() :
-	mTempPath(),
-	mDataPath(),
-	mRootPath(),
-	mConfigMap(),
+	mDiagnosticsManager(NULL),
 	mIsInitialized(false),
-	mIsUpdated(false),
-	mDiagnosticsManager(NULL)
+	mIsUpdated(false)
 {
 
 }
@@ -31,38 +27,14 @@ PcConfig::~PcConfig()
 	}
 }
 
-PcConfig::flags PcConfig::get_config_param(const mbase::string& in_key, mbase::string& out_param) noexcept
+const typename PcConfig::config_descriptions& PcConfig::get_config_descriptions() const noexcept
 {
-	MBASE_CONFIG_RETURN_UNINITIALIZED;
-
-	if(!in_key.size())
-	{
-		return flags::CONFIG_ERR_MISSING_KEY;
-	}
-
-	if(mConfigMap.find(in_key) == mConfigMap.end())
-	{
-		return flags::CONFIG_ERR_PARAM_NOT_FOUND;
-	}
-
-	out_param = mConfigMap.at(in_key);
-
-	return flags::CONFIG_SUCCESS;
+	return mConfigDescriptions;
 }
 
-mbase::wstring PcConfig::get_temp_path() const noexcept
+PcDiagnostics* PcConfig::get_assigned_diagnostics() noexcept
 {
-	return mTempPath;
-}
-
-mbase::wstring PcConfig::get_data_path() const noexcept
-{
-	return mDataPath;
-}
-
-const typename PcConfig::config_map& PcConfig::get_config_map() const noexcept
-{
-	return mConfigMap;
+	return mDiagnosticsManager;
 }
 
 bool PcConfig::is_initialized() const noexcept
@@ -70,132 +42,40 @@ bool PcConfig::is_initialized() const noexcept
 	return mIsInitialized;
 }
 
-bool PcConfig::initialize(PcDiagnostics& in_diagnostics, const mbase::wstring& in_temp_path, const mbase::wstring& in_root_path, const mbase::wstring& in_data_path, const mbase::wstring& in_config_file_name)
+bool PcConfig::initialize(PcDiagnostics& in_diagnostics, const mbase::wstring& in_config_file_name)
 {
 	if (is_initialized())
 	{
 		return true;
 	}
+
+	if(!in_config_file_name.size())
+	{
+		return false;
+	}
+
+	in_diagnostics.log(mbase::PcDiagnostics::flags::LOGTYPE_INFO, mbase::PcDiagnostics::flags::LOGIMPORTANCE_LOW, "Initializing config object: " + mbase::to_utf8(in_config_file_name));
+	mbase::io_file iof;
+	iof.open_file(in_config_file_name, mbase::io_file::access_mode::READ_ACCESS, mbase::io_file::disposition::OPEN);
+	if(!iof.is_file_open())
+	{
+		in_diagnostics.log(mbase::PcDiagnostics::flags::LOGTYPE_INFO, mbase::PcDiagnostics::flags::LOGIMPORTANCE_LOW, "Can not open file: " + mbase::to_utf8(in_config_file_name));
+		in_diagnostics.log(mbase::PcDiagnostics::flags::LOGTYPE_INFO, mbase::PcDiagnostics::flags::LOGIMPORTANCE_LOW, "Config init failed: " + mbase::to_utf8(in_config_file_name));
+	}
+	iof.close_file();
+	mIsInitialized = true;
 	mDiagnosticsManager = &in_diagnostics;
+	load_config_file(in_config_file_name);
 
-	on_initializing();
-
-	mTempPath = in_temp_path;
-	mDataPath = in_data_path;
-	mRootPath = in_root_path;
-
-	if (!in_temp_path.size())
-	{
-		mTempPath = std::move(mbase::get_temp_path());
-	}
-
-	if (!in_root_path.size())
-	{
-		mDataPath = std::move(mbase::get_current_path());
-	}
-
-	if (!in_root_path.size())
-	{
-		mRootPath = std::move(mbase::get_current_path());
-	}
-
-	if(mTempPath.back() != '/')
-	{
-		mTempPath.push_back('/');
-	}
-
-	if(mDataPath.back() != '/')
-	{
-		mDataPath.push_back('/');
-	}
-
-	if(mRootPath.back() != '/')
-	{
-		mRootPath.push_back('/');
-	}
-
+	in_diagnostics.log(mbase::PcDiagnostics::flags::LOGTYPE_INFO, mbase::PcDiagnostics::flags::LOGIMPORTANCE_LOW, "Config object initialized.");
+	
+	mDiagnosticsManager = &in_diagnostics;
 	mConfigFileName = in_config_file_name;
 
-	mDiagnosticsManager->log(mbase::PcDiagnostics::flags::LOGTYPE_INFO, mbase::PcDiagnostics::flags::LOGIMPORTANCE_LOW, "Initializing program config.");
-	mDiagnosticsManager->log(mbase::PcDiagnostics::flags::LOGTYPE_INFO, mbase::PcDiagnostics::flags::LOGIMPORTANCE_LOW, "Program temporary path: " + mbase::to_utf8(mTempPath));
-	mDiagnosticsManager->log(mbase::PcDiagnostics::flags::LOGTYPE_INFO, mbase::PcDiagnostics::flags::LOGIMPORTANCE_LOW, "Program data path: " + mbase::to_utf8(mDataPath));
-	mDiagnosticsManager->log(mbase::PcDiagnostics::flags::LOGTYPE_INFO, mbase::PcDiagnostics::flags::LOGIMPORTANCE_LOW, "Program execution path: " + mbase::to_utf8(mRootPath));
-
-	mbase::vector<mbase::FS_FILE_INFORMATION> fileInfo;
-	mbase::get_directory(mDataPath + '*', fileInfo);
-
-	for (mbase::vector<mbase::FS_FILE_INFORMATION>::iterator It = fileInfo.begin(); It != fileInfo.end(); ++It)
-	{
-		if (It->fileName == L"main_config.txt")
-		{
-			mConfigFileName = L"main_config.txt";
-			mDiagnosticsManager->log(mbase::PcDiagnostics::flags::LOGTYPE_INFO, mbase::PcDiagnostics::flags::LOGIMPORTANCE_MID, "Main configuration folder found.");
-			mIsInitialized = true;
-			load_config_file(It->fileName);
-			
-			mDiagnosticsManager->log(mbase::PcDiagnostics::flags::LOGTYPE_SUCCESS, mbase::PcDiagnostics::flags::LOGIMPORTANCE_LOW, "Config object initialized.");
-
-			on_initialize();
-
-			return true;
-		}
-	}
-	
-	mDiagnosticsManager->log(mbase::PcDiagnostics::flags::LOGTYPE_SUCCESS, mbase::PcDiagnostics::flags::LOGIMPORTANCE_LOW, "Config object initialized.");
-	on_initialize();
-	mIsInitialized = true;
 	return true;
 }
 
-PcConfig::flags PcConfig::set_temp_path(const mbase::wstring& in_path) noexcept
-{
-	MBASE_CONFIG_RETURN_UNINITIALIZED;
-
-	mDiagnosticsManager->log(mbase::PcDiagnostics::flags::LOGTYPE_INFO, mbase::PcDiagnostics::flags::LOGIMPORTANCE_LOW, "Changing temp path: " + mbase::to_utf8(in_path));
-
-	if (!in_path.size())
-	{
-		return flags::CONFIG_ERR_MISSING_PATH;
-	}
-	mIsUpdated = true;
-	mTempPath = in_path;
-	on_temp_path_update();
-	return flags::CONFIG_SUCCESS;
-}
-
-PcConfig::flags PcConfig::set_data_path(const mbase::wstring& in_path) noexcept
-{
-	MBASE_CONFIG_RETURN_UNINITIALIZED;
-
-	mDiagnosticsManager->log(mbase::PcDiagnostics::flags::LOGTYPE_INFO, mbase::PcDiagnostics::flags::LOGIMPORTANCE_LOW, "Changing root path: " + mbase::to_utf8(in_path));
-
-	if (!in_path.size())
-	{
-		return flags::CONFIG_ERR_MISSING_PATH;
-	}
-	mIsUpdated = true;
-	mDataPath = in_path;
-	on_data_path_update();
-	return flags::CONFIG_SUCCESS;
-}
-
-PcConfig::flags PcConfig::set_root_path(const mbase::wstring& in_path) noexcept
-{
-	MBASE_CONFIG_RETURN_UNINITIALIZED;
-	
-	mDiagnosticsManager->log(mbase::PcDiagnostics::flags::LOGTYPE_INFO, mbase::PcDiagnostics::flags::LOGIMPORTANCE_LOW, "Changing config path: " + mbase::to_utf8(in_path));
-
-	if (!in_path.size())
-	{
-		return flags::CONFIG_ERR_MISSING_PATH;
-	}
-	mIsUpdated = true;
-	mRootPath = in_path;
-	on_root_path_update();
-	return flags::CONFIG_SUCCESS;
-}
-
-bool PcConfig::load_config_file(const mbase::wstring& in_file, config_map& out_cmap) noexcept
+bool PcConfig::load_config_file(const mbase::wstring& in_file, config_descriptions& out_cmap) noexcept
 {
 	mbase::io_file mainConfigFile;
 	mainConfigFile.open_file(in_file, mbase::io_file::access_mode::READ_ACCESS, mbase::io_file::disposition::OPEN);
@@ -209,7 +89,7 @@ bool PcConfig::load_config_file(const mbase::wstring& in_file, config_map& out_c
 		mbase::string fileString(dcs.get_buffer(), dcs.buffer_length());
 
 		mbase::vector<mbase::string> configLines;
-		fileString.split("\r\n", configLines);
+		fileString.split(MBASE_PLATFORM_NEWLINE, configLines);
 
 		for (mbase::string& configLine : configLines)
 		{
@@ -254,9 +134,10 @@ bool PcConfig::load_config_file(const mbase::wstring& in_file, config_map& out_c
 						newConfigValue.push_back(configValue[beginIndex]);
 					}
 					configValue = std::move(newConfigValue);
+					std::cout << configKey << "---" << configValue << std::endl;
 				}
 
-				out_cmap[configKey] = configValue;
+				set_config_param(configKey, configValue);
 			}
 		}
 		return true;
@@ -266,8 +147,12 @@ bool PcConfig::load_config_file(const mbase::wstring& in_file, config_map& out_c
 
 bool PcConfig::load_config_file(const mbase::wstring& in_file) noexcept
 {
-	mConfigFileName = this->get_data_path() + in_file;
-	return load_config_file(mConfigFileName, mConfigMap);
+	if(load_config_file(in_file, mConfigDescriptions))
+	{
+		mConfigFileName = in_file;
+		return true;
+	}
+	return false;
 }
 
 PcConfig::flags PcConfig::update() noexcept
@@ -277,16 +162,16 @@ PcConfig::flags PcConfig::update() noexcept
 	if(mIsUpdated)
 	{
 		mbase::string totalConfigString;
-		for(config_map::iterator It = mConfigMap.begin(); It != mConfigMap.end(); ++It)
+		for(config_descriptions::iterator It = mConfigDescriptions.begin(); It != mConfigDescriptions.end(); ++It)
 		{
-			totalConfigString += It->first + "=" + It->second + MBASE_PLATFORM_NEWLINE;
+			totalConfigString += It->mConfigKey + "=" + It->mConfigValue + MBASE_PLATFORM_NEWLINE;
 		}
 		U32 serializedSize = totalConfigString.get_serialized_size();
 		mbase::deep_char_stream dcs(serializedSize);
 		totalConfigString.serialize(dcs);
 		
 		mbase::io_file updatedConfigFile;
-		updatedConfigFile.open_file(mDataPath + mConfigFileName);
+		updatedConfigFile.open_file(mConfigFileName);
 		updatedConfigFile.write_data(dcs.get_buffer(), dcs.buffer_length());
 		mIsUpdated = false;
 	}
@@ -297,51 +182,42 @@ PcConfig::flags PcConfig::update() noexcept
 PcConfig::flags PcConfig::set_config_param(const mbase::string& in_key, const mbase::string& in_param) noexcept
 {
 	MBASE_CONFIG_RETURN_UNINITIALIZED;
-
-	flags returnCode = flags::CONFIG_SUCCESS;
-
-	mDiagnosticsManager->log(mbase::PcDiagnostics::flags::LOGTYPE_INFO, mbase::PcDiagnostics::flags::LOGIMPORTANCE_MID, mbase::string::from_format("Setting up config key: %s=%s", in_key.c_str(), in_param.c_str()));
-
+	
 	if (!in_key.size())
 	{
-		returnCode = flags::CONFIG_ERR_MISSING_KEY;
-		mDiagnosticsManager->log(mbase::PcDiagnostics::flags::LOGTYPE_ERROR, mbase::PcDiagnostics::flags::LOGIMPORTANCE_MID, "Missing config key");
-		return returnCode;
+		return flags::CONFIG_ERR_MISSING_KEY;
 	}
 
-	if (mConfigMap.find(in_key) != mConfigMap.end())
+	if(!in_param.size())
 	{
-		mDiagnosticsManager->log(mbase::PcDiagnostics::flags::LOGTYPE_WARNING, mbase::PcDiagnostics::flags::LOGIMPORTANCE_MID, mbase::string::from_format("Config key: %s=%s, overwritten by value: %s", in_key.c_str(), mConfigMap[in_key].c_str(), in_param.c_str()));
-		returnCode = flags::CONFIG_WARN_KEY_OVERWRITTEN;
+		return flags::CONFIG_ERR_MISSING_VALUE;
 	}
+
+	for(config_descriptions::iterator cIt = mConfigDescriptions.begin(); cIt != mConfigDescriptions.end(); ++cIt)
+	{
+		if(cIt->mConfigKey == in_key)
+		{
+			mDiagnosticsManager->log(mbase::PcDiagnostics::flags::LOGTYPE_WARNING, mbase::PcDiagnostics::flags::LOGIMPORTANCE_MID, mbase::string::from_format("Config key/value: %s=%s, overwritten by value: %s", cIt->mConfigKey.c_str(), cIt->mConfigValue.c_str(), in_param.c_str()));	
+			cIt->mConfigValue = in_param;
+			return flags::CONFIG_WARN_KEY_OVERWRITTEN;
+		}
+	}
+		
 	mIsUpdated = true;
+	mConfigDescriptions.push_back({in_key, in_param});
 
 	mDiagnosticsManager->log(mbase::PcDiagnostics::flags::LOGTYPE_SUCCESS, mbase::PcDiagnostics::flags::LOGIMPORTANCE_MID, mbase::string::from_format("Config key set: %s=%s", in_key.c_str(), in_param.c_str()));
-	mConfigMap.insert(mbase::pair(in_key, in_param));
-	return returnCode;
+	return flags::CONFIG_SUCCESS;
 }
 
 PcConfig::flags PcConfig::dump_to_string(mbase::string& out_config_string) noexcept
 {
 	MBASE_CONFIG_RETURN_UNINITIALIZED;
-	
-	mDiagnosticsManager->log(mbase::PcDiagnostics::flags::LOGTYPE_INFO, mbase::PcDiagnostics::flags::LOGIMPORTANCE_MID, "Dumping config map to string");
-
-	for(config_map::iterator It = mConfigMap.begin(); It != mConfigMap.end(); ++It)
+	for(config_descriptions::iterator It = mConfigDescriptions.begin(); It != mConfigDescriptions.end(); ++It)
 	{
-		out_config_string += It->first + "=" + It->second + MBASE_PLATFORM_NEWLINE;
+		out_config_string += It->mConfigKey + "=" + It->mConfigValue + MBASE_PLATFORM_NEWLINE;
 	}
-	mDiagnosticsManager->log(mbase::PcDiagnostics::flags::LOGTYPE_SUCCESS, mbase::PcDiagnostics::flags::LOGIMPORTANCE_MID, "Dump complete");
 	return flags::CONFIG_SUCCESS;
 }
 
-GENERIC PcConfig::on_initializing(){}
-GENERIC PcConfig::on_initialize(){}
-GENERIC PcConfig::on_initialize_fail(){}
-GENERIC PcConfig::on_destroying(){}
-GENERIC PcConfig::on_destroy(){}
-GENERIC PcConfig::on_config_update() {}
-GENERIC PcConfig::on_temp_path_update(){}
-GENERIC PcConfig::on_data_path_update(){}
-GENERIC PcConfig::on_root_path_update(){}
 MBASE_END

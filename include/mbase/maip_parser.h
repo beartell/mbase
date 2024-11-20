@@ -620,7 +620,7 @@ MBASE_INLINE typename maip_packet_builder::size_type maip_packet_builder::genera
 
 MBASE_INLINE typename maip_packet_builder::size_type maip_packet_builder::generate_payload(mbase::string& out_payload, mbase::wstring in_string)
 {
-	mbase::string utfString = std::move(mbase::to_utf8(in_string));
+	mbase::string utfString = mbase::to_utf8(in_string);
 	mbase::char_stream cs(utfString.data(), utfString.size());
 	return generate_payload(out_payload, cs);
 }
@@ -1078,7 +1078,6 @@ MBASE_INLINE maip_generic_errors maip_peer_request::_parse_message_description(m
 			return maip_generic_errors::MISSING_KEY;
 		}
 
-		I32 maxValueLength = gMaipDescriptionValueLength;
 		I32	countValueLength = 0;
 
 		++processedBytes;
@@ -1194,11 +1193,6 @@ MBASE_INLINE maip_generic_errors maip_peer_request::_parse_end(mbase::char_strea
 		return maip_generic_errors::PACKET_INCOMPLETE;
 	}
 	in_stream.advance(3);
-	return maip_generic_errors::SUCCESS;
-}
-
-MBASE_INLINE maip_generic_errors _parse_message_data(mbase::char_stream& in_stream, IBYTEBUFFER* out_data, U64 out_size)
-{
 	return maip_generic_errors::SUCCESS;
 }
 

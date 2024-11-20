@@ -173,7 +173,7 @@ MBASE_INLINE FS_ERROR err_convert(I16 in_err) noexcept
 		return FS_ERROR::FS_UNKNOWN_ERROR;
 	}
 #endif
-#ifdef MBASE_PLATFORM_LINUX
+#ifdef MBASE_PLATFORM_UNIX
 	switch (in_err)
 	{
 	case EEXIST:
@@ -221,20 +221,6 @@ MBASE_INLINE FS_ERROR create_directory(const mbase::wstring& in_path) noexcept
 	{
 
 	}
-#endif
-	return FS_ERROR::FS_SUCCESS;
-}
-
-MBASE_INLINE FS_ERROR copy_file(const mbase::string& in_path, const mbase::string& in_copypath) noexcept 
-{
-#ifdef MBASE_PLATFORM_WINDOWS
-	if (!CopyFileA(in_path.c_str(), in_copypath.c_str(), false))
-	{
-		return err_convert(GetLastError());
-	}
-#endif
-#ifdef MBASE_PLATFORM_UNIX
-
 #endif
 	return FS_ERROR::FS_SUCCESS;
 }

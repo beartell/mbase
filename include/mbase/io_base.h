@@ -179,8 +179,8 @@ protected:
 	io_context<os_file_handle> mRawContext;
 	char_stream* mIstream;
 	char_stream* mOstream;
-	U32 mLastError;
 	bool mOperateReady;
+	U32 mLastError;
 };
 
 MBASE_STD_END

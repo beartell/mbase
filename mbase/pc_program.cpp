@@ -98,6 +98,8 @@ bool PcProgramBase::halt()
 
 bool PcProgramBase::exit(I32 in_code, mbase::string in_message)
 {
+	::exit(in_code);
+	printf("%s\n", in_message.c_str());
 	return false;
 }
 

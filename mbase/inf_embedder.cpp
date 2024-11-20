@@ -175,8 +175,7 @@ InfEmbedderProcessor::flags InfEmbedderProcessor::set_inference_client(InfClient
 
 	if(in_client->is_registered())
 	{
-		InfProcessorBase* clientProc = NULL;
-		in_client->get_host_processor(clientProc);
+		InfProcessorBase* clientProc = in_client->get_host_processor();
 		if(clientProc != this)
 		{
 			return flags::INF_PROC_ERR_BELONGS_TO_ANOTHER_PROCESSOR;
@@ -376,7 +375,7 @@ GENERIC InfEmbedderProcessor::_calculate_embeddings()
 
     for(size_type i = 0; i < mTokenizedInput.size(); ++i)
     {
-        common_batch_add(mInputBatch, mTokenizedInput[i], i, {0}, true);
+        inf_common_batch_add(mInputBatch, mTokenizedInput[i], i, {0}, true);
     }
 
     InfModelTextToText* t2tModel = static_cast<InfModelTextToText*>(this->mTargetModel_md_model);
@@ -404,7 +403,7 @@ GENERIC InfEmbedderProcessor::_calculate_embeddings()
             // Handle this problem
         }
         
-        common_embd_normalize(embedd, mEmbeddingVector.data(), mEmbeddingVector.size());
+        inf_common_embd_normalize(embedd, mEmbeddingVector.data(), mEmbeddingVector.size());
         mVectorGenerated.set_signal_with_state();
     }
     llama_batch_free(mInputBatch);

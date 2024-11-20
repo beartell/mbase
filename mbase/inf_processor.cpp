@@ -1,8 +1,6 @@
 #include <mbase/inference/inf_processor.h>
 #include <mbase/inference/inf_client.h>
 #include <mbase/inference/inf_model.h>
-#include <mbase/inference/inf_sampling.h>
-#include <common/common.h>
 
 MBASE_BEGIN
 
@@ -30,8 +28,6 @@ if(!this->is_running())\
 	return flags::INF_PROC_ERR_HALTED;\
 }
 
-static U32 gInfProcMaxTokenLength = 128;
-
 InfProcessorBase::InfProcessorBase() :
 	mTargetModel_md_model(NULL),
 	mIsRunning(false),
@@ -39,6 +35,11 @@ InfProcessorBase::InfProcessorBase() :
 	mContextLength(0),
 	mInactivityThreshold(0)
 {
+}
+
+InfProcessorBase::~InfProcessorBase()
+{
+
 }
 
 bool InfProcessorBase::is_registered() const

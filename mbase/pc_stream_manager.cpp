@@ -37,12 +37,12 @@ bool PcStreamManager::initialize(U32 in_stream_count, U32 in_stream_size)
 
 	mStreams = std::move(mbase::vector<deep_char_stream>(in_stream_count));
 
-	for (I32 i = 0; i < mStreamCount; i++)
+	for (U32 i = 0; i < mStreamCount; i++)
 	{
 		mStreams.emplace_back(std::move(deep_char_stream(mStreamSize)));
 	}
 
-	for (I32 i = mStreamCount - 1; i > 0; i--)
+	for (U32 i = mStreamCount - 1; i > 0; i--)
 	{
 		mHandleStack.push(i);
 	}

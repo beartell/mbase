@@ -22,7 +22,7 @@ public:
 	/* ===== STATE-MODIFIER METHODS BEGIN ===== */
 	MBASE_INLINE GENERIC set_user_data(user_data in_data) noexcept;
 	MBASE_INLINE GENERIC _set_thread_index(I32 in_index) noexcept;
-	virtual GENERIC on_call(user_data in_data) {};
+	virtual GENERIC on_call(user_data in_data) = 0;
 	/* ===== STATE-MODIFIER METHODS END ===== */
 
 protected:

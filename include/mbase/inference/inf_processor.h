@@ -10,7 +10,6 @@
 #include <mbase/behaviors.h>
 #include <mbase/inference/inf_model.h>
 #include <mbase/inference/inf_context_line.h>
-#include <mbase/inference/inf_sampling.h>
 #include <mbase/inference/inf_sampling_set.h>
 #include <mbase/framework/logical_processing.h>
 #include <mbase/framework/object_watcher.h>
@@ -92,6 +91,7 @@ public:
 	};
 
 	InfProcessorBase();
+	virtual ~InfProcessorBase();
 
 	bool is_registered() const;
 	bool is_running();

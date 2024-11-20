@@ -8,20 +8,27 @@
 #include <mbase/unordered_map.h>
 #include <mbase/synchronization.h>
 #include <mbase/pc/pc_diagnostics.h>
+#include <mbase/smart_conversion.h>
 
 MBASE_BEGIN
+
+struct PcConfigDescription {
+	mbase::string mConfigKey;
+	mbase::string mConfigValue;
+};
 
 class PcConfig;
 
 class MBASE_API PcConfig {
 public:
-	using config_map = mbase::unordered_map<mbase::string, mbase::string>;
+	using config_descriptions = mbase::vector<PcConfigDescription>;
 
 	enum class flags : U8 {
 		CONFIG_SUCCESS,
 		CONFIG_ERR_NOT_INITIALIZED,
 		CONFIG_ERR_MISSING_PATH,
 		CONFIG_ERR_MISSING_KEY,
+		CONFIG_ERR_MISSING_VALUE,
 		CONFIG_ERR_PARAM_NOT_FOUND,
 		CONFIG_ERR_FILE_NOT_FOUND,
 		CONFIG_WARN_KEY_OVERWRITTEN,
@@ -31,44 +38,47 @@ public:
 	PcConfig();
 	~PcConfig();
 
-	flags get_config_param(const mbase::string& in_key, mbase::string& out_param) noexcept; 
-	mbase::wstring get_temp_path() const noexcept; // On windows: C:/Windows/Temp, On Linux: /tmp
-	mbase::wstring get_data_path() const noexcept; // On windows: C:/ProgramData,  On Linux: /var/lib
-	const config_map& get_config_map() const noexcept;
-	bool is_initialized() const noexcept;
+	template<typename Type>
+	flags get_config_param(const mbase::string& in_key, Type& out_param) noexcept
+	{
+		if(!is_initialized())
+		{
+			return flags::CONFIG_ERR_NOT_INITIALIZED;
+		}
 
+		if(!in_key.size())
+		{
+			return flags::CONFIG_ERR_MISSING_KEY;
+		}
+
+		for(config_descriptions::const_iterator cIt = mConfigDescriptions.begin(); cIt != mConfigDescriptions.end(); ++cIt)
+		{
+			if(cIt->mConfigKey == in_key)
+			{
+				out_param = mbase::smart_conversion<Type>::apply(cIt->mConfigValue.c_str());
+				return flags::CONFIG_SUCCESS;
+			}
+		}
+
+		return flags::CONFIG_ERR_PARAM_NOT_FOUND;
+	}
+	const config_descriptions& get_config_descriptions() const noexcept;
+	PcDiagnostics* get_assigned_diagnostics() noexcept;
+	bool is_initialized() const noexcept;
 	bool initialize(
 		PcDiagnostics& in_diagnostics,
-		const mbase::wstring& in_temp_path, 
-		const mbase::wstring& in_root_path, 
-		const mbase::wstring& in_data_path,
-		const mbase::wstring& in_config_file_name = L""
+		const mbase::wstring& in_config_file_name
 	);
-	flags set_temp_path(const mbase::wstring& in_path) noexcept;
-	flags set_data_path(const mbase::wstring& in_path) noexcept;
-	flags set_root_path(const mbase::wstring& in_path) noexcept;
-	bool load_config_file(const mbase::wstring& in_file, config_map& out_cmap) noexcept;
+	bool load_config_file(const mbase::wstring& in_file, config_descriptions& out_cmap) noexcept;
 	bool load_config_file(const mbase::wstring& in_file) noexcept;
 	flags update() noexcept;
 	flags set_config_param(const mbase::string& in_key, const mbase::string& in_param) noexcept;
 	flags dump_to_string(mbase::string& out_config_string) noexcept;
-	virtual GENERIC on_initializing();
-	virtual GENERIC on_initialize();
-	virtual GENERIC on_initialize_fail();
-	virtual GENERIC on_destroying();
-	virtual GENERIC on_destroy();
-	virtual GENERIC on_config_update();
-	virtual GENERIC on_temp_path_update();
-	virtual GENERIC on_data_path_update();
-	virtual GENERIC on_root_path_update();
 
 private:
 	PcDiagnostics* mDiagnosticsManager;
-	mbase::wstring mTempPath;
-	mbase::wstring mDataPath;
-	mbase::wstring mRootPath;
 	mbase::wstring mConfigFileName;
-	config_map mConfigMap;
+	config_descriptions mConfigDescriptions;
 	bool mIsInitialized;
 	bool mIsUpdated;
 };

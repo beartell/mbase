@@ -10,7 +10,7 @@
 MBASE_BEGIN
 
 static const U32 gThreadPoolMaxThreads = 1024; // ARBITRARY NUMBER. FIND A WAY TO CALCULATE MAX THREAD COUNT
-static const U32 gThreadPoolDefaultThread = 1;
+static const U32 gThreadPoolDefaultThread = 0;
 
 class tpool : public non_copymovable {
 public:
@@ -30,7 +30,7 @@ public:
 			return 0;
 		}
 
-		MBASE_INLINE thread_pool_routine_args() : selfClass(nullptr), tHandler(nullptr), selfThread(_pool_routine, nullptr), tIndex(0) {}
+		MBASE_INLINE thread_pool_routine_args() : selfClass(nullptr), tIndex(0), tHandler(nullptr), selfThread(_pool_routine, nullptr) {}
 		tpool* selfClass;
 		I32 tIndex;
 		handler_base* tHandler;
@@ -56,9 +56,8 @@ private:
 	thread_pool_routine_args* mThreadPool;
 };
 
-MBASE_INLINE tpool::tpool() noexcept : mIsRunning(true)
+MBASE_INLINE tpool::tpool() noexcept : mIsRunning(true), mThreadCount(gThreadPoolDefaultThread)
 {
-	mThreadCount = gThreadPoolDefaultThread;
 	mThreadPool = new thread_pool_routine_args[mThreadCount];
 
 	for (I32 i = mThreadCount - 1; i != -1; --i)
@@ -96,7 +95,7 @@ MBASE_INLINE tpool::~tpool() noexcept
 {
 	thread_pool_routine_args* tpra = mThreadPool;
 	mIsRunning = false;
-	for (I32 i = 0; i < mThreadCount; i++)
+	for (U32 i = 0; i < mThreadCount; i++)
 	{
 		// finish all execution
 		tpra->selfThread.resume();

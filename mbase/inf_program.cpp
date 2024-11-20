@@ -1,5 +1,4 @@
 #include <mbase/inference/inf_program.h>
-#include <mbase/inference/inf_sampling.h>
 #include <mbase/inference/inf_t2t_model.h>
 #include <mbase/inference/inf_embedder.h>
 #include <mbase/inference/inf_gguf_metadata_configurator.h>
@@ -46,6 +45,7 @@ InfMaipModel::InfMaipModel(const mbase::string& in_as_name, InfProgram& in_progr
 
 GENERIC InfMaipModel::on_initialize_fail(init_fail_code out_fail_code)
 {
+	// TODO: Send error response to MAIP client
 	mAssignedProgram->get_registered_models().erase(mAsName);
 }
 
@@ -60,8 +60,9 @@ GENERIC InfMaipModel::on_destroy()
 	delete this;
 }
 
-InfMaipTunedT2TProcessor::InfMaipTunedT2TProcessor(InfClientSession& in_client)
+InfMaipTunedT2TProcessor::InfMaipTunedT2TProcessor(InfClientSession& in_client, InfProgram* in_program_instance)
 {
+	mProgramInstance = in_program_instance;
     mManagerClient = &in_client;
 }
 
@@ -76,13 +77,20 @@ GENERIC InfMaipTunedT2TProcessor::on_initialize_fail(last_fail_code out_code)
 	mbase::maip_packet_builder tmpPacketBuilder;
 	mbase::string outPayload;
 
-    tmpPacketBuilder.set_response_message((U16)InfProgram::maip_err_code::INF_NOT_ENOUGH_MEMORY);
+	if(out_code == last_fail_code::NOT_ENOUGH_MEMORY)
+	{
+		tmpPacketBuilder.set_response_message((U16)InfProgram::maip_err_code::INF_NOT_ENOUGH_MEMORY);
+	}
+	else
+	{
+		tmpPacketBuilder.set_response_message((U16)InfProgram::maip_err_code::INF_MODEL_IS_NOT_ACCESSIBLE);
+	}
 	tmpPacketBuilder.generate_payload(outPayload);
 	mManagerClient->mPeer->write_data(outPayload.c_str(), outPayload.size());
 	mManagerClient->mPeer->send_write_signal();
 	mManagerClient->mPeer->send_read_signal();
 
-	delete this;
+	mProgramInstance->push_dead_processor(*this);
 }
 
 GENERIC InfMaipTunedT2TProcessor::on_destroy()
@@ -97,11 +105,13 @@ GENERIC InfMaipTunedT2TProcessor::on_destroy()
 	mManagerClient->mPeer->write_data(outPayload.c_str(), outPayload.size());
 	mManagerClient->mPeer->send_write_signal();
 	mManagerClient->mPeer->send_read_signal();
-	delete this;
+	
+	mProgramInstance->push_dead_processor(*this);
 }
 
-InfMaipTunedEmbedderProcessor::InfMaipTunedEmbedderProcessor(InfClientSession& in_client)
+InfMaipTunedEmbedderProcessor::InfMaipTunedEmbedderProcessor(InfClientSession& in_client, InfProgram* in_program_instance)
 {
+	mProgramInstance = in_program_instance;
     mManagerClient = &in_client;    
 }
 
@@ -110,13 +120,21 @@ GENERIC InfMaipTunedEmbedderProcessor::on_initialize_fail(init_fail_code out_cod
     mbase::maip_packet_builder tmpPacketBuilder;
 	mbase::string outPayload;
 
-    tmpPacketBuilder.set_response_message((U16)InfProgram::maip_err_code::INF_NOT_ENOUGH_MEMORY);
+    if(out_code == init_fail_code::NOT_ENOUGH_MEMORY)
+	{
+		tmpPacketBuilder.set_response_message((U16)InfProgram::maip_err_code::INF_NOT_ENOUGH_MEMORY);
+	}
+	else
+	{
+		tmpPacketBuilder.set_response_message((U16)InfProgram::maip_err_code::INF_MODEL_IS_NOT_ACCESSIBLE);
+	}
+
 	tmpPacketBuilder.generate_payload(outPayload);
 	mManagerClient->mPeer->write_data(outPayload.c_str(), outPayload.size());
 	mManagerClient->mPeer->send_write_signal();
 	mManagerClient->mPeer->send_read_signal();
 
-	delete this;
+	mProgramInstance->push_dead_processor(*this);
 }
 
 GENERIC InfMaipTunedEmbedderProcessor::on_initialize()
@@ -134,7 +152,8 @@ GENERIC InfMaipTunedEmbedderProcessor::on_destroy()
 	mManagerClient->mPeer->write_data(outPayload.c_str(), outPayload.size());
 	mManagerClient->mPeer->send_write_signal();
 	mManagerClient->mPeer->send_read_signal();
-	delete this;
+
+	mProgramInstance->push_dead_processor(*this);
 }
 
 InfMaipTunedClient::InfMaipTunedClient() : lastToken(), mManagerClient(NULL), mCurrentContextIndex(0)
@@ -167,10 +186,9 @@ bool InfMaipTunedClient::proc_next_embedding()
         return false;
     }
 
-    InfProcessorBase* hostProc = NULL;
-    get_host_processor(hostProc);
+    
 
-    InfEmbedderProcessor* embedProc = static_cast<InfEmbedderProcessor*>(hostProc);
+    InfEmbedderProcessor* embedProc = static_cast<InfEmbedderProcessor*>(get_host_processor());
     mbase::context_line cl;
     get_message(mEmbeddingMessageIndexes.front(), cl);
 
@@ -228,46 +246,49 @@ GENERIC InfMaipTunedClient::on_embedding_data(const F32* out_data, size_type out
 
 GENERIC InfMaipTunedClient::on_write(const inf_text_token_vector& out_token, bool out_is_finish)
 {	
-	// mbase::string outData(out_data, out_size);
-	// mbase::maip_packet_builder tmpPacketBuilder;
+	InfTextToTextProcessor* hostProcessor = static_cast<InfTextToTextProcessor*>(get_host_processor());
+	inf_token_description tokenDesc;
+	hostProcessor->token_to_description(out_token[0], tokenDesc);
 	
-	// if(!out_is_finish)
-	// {
-	// 	tmpPacketBuilder.set_response_message((U16)InfProgram::maip_err_code::EXEC_MESSAGE_CONTINUE);
-	// }
+	mbase::maip_packet_builder tmpPacketBuilder;
+	
+	if(!out_is_finish)
+	{
+		tmpPacketBuilder.set_response_message((U16)InfProgram::maip_err_code::EXEC_MESSAGE_CONTINUE);
+	}
 
-	// else
-	// {
-	// 	// on_finish will be called
-	// 	lastToken = outData;
-	// 	return;
-	// }
+	else
+	{
+		// on_finish will be called
+		lastToken = tokenDesc;
+		return;
+	}
 
-	// mbase::string outPayload;
+	mbase::string outPayload;
 
-	// if(out_is_special)
-	// {
-	// 	tmpPacketBuilder.set_kval("SPECIAL", 1);
-	// }
+	if(tokenDesc.mIsSpecial)
+	{
+		tmpPacketBuilder.set_kval("SPECIAL", 1);
+	}
 
-	// else
-	// {
-	// 	tmpPacketBuilder.set_kval("SPECIAL", 0);
-	// }
+	else
+	{
+		tmpPacketBuilder.set_kval("SPECIAL", 0);
+	}
 
-	// if(outData.size())
-	// {
-	// 	tmpPacketBuilder.generate_payload(outPayload, outData);
-	// }
+	if(tokenDesc.mTokenString.size())
+	{
+		tmpPacketBuilder.generate_payload(outPayload, tokenDesc.mTokenString);
+	}
 
-	// else
-	// {
-	// 	tmpPacketBuilder.generate_payload(outPayload);
-	// }
+	else
+	{
+		tmpPacketBuilder.generate_payload(outPayload);
+	}
 
-	// mManagerClient->mPeer->write_data(outPayload.c_str(), outPayload.size());
-	// mManagerClient->mPeer->send_write_signal();
-	// mManagerClient->mPeer->send_read_signal();
+	mManagerClient->mPeer->write_data(outPayload.c_str(), outPayload.size());
+	mManagerClient->mPeer->send_write_signal();
+	mManagerClient->mPeer->send_read_signal();
 }
 
 GENERIC InfMaipTunedClient::on_finish(size_type out_total_token_size, InfTextToTextProcessor::finish_state out_finish_state)
@@ -281,8 +302,7 @@ GENERIC InfMaipTunedClient::on_finish(size_type out_total_token_size, InfTextToT
 
 	else if(out_finish_state == InfTextToTextProcessor::finish_state::TOKEN_LIMIT_REACHED)
 	{
-		InfProcessorBase* hostProcessor = NULL;
-		get_host_processor(hostProcessor); // 100% success;
+		InfProcessorBase* hostProcessor = get_host_processor();
         InfTextToTextProcessor* t2tProc = static_cast<InfTextToTextProcessor*>(hostProcessor);
 		tmpPacketBuilder.set_kval("MAXTOK", t2tProc->get_max_token_length());
 		tmpPacketBuilder.set_kval("TOKCOUNT", out_total_token_size);
@@ -297,10 +317,9 @@ GENERIC InfMaipTunedClient::on_finish(size_type out_total_token_size, InfTextToT
 
 	mbase::string outPayload;
 
-	if(lastToken.size())
+	if(lastToken.mTokenString.size())
 	{
-		tmpPacketBuilder.generate_payload(outPayload, lastToken);
-		lastToken.clear();
+		tmpPacketBuilder.generate_payload(outPayload, lastToken.mTokenString);
 	}
 
 	else
@@ -437,7 +456,7 @@ InfProgram::maip_err_code InfProgram::inf_get_context_ids(const mbase::string& i
 	return maip_err_code::INF_SUCCESS;
 }
 
-InfProgram::maip_err_code InfProgram::inf_create_context(const mbase::string& in_session_token, std::shared_ptr<mbase::PcNetPeerClient> in_peer, const mbase::string& in_model, const U32& in_ctsize, const mbase::vector<InfSamplingInput>& in_samplers)
+InfProgram::maip_err_code InfProgram::inf_create_context(const mbase::string& in_session_token, std::shared_ptr<mbase::PcNetPeerClient> in_peer, const mbase::string& in_model, const U32& in_ctsize)
 {
 	MBASE_SESSION_CONTROL;
 	
@@ -491,7 +510,7 @@ InfProgram::maip_err_code InfProgram::inf_create_context(const mbase::string& in
 
 	if(t2tModel->is_embedding_model())
 	{
-		InfMaipTunedEmbedderProcessor* maipEmbedderContext = new InfMaipTunedEmbedderProcessor(clientSession);
+		InfMaipTunedEmbedderProcessor* maipEmbedderContext = new InfMaipTunedEmbedderProcessor(clientSession, this);
 		t2tModel->register_context_process(
 			maipEmbedderContext,
 			in_ctsize,
@@ -501,7 +520,7 @@ InfProgram::maip_err_code InfProgram::inf_create_context(const mbase::string& in
 	}
 	else
 	{
-		InfMaipTunedT2TProcessor* maipT2tContext = new InfMaipTunedT2TProcessor(clientSession);
+		InfMaipTunedT2TProcessor* maipT2tContext = new InfMaipTunedT2TProcessor(clientSession, this);
 		t2tModel->register_context_process(
 			maipT2tContext,
 			in_ctsize,
@@ -519,6 +538,10 @@ InfProgram::maip_err_code InfProgram::inf_clear_context_history(const mbase::str
 	MBASE_SESSION_CONTROL;
 	
 	InfClientSession::chat_session_map::iterator It = clientSession.mChatSessions.find(in_ctxId);
+	if(It != clientSession.mChatSessions.end())
+	{
+		// TODO: Implement
+	}
 	// if(It != clientSession.mChatSessions.end())
 	// {
 	// 	It->second->clear_chat_history();
@@ -1653,9 +1676,7 @@ GENERIC InfProgram::initialize(InfProgramInformation in_program_information)
 	mInferenceDiagnostics.initialize(in_program_information.mProgramInformation.mProductName + "main_log");
 	mInferenceConfigurator.initialize(
 		mInferenceDiagnostics,
-		in_program_information.mTempPath,
-		in_program_information.mExecutionPath,
-		in_program_information.mDataPath
+		in_program_information.mDataPath + L"main_config.txt"
 	);
 	mbase::string mainStateName = in_program_information.mProgramInformation.mProductName;
 	mMainProgramState.initialize(mainStateName, in_program_information.mDataPath);
@@ -1669,10 +1690,10 @@ GENERIC InfProgram::initialize(InfProgramInformation in_program_information)
 		&mMainProgramState
 	);
 
-	mClientStateDirectory = mInferenceConfigurator.get_data_path() + L"states/users/";
-	mDescriptionDirectory = mInferenceConfigurator.get_data_path() + L"states/descriptions/";
+	mClientStateDirectory = in_program_information.mDataPath + L"states/users/";
+	mDescriptionDirectory = in_program_information.mDataPath + L"states/descriptions/";
 
-	mbase::create_directory(mInferenceConfigurator.get_data_path() + L"states/");
+	mbase::create_directory(in_program_information.mDataPath + L"states/");
 	mbase::create_directory(mClientStateDirectory);
 	mbase::create_directory(mDescriptionDirectory);
 
@@ -2025,6 +2046,16 @@ GENERIC InfProgram::update_maip_user_sessions(InfMaipUser& in_maip_user)
 	}
 }
 
+GENERIC InfProgram::push_dead_model(InfModelBase& in_model)
+{
+	mDeadModelVector.push_back(&in_model);
+}
+
+GENERIC InfProgram::push_dead_processor(InfProcessorBase& in_processor)
+{
+	mDeadProcessorVector.push_back(&in_processor);
+}
+
 GENERIC InfProgram::update()
 {
 	for(accepted_client_map::iterator It = mSessionMap.begin(); It != mSessionMap.end();)
@@ -2036,6 +2067,19 @@ GENERIC InfProgram::update()
 		}
 		++It;
 	}
+
+	for(dead_processor_vector::iterator It = mDeadProcessorVector.begin(); It != mDeadProcessorVector.end(); It++)
+	{
+		delete *It;
+	}
+
+	for(dead_model_vector::iterator It = mDeadModelVector.begin(); It != mDeadModelVector.end(); It++)
+	{
+		delete *It;
+	}
+
+	mDeadProcessorVector.clear();
+	mDeadModelVector.clear();
 
 	for(registered_model_map::iterator It = mRegisteredModels.begin(); It != mRegisteredModels.end();)
 	{
