@@ -1,3 +1,10 @@
+find_package(llama REQUIRED)
+list(APPEND MBASE_PROJECT_COMMON_INCLUDES
+    ${CMAKE_SOURCE_DIR}/include
+)
+
+
+
 if (WIN32)
 
 set(external_source_libs
@@ -14,16 +21,16 @@ endif (WIN32)
 if (UNIX)
 
 find_package(UUID REQUIRED)
-find_package(llama REQUIRED)
 
 list(APPEND MBASE_PROJECT_COMMON_INCLUDES
-    ${CMAKE_SOURCE_DIR}/include
     ${UUID_INCLUDE_DIRS}
 )
 
 list(APPEND MBASE_PROJECT_COMMON_LIBS
     ${UUID_LIBRARIES}
 )
+
+endif (UNIX)
 
 list(APPEND MBASE_INFERENCE_TARGET_INCLUDES
     ${MBASE_PROJECT_COMMON_INCLUDES}
@@ -35,8 +42,6 @@ list(APPEND MBASE_INFERENCE_TARGET_LIBS
     ${llama_LIBRARY}
     ${ggml_LIBRARY}
 )
-
-endif (UNIX)
 
 add_library(mb_core SHARED pc_state.cpp 
     pc_config.cpp 
@@ -63,8 +68,8 @@ add_library(mb_inference SHARED inf_client.cpp
     inf_maip_callbacks.cpp
 )
 
-target_compile_options(mb_core PRIVATE -Wall -Wextra -Wpedantic -O3)
-target_compile_options(mb_inference PRIVATE -Wall -Wextra -Wpedantic -O3)
+# target_compile_options(mb_core PRIVATE -Wall -Wextra -Wpedantic -O3)
+# target_compile_options(mb_inference PRIVATE -Wall -Wextra -Wpedantic -O3)
 
 target_include_directories(mb_core PUBLIC ${MBASE_PROJECT_COMMON_INCLUDES})
 target_include_directories(mb_inference PUBLIC ${MBASE_INFERENCE_TARGET_INCLUDES})

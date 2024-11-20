@@ -10,6 +10,10 @@ project(mbase_std VERSION 1.0 LANGUAGES CXX)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/")
 
+include (InstallRequiredSystemLibraries)
+message(${CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS})
+message(${CMAKE_INSTALL_SYSTEM_RUNTIME_DESTINATION})
+
 set(CMAKE_CXX_STANDARD 20)
 
 add_executable(mbase_test_program main.cpp)
@@ -17,4 +21,6 @@ add_subdirectory(mbase)
 
 target_include_directories(mbase_test_program PUBLIC ${MBASE_INFERENCE_TARGET_INCLUDES})
 target_link_libraries(mbase_test_program PRIVATE mb_core mb_inference)
+
+include(CPack)
 

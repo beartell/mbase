@@ -651,8 +651,15 @@ PcNetManager::flags PcNetManager::create_server(const mbase::string& in_addr, I3
 		.ai_socktype = SOCK_STREAM,
 		.ai_protocol = IPPROTO_TCP,
 		.ai_addrlen = 0,
+		#ifdef MBASE_PLATFORM_UNIX
 		.ai_addr = NULL,
 		.ai_canonname = NULL,
+		#endif // MBASE_PLATFORM_UNIX
+		#ifdef MBASE_PLATFORM_WINDOWS
+		.ai_canonname = NULL,
+		.ai_addr = NULL,
+		#endif // MBASE_PLATFORM_WINDOWS
+		
 		.ai_next = NULL
 	};
 

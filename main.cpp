@@ -50,7 +50,6 @@ public:
         t2tProcessor->tokenize_input(msgArray.data(), msgArray.size(), tokenVector);
         t2tProcessor->execute_input(tokenVector);
         t2tProcessor->next(decodeBehavior);
-
     }
 
     GENERIC on_write(const inf_text_token_vector& out_token_vector, bool out_is_finish) override 
@@ -144,7 +143,7 @@ class my_model : public mbase::InfModelTextToText {
 public:
     void on_initialize() override 
     {
-        register_context_process(&c1, 12000, 512, 16, true, {});
+        register_context_process(&c1, 16000, 512, 16, true, {});
     }
     void on_destroy() override 
     {
