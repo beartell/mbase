@@ -1133,7 +1133,7 @@ MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE I32 character_sequence<SeqType, SeqBase,
 template<typename SeqType, typename SeqBase, typename Allocator>
 MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE_EXPR typename character_sequence<SeqType, SeqBase, Allocator>::size_type character_sequence<SeqType, SeqBase, Allocator>::get_serialized_size() const noexcept
 {
-    return mSize + 1;
+    return sizeof(size_type) + mSize;
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
@@ -2251,20 +2251,29 @@ character_sequence<SeqType, SeqBase, Allocator>& character_sequence<SeqType, Seq
 template<typename SeqType, typename SeqBase, typename Allocator>
 MBASE_INLINE GENERIC character_sequence<SeqType, SeqBase, Allocator>::serialize(char_stream& out_buffer) const
 {
+    out_buffer.put_datan<SIZE_T>(mSize);
     if (mSize)
     {
-        out_buffer.put_buffern(mRawData, this->get_serialized_size());
+        out_buffer.put_buffern(mRawData, mSize);
     }
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
 MBASE_INLINE character_sequence<SeqType, SeqBase, Allocator> character_sequence<SeqType, SeqBase, Allocator>::deserialize(IBYTEBUFFER in_buffer, SIZE_T in_length, SIZE_T& bytes_processed)
 {
-    character_sequence cs(in_buffer, in_length);
-    size_type bytesProcessed = 0;
-    bytesProcessed += in_length + 1;
-    bytes_processed = bytesProcessed;
-    return std::move(cs);
+    mbase::char_stream charStream(in_buffer, in_length);
+    SIZE_T stringLength = charStream.get_datan<SIZE_T>();
+    bytes_processed = sizeof(SIZE_T);
+    if(stringLength)
+    {
+        IBYTEBUFFER strOffset = charStream.get_bufferc();
+        bytes_processed += stringLength;
+        character_sequence cs(strOffset, stringLength);
+        charStream.advance(stringLength);
+
+        return cs;
+    }
+    return character_sequence();
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>

@@ -658,8 +658,15 @@ InfProgram::maip_err_code InfProgram::inf_load_model(const mbase::string& in_ses
 	{
 		if(n.first == in_modelname)
 		{
+			if(!mbase::is_file_valid(mbase::from_utf8(n.first)))
+			{
+				return maip_err_code::INF_UNABLE_TO_OPEN_MODEL_FILE;
+			}
+
+			mbase::wstring modelFileTotal = mModelDirectory + mbase::from_utf8(n.second.get_model_file());
+
 			InfMaipModel* newModel = new InfMaipModel(n.second.get_custom_name(), *this);
-			newModel->initialize_model(mbase::from_utf8(n.second.get_model_file()), in_total_context_size, 999);
+			newModel->initialize_model(modelFileTotal, in_total_context_size, 999);
 			mRegisteredModels[n.second.get_custom_name()] = newModel;
 			return maip_err_code::INF_SUCCESS;
 		}
@@ -822,6 +829,7 @@ InfProgram::maip_err_code InfProgram::inf_create_new_user(
 		in_proc_threads,
 		in_superuser,
 		in_is_static,
+		{},
 		out_access_token
 	);
 
@@ -1676,10 +1684,38 @@ GENERIC InfProgram::initialize(InfProgramInformation in_program_information)
 	mInferenceDiagnostics.initialize(in_program_information.mProgramInformation.mProductName + "main_log");
 	mInferenceConfigurator.initialize(
 		mInferenceDiagnostics,
-		in_program_information.mDataPath + L"main_config.txt"
+		in_program_information.mConfigPath + L"mbase_inference_config"
 	);
+
+	mbase::string tmpApplicationName;
+	mbase::string tmpHostName;
+	mbase::string productId;
+	mbase::string defaultUsername;
+	mbase::string defaultAccessToken;
+	mbase::string versionString;
+	I32 tmpHostPort = 0;
+
+	//mInferenceConfigurator.get_config_param("models_directory", mModelDirectory);
+
+	// UNIX
+	// Config path is: /etc/mbase_inference_config
+	// Data path is: /var/lib/mbase_inference/
+
+	// Windows 
+	// Config path is: C:/ProgramData/mbase_inference/mbase_inference_config
+	// Data path is: C:/User/AppData/Roaming/
+
+	// TODO: HANDLE PATH NOT FOUND
+
+	mClientStateDirectory = in_program_information.mDataPath + L"states/users/";
+	mDescriptionDirectory = in_program_information.mDataPath + L"states/descriptions/";
+
+	mbase::create_directory(in_program_information.mDataPath + L"states/");
+	mbase::create_directory(mClientStateDirectory);
+	mbase::create_directory(mDescriptionDirectory);
+
 	mbase::string mainStateName = in_program_information.mProgramInformation.mProductName;
-	mMainProgramState.initialize(mainStateName, in_program_information.mDataPath);
+	mMainProgramState.initialize(mainStateName, in_program_information.mDataPath + L"states/");
 
 	this->initialize_system(
 		in_program_information.mProgramInformation,
@@ -1690,80 +1726,7 @@ GENERIC InfProgram::initialize(InfProgramInformation in_program_information)
 		&mMainProgramState
 	);
 
-	mClientStateDirectory = in_program_information.mDataPath + L"states/users/";
-	mDescriptionDirectory = in_program_information.mDataPath + L"states/descriptions/";
-
-	mbase::create_directory(in_program_information.mDataPath + L"states/");
-	mbase::create_directory(mClientStateDirectory);
-	mbase::create_directory(mDescriptionDirectory);
-
-	mbase::vector<FS_FILE_INFORMATION> fileInfo;
-	mbase::get_directory(mClientStateDirectory, fileInfo);
-
-	for(mbase::vector<FS_FILE_INFORMATION>::iterator It = fileInfo.begin(); It != fileInfo.end(); ++It)
-	{
-		// Reloading users from state directory
-		FS_FILE_INFORMATION fi = *It;
-		PcState myState;
-
-		myState.initialize(mbase::to_utf8(fi.fileName), mClientStateDirectory);
-		
-		U32 authorityFlags;
-		U32 modelAccessLimit;
-		U32 maxContextLength;
-		mbase::vector<mbase::string> accessibleModels;
-		mbase::string userName;
-		mbase::string accessKey;
-		bool superUser;
-		bool authLocked;
-
-		if(myState.get_state<U32>("authority_flags", authorityFlags) != PcState::flags::STATE_SUCCESS ||
-			myState.get_state<U32>("model_access_limit", modelAccessLimit) != PcState::flags::STATE_SUCCESS ||
-			myState.get_state<U32>("max_context_length", maxContextLength) != PcState::flags::STATE_SUCCESS ||
-			myState.get_state<mbase::vector<mbase::string>>("accessible_models", accessibleModels) != PcState::flags::STATE_SUCCESS ||
-			myState.get_state<mbase::string>("username", userName) != PcState::flags::STATE_SUCCESS ||
-			myState.get_state<mbase::string>("access_key", accessKey) != PcState::flags::STATE_SUCCESS ||
-			myState.get_state<bool>("is_super", superUser) != PcState::flags::STATE_SUCCESS ||
-			myState.get_state<bool>("is_auth_locked", authLocked) != PcState::flags::STATE_SUCCESS)
-		{
-			continue;
-		}
-
-		InfMaipUser maipUser;
-		maipUser.add_authority_flags(authorityFlags);
-		maipUser.set_distinct_model_access_limit(modelAccessLimit);
-		maipUser.set_maximum_context_length(maxContextLength);
-		maipUser.set_username(userName);
-		maipUser.set_access_key(accessKey);
-
-		if(superUser)
-		{
-			maipUser.make_superuser();
-		}
-
-		if(authLocked)
-		{
-			maipUser.lock_user();
-		}
-
-		for(mbase::vector<mbase::string>::iterator It = accessibleModels.begin(); It != accessibleModels.end(); ++It)
-		{
-			maipUser.add_accessible_model(*It);
-		}
-
-		std::cout << "Loading user: " << std::endl;
-		std::cout << "- Authority value: " << authorityFlags << std::endl;
-		std::cout << "- Model access limit: " << modelAccessLimit << std::endl;
-		std::cout << "- Maximum context size: " << maxContextLength << std::endl;
-		std::cout << "- Username: " << userName << std::endl;
-		std::cout << "- Access key: " << accessKey << std::endl;
-		std::cout << "- Is super user:" << superUser << std::endl;
-		std::cout << "- Is authorization locked:" << authLocked << std::endl;
-		std::cout << "=======\n" << std::endl;
-		mUserMap[userName] = maipUser;
-	}
-
-	fileInfo.clear();
+	_load_user_states();
 	_reload_model_descriptions();
 }
 
@@ -1816,6 +1779,7 @@ InfProgram::flags InfProgram::create_user(
 		const U32& in_proc_threads,
 		const bool& in_superuser,
 		const bool& in_is_static,
+		const inf_sampling_set& in_sampling_set,
 		mbase::string& out_access_token
 )
 {
@@ -1881,21 +1845,9 @@ InfProgram::flags InfProgram::create_user(
 		newUser.lock_user();
 	}
 
+	newUser.set_sampling_set(in_sampling_set);
 	mUserMap[in_username] = newUser;
 	newUser.update_state_file(mClientStateDirectory);
-
-	for(auto& n : mUserMap)
-	{
-		std::cout << "Username: " << n.first << std::endl;
-
-		InfMaipUser& maipUser = n.second;
-		std::cout << "- Context length: " << maipUser.get_maximum_context_length() << std::endl;
-		std::cout << "- Model access limit: " << maipUser.get_model_access_limit() << std::endl;
-		std::cout << "- Username: " << maipUser.get_username() << std::endl;
-		std::cout << "- Access key: " << maipUser.get_access_key() << std::endl;
-		std::cout << "- Is superuser: " << maipUser.is_superuser() << std::endl;
-		std::cout << "- Is static: " << maipUser.is_static() << std::endl;
-	}
 
 	out_access_token = accessToken;
 
@@ -1995,19 +1947,56 @@ InfProgram::maip_err_code InfProgram::common_modification_control(InfClientSessi
 GENERIC InfProgram::_reload_model_descriptions()
 {
 	mbase::vector<FS_FILE_INFORMATION> fileInfo;
-	mbase::get_directory(mClientStateDirectory, fileInfo);
+	mbase::get_directory(mDescriptionDirectory, fileInfo);
 
 	for(mbase::vector<FS_FILE_INFORMATION>::iterator It = fileInfo.begin(); It != fileInfo.end(); ++It)
 	{
 		// Querying model descriptions
 
 		mbase::string stateObjectName = mbase::to_utf8(It->fileName);
+		std::cout << "Model description name: " << stateObjectName << std::endl;
 		InfMaipModelDescription modelDescriptionObject;
 		
-		modelDescriptionObject.load_from_state_file(stateObjectName, mClientStateDirectory);
-		if(modelDescriptionObject.get_original_name().size())
-		{
-			mModelDescriptionMap[modelDescriptionObject.get_original_name()] = modelDescriptionObject;
+		modelDescriptionObject.load_from_state_file(stateObjectName, mDescriptionDirectory);
+		
+			std::cout << "Original name: " << modelDescriptionObject.get_original_name() << std::endl;
+			std::cout << "Custom name: " << modelDescriptionObject.get_custom_name() << std::endl;
+			std::cout << "Description: " << modelDescriptionObject.get_description() << std::endl;
+			std::cout << "System prompt: " << modelDescriptionObject.get_system_prompt() << std::endl;
+			std::cout << "Model file: " << modelDescriptionObject.get_model_file() << std::endl;
+			std::cout << "Maximum context length: " << modelDescriptionObject.get_maximum_context_length() << std::endl;
+			
+			std::cout << "Tags: ";
+			for(auto& n : modelDescriptionObject.get_tags())
+			{
+				std::cout << n << ";";
+			}
+			std::cout << std::endl;
+			std::cout << "Force prompt: " << modelDescriptionObject.get_forced_system_prompt() << std::endl;
+			std::cout << "Is embedding: " << modelDescriptionObject.get_embedding() << std::endl;
+
+			mModelDescriptionMap[modelDescriptionObject.get_custom_name()] = modelDescriptionObject;
+		
+	}
+}
+
+GENERIC InfProgram::_load_user_states()
+{
+	mbase::vector<FS_FILE_INFORMATION> fileInfo;
+	mbase::get_directory(mClientStateDirectory, fileInfo);
+
+	for(mbase::vector<FS_FILE_INFORMATION>::iterator It = fileInfo.begin(); It != fileInfo.end(); ++It)
+	{
+		// Querying model descriptions
+
+		InfMaipUser maipUser;
+		maipUser.load_from_state_file(mbase::to_utf8(It->fileName), mClientStateDirectory);
+
+		if(maipUser.get_username().size() && maipUser.get_access_key().size())
+		{	
+			// If there is a username and access key
+			// load it
+			mUserMap[maipUser.get_username()] = maipUser;
 		}
 	}
 }

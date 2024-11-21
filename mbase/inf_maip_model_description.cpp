@@ -1,5 +1,6 @@
 #include <mbase/inference/inf_maip_model_description.h>
 #include <mbase/pc/pc_state.h>
+#include <iostream>
 
 MBASE_BEGIN
 
@@ -123,6 +124,7 @@ GENERIC InfMaipModelDescription::set_maximum_context_length(const U32& in_maximu
 
 GENERIC InfMaipModelDescription::load_from_state_file(const mbase::string& in_object_name, const mbase::wstring& in_state_path)
 {
+    U8 categoryValue = 0;
     PcState modelDescriptionState;
     modelDescriptionState.initialize(in_object_name, in_state_path);
 
@@ -132,13 +134,17 @@ GENERIC InfMaipModelDescription::load_from_state_file(const mbase::string& in_ob
     modelDescriptionState.get_state("system_prompt", mSystemPrompt);
     modelDescriptionState.get_state("model_file", mModelFile);
     modelDescriptionState.get_state("tags", mTags);
-
-    U8 categoryValue = 0;
-
     modelDescriptionState.get_state("category", categoryValue);
     modelDescriptionState.get_state("max_context_length", mMaximumAllowedContext);
+    modelDescriptionState.get_state("embedding", mIsEmbeddingModel);
+    modelDescriptionState.get_state("force_prompt", mForceSystemPrompt);
 
     mCategory = (CATEGORY)categoryValue;
+
+    if(!mModelCustomName.size())
+    {
+        mModelCustomName = mModelOriginalName;
+    }
 }
 
 GENERIC InfMaipModelDescription::update_state_file(const mbase::wstring& in_state_path)
@@ -152,7 +158,7 @@ GENERIC InfMaipModelDescription::update_state_file(const mbase::wstring& in_stat
     {
         mModelCustomName = mModelOriginalName;
     }
-
+    U8 categoryValue = (U8)mCategory;
     PcState modelDescriptionState;
     modelDescriptionState.initialize_overwrite(mModelCustomName, in_state_path);
 
@@ -162,11 +168,10 @@ GENERIC InfMaipModelDescription::update_state_file(const mbase::wstring& in_stat
     modelDescriptionState.set_state("system_prompt", mSystemPrompt);
     modelDescriptionState.set_state("model_file", mModelFile);
     modelDescriptionState.set_state("tags", mTags);
-
-    U8 categoryValue = (U8)mCategory;
-
     modelDescriptionState.set_state("category", categoryValue);
     modelDescriptionState.set_state("max_context_length", mMaximumAllowedContext);
+    modelDescriptionState.set_state("embedding", mIsEmbeddingModel);
+    modelDescriptionState.set_state("force_prompt", mForceSystemPrompt);
 
     modelDescriptionState.update();
 }

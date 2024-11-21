@@ -19,5 +19,3 @@ add_subdirectory(mbase)
 target_include_directories(mbase_test_program PUBLIC ${MBASE_INFERENCE_TARGET_INCLUDES})
 target_link_libraries(mbase_test_program PRIVATE mb_core mb_inference)
 
-include(CPack)
-

@@ -51,7 +51,7 @@ PcStateFileHeader PcStateFileHeader::deserialize(IBYTEBUFFER in_src, size_type i
 			U16 mbaseVersionMinor = tmpCharStream.get_datan_safe<U16>();
 			bytes_processed += sizeof(U32) + sizeof(U16) + sizeof(U16);
 			size_type stringBytesProcessed = 0;
-			mbase::string objectName = mbase::string::deserialize(tmpCharStream.get_bufferc(), mbase::type_sequence<IBYTE>::length_bytes(tmpCharStream.get_bufferc()), stringBytesProcessed);
+			mbase::string objectName = mbase::string::deserialize(tmpCharStream.get_bufferc(), tmpCharStream.get_difference(), stringBytesProcessed);
 			bytes_processed += stringBytesProcessed;
 			fileHeader.mMbaseVersionMajor = mbaseVersionMajor;
 			fileHeader.mMbaseVersionMinor = mbaseVersionMinor;
@@ -166,7 +166,7 @@ PcSerializedStateStruct PcSerializedStateStruct::deserialize(IBYTEBUFFER in_src,
 {
 	char_stream tmpCharStream(in_src, in_length);
 	size_type tmpBytesProcessed = 0;
-	mbase::string stateKey = mbase::string::deserialize(tmpCharStream.get_buffer(), mbase::type_sequence<IBYTE>::length_bytes(tmpCharStream.data()), tmpBytesProcessed);
+	mbase::string stateKey = mbase::string::deserialize(tmpCharStream.get_buffer(), tmpCharStream.get_difference(), tmpBytesProcessed);
 	IBYTEBUFFER stateValue = NULL;
 	try
 	{
@@ -273,26 +273,30 @@ PcState::flags PcState::initialize(const mbase::string& in_object_name, const mb
 		statePath = gDefaultStateDirectory;
 	}
 
-	if(statePath.back() != '/' || statePath.back() != '\\')
+	#ifdef MBASE_PLATFORM_UNIX
+	if(statePath.back() != L'/')
 	{
-#ifdef MBASE_PLATFORM_WINDOWS
-		statePath += '\\';
-#endif
-#ifdef MBASE_PLATFORM_UNIX
-		statePath += '/';
-#endif // MBASE_PLATFORM_WINDOWS
-
+		statePath += L'/';
 	}
+	#endif
+	#ifdef MBASE_PLATFORM_WINDOWS
+	if(statePath.back() != L'\\')
+	{
+		statePath += L'\\';
+	}
+	#endif
 
 	if (in_object_name.size())
 	{
 		mFullStateName = mbase::to_utf8(statePath) + in_object_name;
 		mObjectName = in_object_name;
 		mbase::io_file ioStateFile;
+		
 		if(mbase::string::get_extension(mFullStateName) != "mbsf")
 		{
 			mFullStateName += ".mbsf";
 		}
+		
 		ioStateFile.open_file(mbase::from_utf8(mFullStateName), mbase::io_file::access_mode::READ_ACCESS, mbase::io_file::disposition::APPEND);
 
 		mIsInitialized = true; // FOR NOW, IT WILL WE MARKED INITIALIZED REGARDLESS OF ALL THE PROBLEMS
@@ -367,25 +371,26 @@ PcState::flags PcState::initialize_overwrite(const mbase::string& in_object_name
 	{
 		statePath = gDefaultStateDirectory;
 	}
-
-	if (statePath.back() != '/' || statePath.back() != '\\')
+	#ifdef MBASE_PLATFORM_UNIX
+	if(statePath.back() != L'/')
 	{
-#ifdef MBASE_PLATFORM_WINDOWS
-		statePath += '\\';
-#endif
-#ifdef MBASE_PLATFORM_UNIX
-		statePath += '/';
-#endif // MBASE_PLATFORM_WINDOWS
-
+		statePath += L'/';
 	}
-
+	#endif
+	#ifdef MBASE_PLATFORM_WINDOWS
+	if(statePath.back() != L'\\')
+	{
+		statePath += L'\\';
+	}
+	#endif
 	if (in_object_name.size())
 	{
-		mFullStateName = mbase::to_utf8(statePath) + in_object_name;
+		mFullStateName = mbase::to_utf8(statePath) + in_object_name;		
 		if(mbase::string::get_extension(mFullStateName) != "mbsf")
 		{
 			mFullStateName += ".mbsf";
 		}
+				
 		mObjectName = in_object_name;
 		mbase::io_file ioStateFile;
 		ioStateFile.open_file(mbase::from_utf8(mFullStateName));

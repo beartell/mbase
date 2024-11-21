@@ -15,6 +15,7 @@ MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE InputIt find(InputIt in_first, InputIt i
             return in_first;
         }
     }
+    return in_last;
 }
 
 #undef max

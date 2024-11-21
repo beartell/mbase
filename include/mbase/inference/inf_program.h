@@ -90,7 +90,7 @@ struct MBASE_API InfClientSession {
 struct MBASE_API InfProgramInformation {
 	PcProgramInformation mProgramInformation;
 	mbase::wstring mDataPath;
-	mbase::wstring mExecutionPath;
+	mbase::wstring mConfigPath;
 	mbase::wstring mTempPath;
 };
 
@@ -142,6 +142,7 @@ public:
 		INF_NOT_ENOUGH_MEMORY = 2023,
 		INF_DESCRIPTION_ALREADY_EXISTS = 2024,
 		INF_MODEL_ALREADY_LOADED = 2025,
+		INF_UNABLE_TO_OPEN_MODEL_FILE = 2026,
 		EXEC_SUCCESS = 3000,
 		EXEC_ALREADY_PROCESSING = 3001,
 		EXEC_MESSAGE_ID_MISMATCH = 3002,
@@ -258,10 +259,6 @@ public:
 	GENERIC push_dead_processor(InfProcessorBase& in_processor);
 	GENERIC initialize(InfProgramInformation in_program_information);
 	GENERIC update() override;
-
-private:
-	flags host_model(InfModelTextToText* in_model);
-	flags release_model(const mbase::string& in_model_name);
 	flags create_user(
 		const mbase::string& in_username,
 		const mbase::string& in_access_token,
@@ -274,8 +271,12 @@ private:
 		const U32& in_proc_threads,
 		const bool& in_superuser,
 		const bool& in_is_static,
+		const inf_sampling_set& in_sampling_set,
 		mbase::string& out_access_token
 	);
+private:
+	flags host_model(InfModelTextToText* in_model);
+	flags release_model(const mbase::string& in_model_name);
 	flags update_users_model_access_limit(const mbase::string& in_username, const U32& in_new_access_limit);
 	flags update_users_maximum_context(const mbase::string& in_username, const U32& in_new_context_length);
 	flags authorize_user_on_model(const mbase::string& in_username, const mbase::string& in_model);
@@ -283,6 +284,7 @@ private:
 	maip_err_code common_description_modification_control(InfClientSession& in_session, const mbase::string& in_model_target);
 	GENERIC update_maip_user_sessions(InfMaipUser& in_maip_user);
 	GENERIC _reload_model_descriptions();
+	GENERIC _load_user_states();
 
 	PcDiagnostics mInferenceDiagnostics;
 	PcConfig mInferenceConfigurator;
@@ -301,6 +303,7 @@ private:
 	U32 mDefaultContextLimit;
 	mbase::wstring mClientStateDirectory;
 	mbase::wstring mDescriptionDirectory;
+	mbase::wstring mModelDirectory;
 };
 
 MBASE_END

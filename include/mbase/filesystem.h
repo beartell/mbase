@@ -4,6 +4,7 @@
 #include <mbase/common.h>
 #include <mbase/string.h> // mbase::string
 #include <mbase/vector.h> // mbase::vector
+#include <mbase/io_file.h>
 #include <iostream>
 #include <string>
 
@@ -59,6 +60,7 @@ MBASE_INLINE FS_ERROR create_directory(const mbase::string& in_path) noexcept;
 MBASE_INLINE FS_ERROR create_directory(const mbase::wstring& in_path) noexcept;
 MBASE_INLINE FS_ERROR copy_file(const mbase::string& in_path, const mbase::string& in_copypath) noexcept;
 MBASE_INLINE FS_ERROR delete_file(const mbase::wstring& in_path) noexcept;
+MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE bool is_file_valid(const mbase::wstring& in_file) noexcept;
 MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE mbase::wstring get_temp_path() noexcept;
 MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE mbase::wstring get_current_path() noexcept;
 MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE mbase::wstring get_temp_file(const mbase::wstring& in_prefix = L"") noexcept;
@@ -237,6 +239,19 @@ MBASE_INLINE FS_ERROR delete_file(const mbase::wstring& in_path) noexcept
 	remove(mbase::to_utf8(in_path).c_str());
 #endif
 	return FS_ERROR::FS_SUCCESS;
+}
+
+MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE bool is_file_valid(const mbase::wstring& in_file) noexcept
+{
+	mbase::io_file iof;
+	iof.open_file(in_file, mbase::io_file::access_mode::READ_ACCESS, mbase::io_file::disposition::OPEN);
+
+	if(iof.is_file_open())
+	{
+		return true;
+	}
+
+	return false;
 }
 
 MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE mbase::wstring get_temp_path() noexcept 

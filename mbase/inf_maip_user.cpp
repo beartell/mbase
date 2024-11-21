@@ -31,7 +31,7 @@ bool InfMaipUser::is_model_accessible(const mbase::string& in_modelname)
 		return true;
 	}
 
-	if(std::find(mAccessibleModels.begin(), mAccessibleModels.end(), in_modelname) != mAccessibleModels.end())
+	if(mbase::find(mAccessibleModels.begin(), mAccessibleModels.end(), in_modelname) != mAccessibleModels.end())
 	{
 		return true;
 	}

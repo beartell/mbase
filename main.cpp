@@ -161,88 +161,110 @@ using namespace mbase;
 
 int main(int argc, char** argv)
 {
-    //mbase::tpool tp(8);
+    // mbase::vector<mbase::string> aa = {"hello", "world", "how"};
 
-    mbase::InfMaipUser maipUser;
-    maipUser.load_from_state_file("admin", L"./");
-    // maipUser.set_username("admin");
-    // maipUser.set_access_key("hasankere88");
-    // maipUser.set_assistant_prefix("As you can see: ");
-    // maipUser.set_batch_size(512);
-    // maipUser.set_distinct_model_access_limit(10);
-    // maipUser.set_maximum_context_length(4096);
-    // maipUser.set_processor_max_thread_count(16);
-    // maipUser.set_processor_thread_count(16);
-    // maipUser.set_system_prompt("You are a helpful assistant");
+    // for(auto& n : aa)
+    // {
+    //     std::cout << n.size() << "-" << n.get_serialized_size() << std::endl;
+    // }
+
+    // deep_char_stream dcs(aa.get_serialized_size());
+    // aa.serialize(dcs);
+    // SIZE_T pro;
+    // mbase::vector<mbase::string> cc = aa.deserialize(dcs.get_buffer(), dcs.buffer_length(), pro);
+
+    // for(auto& n : cc)
+    // {   
+    //     std::cout << n << std::endl;
+    // }
+
+    // return 0;
     
-    // mbase::inf_sampling_set samplingSet;
-    
-    // mbase::InfSamplerDescription topKSampling;
-    // mbase::InfSamplerDescription topPSampling;
-    // mbase::InfSamplerDescription minPSampling;
-    // mbase::InfSamplerDescription tempSampling;
-    // mbase::InfSamplerDescription mirov2;
+    mbase::InfSamplerDescription topKSampling;
+    mbase::InfSamplerDescription topPSampling;
+    mbase::InfSamplerDescription minPSampling;
+    mbase::InfSamplerDescription tempSampling;
+    mbase::InfSamplerDescription mirov2;
 
-    // topKSampling.mSamplerType = mbase::InfSamplerDescription::SAMPLER::TOP_K;
-    // topKSampling.mTopK = 40;
+    topKSampling.mSamplerType = mbase::InfSamplerDescription::SAMPLER::TOP_K;
+    topKSampling.mTopK = 40;
 
-    // topPSampling.mSamplerType = mbase::InfSamplerDescription::SAMPLER::TOP_P;
-    // topPSampling.mTopP = 0.9;
+    topPSampling.mSamplerType = mbase::InfSamplerDescription::SAMPLER::TOP_P;
+    topPSampling.mTopP = 0.9;
 
-    // minPSampling.mSamplerType = mbase::InfSamplerDescription::SAMPLER::MIN_P;
-    // minPSampling.mMinP = 0.1;
+    minPSampling.mSamplerType = mbase::InfSamplerDescription::SAMPLER::MIN_P;
+    minPSampling.mMinP = 0.1;
 
-    // tempSampling.mSamplerType = mbase::InfSamplerDescription::SAMPLER::TEMP;
-    // tempSampling.mTemp = 0.1;
+    tempSampling.mSamplerType = mbase::InfSamplerDescription::SAMPLER::TEMP;
+    tempSampling.mTemp = 0.1;
 
-    // mirov2.mSamplerType = mbase::InfSamplerDescription::SAMPLER::MIROSTAT_V2;
-    // mirov2.mMiroV2.mTau = 1.0;
-    // mirov2.mMiroV2.mEta = 0.01;
-
-    // maipUser.set_sampling_set({
-    //     topKSampling,
-    //     topPSampling,
-    //     minPSampling,
-    //     tempSampling,
-    //     mirov2
-    // });
+    mirov2.mSamplerType = mbase::InfSamplerDescription::SAMPLER::MIROSTAT_V2;
+    mirov2.mMiroV2.mTau = 1.0;
+    mirov2.mMiroV2.mEta = 0.01;
 
     // maipUser.update_state_file(L"./");
 
-    std::cout << "Username: " << maipUser.get_username() << std::endl;
-    std::cout << "Access token: " << maipUser.get_access_key() << std::endl;
-    std::cout << "Assistant prefix: " << maipUser.get_assistant_prefix() << std::endl;
-    std::cout << "Batch size: " << maipUser.get_batch_size() << std::endl;
-    std::cout << "Distinct model access limit: " << maipUser.get_model_access_limit() << std::endl;
-    std::cout << "Maximum context length: " << maipUser.get_maximum_context_length() << std::endl;
-    std::cout << "Processor max thread count: " << maipUser.get_processor_max_thread_count() << std::endl;
-    std::cout << "Processor thread count: " << maipUser.get_processor_thread_count() << std::endl;
-    std::cout << "System prompt: " << maipUser.get_system_prompt() << std::endl;
+    mbase::vector<mbase::string> userNameList = {"admin", "john", "sql_executor", "mustafa", "web_assistant"};
+    mbase::vector<mbase::string> acckeyList = {"1234", "chris", "yumniye", "hasankere88", "1df215a571"};
+    mbase::vector<U32> batchSizeList = {1024, 1024, 2048, 512, 8192};
+    mbase::vector<U32> accLimitList = {10, 3, 4, 3, 3};
+    mbase::vector<U32> maxContextLengthList = {16000, 12000, 4096, 4096, 7000};
+    mbase::vector<U32> maxProcThreadCount = {16, 16, 8, 4, 4};
+    mbase::vector<U32> procThreadCount = {4, 8, 12, 6, 8};
 
-    for(auto& n : maipUser.get_sampling_set())
+    mbase::InfProgramInformation programInfo;
+    programInfo.mConfigPath = L"./";
+    programInfo.mDataPath = L"./";
+    programInfo.mTempPath = L"./";
+    
+    mbase::InfProgram instanceProgram;
+    instanceProgram.initialize(programInfo);
+
+    for(I32 i = 0; i < 5; i++)
     {
-        if(n.mSamplerType == mbase::InfSamplerDescription::SAMPLER::TOP_K)
-        {
-            std::cout << "- top_k:";
-            std::cout << n.mTopK << std::endl;
-        }
-        else if(n.mSamplerType == mbase::InfSamplerDescription::SAMPLER::TOP_P)
-        {
-            std::cout << "- top_p:";
-            std::cout << n.mTopP << std::endl;
-        }
-        else if(n.mSamplerType == mbase::InfSamplerDescription::SAMPLER::MIN_P)
-        {
-            std::cout << "- min_p:";
-            std::cout << n.mMinP << std::endl;
-        }
-        else if(n.mSamplerType == mbase::InfSamplerDescription::SAMPLER::TEMP)
-        {
-            std::cout << "- tempv1:";
-            std::cout << n.mTemp << std::endl;
-        }
+        mbase::string accTok;
+        mbase::InfProgram::flags result = instanceProgram.create_user(
+            userNameList[i],
+            acckeyList[i],
+            "",
+            MAIP_MODEL_LOAD_UNLOAD,
+            accLimitList[i],
+            maxContextLengthList[i],
+            batchSizeList[i],
+            maxProcThreadCount[i],
+            procThreadCount[i],
+            true,
+            true,
+            {topKSampling, topPSampling, minPSampling, tempSampling, mirov2},
+            accTok
+        );
     }
+    mbase::string outToken;
+    instanceProgram.inf_access_request(
+        "admin",
+        "1234",
+        NULL,
+        outToken
+    );
+    instanceProgram.inf_create_model_description(
+        outToken,
+        "llama_model",
+        "custom_lama",
+        "Website assitant",
+        "",
+        "Llama3.1.gguf",
+        {"SQL", "Web", "Assistant"},
+        "T2T",
+        false,
+        true,
+        4096
+    );
+    mbase::InfProgram::maip_err_code result = instanceProgram.inf_modify_model_system_prompt(
+        outToken, "custom_lama", "You are a big motherfucker"
+    );
 
+    std::cout << (I32)result << std::endl;  
+    
     // my_model sampleModel;
     // sampleModel.initialize_model(L"./Llama-3.2-1B-Instruct-Q4_K_M.gguf", 36000, 999);
 
