@@ -22,8 +22,7 @@ InfEmbedderProcessor::InfEmbedderProcessor():
     mModelContext(NULL),
     mEmbeddingLength(0),
     mBatchSize(0),
-    mThreadCount(0),
-    mAssignedClient(NULL)
+    mThreadCount(0)
 {
     mProcessorType = processor_type::EMBEDDER;
 }
@@ -92,11 +91,6 @@ const U32& InfEmbedderProcessor::get_max_token_length()
     return mContextLength;
 }
 
-InfClientTextToText* InfEmbedderProcessor::get_assigned_client()
-{
-    return mAssignedClient;
-}
-
 InfEmbedderProcessor::flags InfEmbedderProcessor::tokenize_input(CBYTEBUFFER in_data, size_type in_size, inf_text_token_vector& out_tokens)
 {
     MBASE_INF_EMBEDDER_PROC_RETURN_UNREGISTERED;
@@ -159,37 +153,31 @@ InfEmbedderProcessor::flags InfEmbedderProcessor::execute_input(const inf_text_t
     return flags::INF_PROC_SUCCESS;
 }
 
-InfEmbedderProcessor::flags InfEmbedderProcessor::set_inference_client(InfClientTextToText* in_client)
+InfEmbedderProcessor::flags InfEmbedderProcessor::set_inference_client(InfClientBase* in_client)
 {
     MBASE_INF_EMBEDDER_PROC_RETURN_UNREGISTERED;
 
-    if(get_assigned_client())
-	{
-		return flags::INF_PROC_ERR_ALREADY_PROCESSING;
-	}
+    if (get_assigned_client())
+    {
+        return flags::INF_PROC_ERR_ALREADY_PROCESSING;
+    }
 
-	if(!in_client)
-	{
-		return flags::INF_PROC_ERR_MISSING_CLIENT;
-	}
+    if (!in_client)
+    {
+        return flags::INF_PROC_ERR_MISSING_CLIENT;
+    }
 
-	if(in_client->is_registered())
-	{
-		InfProcessorBase* clientProc = in_client->get_host_processor();
-		if(clientProc != this)
-		{
-			return flags::INF_PROC_ERR_BELONGS_TO_ANOTHER_PROCESSOR;
-		}
-		else
-		{
-			return flags::INF_PROC_SUCCESS;
-		}
-	}
+    if (mAssignedClient == in_client)
+    {
+        return flags::INF_PROC_SUCCESS;
+    }
 
-	mAssignedClient = in_client;
-	mAssignedClient->_on_register(this);
+    release_inference_client();
 
-	return flags::INF_PROC_SUCCESS;
+    mAssignedClient = in_client;
+    mAssignedClient->on_register(this);
+
+    return flags::INF_PROC_SUCCESS;
 }
 
 InfEmbedderProcessor::flags InfEmbedderProcessor::initialize(
@@ -287,21 +275,6 @@ InfEmbedderProcessor::flags InfEmbedderProcessor::destroy_sync()
 	}
 
 	return flags::INF_PROC_INFO_NEED_UPDATE;
-}
-
-GENERIC InfEmbedderProcessor::release_inference_client()
-{
-    InfClientTextToText* assignedClient = get_assigned_client();
-	if(assignedClient)
-	{
-		assignedClient->_on_unregister();
-		mAssignedClient = NULL;
-	}
-}
-
-GENERIC InfEmbedderProcessor::release_inference_client_stacked()
-{
-    mAssignedClient = NULL;
 }
 
 GENERIC InfEmbedderProcessor::_initialize_context()
@@ -436,15 +409,15 @@ GENERIC InfEmbedderProcessor::update()
     {
         if(signal_embedding_vector_generated())
         {
-            InfClientTextToText* t2tClient = get_assigned_client();
+            InfClientBase* t2tClient = get_assigned_client();
 			mEmbeddingSignal.reset_signal_with_state();
             mVectorGenerated.reset_signal_with_state();
-            if(t2tClient)
+            /*if(t2tClient)
 			{    
                 stop_processor();
                 t2tClient->on_embedding_data(mEmbeddingVector.data(), mEmbeddingVector.size());
 				return;
-			}
+			}*/
         }
     }
 

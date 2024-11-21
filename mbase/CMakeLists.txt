@@ -61,6 +61,7 @@ add_library(mb_inference SHARED inf_client.cpp
     inf_sampling.cpp 
     inf_gguf_meta_configurator.cpp 
     inf_maip_user.cpp 
+    inf_t2t_client.cpp
     inf_t2t_processor.cpp 
     inf_t2t_model.cpp 
     inf_embedder.cpp

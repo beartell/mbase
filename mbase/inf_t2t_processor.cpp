@@ -1,6 +1,6 @@
 #include <mbase/inference/inf_t2t_processor.h>
 #include <mbase/inference/inf_t2t_model.h>
-#include <mbase/inference/inf_client.h>
+#include <mbase/inference/inf_t2t_client.h>
 
 MBASE_BEGIN
 
@@ -36,7 +36,6 @@ InfTextToTextProcessor::InfTextToTextProcessor():
 	mBatchSize(0),
 	mThreadCount(0),
 	mFinishState(finish_state::FINISHED),
-	mAssignedClient(NULL),
 	mLastFailCode(last_fail_code::MODEL_NOT_INITIALIZED),
 	mFlashAttention(false),
 	mIsInitializeFailed(false)
@@ -54,7 +53,7 @@ InfTextToTextProcessor::~InfTextToTextProcessor()
 
 		if(mAssignedClient)
 		{
-			mAssignedClient->_on_unregister();
+			mAssignedClient->on_unregister(this);
 			mAssignedClient = NULL;
 		}
 	}
@@ -103,11 +102,6 @@ bool InfTextToTextProcessor::signal_decode_process() const
 U32 InfTextToTextProcessor::get_max_token_length()
 {
 	return mContextLength;
-}
-
-InfClientTextToText* InfTextToTextProcessor::get_assigned_client()
-{
-	return mAssignedClient;
 }
 
 bool InfTextToTextProcessor::has_sampler(InfSamplerDescription::SAMPLER in_sampler_type, InfSamplerDescription& out_sampler)
@@ -347,16 +341,12 @@ InfTextToTextProcessor::flags InfTextToTextProcessor::next_sync(const decode_beh
 {
 	MBASE_INF_T2T_PROC_RETURN_UNREGISTERED;
 
-	// if(!signal_state_input_process())
-	// {
-	// 	return flags::INF_PROC_ERR_INPUT_IS_EMPTY;
-	// }
 	while(signal_input_process()){}
 
 	return next(in_description);
 }
 
-InfTextToTextProcessor::flags InfTextToTextProcessor::set_inference_client(InfClientTextToText* in_client)
+InfTextToTextProcessor::flags InfTextToTextProcessor::set_inference_client(InfClientBase* in_client)
 {
 	MBASE_INF_T2T_PROC_RETURN_UNREGISTERED;
 
@@ -369,22 +359,16 @@ InfTextToTextProcessor::flags InfTextToTextProcessor::set_inference_client(InfCl
 	{
 		return flags::INF_PROC_ERR_MISSING_CLIENT;
 	}
-
-	if(in_client->is_registered())
+	
+	if(mAssignedClient == in_client)
 	{
-		InfProcessorBase* clientProc = in_client->get_host_processor();
-		if(clientProc != this)
-		{
-			return flags::INF_PROC_ERR_BELONGS_TO_ANOTHER_PROCESSOR;
-		}
-		else
-		{
-			return flags::INF_PROC_SUCCESS;
-		}
+		return flags::INF_PROC_SUCCESS;
 	}
 
+	release_inference_client();
+
 	mAssignedClient = in_client;
-	mAssignedClient->_on_register(this);
+	mAssignedClient->on_register(this);
 
 	return flags::INF_PROC_SUCCESS;
 }
@@ -422,7 +406,6 @@ InfTextToTextProcessor::flags InfTextToTextProcessor::initialize(
 	mSamplerDescriptions = in_sampler_set;
 	mFlashAttention = in_flash_attention;
 
-	mDiagnostics.log(PcDiagnostics::flags::LOGTYPE_INFO, PcDiagnostics::flags::LOGIMPORTANCE_HIGH, "Initializing context with length (%d) and id (%s)", in_context_length, in_context_id.c_str());
 	mInitializeSignal.set_signal();
 	on_initializing();
 	start_processor();
@@ -485,21 +468,6 @@ InfTextToTextProcessor::flags InfTextToTextProcessor::destroy_sync()
 	}
 
 	return flags::INF_PROC_INFO_NEED_UPDATE;
-}
-
-GENERIC InfTextToTextProcessor::release_inference_client()
-{
-	InfClientTextToText* assignedClient = get_assigned_client();
-	if(assignedClient)
-	{
-		assignedClient->_on_unregister();
-		mAssignedClient = NULL;
-	}
-}
-
-GENERIC InfTextToTextProcessor::release_inference_client_stacked()
-{
-	mAssignedClient = NULL;
 }
 
 GENERIC InfTextToTextProcessor::clear_token_candidates()
@@ -832,7 +800,7 @@ GENERIC InfTextToTextProcessor::update()
 			mInputSignal.reset_signal_with_state();
 		}
 
-		InfClientTextToText* t2tClient = get_assigned_client();
+		InfClientTextToText* t2tClient = static_cast<InfClientTextToText*>(get_assigned_client());
 
 		if(t2tClient)
 		{
@@ -842,10 +810,10 @@ GENERIC InfTextToTextProcessor::update()
 				stop_processor();
 			}
 
-			t2tClient->on_write(tokenVector, isFinish);
+			t2tClient->on_write(this, tokenVector, isFinish);
 			if(isFinish)
 			{
-				t2tClient->on_finish(mContextCursor, mFinishState);
+				t2tClient->on_finish(this, mContextCursor, mFinishState);
 			}
 		}
 	}

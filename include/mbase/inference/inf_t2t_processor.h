@@ -3,6 +3,8 @@
 
 #include <mbase/common.h>
 #include <mbase/inference/inf_processor.h>
+#include <mbase/inference/inf_sampling_set.h>
+#include <mbase/inference/inf_context_line.h>
 
 MBASE_BEGIN
 
@@ -37,7 +39,6 @@ public:
 		inf_text_token_candidates& get_token_candidates();
 	#endif // MBASE_INTERNAL_API
 	U32 get_max_token_length();
-	InfClientTextToText* get_assigned_client();
 	bool has_sampler(InfSamplerDescription::SAMPLER in_sampler_type, InfSamplerDescription& out_sampler);
 	GENERIC get_available_samplers(inf_sampling_set& out_samplers);
 	bool has_client() const;
@@ -49,7 +50,7 @@ public:
 	flags execute_input(const inf_text_token_vector& in_tokens, bool in_abandon = false);
 	flags next(const decode_behavior_description& in_description);
 	flags next_sync(const decode_behavior_description& in_description);
-	flags set_inference_client(InfClientTextToText* in_client);
+	flags set_inference_client(InfClientBase* in_client);
 	flags initialize(
 		InfModelTextToText* in_model, 
 		const U32& in_context_length, 
@@ -70,11 +71,6 @@ public:
 	);
 	flags destroy() override;
 	flags destroy_sync() override;
-	GENERIC release_inference_client();
-	GENERIC release_inference_client_stacked();
-	#ifdef MBASE_INTERNAL_API
-		
-	#endif // MBASE_INTERNAL_API
 	GENERIC clear_token_candidates();
 	GENERIC clear_samplers();
 	GENERIC update() override;
@@ -105,8 +101,6 @@ private:
 	processor_signal mInputSignal;
 	processor_signal mDecodeSignal;
 	finish_state mFinishState;
-	InfClientTextToText* mAssignedClient;
-	PcDiagnostics mDiagnostics;
 	last_fail_code mLastFailCode;	
 	bool mFlashAttention;
 	bool mIsInitializeFailed;

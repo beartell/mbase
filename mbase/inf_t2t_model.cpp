@@ -584,10 +584,6 @@ GENERIC InfModelTextToText::_initialize_model()
 		return;
 	}
 
-	std::cout << mSystemStart << "You are a helpful assistant" << mSystemEnd;
-	std::cout << mUsrStart << "How are you?" << mUserEnd;
-	std::cout << mAssistantStart << "I am fine thanks!" << mAssistantEnd;
-
 	if(llama_model_has_encoder(mModel) && llama_model_has_decoder(mModel))
 	{
 		mIsEmbeddingModel = false;

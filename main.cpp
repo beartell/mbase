@@ -7,6 +7,7 @@
 #include <mbase/inference/inf_client.h>
 #include <mbase/inference/inf_processor.h>
 #include <mbase/inference/inf_t2t_processor.h>
+#include <mbase/inference/inf_t2t_client.h>
 #include <mbase/inference/inf_embedder.h>
 #include <mbase/inference/inf_t2t_model.h>
 #include <mbase/inference/inf_program.h>
@@ -52,9 +53,9 @@ public:
         t2tProcessor->next(decodeBehavior);
     }
 
-    GENERIC on_write(const inf_text_token_vector& out_token_vector, bool out_is_finish) override 
+    GENERIC on_write(InfTextToTextProcessor* out_processor, const inf_text_token_vector& out_token_vector, bool out_is_finish) override
     {        
-        InfTextToTextProcessor* txtOut = static_cast<InfTextToTextProcessor*>(get_host_processor());
+        InfTextToTextProcessor* txtOut = static_cast<InfTextToTextProcessor*>(out_processor);
         fflush(stdout);
         mbase::vector<inf_token_description> tokenDesc;
         txtOut->tokens_to_description_vector(out_token_vector, tokenDesc);
@@ -74,7 +75,7 @@ public:
         
     }
 
-    GENERIC on_finish(size_type out_total_token_size, InfTextToTextProcessor::finish_state out_finish_state) override 
+    GENERIC on_finish(InfTextToTextProcessor* out_processor, size_type out_total_token_size, InfTextToTextProcessor::finish_state out_finish_state) override
     {   
         std::cout << std::endl;
         U32 outMsgId = 0;
@@ -88,7 +89,7 @@ public:
 
         totalMessage.clear();
         
-        InfTextToTextProcessor* t2tProcessor = static_cast<InfTextToTextProcessor*>(get_host_processor());
+        InfTextToTextProcessor* t2tProcessor = static_cast<InfTextToTextProcessor*>(out_processor);
         mbase::vector<mbase::context_line> msgArray;
         get_message_array(msgIds.data(), msgIds.size(), msgArray);
         
@@ -102,7 +103,7 @@ public:
         t2tProcessor->next(decodeBehavior);
     }   
     
-    GENERIC on_unregister() override 
+    GENERIC on_unregister(InfProcessorBase* out_processor) override
     {
 
     }
@@ -180,98 +181,98 @@ int main(int argc, char** argv)
 
     // return 0;
     
-    mbase::InfSamplerDescription topKSampling;
-    mbase::InfSamplerDescription topPSampling;
-    mbase::InfSamplerDescription minPSampling;
-    mbase::InfSamplerDescription tempSampling;
-    mbase::InfSamplerDescription mirov2;
+    //mbase::InfSamplerDescription topKSampling;
+    //mbase::InfSamplerDescription topPSampling;
+    //mbase::InfSamplerDescription minPSampling;
+    //mbase::InfSamplerDescription tempSampling;
+    //mbase::InfSamplerDescription mirov2;
 
-    topKSampling.mSamplerType = mbase::InfSamplerDescription::SAMPLER::TOP_K;
-    topKSampling.mTopK = 40;
+    //topKSampling.mSamplerType = mbase::InfSamplerDescription::SAMPLER::TOP_K;
+    //topKSampling.mTopK = 40;
 
-    topPSampling.mSamplerType = mbase::InfSamplerDescription::SAMPLER::TOP_P;
-    topPSampling.mTopP = 0.9;
+    //topPSampling.mSamplerType = mbase::InfSamplerDescription::SAMPLER::TOP_P;
+    //topPSampling.mTopP = 0.9;
 
-    minPSampling.mSamplerType = mbase::InfSamplerDescription::SAMPLER::MIN_P;
-    minPSampling.mMinP = 0.1;
+    //minPSampling.mSamplerType = mbase::InfSamplerDescription::SAMPLER::MIN_P;
+    //minPSampling.mMinP = 0.1;
 
-    tempSampling.mSamplerType = mbase::InfSamplerDescription::SAMPLER::TEMP;
-    tempSampling.mTemp = 0.1;
+    //tempSampling.mSamplerType = mbase::InfSamplerDescription::SAMPLER::TEMP;
+    //tempSampling.mTemp = 0.1;
 
-    mirov2.mSamplerType = mbase::InfSamplerDescription::SAMPLER::MIROSTAT_V2;
-    mirov2.mMiroV2.mTau = 1.0;
-    mirov2.mMiroV2.mEta = 0.01;
+    //mirov2.mSamplerType = mbase::InfSamplerDescription::SAMPLER::MIROSTAT_V2;
+    //mirov2.mMiroV2.mTau = 1.0;
+    //mirov2.mMiroV2.mEta = 0.01;
 
-    // maipUser.update_state_file(L"./");
+    //// maipUser.update_state_file(L"./");
 
-    mbase::vector<mbase::string> userNameList = {"admin", "john", "sql_executor", "mustafa", "web_assistant"};
-    mbase::vector<mbase::string> acckeyList = {"1234", "chris", "yumniye", "hasankere88", "1df215a571"};
-    mbase::vector<U32> batchSizeList = {1024, 1024, 2048, 512, 8192};
-    mbase::vector<U32> accLimitList = {10, 3, 4, 3, 3};
-    mbase::vector<U32> maxContextLengthList = {16000, 12000, 4096, 4096, 7000};
-    mbase::vector<U32> maxProcThreadCount = {16, 16, 8, 4, 4};
-    mbase::vector<U32> procThreadCount = {4, 8, 12, 6, 8};
+    //mbase::vector<mbase::string> userNameList = {"admin", "john", "sql_executor", "mustafa", "web_assistant"};
+    //mbase::vector<mbase::string> acckeyList = {"1234", "chris", "yumniye", "hasankere88", "1df215a571"};
+    //mbase::vector<U32> batchSizeList = {1024, 1024, 2048, 512, 8192};
+    //mbase::vector<U32> accLimitList = {10, 3, 4, 3, 3};
+    //mbase::vector<U32> maxContextLengthList = {16000, 12000, 4096, 4096, 7000};
+    //mbase::vector<U32> maxProcThreadCount = {16, 16, 8, 4, 4};
+    //mbase::vector<U32> procThreadCount = {4, 8, 12, 6, 8};
 
-    mbase::InfProgramInformation programInfo;
-    programInfo.mConfigPath = L"./";
-    programInfo.mDataPath = L"./";
-    programInfo.mTempPath = L"./";
+    //mbase::InfProgramInformation programInfo;
+    //programInfo.mConfigPath = L"./";
+    //programInfo.mDataPath = L"./";
+    //programInfo.mTempPath = L"./";
+    //
+    //mbase::InfProgram instanceProgram;
+    //instanceProgram.initialize(programInfo);
+
+    //for(I32 i = 0; i < 5; i++)
+    //{
+    //    mbase::string accTok;
+    //    mbase::InfProgram::flags result = instanceProgram.create_user(
+    //        userNameList[i],
+    //        acckeyList[i],
+    //        "",
+    //        MAIP_MODEL_LOAD_UNLOAD,
+    //        accLimitList[i],
+    //        maxContextLengthList[i],
+    //        batchSizeList[i],
+    //        maxProcThreadCount[i],
+    //        procThreadCount[i],
+    //        true,
+    //        true,
+    //        {topKSampling, topPSampling, minPSampling, tempSampling, mirov2},
+    //        accTok
+    //    );
+    //}
+    //mbase::string outToken;
+    //instanceProgram.inf_access_request(
+    //    "admin",
+    //    "1234",
+    //    NULL,
+    //    outToken
+    //);
+    //instanceProgram.inf_create_model_description(
+    //    outToken,
+    //    "llama_model",
+    //    "custom_lama",
+    //    "Website assitant",
+    //    "",
+    //    "Llama3.1.gguf",
+    //    {"SQL", "Web", "Assistant"},
+    //    "T2T",
+    //    false,
+    //    true,
+    //    4096
+    //);
+    //mbase::InfProgram::maip_err_code result = instanceProgram.inf_modify_model_system_prompt(
+    //    outToken, "custom_lama", "You are a big motherfucker"
+    //);
+
+    //std::cout << (I32)result << std::endl;  
     
-    mbase::InfProgram instanceProgram;
-    instanceProgram.initialize(programInfo);
+     my_model sampleModel;
+     sampleModel.initialize_model(L"./llama-3.2-1b-instruct-q8_0.gguf", 36000, 999);
 
-    for(I32 i = 0; i < 5; i++)
-    {
-        mbase::string accTok;
-        mbase::InfProgram::flags result = instanceProgram.create_user(
-            userNameList[i],
-            acckeyList[i],
-            "",
-            MAIP_MODEL_LOAD_UNLOAD,
-            accLimitList[i],
-            maxContextLengthList[i],
-            batchSizeList[i],
-            maxProcThreadCount[i],
-            procThreadCount[i],
-            true,
-            true,
-            {topKSampling, topPSampling, minPSampling, tempSampling, mirov2},
-            accTok
-        );
-    }
-    mbase::string outToken;
-    instanceProgram.inf_access_request(
-        "admin",
-        "1234",
-        NULL,
-        outToken
-    );
-    instanceProgram.inf_create_model_description(
-        outToken,
-        "llama_model",
-        "custom_lama",
-        "Website assitant",
-        "",
-        "Llama3.1.gguf",
-        {"SQL", "Web", "Assistant"},
-        "T2T",
-        false,
-        true,
-        4096
-    );
-    mbase::InfProgram::maip_err_code result = instanceProgram.inf_modify_model_system_prompt(
-        outToken, "custom_lama", "You are a big motherfucker"
-    );
-
-    std::cout << (I32)result << std::endl;  
-    
-    // my_model sampleModel;
-    // sampleModel.initialize_model(L"./Llama-3.2-1B-Instruct-Q4_K_M.gguf", 36000, 999);
-
-    // while(1)
-    // {
-    //     sampleModel.update();
-    // }
+     while(1)
+     {
+         sampleModel.update();
+     }
     
     // InfProgram ifp;
     // InfMaipDefaultServer IDS(ifp);

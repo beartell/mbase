@@ -25,6 +25,11 @@ InfModelBase::InfModelBase() :
 {
 }
 
+InfModelBase::~InfModelBase()
+{
+
+}
+
 typename InfModelBase::iterator InfModelBase::begin() noexcept
 {
 	return mRegisteredProcessors.begin();

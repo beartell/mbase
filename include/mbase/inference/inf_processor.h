@@ -9,13 +9,8 @@
 #include <mbase/synchronization.h>
 #include <mbase/behaviors.h>
 #include <mbase/inference/inf_model.h>
-#include <mbase/inference/inf_context_line.h>
-#include <mbase/inference/inf_sampling_set.h>
 #include <mbase/framework/logical_processing.h>
 #include <mbase/framework/object_watcher.h>
-#include <mbase/pc/pc_diagnostics.h>
-#include <mutex>
-#include <llama.h>
 
 MBASE_BEGIN
 
@@ -48,7 +43,7 @@ MBASE_BEGIN
 
 static const U32 gProcessorMinimumTokenCount = 32;
 
-class InfClientTextToText;
+class InfClientBase;
 class InfProgram;
 
 class MBASE_API InfProcessorBase : public mbase::logical_processor {
@@ -80,7 +75,8 @@ public:
 
 	enum class processor_type : U8 {
 		TEXT_TO_TEXT,
-		EMBEDDER
+		EMBEDDER,
+		UNDEFINED
 	};
 
 	enum class finish_state {
@@ -102,6 +98,7 @@ public:
 
 	U32 get_context_size();
 	InfModelBase* get_processed_model();
+	InfClientBase* get_assigned_client();
 	U32 get_inactivity_threshold();
 	processor_signal& get_initialize_signal();
 	processor_signal& get_destroy_signal();
@@ -113,10 +110,14 @@ public:
 	GENERIC halt();
 	GENERIC resume();
 	GENERIC reset_base_signals();
+	virtual flags set_inference_client(InfClientBase* in_client);
+	GENERIC release_inference_client();
+	GENERIC release_inference_client_stacked();
 	virtual flags destroy();
 	virtual flags destroy_sync();
 
 protected:
+	InfClientBase* mAssignedClient;
 	InfModelBase* mTargetModel_md_model;
 	bool mIsRunning;
 	bool mIsRegistered;

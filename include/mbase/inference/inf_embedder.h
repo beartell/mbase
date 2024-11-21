@@ -29,11 +29,10 @@ public:
     bool signal_embedding_vector_generated() const;
     const U32& get_embedding_length();
     const U32& get_max_token_length();
-    InfClientTextToText* get_assigned_client();
 
     flags tokenize_input(CBYTEBUFFER in_data, size_type in_size, inf_text_token_vector& out_tokens);
     flags execute_input(const inf_text_token_vector& in_tokens, bool in_abandon = false);
-    flags set_inference_client(InfClientTextToText* in_client);
+    flags set_inference_client(InfClientBase* in_client);
     flags initialize(
         InfModelTextToText* in_model,
         const mbase::string& in_context_id,
@@ -50,8 +49,6 @@ public:
     );
     flags destroy() override;
     flags destroy_sync() override;
-    GENERIC release_inference_client();
-    GENERIC release_inference_client_stacked();
     GENERIC update() override;
     GENERIC update_t() override;
 
@@ -78,7 +75,6 @@ private:
     processor_signal mInitializeMethodSignal;
     processor_signal mDestroyMethodSignal;
     processor_signal mInitializeFailSignal;
-    InfClientTextToText* mAssignedClient;
     init_fail_code mInitFailCode;
 };
 

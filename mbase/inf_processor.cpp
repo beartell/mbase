@@ -1,39 +1,17 @@
 #include <mbase/inference/inf_processor.h>
 #include <mbase/inference/inf_client.h>
-#include <mbase/inference/inf_model.h>
 
 MBASE_BEGIN
 
-#define MBASE_INF_PROC_RETURN_UNREGISTERED \
-if(this->signal_state_initializing())\
-{\
-	return flags::INF_PROC_INFO_INITIALIZING;\
-}\
-if(!this->is_registered())\
-{\
-	return flags::INF_PROC_ERR_UNREGISTERED_PROCESSOR;\
-}\
-if (this->signal_state_destroying())\
-{\
-	return flags::INF_PROC_INFO_DESTROYING;\
-}
-
-#define MBASE_INF_PROC_RETURN_HALTED \
-if(!this->is_registered())\
-{\
-	return flags::INF_PROC_ERR_UNREGISTERED_PROCESSOR;\
-}\
-if(!this->is_running())\
-{\
-	return flags::INF_PROC_ERR_HALTED;\
-}
-
 InfProcessorBase::InfProcessorBase() :
+	mAssignedClient(NULL),
 	mTargetModel_md_model(NULL),
 	mIsRunning(false),
 	mIsRegistered(false),
+	mProcessorType(processor_type::UNDEFINED),
 	mContextLength(0),
-	mInactivityThreshold(0)
+	mInactivityThreshold(0),
+	mTargetWatcher(NULL)
 {
 }
 
@@ -80,6 +58,11 @@ U32 InfProcessorBase::get_context_size()
 InfModelBase* InfProcessorBase::get_processed_model()
 {
 	return mTargetModel_md_model;
+}
+
+InfClientBase* InfProcessorBase::get_assigned_client()
+{
+	return mAssignedClient;
 }
 
 U32 InfProcessorBase::get_inactivity_threshold()
@@ -139,6 +122,30 @@ GENERIC InfProcessorBase::reset_base_signals()
 {
 	mInitializeSignal.reset_signal_with_state();
 	mDestroySignal.reset_signal_with_state();
+}
+
+InfProcessorBase::flags InfProcessorBase::set_inference_client(InfClientBase* in_client)
+{
+	release_inference_client();
+
+	mAssignedClient = in_client;
+	mAssignedClient->on_register(this);
+
+	return flags::INF_PROC_SUCCESS;
+}
+
+GENERIC InfProcessorBase::release_inference_client()
+{
+	if(mAssignedClient)
+	{
+		mAssignedClient->on_unregister(this);
+		mAssignedClient = NULL;
+	}
+}
+
+GENERIC InfProcessorBase::release_inference_client_stacked()
+{
+	mAssignedClient = NULL;
 }
 
 InfProcessorBase::flags InfProcessorBase::destroy()

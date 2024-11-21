@@ -30,6 +30,7 @@ public:
 	using const_reverse_iterator = typename context_processor_list::const_reverse_iterator;
 
 	InfModelBase();
+	virtual ~InfModelBase();
 
 	iterator begin() noexcept;
 	iterator end() noexcept;
