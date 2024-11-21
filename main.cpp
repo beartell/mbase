@@ -136,7 +136,6 @@ public:
     }
 private:
     my_client myCl;
-    
 };
 
 class my_model : public mbase::InfModelTextToText {
@@ -164,14 +163,93 @@ int main(int argc, char** argv)
 {
     //mbase::tpool tp(8);
 
+    mbase::InfMaipUser maipUser;
+    maipUser.load_from_state_file("admin", L"./");
+    // maipUser.set_username("admin");
+    // maipUser.set_access_key("hasankere88");
+    // maipUser.set_assistant_prefix("As you can see: ");
+    // maipUser.set_batch_size(512);
+    // maipUser.set_distinct_model_access_limit(10);
+    // maipUser.set_maximum_context_length(4096);
+    // maipUser.set_processor_max_thread_count(16);
+    // maipUser.set_processor_thread_count(16);
+    // maipUser.set_system_prompt("You are a helpful assistant");
+    
+    // mbase::inf_sampling_set samplingSet;
+    
+    // mbase::InfSamplerDescription topKSampling;
+    // mbase::InfSamplerDescription topPSampling;
+    // mbase::InfSamplerDescription minPSampling;
+    // mbase::InfSamplerDescription tempSampling;
+    // mbase::InfSamplerDescription mirov2;
 
-    my_model sampleModel;
-    sampleModel.initialize_model(L"./Llama-3.2-1B-Instruct-Q4_K_M.gguf", 36000, 999);
+    // topKSampling.mSamplerType = mbase::InfSamplerDescription::SAMPLER::TOP_K;
+    // topKSampling.mTopK = 40;
 
-    while(1)
+    // topPSampling.mSamplerType = mbase::InfSamplerDescription::SAMPLER::TOP_P;
+    // topPSampling.mTopP = 0.9;
+
+    // minPSampling.mSamplerType = mbase::InfSamplerDescription::SAMPLER::MIN_P;
+    // minPSampling.mMinP = 0.1;
+
+    // tempSampling.mSamplerType = mbase::InfSamplerDescription::SAMPLER::TEMP;
+    // tempSampling.mTemp = 0.1;
+
+    // mirov2.mSamplerType = mbase::InfSamplerDescription::SAMPLER::MIROSTAT_V2;
+    // mirov2.mMiroV2.mTau = 1.0;
+    // mirov2.mMiroV2.mEta = 0.01;
+
+    // maipUser.set_sampling_set({
+    //     topKSampling,
+    //     topPSampling,
+    //     minPSampling,
+    //     tempSampling,
+    //     mirov2
+    // });
+
+    // maipUser.update_state_file(L"./");
+
+    std::cout << "Username: " << maipUser.get_username() << std::endl;
+    std::cout << "Access token: " << maipUser.get_access_key() << std::endl;
+    std::cout << "Assistant prefix: " << maipUser.get_assistant_prefix() << std::endl;
+    std::cout << "Batch size: " << maipUser.get_batch_size() << std::endl;
+    std::cout << "Distinct model access limit: " << maipUser.get_model_access_limit() << std::endl;
+    std::cout << "Maximum context length: " << maipUser.get_maximum_context_length() << std::endl;
+    std::cout << "Processor max thread count: " << maipUser.get_processor_max_thread_count() << std::endl;
+    std::cout << "Processor thread count: " << maipUser.get_processor_thread_count() << std::endl;
+    std::cout << "System prompt: " << maipUser.get_system_prompt() << std::endl;
+
+    for(auto& n : maipUser.get_sampling_set())
     {
-        sampleModel.update();
+        if(n.mSamplerType == mbase::InfSamplerDescription::SAMPLER::TOP_K)
+        {
+            std::cout << "- top_k:";
+            std::cout << n.mTopK << std::endl;
+        }
+        else if(n.mSamplerType == mbase::InfSamplerDescription::SAMPLER::TOP_P)
+        {
+            std::cout << "- top_p:";
+            std::cout << n.mTopP << std::endl;
+        }
+        else if(n.mSamplerType == mbase::InfSamplerDescription::SAMPLER::MIN_P)
+        {
+            std::cout << "- min_p:";
+            std::cout << n.mMinP << std::endl;
+        }
+        else if(n.mSamplerType == mbase::InfSamplerDescription::SAMPLER::TEMP)
+        {
+            std::cout << "- tempv1:";
+            std::cout << n.mTemp << std::endl;
+        }
     }
+
+    // my_model sampleModel;
+    // sampleModel.initialize_model(L"./Llama-3.2-1B-Instruct-Q4_K_M.gguf", 36000, 999);
+
+    // while(1)
+    // {
+    //     sampleModel.update();
+    // }
     
     // InfProgram ifp;
     // InfMaipDefaultServer IDS(ifp);

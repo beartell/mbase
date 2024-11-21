@@ -527,7 +527,7 @@ InfProgram::maip_err_code InfProgram::inf_create_context(const mbase::string& in
 			clientSession.mMaipUser.get_batch_size(),
 			clientSession.mMaipUser.get_processor_thread_count(),
 			true,
-			{}
+			clientSession.mMaipUser.get_sampling_set()
 		); // 100% SUCCESS
 	}
 	return maip_err_code::INF_SUCCESS;

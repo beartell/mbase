@@ -202,6 +202,7 @@ GENERIC InfMaipUser::load_from_state_file(const mbase::string& in_object_name, c
 	userState.initialize(in_object_name, in_state_path);
 
 	mbase::vector<mbase::string> tmpVectorizedSet;
+	mbase::vector<mbase::string> tmpSamplerList;
 
 	userState.get_state("authority_flags", mAuthorityFlags);
 	userState.get_state("model_access_limit", mDistinctModelAccessLimit);
@@ -215,9 +216,69 @@ GENERIC InfMaipUser::load_from_state_file(const mbase::string& in_object_name, c
 	userState.get_state("system_prompt", mSystemPrompt);
 	userState.get_state("is_super", mIsSuperUser);
 	userState.get_state("is_static", mIsStatic);
+	userState.get_state("sampler_list", tmpSamplerList);
 
 	mAccessibleModels.insert(tmpVectorizedSet.begin(), tmpVectorizedSet.end());
 
+	for(auto& samplerString : tmpSamplerList)
+	{
+		InfSamplerDescription samplerDescription;
+		if(samplerString == "repetition")
+		{
+			samplerDescription.mSamplerType = InfSamplerDescription::SAMPLER::REPETITION;
+			userState.get_state<U32>("repeat_n", samplerDescription.mRepetition.mPenaltyN);
+			userState.get_state<F32>("repeat_penalty", samplerDescription.mRepetition.mRepeatPenalty);
+			userState.get_state<F32>("repeat_frequency", samplerDescription.mRepetition.mPenaltyFrequency);
+			userState.get_state<F32>("repeat_present", samplerDescription.mRepetition.mPenaltyPresent);
+			userState.get_state<bool>("repeat_lf", samplerDescription.mRepetition.mPenaltyLinefeed);
+			userState.get_state<bool>("repear_eos", samplerDescription.mRepetition.mPenaltyEos);
+			mSamplingSet.insert(samplerDescription);
+		}
+
+		else if(samplerString == "top_k")
+		{
+			
+			samplerDescription.mSamplerType = InfSamplerDescription::SAMPLER::TOP_K;
+			userState.get_state<U32>("top_k", samplerDescription.mTopK);
+			mSamplingSet.insert(samplerDescription);
+		}
+		
+		else if(samplerString == "top_p")
+		{
+			samplerDescription.mSamplerType = InfSamplerDescription::SAMPLER::TOP_P;
+			userState.get_state<F32>("top_p", samplerDescription.mTopP);
+			mSamplingSet.insert(samplerDescription);
+		}
+		
+		else if(samplerString == "min_p")
+		{
+			samplerDescription.mSamplerType = InfSamplerDescription::SAMPLER::MIN_P;
+			userState.get_state<F32>("min_p", samplerDescription.mMinP);
+			mSamplingSet.insert(samplerDescription);
+		}
+
+		else if(samplerString == "typical_p")
+		{
+			samplerDescription.mSamplerType = InfSamplerDescription::SAMPLER::TYPICAL_P;
+			userState.get_state<F32>("typical_p", samplerDescription.mTypicalP);
+			mSamplingSet.insert(samplerDescription);
+		}
+
+		else if(samplerString == "tempv1")
+		{
+			samplerDescription.mSamplerType = InfSamplerDescription::SAMPLER::TEMP;
+			userState.get_state<F32>("tempv1", samplerDescription.mTemp);
+			mSamplingSet.insert(samplerDescription);
+		}
+
+		else if(samplerString == "mirostat_v2")
+		{
+			samplerDescription.mSamplerType = InfSamplerDescription::SAMPLER::MIROSTAT_V2;
+			userState.get_state<F32>("mv2_tau", samplerDescription.mMiroV2.mTau);
+			userState.get_state<F32>("mv2_eta", samplerDescription.mMiroV2.mEta);
+			mSamplingSet.insert(samplerDescription);
+		}
+	}
 	// TODO, DO FOR THE SAMPLING SET TOO
 }
 
@@ -246,7 +307,68 @@ GENERIC InfMaipUser::update_state_file(const mbase::wstring& in_state_path)
 	/* userState.set_state<inf_sampling_set>("sampling_set", get_sampling_set()); // Fix this thing */
 	userState.set_state("is_super", is_superuser());
 	userState.set_state("is_static", is_static());
-	 
+
+	mbase::vector<mbase::string> tmpSamplerList;
+	for(auto& samplerDescription : get_sampling_set())
+	{
+		// The codes here is terrible.
+		// However, we need a precise and fast solution,
+		// thing about optimization later...
+
+		// !!!! NOTE: DRY and XTC Samplers are not included here !!!!
+
+		// Sampler names are:
+		// - repetition
+		// - top_k
+		// - top_p
+		// - min_p
+		// - typical_p
+		// - tempv1
+		// - mirostat_v2
+
+		if(samplerDescription.mSamplerType == InfSamplerDescription::SAMPLER::REPETITION)
+		{
+			tmpSamplerList.push_back("repetition");
+			userState.set_state<U32>("repeat_n", samplerDescription.mRepetition.mPenaltyN);
+			userState.set_state<F32>("repeat_penalty", samplerDescription.mRepetition.mRepeatPenalty);
+			userState.set_state<F32>("repeat_frequency", samplerDescription.mRepetition.mPenaltyFrequency);
+			userState.set_state<F32>("repeat_present", samplerDescription.mRepetition.mPenaltyPresent);
+			userState.set_state<bool>("repeat_lf", samplerDescription.mRepetition.mPenaltyLinefeed);
+			userState.set_state<bool>("repear_eos", samplerDescription.mRepetition.mPenaltyEos);
+		}
+		else if(samplerDescription.mSamplerType == InfSamplerDescription::SAMPLER::TOP_K)
+		{
+			tmpSamplerList.push_back("top_k");
+			userState.set_state<U32>("top_k", samplerDescription.mTopK);
+		}
+		else if(samplerDescription.mSamplerType == InfSamplerDescription::SAMPLER::TOP_P)
+		{
+			tmpSamplerList.push_back("top_p");
+			userState.set_state<F32>("top_p", samplerDescription.mTopP);
+		}
+		else if(samplerDescription.mSamplerType == InfSamplerDescription::SAMPLER::MIN_P)
+		{
+			tmpSamplerList.push_back("min_p");
+			userState.set_state<F32>("min_p", samplerDescription.mMinP);
+		}
+		else if(samplerDescription.mSamplerType == InfSamplerDescription::SAMPLER::TYPICAL_P)
+		{
+			tmpSamplerList.push_back("typical_p");
+			userState.set_state<F32>("typical_p", samplerDescription.mTypicalP);
+		}
+		else if(samplerDescription.mSamplerType == InfSamplerDescription::SAMPLER::TEMP)
+		{
+			tmpSamplerList.push_back("tempv1");
+			userState.set_state<F32>("tempv1", samplerDescription.mTemp);
+		}
+		else if(samplerDescription.mSamplerType == InfSamplerDescription::SAMPLER::MIROSTAT_V2)
+		{
+			tmpSamplerList.push_back("mirostat_v2");
+			userState.set_state<F32>("mv2_tau", samplerDescription.mMiroV2.mTau);
+			userState.set_state<F32>("mv2_eta", samplerDescription.mMiroV2.mEta);
+		}
+	}
+	userState.set_state("sampler_list", tmpSamplerList);
 	userState.update();
 }
 
