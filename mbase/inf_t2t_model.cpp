@@ -63,11 +63,6 @@ InfModelTextToText::~InfModelTextToText()
 	}
 }
 
-bool InfModelTextToText::is_initialize_failed() const
-{
-	return mIsInitFailed;
-}
-
 bool InfModelTextToText::is_available(const U32& in_context_size) const
 {
 	if (this->signal_state_initializing())
@@ -528,10 +523,6 @@ InfModelTextToText::flags InfModelTextToText::register_context_process
 	in_processor->acquire_object_watcher(&newWatcher);
 	mProcessorListMutex.release();
 	return flags::INF_MODEL_INFO_REGISTERING_PROCESSOR;
-}
-
-GENERIC InfModelTextToText::on_initialize_fail(init_fail_code out_fail_code)
-{
 }
 
 GENERIC InfModelTextToText::_initialize_model()

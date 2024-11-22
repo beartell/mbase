@@ -1,7 +1,7 @@
 #include <mbase/inference/inf_program.h>
 #include <mbase/inference/inf_t2t_model.h>
 #include <mbase/inference/inf_embedder.h>
-#include <mbase/inference/inf_gguf_metadata_configurator.h>
+#include <mbase/inference/inf_maip_peer_t2t.h>
 #include <mbase/maip_parser.h>
 #include <mbase/pc/pc_state.h>
 #include <mbase/filesystem.h>
@@ -16,7 +16,7 @@ if(!this->is_session_token_valid(in_session_token))\
 {\
 	return maip_err_code::INF_SESSION_TOKEN_MISMATCH;\
 }\
-InfClientSession& clientSession = mSessionMap[in_session_token];
+InfMaipPeerBase* clientSession = mSessionMap[in_session_token];
 
 #define MBASE_DESC_MODIF_CONTROL \
 maip_err_code result = common_description_modification_control(clientSession, in_model_target);\
@@ -25,327 +25,34 @@ if(result != maip_err_code::INF_SUCCESS)\
 	return result;\
 }
 
-class InfMaipModel : public mbase::InfModelTextToText {
+InfMaipModelBase::InfMaipModelBase(InfProgram* in_program, const mbase::string& in_model_name):
+	mProgramInstance(in_program),
+	mDefinedModelName(in_model_name)
+{
+}
+
+InfMaipModelBase::~InfMaipModelBase(){}
+
+class MBASE_API InfMaipModelTextToText : public InfMaipModelBase, public InfModelTextToText {
 public:
-	InfMaipModel(const mbase::string& in_as_name, InfProgram& in_program);
 	GENERIC on_initialize_fail(init_fail_code out_fail_code) override;
 	GENERIC on_initialize() override;
 	GENERIC on_destroy() override;
-private:
-	mbase::string mAsName;
-	InfProgram* mAssignedProgram;
 };
 
-InfMaipModel::InfMaipModel(const mbase::string& in_as_name, InfProgram& in_program) :
-	mAsName(in_as_name),
-	mAssignedProgram(&in_program)
+GENERIC InfMaipModelTextToText::on_initialize_fail(init_fail_code out_fail_code)
 {
-
+	mProgramInstance->remove_loading_model(mDefinedModelName);
 }
 
-GENERIC InfMaipModel::on_initialize_fail(init_fail_code out_fail_code)
+GENERIC InfMaipModelTextToText::on_initialize()
 {
-	// TODO: Send error response to MAIP client
-	mAssignedProgram->get_registered_models().erase(mAsName);
+	mProgramInstance->set_registered_model(this, mDefinedModelName);
 }
 
-GENERIC InfMaipModel::on_initialize()
+GENERIC InfMaipModelTextToText::on_destroy()
 {
-
-}
-
-GENERIC InfMaipModel::on_destroy()
-{
-	std::cout << "Model is being destroyed" << std::endl;
-	delete this;
-}
-
-InfMaipTunedT2TProcessor::InfMaipTunedT2TProcessor(InfClientSession& in_client, InfProgram* in_program_instance)
-{
-	mProgramInstance = in_program_instance;
-    mManagerClient = &in_client;
-}
-
-GENERIC InfMaipTunedT2TProcessor::on_initialize()
-{
-    mProcessorClient.set_session(*mManagerClient);
-	set_inference_client(&mProcessorClient);
-}
-
-GENERIC InfMaipTunedT2TProcessor::on_initialize_fail(last_fail_code out_code)
-{
-	mbase::maip_packet_builder tmpPacketBuilder;
-	mbase::string outPayload;
-
-	if(out_code == last_fail_code::NOT_ENOUGH_MEMORY)
-	{
-		tmpPacketBuilder.set_response_message((U16)InfProgram::maip_err_code::INF_NOT_ENOUGH_MEMORY);
-	}
-	else
-	{
-		tmpPacketBuilder.set_response_message((U16)InfProgram::maip_err_code::INF_MODEL_IS_NOT_ACCESSIBLE);
-	}
-	tmpPacketBuilder.generate_payload(outPayload);
-	mManagerClient->mPeer->write_data(outPayload.c_str(), outPayload.size());
-	mManagerClient->mPeer->send_write_signal();
-	mManagerClient->mPeer->send_read_signal();
-
-	mProgramInstance->push_dead_processor(*this);
-}
-
-GENERIC InfMaipTunedT2TProcessor::on_destroy()
-{
-    // If this guy is called,
-    // It means that the model it belongs to is being destroyed 
-
-	mbase::maip_packet_builder tmpPacketBuilder;
-	mbase::string outPayload;
-	tmpPacketBuilder.set_response_message((U16)InfProgram::maip_err_code::EXEC_ABANDONED);
-	tmpPacketBuilder.generate_payload(outPayload);
-	mManagerClient->mPeer->write_data(outPayload.c_str(), outPayload.size());
-	mManagerClient->mPeer->send_write_signal();
-	mManagerClient->mPeer->send_read_signal();
 	
-	mProgramInstance->push_dead_processor(*this);
-}
-
-InfMaipTunedEmbedderProcessor::InfMaipTunedEmbedderProcessor(InfClientSession& in_client, InfProgram* in_program_instance)
-{
-	mProgramInstance = in_program_instance;
-    mManagerClient = &in_client;    
-}
-
-GENERIC InfMaipTunedEmbedderProcessor::on_initialize_fail(init_fail_code out_code)
-{
-    mbase::maip_packet_builder tmpPacketBuilder;
-	mbase::string outPayload;
-
-    if(out_code == init_fail_code::NOT_ENOUGH_MEMORY)
-	{
-		tmpPacketBuilder.set_response_message((U16)InfProgram::maip_err_code::INF_NOT_ENOUGH_MEMORY);
-	}
-	else
-	{
-		tmpPacketBuilder.set_response_message((U16)InfProgram::maip_err_code::INF_MODEL_IS_NOT_ACCESSIBLE);
-	}
-
-	tmpPacketBuilder.generate_payload(outPayload);
-	mManagerClient->mPeer->write_data(outPayload.c_str(), outPayload.size());
-	mManagerClient->mPeer->send_write_signal();
-	mManagerClient->mPeer->send_read_signal();
-
-	mProgramInstance->push_dead_processor(*this);
-}
-
-GENERIC InfMaipTunedEmbedderProcessor::on_initialize()
-{   
-    mProcessorClient.set_session(*mManagerClient);
-	set_inference_client(&mProcessorClient);
-}
-
-GENERIC InfMaipTunedEmbedderProcessor::on_destroy()
-{
-    mbase::maip_packet_builder tmpPacketBuilder;
-	mbase::string outPayload;
-	tmpPacketBuilder.set_response_message((U16)InfProgram::maip_err_code::EXEC_ABANDONED);
-	tmpPacketBuilder.generate_payload(outPayload);
-	mManagerClient->mPeer->write_data(outPayload.c_str(), outPayload.size());
-	mManagerClient->mPeer->send_write_signal();
-	mManagerClient->mPeer->send_read_signal();
-
-	mProgramInstance->push_dead_processor(*this);
-}
-
-InfMaipTunedClient::InfMaipTunedClient() : lastToken(), mManagerClient(NULL), mCurrentContextIndex(0)
-{
-}
-
-GENERIC InfMaipTunedClient::set_session(InfClientSession& in_session)
-{
-    mManagerClient = &in_session;
-}
-
-GENERIC InfMaipTunedClient::set_embedder_message_queue(mbase::vector<U32>& in_msg_ids)
-{
-    while(mEmbeddingMessageIndexes.size())
-    {
-        // Empty the embedding message index queue
-        mEmbeddingMessageIndexes.pop();
-    }
-
-    for(mbase::vector<U32>::iterator It = in_msg_ids.begin(); It != in_msg_ids.end(); ++It)
-    {
-        mEmbeddingMessageIndexes.push(*It);
-    }
-}
-
-bool InfMaipTunedClient::proc_next_embedding()
-{
-    if(!mEmbeddingMessageIndexes.size())
-    {
-        return false;
-    }
-
-    
-
-    InfEmbedderProcessor* embedProc = static_cast<InfEmbedderProcessor*>(get_host_processor());
-    mbase::context_line cl;
-    get_message(mEmbeddingMessageIndexes.front(), cl);
-
-    mEmbeddingMessageIndexes.pop();
-
-    inf_text_token_vector tokVec;
-    embedProc->tokenize_input(cl.mMessage.c_str(), cl.mMessage.size(), tokVec);
-    embedProc->execute_input(tokVec, true);
-
-    return true;
-}
-
-GENERIC InfMaipTunedClient::on_register(InfProcessorBase* out_processor)
-{
-    mManagerClient->mChatSessions[mManagerClient->mContextCounter] = out_processor;
-    mManagerClient->mContextCounter++;
-
-    mbase::maip_packet_builder tmpPacketBuilder;
-	mbase::string outPayload;
-	tmpPacketBuilder.set_response_message((U16)InfProgram::maip_err_code::INF_SUCCESS);
-	tmpPacketBuilder.set_kval("CTXID", mManagerClient->mContextCounter - 1);
-	tmpPacketBuilder.generate_payload(outPayload);
-	mManagerClient->mPeer->write_data(outPayload.c_str(), outPayload.size());
-	mManagerClient->mPeer->send_write_signal();
-	mManagerClient->mPeer->send_read_signal();
-}
-
-GENERIC InfMaipTunedClient::on_embedding_data(const F32* out_data, size_type out_size)
-{
-    mbase::string totalEmbeddingString;
-    for(size_type i = 0; i < out_size; i++)
-    {
-        totalEmbeddingString += mbase::string::from_format("%f;", out_data[i]);
-    }
-
-    if(totalEmbeddingString.size())
-    {
-        totalEmbeddingString.pop_back(); // Remove the last semicolon
-    }
-    
-    mbase::maip_packet_builder tmpPacketBuilder;
-    tmpPacketBuilder.set_response_message((U16)InfProgram::maip_err_code::EXEC_MESSAGE_FINISH);
-    if(mEmbeddingMessageIndexes.size())
-    {
-        // There are still messages in the embedding message list
-        tmpPacketBuilder.set_response_message((U16)InfProgram::maip_err_code::EXEC_MESSAGE_CONTINUE);
-    }
-
-    mbase::string outPayload;
-    tmpPacketBuilder.generate_payload(outPayload, totalEmbeddingString);
-    mManagerClient->mPeer->write_data(outPayload.c_str(), outPayload.size());
-	mManagerClient->mPeer->send_write_signal();
-	mManagerClient->mPeer->send_read_signal();
-}
-
-GENERIC InfMaipTunedClient::on_write(const inf_text_token_vector& out_token, bool out_is_finish)
-{	
-	InfTextToTextProcessor* hostProcessor = static_cast<InfTextToTextProcessor*>(get_host_processor());
-	inf_token_description tokenDesc;
-	hostProcessor->token_to_description(out_token[0], tokenDesc);
-	
-	mbase::maip_packet_builder tmpPacketBuilder;
-	
-	if(!out_is_finish)
-	{
-		tmpPacketBuilder.set_response_message((U16)InfProgram::maip_err_code::EXEC_MESSAGE_CONTINUE);
-	}
-
-	else
-	{
-		// on_finish will be called
-		lastToken = tokenDesc;
-		return;
-	}
-
-	mbase::string outPayload;
-
-	if(tokenDesc.mIsSpecial)
-	{
-		tmpPacketBuilder.set_kval("SPECIAL", 1);
-	}
-
-	else
-	{
-		tmpPacketBuilder.set_kval("SPECIAL", 0);
-	}
-
-	if(tokenDesc.mTokenString.size())
-	{
-		tmpPacketBuilder.generate_payload(outPayload, tokenDesc.mTokenString);
-	}
-
-	else
-	{
-		tmpPacketBuilder.generate_payload(outPayload);
-	}
-
-	mManagerClient->mPeer->write_data(outPayload.c_str(), outPayload.size());
-	mManagerClient->mPeer->send_write_signal();
-	mManagerClient->mPeer->send_read_signal();
-}
-
-GENERIC InfMaipTunedClient::on_finish(size_type out_total_token_size, InfTextToTextProcessor::finish_state out_finish_state)
-{
-	mbase::maip_packet_builder tmpPacketBuilder;
-	if(out_finish_state == InfTextToTextProcessor::finish_state::FINISHED)
-	{
-		tmpPacketBuilder.set_kval("TOKCOUNT", out_total_token_size);
-		tmpPacketBuilder.set_response_message((U16)InfProgram::maip_err_code::EXEC_MESSAGE_FINISH);
-	}
-
-	else if(out_finish_state == InfTextToTextProcessor::finish_state::TOKEN_LIMIT_REACHED)
-	{
-		InfProcessorBase* hostProcessor = get_host_processor();
-        InfTextToTextProcessor* t2tProc = static_cast<InfTextToTextProcessor*>(hostProcessor);
-		tmpPacketBuilder.set_kval("MAXTOK", t2tProc->get_max_token_length());
-		tmpPacketBuilder.set_kval("TOKCOUNT", out_total_token_size);
-		tmpPacketBuilder.set_response_message((U16)InfProgram::maip_err_code::EXEC_TOKEN_LIMIT_EXCEEDED);
-	}
-
-	else if(out_finish_state == InfTextToTextProcessor::finish_state::ABANDONED)
-	{
-		tmpPacketBuilder.set_kval("TOKCOUNT", out_total_token_size);
-		tmpPacketBuilder.set_response_message((U16)InfProgram::maip_err_code::EXEC_ABANDONED);
-	}
-
-	mbase::string outPayload;
-
-	if(lastToken.mTokenString.size())
-	{
-		tmpPacketBuilder.generate_payload(outPayload, lastToken.mTokenString);
-	}
-
-	else
-	{
-		tmpPacketBuilder.generate_payload(outPayload);
-	}
-
-	mManagerClient->mPeer->write_data(outPayload.c_str(), outPayload.size());
-	mManagerClient->mPeer->send_write_signal();
-	mManagerClient->mPeer->send_read_signal();
-}
-
-GENERIC InfMaipTunedClient::on_unregister() 
-{
-}
-
-InfClientSession::~InfClientSession()
-{
-	for(chat_session_map::iterator It = mChatSessions.begin(); It != mChatSessions.end(); ++It)
-	{
-		InfProcessorBase* tProc = It->second;
-		if(tProc)
-		{
-			delete tProc;
-		}
-	}
 }
 
 bool InfProgram::is_session_token_valid(const mbase::string& in_session_token)
@@ -369,7 +76,7 @@ typename InfProgram::registered_model_map& InfProgram::get_registered_models()
 	return mRegisteredModels;
 }
 
-InfProgram::maip_err_code InfProgram::inf_access_request(const mbase::string& in_username, const mbase::string& in_access_token, std::shared_ptr<PcNetPeerClient> in_client, mbase::string& out_session_token)
+InfProgram::maip_err_code InfProgram::inf_access_request(const mbase::string& in_username, const mbase::string& in_access_token, std::shared_ptr<PcNetPeerClient> in_client, const mbase::string& in_category, mbase::string& out_session_token)
 {
 	// === Writing behavior of the method verbally to detect bugs or problems === 
 	// *** inf_access_request ***
@@ -391,10 +98,15 @@ InfProgram::maip_err_code InfProgram::inf_access_request(const mbase::string& in
 	if(maipUser.get_access_key() == in_access_token)
 	{
 		out_session_token = mbase::string::generate_uuid();
-		InfClientSession newClientSession;
-		newClientSession.mMaipUser = maipUser;
-		newClientSession.mPeer = in_client;
-		mSessionMap[out_session_token] = newClientSession;
+		if(in_category == "T2T")
+		{
+			mSessionMap[out_session_token] = new InfMaipPeerTextToText(in_client, maipUser.get_username());
+		}
+		else
+		{
+			// undefined category
+			return maip_err_code::INF_UNDEFINED_CATEGORY;
+		}
 
 		return maip_err_code::INF_SUCCESS;
 	}
@@ -414,8 +126,9 @@ InfProgram::maip_err_code InfProgram::inf_destroy_session(const mbase::string& i
 
 	if(this->is_session_token_valid(in_session_token))
 	{
-		// It will destroy context in its destructor
-		mSessionMap.erase(in_session_token);
+		accepted_client_map::iterator It = mSessionMap.find(in_session_token);
+		delete It->second;
+		mSessionMap.erase(It);
 	}
 	return maip_err_code::INF_SUCCESS;
 }
@@ -429,8 +142,7 @@ InfProgram::maip_err_code InfProgram::inf_get_accessible_models(const mbase::str
 	// 1- Get accessible models set and push it to the out models vector
 	
 	// CHECK NOTE: DO NOT NEED TO CHECK ANYMORE, IT WORKS AS INTENDED
-
-	const InfMaipUser::model_name_set& accModels = clientSession.mMaipUser.get_accessible_models();
+	const InfMaipUser::model_name_set& accModels = mUserMap[clientSession->get_maip_username()].get_accessible_models();
 	for(auto& n : accModels)
 	{
 		out_models.push_back(n);
@@ -448,11 +160,7 @@ InfProgram::maip_err_code InfProgram::inf_get_context_ids(const mbase::string& i
 	
 	// CHECK NOTE: DO NOT NEED TO CHECK ANYMORE, IT WORKS AS INTENDED
 
-	for(auto& n : clientSession.mChatSessions)
-	{
-		out_contexts.push_back(n.first);
-	}
-
+	out_contexts = clientSession->get_processor_ids();
 	return maip_err_code::INF_SUCCESS;
 }
 
@@ -476,8 +184,8 @@ InfProgram::maip_err_code InfProgram::inf_create_context(const mbase::string& in
 	// 12- If the model is not embedding model, create and register T2T processor
 
 	// CHECK NOTE: CHECK THE handlers on_initialize and on_initialize_fail then come back here again.
-
-	if(!clientSession.mMaipUser.is_model_accessible(in_model))
+	InfMaipUser& sessionMaip = mUserMap[clientSession->get_maip_username()];
+	if(!sessionMaip.is_model_accessible(in_model))
 	{
 		return maip_err_code::INF_MODEL_IS_NOT_ACCESSIBLE;
 	}
@@ -487,49 +195,61 @@ InfProgram::maip_err_code InfProgram::inf_create_context(const mbase::string& in
 		return maip_err_code::INF_INVALID_TOKEN_LIMIT;
 	}
 
-	registered_model_map::iterator It = mRegisteredModels.find(in_model);
-	if(It == mRegisteredModels.end())
+	model_description_map::iterator It = mModelDescriptionMap.find(in_model);
+	if(It == mModelDescriptionMap.end())
 	{
 		return maip_err_code::INF_MODEL_NAME_MISMATCH;
 	}
+	
+	if(It->second.get_category_string() != clientSession->get_peer_category())
+	{
+		return maip_err_code::INF_CATEGORY_MISMATCH;
+	}
 
-	if(in_ctsize > clientSession.mMaipUser.get_maximum_context_length())
+	registered_model_map::iterator It2 = mRegisteredModels.find(in_model);
+
+	if(It2 == mRegisteredModels.end())
+	{
+		return maip_err_code::INF_MODEL_NOT_LOADED;
+	}
+
+	if(in_ctsize > sessionMaip.get_maximum_context_length())
 	{
 		return maip_err_code::INF_USER_CONTEXT_LENGTH_EXCEEDED;
 	}
 
-	InfModelTextToText* t2tModel = It->second;
-	if(!t2tModel->is_available(in_ctsize))
-	{
-		return maip_err_code::INF_MODEL_CONTEXT_FULL;
-	}
+	// InfModelTextToText* t2tModel = It->second;
+	// if(!t2tModel->is_available(in_ctsize))
+	// {
+	// 	return maip_err_code::INF_MODEL_CONTEXT_FULL;
+	// }
 
-	// means the model is available
-	// we can create the context
-    clientSession.mPeer = in_peer;
+	// // means the model is available
+	// // we can create the context
+    // clientSession.mPeer = in_peer;
 
-	if(t2tModel->is_embedding_model())
-	{
-		InfMaipTunedEmbedderProcessor* maipEmbedderContext = new InfMaipTunedEmbedderProcessor(clientSession, this);
-		t2tModel->register_context_process(
-			maipEmbedderContext,
-			in_ctsize,
-			clientSession.mMaipUser.get_batch_size(),
-			clientSession.mMaipUser.get_processor_thread_count()
-		); // 100% SUCCESS
-	}
-	else
-	{
-		InfMaipTunedT2TProcessor* maipT2tContext = new InfMaipTunedT2TProcessor(clientSession, this);
-		t2tModel->register_context_process(
-			maipT2tContext,
-			in_ctsize,
-			clientSession.mMaipUser.get_batch_size(),
-			clientSession.mMaipUser.get_processor_thread_count(),
-			true,
-			clientSession.mMaipUser.get_sampling_set()
-		); // 100% SUCCESS
-	}
+	// if(t2tModel->is_embedding_model())
+	// {
+	// 	InfMaipTunedEmbedderProcessor* maipEmbedderContext = new InfMaipTunedEmbedderProcessor(clientSession, this);
+	// 	t2tModel->register_context_process(
+	// 		maipEmbedderContext,
+	// 		in_ctsize,
+	// 		clientSession.mMaipUser.get_batch_size(),
+	// 		clientSession.mMaipUser.get_processor_thread_count()
+	// 	); // 100% SUCCESS
+	// }
+	// else
+	// {
+	// 	InfMaipTunedT2TProcessor* maipT2tContext = new InfMaipTunedT2TProcessor(clientSession, this);
+	// 	t2tModel->register_context_process(
+	// 		maipT2tContext,
+	// 		in_ctsize,
+	// 		clientSession.mMaipUser.get_batch_size(),
+	// 		clientSession.mMaipUser.get_processor_thread_count(),
+	// 		true,
+	// 		clientSession.mMaipUser.get_sampling_set()
+	// 	); // 100% SUCCESS
+	// }
 	return maip_err_code::INF_SUCCESS;
 }
 
@@ -537,16 +257,11 @@ InfProgram::maip_err_code InfProgram::inf_clear_context_history(const mbase::str
 {
 	MBASE_SESSION_CONTROL;
 	
-	InfClientSession::chat_session_map::iterator It = clientSession.mChatSessions.find(in_ctxId);
-	if(It != clientSession.mChatSessions.end())
+	if(clientSession->get_peer_category() == "T2T")
 	{
-		// TODO: Implement
+		InfMaipPeerTextToText* peerT2t = static_cast<InfMaipPeerTextToText*>(clientSession);
+		peerT2t->clear_chat_history();
 	}
-	// if(It != clientSession.mChatSessions.end())
-	// {
-	// 	It->second->clear_chat_history();
-	// }
-
 	return maip_err_code::INF_SUCCESS;
 }
 
@@ -594,16 +309,11 @@ InfProgram::maip_err_code InfProgram::inf_destroy_context(const mbase::string& i
 	// 4- Erase that context id from chat_session_map
 
 	// CHECK NOTE: DO NOT NEED TO CHECK ANYMORE, IT WORKS AS INTENDED
-
-	InfClientSession::chat_session_map::iterator It = clientSession.mChatSessions.find(in_ctxId);
-	if (It == clientSession.mChatSessions.end())
+	InfProcessorBase* procBase = clientSession->get_processor_by_id(in_ctxId);
+	if(procBase)
 	{
-		return maip_err_code::INF_CONTEXT_ID_MISMATCH;
+		procBase->destroy();
 	}
-	
-	delete It->second;
-    clientSession.mChatSessions.erase(in_ctxId);
-
 	return maip_err_code::INF_SUCCESS;
 }
 
@@ -635,8 +345,8 @@ InfProgram::maip_err_code InfProgram::inf_load_model(const mbase::string& in_ses
 	// 6- If the given model name is not found in the model description map, return INF_MODEL_NAME_MISMATCH(2004)
 
 	// CHECK NOTE: This method must own the client socket, implement that and come back here again
-
-	if(!clientSession.mMaipUser.is_flags_set(MAIP_MODEL_LOAD_UNLOAD))
+	InfMaipUser& sessionMaip = mUserMap[clientSession->get_maip_username()];
+	if(!sessionMaip.is_flags_set(MAIP_MODEL_LOAD_UNLOAD))
 	{
 		return maip_err_code::INF_AUTHORIZATION_FAILED;
 	}
@@ -654,6 +364,14 @@ InfProgram::maip_err_code InfProgram::inf_load_model(const mbase::string& in_ses
 		}
 	}
 
+	for(auto& n : mLoadingModels)
+	{
+		if(n == in_modelname)
+		{
+			return maip_err_code::INF_LOADING_MODEL;
+		}
+	}
+
 	for(auto& n : mModelDescriptionMap)
 	{
 		if(n.first == in_modelname)
@@ -665,10 +383,15 @@ InfProgram::maip_err_code InfProgram::inf_load_model(const mbase::string& in_ses
 
 			mbase::wstring modelFileTotal = mModelDirectory + mbase::from_utf8(n.second.get_model_file());
 
+			if(n.second.get_category_value() == InfMaipModelDescription::CATEGORY::TEXT_TO_TEXT)
+			{
+
+			}
+
 			InfMaipModel* newModel = new InfMaipModel(n.second.get_custom_name(), *this);
 			newModel->initialize_model(modelFileTotal, in_total_context_size, 999);
 			mRegisteredModels[n.second.get_custom_name()] = newModel;
-			return maip_err_code::INF_SUCCESS;
+			return maip_err_code::INF_LOADING_MODEL;
 		}
 	}
 
@@ -1730,6 +1453,11 @@ GENERIC InfProgram::initialize(InfProgramInformation in_program_information)
 	_reload_model_descriptions();
 }
 
+bool InfProgram::is_maip_user_valid(InfMaipPeerBase* in_client)
+{
+	
+}
+
 InfProgram::flags InfProgram::host_model(InfModelTextToText* in_model)
 {
 	if(!in_model)
@@ -1854,6 +1582,20 @@ InfProgram::flags InfProgram::create_user(
 	return flags::INF_PROGRAM_SUCCESS;
 }
 
+GENERIC InfProgram::remove_loading_model(const mbase::string& in_model_name)
+{
+	// 100% success, no need for further control
+	actively_loading_models::iterator It = mbase::find(mLoadingModels.begin(), mLoadingModels.end(), in_model_name);
+	mLoadingModels.erase(It);
+}
+
+GENERIC InfProgram::set_registered_model(InfMaipModelBase* in_model, const mbase::string& in_model_name)
+{
+	// No need to check anything, this place will succeed
+	remove_loading_model(in_model_name);
+	mRegisteredModels[in_model_name] = in_model;
+}
+
 InfProgram::flags InfProgram::update_users_model_access_limit(const mbase::string& in_username, const U32& in_new_access_limit)
 {
 	inference_user_map::iterator It = mUserMap.find(in_username);
@@ -1911,14 +1653,16 @@ InfProgram::flags InfProgram::authorize_user_on_model(const mbase::string& in_us
 	return flags::INF_PROGRAM_SUCCESS;
 }
 
-InfProgram::maip_err_code InfProgram::common_modification_control(InfClientSession& in_session, const mbase::string& in_username, const U32& in_flags)
+InfProgram::maip_err_code InfProgram::common_modification_control(InfMaipPeerBase* in_session, const mbase::string& in_username, const U32& in_flags)
 {
 	// 1- Check if the flags are set. If not, INF_AUTHORIZATION_FAILED
 	// 2- Check if the specified username exists. If not, INF_USER_NOT_FOUND
 	// 3- Check if the specified user is static. If so and if the current session is not superuser, INF_AUTHORIZATION_FAILED
 	// 3- Check if the specified user is superuser. If so and if the current session is not a superuser INF_AUTHORIZATION_FAILED
 
-	if(!in_session.mMaipUser.is_flags_set(in_flags))
+	InfMaipUser& sessionMaip = mUserMap[in_session->get_maip_username()];
+
+	if(!sessionMaip.is_flags_set(in_flags))
 	{
 		return maip_err_code::INF_AUTHORIZATION_FAILED;
 	}
@@ -1931,12 +1675,12 @@ InfProgram::maip_err_code InfProgram::common_modification_control(InfClientSessi
 	}
 
 	InfMaipUser& maipUser = It->second;
-	if(maipUser.is_static() && !in_session.mMaipUser.is_superuser())
+	if(maipUser.is_static() && !sessionMaip.is_superuser())
 	{
 		return maip_err_code::INF_AUTHORIZATION_FAILED;
 	}
 
-	if(maipUser.is_superuser() && !in_session.mMaipUser.is_superuser())
+	if(maipUser.is_superuser() && !sessionMaip.is_superuser())
 	{
 		return maip_err_code::INF_AUTHORIZATION_FAILED;
 	}
@@ -2001,7 +1745,7 @@ GENERIC InfProgram::_load_user_states()
 	}
 }
 
-InfProgram::maip_err_code InfProgram::common_description_modification_control(InfClientSession& in_session, const mbase::string& in_model_target)
+InfProgram::maip_err_code InfProgram::common_description_modification_control(InfMaipModelDescription& in_description, const mbase::string& in_model_target)
 {
 	maip_err_code result = common_modification_control(in_session, in_session.mMaipUser.get_username(), MAIP_MODEL_LOAD_UNLOAD);
 	if(result != maip_err_code::INF_SUCCESS)

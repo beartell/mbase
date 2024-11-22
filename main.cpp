@@ -141,6 +141,10 @@ private:
 
 class my_model : public mbase::InfModelTextToText {
 public:
+    void on_initialize_fail(init_fail_code out_fail_code) override
+    {
+        
+    }
     void on_initialize() override 
     {
         register_context_process(&c1, 16000, 512, 16, true, {});

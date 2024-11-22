@@ -80,6 +80,11 @@ typename InfModelBase::const_reverse_iterator InfModelBase::crend() const noexce
 	return mRegisteredProcessors.crend();
 }
 
+bool InfModelBase::is_initialize_failed() const
+{
+	return mIsInitFailed;
+}
+
 bool InfModelBase::is_initialized() const
 {
 	return mIsInitialized;

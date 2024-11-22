@@ -13,8 +13,6 @@
 #include <mbase/pc/pc_state.h>
 #include <mbase/pc/pc_program.h>
 #include <mbase/inference/inf_embedder.h>
-#include <mbase/inference/inf_model.h>
-#include <mbase/inference/inf_client.h>
 #include <mbase/inference/inf_maip_user.h>
 #include <mbase/inference/inf_maip_model_description.h>
 #include <unordered_map>
@@ -22,70 +20,9 @@
 
 MBASE_BEGIN
 
-struct InfClientSession;
-class InfMaipTunedClient;
-class InfMaipTunedT2TProcessor;
 class InfProgram;
-
-class MBASE_API InfMaipTunedClient : public mbase::InfClientTextToText {
-public:
-	InfMaipTunedClient();
-	GENERIC set_session(InfClientSession& in_session);
-	GENERIC set_embedder_message_queue(mbase::vector<U32>& in_msg_ids);
-	bool proc_next_embedding();
-
-	GENERIC on_register(InfProcessorBase* out_processor) override; // 100% called if the proc init is successful
-	GENERIC on_embedding_data(const F32* out_data, size_type out_size) override; // For embedder models
-	GENERIC on_write(const inf_text_token_vector& out_token, bool out_is_finish) override;
-	GENERIC on_finish(size_type out_total_token_size, InfTextToTextProcessor::finish_state out_finish_state) override;
-	GENERIC on_unregister() override; // 100% called if the proc destroy is called either in stack or heap
-private:
-	mbase::queue<U32> mEmbeddingMessageIndexes;
-	inf_token_description lastToken;
-	InfClientSession* mManagerClient;
-	U64 mCurrentContextIndex;
-};
-
-class MBASE_API InfMaipTunedT2TProcessor : public mbase::InfTextToTextProcessor {
-public:
-	InfMaipTunedT2TProcessor(InfClientSession& in_client, InfProgram* in_program_instance);
-
-	GENERIC on_initialize_fail(last_fail_code out_code) override;
-	GENERIC on_initialize() override;
-	GENERIC on_destroy() override;
-
-private:
-	InfProgram* mProgramInstance;
-	InfClientSession* mManagerClient;
-	InfMaipTunedClient mProcessorClient;
-};
-
-class MBASE_API InfMaipTunedEmbedderProcessor : public mbase::InfEmbedderProcessor {
-public:
-	InfMaipTunedEmbedderProcessor(InfClientSession& in_client, InfProgram* in_program_instance);
-
-	GENERIC on_initialize_fail(init_fail_code out_code) override;
-	GENERIC on_initialize() override;
-	GENERIC on_destroy() override;
-
-private:
-	InfProgram* mProgramInstance;
-	InfClientSession* mManagerClient;
-	InfMaipTunedClient mProcessorClient;
-};
-
-struct MBASE_API InfClientSession {
-	using chat_session_map = std::unordered_map<U64, InfProcessorBase*>;
-	using size_type = SIZE_T;
-
-	InfClientSession() = default;
-	~InfClientSession();
-
-	std::shared_ptr<mbase::PcNetPeerClient> mPeer;
-	chat_session_map mChatSessions;
-	InfMaipUser mMaipUser;
-	U64 mContextCounter = 0;
-};
+class InfModelBase;
+class InfMaipPeerBase;
 
 struct MBASE_API InfProgramInformation {
 	PcProgramInformation mProgramInformation;
@@ -94,12 +31,21 @@ struct MBASE_API InfProgramInformation {
 	mbase::wstring mTempPath;
 };
 
+class MBASE_API InfMaipModelBase {
+public:
+    InfMaipModelBase(InfProgram* in_program, const mbase::string& in_model_name);
+    virtual ~InfMaipModelBase();
+
+protected:
+    InfProgram* mProgramInstance;
+	mbase::string mDefinedModelName;
+};
+
 class MBASE_API InfProgram : public mbase::PcProgramBase {
 public:
-	using dead_model_vector = mbase::vector<InfModelBase*>;
-	using dead_processor_vector = mbase::vector<InfProcessorBase*>;
-	using accepted_client_map = std::unordered_map<mbase::string, InfClientSession>;
-	using registered_model_map = std::unordered_map<mbase::string, InfModelTextToText*>;
+	using actively_loading_models = mbase::vector<mbase::string>;
+	using accepted_client_map = std::unordered_map<mbase::string, InfMaipPeerBase*>;
+	using registered_model_map = std::unordered_map<mbase::string, InfMaipModelBase*>;
 	using model_description_map = std::unordered_map<mbase::string, InfMaipModelDescription>;
 	using inference_user_map = std::unordered_map<mbase::string, InfMaipUser>;
 
@@ -143,6 +89,10 @@ public:
 		INF_DESCRIPTION_ALREADY_EXISTS = 2024,
 		INF_MODEL_ALREADY_LOADED = 2025,
 		INF_UNABLE_TO_OPEN_MODEL_FILE = 2026,
+		INF_UNDEFINED_CATEGORY = 2027,
+		INF_CATEGORY_MISMATCH = 2028,
+		INF_MODEL_NOT_LOADED = 2029,
+		INF_LOADING_MODEL = 2030,
 		EXEC_SUCCESS = 3000,
 		EXEC_ALREADY_PROCESSING = 3001,
 		EXEC_MESSAGE_ID_MISMATCH = 3002,
@@ -161,7 +111,7 @@ public:
 	registered_model_map& get_registered_models();
 	#endif
 	
-	maip_err_code inf_access_request(const mbase::string& in_username, const mbase::string& in_access_token, std::shared_ptr<PcNetPeerClient> in_client, mbase::string& out_session_token);
+	maip_err_code inf_access_request(const mbase::string& in_username, const mbase::string& in_access_token, std::shared_ptr<PcNetPeerClient> in_client, const mbase::string& in_category, mbase::string& out_session_token);
 	maip_err_code inf_destroy_session(const mbase::string& in_session_token);
 	maip_err_code inf_get_accessible_models(const mbase::string& in_session_token, mbase::vector<mbase::string>& out_models);
 	maip_err_code inf_get_context_ids(const mbase::string& in_session_token, mbase::vector<U64>& out_contexts);
@@ -249,7 +199,6 @@ public:
 		const mbase::string& in_model_target,
 		const U32& in_maximum_context
 	);
-
 	maip_err_code exec_set_input(const mbase::string& in_session_token, const U64& in_ctxId, mbase::context_role in_role, const mbase::string& in_input, U32& out_msgid);
 	maip_err_code exec_set_input(const mbase::string& in_session_token, const U64& in_ctxId, mbase::context_role in_role, CBYTEBUFFER in_input, const size_type& in_length, U32& out_msgid);
 	maip_err_code exec_execute_input(const mbase::string& in_session_token, const U64& in_ctxId, mbase::vector<U32>& in_msgid); // TODO: CHANGE CONTENT
@@ -274,14 +223,16 @@ public:
 		const inf_sampling_set& in_sampling_set,
 		mbase::string& out_access_token
 	);
+	GENERIC remove_loading_model(const mbase::string& in_model_name);
+	GENERIC set_registered_model(InfMaipModelBase* in_model, const mbase::string& in_model_name); // This method is internal call
 private:
 	flags host_model(InfModelTextToText* in_model);
 	flags release_model(const mbase::string& in_model_name);
 	flags update_users_model_access_limit(const mbase::string& in_username, const U32& in_new_access_limit);
 	flags update_users_maximum_context(const mbase::string& in_username, const U32& in_new_context_length);
 	flags authorize_user_on_model(const mbase::string& in_username, const mbase::string& in_model);
-	maip_err_code common_modification_control(InfClientSession& in_session, const mbase::string& in_username, const U32& in_flags);
-	maip_err_code common_description_modification_control(InfClientSession& in_session, const mbase::string& in_model_target);
+	maip_err_code common_modification_control(InfMaipPeerBase* in_session, const mbase::string& in_username, const U32& in_flags);
+	maip_err_code common_description_modification_control(InfMaipModelDescription& in_description, const mbase::string& in_model_target);
 	GENERIC update_maip_user_sessions(InfMaipUser& in_maip_user);
 	GENERIC _reload_model_descriptions();
 	GENERIC _load_user_states();
@@ -290,9 +241,7 @@ private:
 	PcConfig mInferenceConfigurator;
 	PcNetManager mInferenceNetManager;
 	PcState mMainProgramState;
-
-	dead_model_vector mDeadModelVector;
-	dead_processor_vector mDeadProcessorVector;
+	actively_loading_models mLoadingModels;
 	accepted_client_map mSessionMap;
 	registered_model_map mRegisteredModels;
 	model_description_map mModelDescriptionMap;

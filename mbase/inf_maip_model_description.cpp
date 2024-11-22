@@ -67,6 +67,19 @@ const InfMaipModelDescription::CATEGORY& InfMaipModelDescription::get_category_v
     return mCategory;
 }
 
+mbase::string InfMaipModelDescription::get_category_string()
+{
+    if(mCategory == InfMaipModelDescription::CATEGORY::TEXT_TO_TEXT)
+    {
+        return mbase::string("T2T");
+    }
+    else if(mCategory == InfMaipModelDescription::CATEGORY::EMBEDDING)
+    {
+        return mbase::string("EMBEDD");
+    }
+    return mbase::string();
+}
+
 const U32& InfMaipModelDescription::get_maximum_context_length()
 {
     return mMaximumAllowedContext;

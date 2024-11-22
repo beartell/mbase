@@ -29,6 +29,13 @@ public:
 	using reverse_iterator = typename context_processor_list::reverse_iterator;
 	using const_reverse_iterator = typename context_processor_list::const_reverse_iterator;
 
+	enum class init_fail_code : U8 {
+		NOT_ENOUGH_MEMORY,
+		MBASE_PARAMS_DONT_MATCH,
+		PATH_NOT_FOUND,
+		LLAMA_SYSTEM_ERROR
+	};
+
 	InfModelBase();
 	virtual ~InfModelBase();
 
@@ -43,13 +50,17 @@ public:
 	const_reverse_iterator crbegin() const noexcept;
 	const_reverse_iterator crend() const noexcept;
 
+	bool is_initialize_failed() const;
 	bool is_initialized() const;
 	bool signal_state_initializing() const;
 	bool signal_state_destroying() const;
 	bool signal_initializing() const;
 	bool signal_destroying() const;
-
 	GENERIC reset_base_signals();
+
+	virtual GENERIC on_initialize_fail(init_fail_code out_fail_code) = 0;
+	virtual GENERIC on_initialize() = 0;
+	virtual GENERIC on_destroy() = 0;
 protected:
 	volatile bool mIsInitialized;
 	processor_signal mInitializeSignal;
@@ -58,6 +69,8 @@ protected:
 	context_processor_list mRegisteredProcessors;
 	mbase::mutex mProcessorListMutex;
 	mbase::timer_loop mModelTimer;
+	init_fail_code mInitFailCode;
+	bool mIsInitFailed;
 };
 
 // class MBASE_API InfModelImageToText : public InfModelBase{ // possibly using llava

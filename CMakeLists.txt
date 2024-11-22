@@ -13,7 +13,7 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/")
 
 set(CMAKE_CXX_STANDARD 20)
 
-add_executable(mbase_test_program main.cpp "include/mbase/inference/inf_maip_peer_base.h")
+add_executable(mbase_test_program main.cpp)
 add_subdirectory(mbase)
 
 target_include_directories(mbase_test_program PUBLIC ${MBASE_INFERENCE_TARGET_INCLUDES})

@@ -32,13 +32,6 @@ public:
 		INF_MODEL_ERR_GENERIC
 	};
 
-	enum class init_fail_code : U8 {
-		NOT_ENOUGH_MEMORY,
-		MBASE_PARAMS_DONT_MATCH,
-		PATH_NOT_FOUND,
-		LLAMA_SYSTEM_ERROR
-	};
-
 	InfModelTextToText();
 	~InfModelTextToText();
 
@@ -92,10 +85,6 @@ public:
 		U32 in_thread_count
 	);
 
-	virtual GENERIC on_initialize_fail(init_fail_code out_fail_code);
-	virtual GENERIC on_initialize() = 0;
-	virtual GENERIC on_destroy() = 0;
-
 	GENERIC update() override;
 	GENERIC update_t() override;
 
@@ -128,8 +117,6 @@ private:
 	U32 mHeadCount;
 	U32 mEmbeddingLength;
 	F32 mQuantizationCoefficient;
-	init_fail_code mInitFailCode;
-	bool mIsInitFailed;
 	bool mIsEmbeddingModel; // Not supported if (llama_model_has_encoder(model) && llama_model_has_decoder(model) is true)
 };
 

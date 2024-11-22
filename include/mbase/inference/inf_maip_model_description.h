@@ -26,6 +26,7 @@ public:
     const bool& get_embedding();
     const bool& get_forced_system_prompt();
     const CATEGORY& get_category_value();
+    mbase::string get_category_string();
     const U32& get_maximum_context_length();
 
     GENERIC set_original_name(const mbase::string& in_name);
