@@ -73,12 +73,6 @@ public:
 		INF_PROC_INFO_NOT_IMPLEMENTED
 	};
 
-	enum class processor_type : U8 {
-		TEXT_TO_TEXT,
-		EMBEDDER,
-		UNDEFINED
-	};
-
 	enum class finish_state {
 		FINISHED,
 		CONTINUE,
@@ -103,7 +97,7 @@ public:
 	processor_signal& get_initialize_signal();
 	processor_signal& get_destroy_signal();
 	const mbase::string& get_context_identifier();
-	processor_type get_processor_type();
+	inf_model_category get_model_category();
 
 	GENERIC acquire_object_watcher(mbase::inf_processor_watcher<InfProcessorBase>* in_watcher);
 	GENERIC release_object_watcher();
@@ -123,7 +117,7 @@ protected:
 	bool mIsRegistered;
 	processor_signal mInitializeSignal;
 	processor_signal mDestroySignal;
-	processor_type mProcessorType;
+	inf_model_category mModelCategory;
 	U32 mContextLength;
 	U32 mInactivityThreshold;
 	mbase::string mContextIdentifier;

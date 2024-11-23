@@ -35,14 +35,21 @@ InfMaipModelBase::~InfMaipModelBase(){}
 
 class MBASE_API InfMaipModelTextToText : public InfMaipModelBase, public InfModelTextToText {
 public:
+	InfMaipModelTextToText(InfProgram* in_program, const mbase::string& in_model_name);
 	GENERIC on_initialize_fail(init_fail_code out_fail_code) override;
 	GENERIC on_initialize() override;
 	GENERIC on_destroy() override;
 };
 
+InfMaipModelTextToText::InfMaipModelTextToText(InfProgram* in_program, const mbase::string& in_model_name):
+	InfMaipModelBase(in_program, in_model_name)
+{
+}
+
 GENERIC InfMaipModelTextToText::on_initialize_fail(init_fail_code out_fail_code)
 {
 	mProgramInstance->remove_loading_model(mDefinedModelName);
+	delete this;
 }
 
 GENERIC InfMaipModelTextToText::on_initialize()
@@ -201,7 +208,7 @@ InfProgram::maip_err_code InfProgram::inf_create_context(const mbase::string& in
 		return maip_err_code::INF_MODEL_NAME_MISMATCH;
 	}
 	
-	if(It->second.get_category_string() != clientSession->get_peer_category())
+	if(It->second.get_category_value() != clientSession->get_peer_category())
 	{
 		return maip_err_code::INF_CATEGORY_MISMATCH;
 	}
@@ -218,38 +225,35 @@ InfProgram::maip_err_code InfProgram::inf_create_context(const mbase::string& in
 		return maip_err_code::INF_USER_CONTEXT_LENGTH_EXCEEDED;
 	}
 
-	// InfModelTextToText* t2tModel = It->second;
-	// if(!t2tModel->is_available(in_ctsize))
-	// {
-	// 	return maip_err_code::INF_MODEL_CONTEXT_FULL;
-	// }
+	if(clientSession->get_peer_category() == inf_model_category::TEXT_TO_TEXT)
+	{
+		InfMaipModelTextToText* t2tModel = static_cast<InfMaipModelTextToText*>(It2->second);
+		InfMaipPeerTextToText* t2tClient = static_cast<InfMaipPeerTextToText*>(clientSession);
+		InfMaipTextToTextProcessor* t2tProc = new InfMaipTextToTextProcessor(t2tClient);
 
-	// // means the model is available
-	// // we can create the context
-    // clientSession.mPeer = in_peer;
+		if(!t2tModel->is_available(in_ctsize))
+		{
+			delete t2tProc;
+			return maip_err_code::INF_MODEL_UNAVAILABLE;
+		}
 
-	// if(t2tModel->is_embedding_model())
-	// {
-	// 	InfMaipTunedEmbedderProcessor* maipEmbedderContext = new InfMaipTunedEmbedderProcessor(clientSession, this);
-	// 	t2tModel->register_context_process(
-	// 		maipEmbedderContext,
-	// 		in_ctsize,
-	// 		clientSession.mMaipUser.get_batch_size(),
-	// 		clientSession.mMaipUser.get_processor_thread_count()
-	// 	); // 100% SUCCESS
-	// }
-	// else
-	// {
-	// 	InfMaipTunedT2TProcessor* maipT2tContext = new InfMaipTunedT2TProcessor(clientSession, this);
-	// 	t2tModel->register_context_process(
-	// 		maipT2tContext,
-	// 		in_ctsize,
-	// 		clientSession.mMaipUser.get_batch_size(),
-	// 		clientSession.mMaipUser.get_processor_thread_count(),
-	// 		true,
-	// 		clientSession.mMaipUser.get_sampling_set()
-	// 	); // 100% SUCCESS
-	// }
+		InfModelTextToText::flags rgrResult = t2tModel->register_context_process(
+			t2tProc,
+			in_ctsize,
+			sessionMaip.get_batch_size(),
+			sessionMaip.get_processor_thread_count(),
+			true,
+			sessionMaip.get_sampling_set()
+		);
+
+		clientSession->set_network_peer(in_peer);
+
+		if(rgrResult != InfModelTextToText::flags::INF_MODEL_INFO_REGISTERING_PROCESSOR)
+		{
+			delete t2tProc;
+			return maip_err_code::INF_FAILED_TO_CREATE_CONTEXT;
+		}
+	}
 	return maip_err_code::INF_SUCCESS;
 }
 
@@ -257,7 +261,7 @@ InfProgram::maip_err_code InfProgram::inf_clear_context_history(const mbase::str
 {
 	MBASE_SESSION_CONTROL;
 	
-	if(clientSession->get_peer_category() == "T2T")
+	if(clientSession->get_peer_category() == inf_model_category::TEXT_TO_TEXT)
 	{
 		InfMaipPeerTextToText* peerT2t = static_cast<InfMaipPeerTextToText*>(clientSession);
 		peerT2t->clear_chat_history();
@@ -383,15 +387,24 @@ InfProgram::maip_err_code InfProgram::inf_load_model(const mbase::string& in_ses
 
 			mbase::wstring modelFileTotal = mModelDirectory + mbase::from_utf8(n.second.get_model_file());
 
-			if(n.second.get_category_value() == InfMaipModelDescription::CATEGORY::TEXT_TO_TEXT)
+			if(n.second.get_category_value() == inf_model_category::TEXT_TO_TEXT)
 			{
+				InfMaipModelTextToText* t2tModel = new InfMaipModelTextToText(this, n.first);
+				InfMaipModelTextToText::flags returnVal = t2tModel->initialize_model(
+					modelFileTotal,
+					in_total_context_size,
+					999
+				);
 
+				if(returnVal != InfMaipModelTextToText::flags::INF_MODEL_INFO_INITIALIZING_MODEL)
+				{
+					delete t2tModel;
+					return maip_err_code::INF_MODEL_NOT_LOADED;
+				}
+
+				mLoadingModels.push_back(n.first);
+				return maip_err_code::INF_LOADING_MODEL;
 			}
-
-			InfMaipModel* newModel = new InfMaipModel(n.second.get_custom_name(), *this);
-			newModel->initialize_model(modelFileTotal, in_total_context_size, 999);
-			mRegisteredModels[n.second.get_custom_name()] = newModel;
-			return maip_err_code::INF_LOADING_MODEL;
 		}
 	}
 
@@ -419,7 +432,7 @@ InfProgram::maip_err_code InfProgram::inf_unload_model(const mbase::string& in_s
 	{
 		return maip_err_code::INF_SUCCESS;
 	}
-
+	
 	InfModelTextToText* t2tModel = It->second;
 	t2tModel->destroy();
 

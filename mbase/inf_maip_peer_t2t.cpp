@@ -4,7 +4,7 @@
 
 MBASE_BEGIN
 
-InfMaipTextToTextProcessor::InfMaipTextToTextProcessor(InfMaipPeerTextToText& in_peer) : mClientNominee(&in_peer)
+InfMaipTextToTextProcessor::InfMaipTextToTextProcessor(InfMaipPeerTextToText* in_peer) : mClientNominee(in_peer)
 {
 
 }
@@ -24,7 +24,7 @@ GENERIC InfMaipTextToTextProcessor::on_destroy()
 }
 
 InfMaipPeerTextToText::InfMaipPeerTextToText(std::shared_ptr<mbase::PcNetPeerClient> in_peer, const mbase::string& in_maip_user) : 
-    InfMaipPeerBase(in_peer, in_maip_user, "T2T")
+    InfMaipPeerBase(in_peer, in_maip_user, inf_model_category::TEXT_TO_TEXT)
 {
 
 }

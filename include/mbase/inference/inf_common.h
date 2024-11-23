@@ -26,6 +26,12 @@ struct inf_token_description {
     bool mIsSpecial = false;
 };
 
+enum class inf_model_category {
+    TEXT_TO_TEXT,
+    EMBEDDING,
+    UNDEFINED
+};
+
 // The rest is common functionality inspired from llama.cpp common library for examples
 // The set of functions will be populated as new needs are found
 

@@ -33,7 +33,8 @@ public:
 		NOT_ENOUGH_MEMORY,
 		MBASE_PARAMS_DONT_MATCH,
 		PATH_NOT_FOUND,
-		LLAMA_SYSTEM_ERROR
+		LLAMA_SYSTEM_ERROR,
+		UNDEFINED
 	};
 
 	InfModelBase();
@@ -50,6 +51,7 @@ public:
 	const_reverse_iterator crbegin() const noexcept;
 	const_reverse_iterator crend() const noexcept;
 
+	inf_model_category get_model_category() const;
 	bool is_initialize_failed() const;
 	bool is_initialized() const;
 	bool signal_state_initializing() const;
@@ -62,13 +64,13 @@ public:
 	virtual GENERIC on_initialize() = 0;
 	virtual GENERIC on_destroy() = 0;
 protected:
+	inf_model_category mModelCategory;
 	volatile bool mIsInitialized;
 	processor_signal mInitializeSignal;
 	processor_signal mDestroySignal;
 
 	context_processor_list mRegisteredProcessors;
 	mbase::mutex mProcessorListMutex;
-	mbase::timer_loop mModelTimer;
 	init_fail_code mInitFailCode;
 	bool mIsInitFailed;
 };

@@ -27,15 +27,15 @@ InfModelTextToText::InfModelTextToText() :
 	mSystemStart(),
 	mAssistantStart(),
 	mOccupiedContext(0),
+	mTotalContextSize(0),
 	mBlockCount(0),
 	mHeadCount(0),
 	mEmbeddingLength(0),
 	mQuantizationCoefficient(0.0f),
 	mModelSize(0),
-	mIsEmbeddingModel(false),
-	mIsInitFailed(false)
+	mIsEmbeddingModel(false)
 {
-
+	mModelCategory = inf_model_category::TEXT_TO_TEXT;
 }
 
 InfModelTextToText::~InfModelTextToText()

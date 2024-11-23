@@ -3,7 +3,7 @@
 
 MBASE_BEGIN
 
-InfMaipPeerBase::InfMaipPeerBase(std::shared_ptr<mbase::PcNetPeerClient> in_peer, const mbase::string& in_maip_user, const mbase::string& in_peer_category):
+InfMaipPeerBase::InfMaipPeerBase(std::shared_ptr<mbase::PcNetPeerClient> in_peer, const mbase::string& in_maip_user, const inf_model_category& in_peer_category) :
     mPeer(in_peer),
     mMaipUsername(in_maip_user),
     mPeerCategory(in_peer_category)
@@ -26,7 +26,7 @@ const mbase::string& InfMaipPeerBase::get_maip_username() const
     return mMaipUsername;
 }
 
-const mbase::string& InfMaipPeerBase::get_peer_category() const
+const inf_model_category& InfMaipPeerBase::get_peer_category() const
 {
     return mPeerCategory;
 }

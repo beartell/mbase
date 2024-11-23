@@ -21,7 +21,10 @@ if(this->signal_state_destroying())\
 }
 
 InfModelBase::InfModelBase() :
-	mIsInitialized(false)
+	mModelCategory(inf_model_category::UNDEFINED),
+	mIsInitialized(false),
+	mIsInitFailed(false),
+	mInitFailCode(init_fail_code::UNDEFINED)
 {
 }
 
@@ -78,6 +81,11 @@ typename InfModelBase::const_reverse_iterator InfModelBase::crbegin() const noex
 typename InfModelBase::const_reverse_iterator InfModelBase::crend() const noexcept
 {
 	return mRegisteredProcessors.crend();
+}
+
+inf_model_category InfModelBase::get_model_category() const
+{
+	return mModelCategory;
 }
 
 bool InfModelBase::is_initialize_failed() const

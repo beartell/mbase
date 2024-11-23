@@ -40,7 +40,7 @@ InfTextToTextProcessor::InfTextToTextProcessor():
 	mFlashAttention(false),
 	mIsInitializeFailed(false)
 {
-	mProcessorType = processor_type::TEXT_TO_TEXT;
+	mModelCategory = inf_model_category::TEXT_TO_TEXT;
 }
 
 InfTextToTextProcessor::~InfTextToTextProcessor()

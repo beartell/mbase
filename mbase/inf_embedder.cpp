@@ -24,7 +24,7 @@ InfEmbedderProcessor::InfEmbedderProcessor():
     mBatchSize(0),
     mThreadCount(0)
 {
-    mProcessorType = processor_type::EMBEDDER;
+    mModelCategory = inf_model_category::TEXT_TO_TEXT;
 }
 
 InfEmbedderProcessor::~InfEmbedderProcessor()

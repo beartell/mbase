@@ -11,7 +11,7 @@ class InfMaipPeerTextToText;
 
 class MBASE_API InfMaipTextToTextProcessor : public mbase::InfTextToTextProcessor {
 public:
-    InfMaipTextToTextProcessor(InfMaipPeerTextToText& in_peer);
+    InfMaipTextToTextProcessor(InfMaipPeerTextToText* in_peer);
     GENERIC on_initialize_fail(last_fail_code out_code) override;
 	GENERIC on_initialize() override;
 	GENERIC on_destroy() override;

@@ -85,9 +85,9 @@ const mbase::string& InfProcessorBase::get_context_identifier()
 	return mContextIdentifier;
 }
 
-InfProcessorBase::processor_type InfProcessorBase::get_processor_type()
+inf_model_category InfProcessorBase::get_model_category()
 {
-	return mProcessorType;
+	return mModelCategory;
 }
 
 GENERIC InfProcessorBase::acquire_object_watcher(mbase::inf_processor_watcher<InfProcessorBase>* in_watcher)

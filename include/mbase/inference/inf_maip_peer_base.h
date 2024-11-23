@@ -13,12 +13,12 @@ public:
 	using registered_processor_map = std::unordered_map<InfProcessorBase*, U64>;
 	using indexed_processor_map = std::unordered_map<U64, InfProcessorBase*>;
 
-	InfMaipPeerBase(std::shared_ptr<mbase::PcNetPeerClient> in_peer, const mbase::string& in_maip_user, const mbase::string& in_peer_category);
+	InfMaipPeerBase(std::shared_ptr<mbase::PcNetPeerClient> in_peer, const mbase::string& in_maip_user, const inf_model_category& in_peer_category);
 	virtual ~InfMaipPeerBase();
 
 	std::shared_ptr<mbase::PcNetPeerClient> get_maip_peer() const;
 	const mbase::string& get_maip_username() const;
-	const mbase::string& get_peer_category() const;
+	const inf_model_category& get_peer_category() const;
 	InfProcessorBase* get_processor_by_id(const U64& in_id);
 	mbase::vector<U64> get_processor_ids() const;
 
@@ -34,7 +34,7 @@ protected:
 	indexed_processor_map mIndexedProcMap;
 	std::shared_ptr<mbase::PcNetPeerClient> mPeer = NULL;
 	mbase::string mMaipUsername;
-	mbase::string mPeerCategory;
+	inf_model_category mPeerCategory;
 	U64 mContextCounter = 1;
 };
 

@@ -13,7 +13,7 @@ InfMaipModelDescription::InfMaipModelDescription() :
     mTags(),
     mIsEmbeddingModel(false),
     mForceSystemPrompt(false),
-    mCategory(CATEGORY::TEXT_TO_TEXT),
+    mCategory(inf_model_category::UNDEFINED),
     mMaximumAllowedContext(0)
 {
 }
@@ -62,18 +62,18 @@ const bool& InfMaipModelDescription::get_forced_system_prompt()
     return mForceSystemPrompt;
 }
 
-const InfMaipModelDescription::CATEGORY& InfMaipModelDescription::get_category_value()
+inf_model_category InfMaipModelDescription::get_category_value()
 {
     return mCategory;
 }
 
 mbase::string InfMaipModelDescription::get_category_string()
 {
-    if(mCategory == InfMaipModelDescription::CATEGORY::TEXT_TO_TEXT)
+    if(mCategory == inf_model_category::TEXT_TO_TEXT)
     {
         return mbase::string("T2T");
     }
-    else if(mCategory == InfMaipModelDescription::CATEGORY::EMBEDDING)
+    else if(mCategory == inf_model_category::EMBEDDING)
     {
         return mbase::string("EMBEDD");
     }
@@ -125,7 +125,7 @@ GENERIC InfMaipModelDescription::set_force_system_prompt(const bool& in_value)
     mForceSystemPrompt = in_value;
 }
 
-GENERIC InfMaipModelDescription::set_category(const CATEGORY& in_category)
+GENERIC InfMaipModelDescription::set_category(const inf_model_category& in_category)
 {
     mCategory = in_category;
 }
@@ -152,7 +152,7 @@ GENERIC InfMaipModelDescription::load_from_state_file(const mbase::string& in_ob
     modelDescriptionState.get_state("embedding", mIsEmbeddingModel);
     modelDescriptionState.get_state("force_prompt", mForceSystemPrompt);
 
-    mCategory = (CATEGORY)categoryValue;
+    mCategory = (inf_model_category)categoryValue;
 
     if(!mModelCustomName.size())
     {
