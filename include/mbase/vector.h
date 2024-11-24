@@ -236,7 +236,7 @@ template<class InputIt, typename>
 MBASE_INLINE_EXPR vector<T, Allocator>::vector(InputIt in_begin, InputIt in_end, const Allocator& in_alloc) : mRawData(nullptr), mSize(0), mCapacity(gVectorDefaultCapacity), mExternalAllocator(in_alloc)
 {
 	mRawData = mExternalAllocator.allocate(mCapacity);
-	for (in_begin; in_begin != in_end; in_begin++)
+	for (; in_begin != in_end; in_begin++)
 	{
 		push_back(*in_begin);
 	}

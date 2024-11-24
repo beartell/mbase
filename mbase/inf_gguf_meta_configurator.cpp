@@ -71,7 +71,6 @@ GgufMetaConfigurator::param_application_error GgufMetaConfigurator::apply_mbase_
 		U32 blockCount;
 		U32 headCount;
 		U32 embeddingLength;
-		U32 modelSizeInBytes;
 		F32 quantizationCoefficient = 32.0;
 		llama_ftype enumQuantizationType = llama_ftype::LLAMA_FTYPE_ALL_F32;
 
@@ -263,7 +262,8 @@ GENERIC GgufMetaConfigurator::clear_context()
 	{
 		if(mIsModified)
 		{
-			size_type metaDataSize = gguf_get_meta_size(mGgufContext);
+			// This place needs some refactoring
+			//size_type metaDataSize = gguf_get_meta_size(mGgufContext);
 			mbase::wstring modifiedFileName = mGgufFile + L".modif";
 			
 			gguf_write_to_file(mGgufContext, mbase::to_utf8(modifiedFileName).c_str(), true);

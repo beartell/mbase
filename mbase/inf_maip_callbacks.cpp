@@ -9,7 +9,7 @@ bool access_request_cb(InfProgram& in_program, std::shared_ptr<PcNetPeerClient> 
 
     mbase::string outToken;
 
-    InfProgram::maip_err_code errCode = in_program.inf_access_request(username, accessToken, in_peer, outToken);
+    InfProgram::maip_err_code errCode = in_program.inf_access_request(username, accessToken, in_peer, "T2T", outToken);
     if(errCode == InfProgram::maip_err_code::INF_SUCCESS)
     {
         out_packet.set_kval("STOK", outToken);

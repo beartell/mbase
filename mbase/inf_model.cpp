@@ -23,8 +23,8 @@ if(this->signal_state_destroying())\
 InfModelBase::InfModelBase() :
 	mModelCategory(inf_model_category::UNDEFINED),
 	mIsInitialized(false),
-	mIsInitFailed(false),
-	mInitFailCode(init_fail_code::UNDEFINED)
+	mInitFailCode(init_fail_code::UNDEFINED),
+	mIsInitFailed(false)
 {
 }
 

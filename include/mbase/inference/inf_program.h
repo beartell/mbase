@@ -12,6 +12,7 @@
 #include <mbase/pc/pc_config.h>
 #include <mbase/pc/pc_state.h>
 #include <mbase/pc/pc_program.h>
+#include <mbase/inference/inf_context_line.h>
 #include <mbase/inference/inf_embedder.h>
 #include <mbase/inference/inf_maip_user.h>
 #include <mbase/inference/inf_maip_model_description.h>
@@ -45,7 +46,7 @@ class MBASE_API InfProgram : public mbase::PcProgramBase {
 public:
 	using actively_loading_models = mbase::vector<mbase::string>;
 	using accepted_client_map = std::unordered_map<mbase::string, InfMaipPeerBase*>;
-	using registered_model_map = std::unordered_map<mbase::string, InfMaipModelBase*>;
+	using registered_model_map = std::unordered_map<mbase::string, InfModelBase*>;
 	using model_description_map = std::unordered_map<mbase::string, InfMaipModelDescription>;
 	using inference_user_map = std::unordered_map<mbase::string, InfMaipUser>;
 
@@ -225,15 +226,10 @@ public:
 		mbase::string& out_access_token
 	);
 	GENERIC remove_loading_model(const mbase::string& in_model_name);
-	GENERIC set_registered_model(InfMaipModelBase* in_model, const mbase::string& in_model_name); // This method is internal call
+	GENERIC set_registered_model(InfModelBase* in_model, const mbase::string& in_model_name); // This method is internal call
 private:
-	flags host_model(InfModelTextToText* in_model);
-	flags release_model(const mbase::string& in_model_name);
-	flags update_users_model_access_limit(const mbase::string& in_username, const U32& in_new_access_limit);
-	flags update_users_maximum_context(const mbase::string& in_username, const U32& in_new_context_length);
-	flags authorize_user_on_model(const mbase::string& in_username, const mbase::string& in_model);
 	maip_err_code common_modification_control(InfMaipPeerBase* in_session, const mbase::string& in_username, const U32& in_flags);
-	maip_err_code common_description_modification_control(InfMaipModelDescription& in_description, const mbase::string& in_model_target);
+	maip_err_code common_description_modification_control(InfMaipPeerBase* in_session, InfMaipModelDescription*& in_description, const mbase::string& in_model_target);
 	GENERIC update_maip_user_sessions(InfMaipUser& in_maip_user);
 	GENERIC _reload_model_descriptions();
 	GENERIC _load_user_states();

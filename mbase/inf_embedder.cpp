@@ -24,21 +24,23 @@ InfEmbedderProcessor::InfEmbedderProcessor():
     mBatchSize(0),
     mThreadCount(0)
 {
-    mModelCategory = inf_model_category::TEXT_TO_TEXT;
+    mModelCategory = inf_model_category::EMBEDDING;
 }
 
 InfEmbedderProcessor::~InfEmbedderProcessor()
 {
     if(mModelContext)
-    {
-        stop_processor();
-        llama_free(mModelContext);
-        if(this->mTargetModel_md_model)
-        {
-            InfModelTextToText* t2tModel = static_cast<InfModelTextToText*>(this->mTargetModel_md_model);
-            // TODO, MANUAL CONTEXT DELETION
-        }
-    }
+	{
+		stop_processor();
+		llama_free(mModelContext);
+		this->release_object_watcher();
+
+		if(mAssignedClient)
+		{
+			mAssignedClient->on_unregister(this);
+			mAssignedClient = NULL;
+		}
+	}
 }
 
 bool InfEmbedderProcessor::is_available() const

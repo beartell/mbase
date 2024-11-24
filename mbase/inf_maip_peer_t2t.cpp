@@ -21,6 +21,7 @@ GENERIC InfMaipTextToTextProcessor::on_initialize()
 
 GENERIC InfMaipTextToTextProcessor::on_destroy()
 {
+    delete this;
 }
 
 InfMaipPeerTextToText::InfMaipPeerTextToText(std::shared_ptr<mbase::PcNetPeerClient> in_peer, const mbase::string& in_maip_user) : 
@@ -34,7 +35,7 @@ InfMaipPeerTextToText::~InfMaipPeerTextToText()
     mandatory_processor_cleanup(); // Must be called
 }
 
-GENERIC InfMaipPeerTextToText::on_init_fail(InfProcessorBase* out_processor, InfTextToTextProcessor::last_fail_code out_fail_code)
+GENERIC InfMaipPeerTextToText::on_init_fail(InfProcessorBase* out_processor, [[maybe_unused]] InfTextToTextProcessor::last_fail_code out_fail_code)
 {
     if(mPeer->is_connected())
     {
@@ -109,7 +110,7 @@ GENERIC InfMaipPeerTextToText::on_write(InfTextToTextProcessor* out_processor, c
     }
 }
 
-GENERIC InfMaipPeerTextToText::on_finish(InfTextToTextProcessor* out_processor, size_type out_total_token_size, InfTextToTextProcessor::finish_state out_finish_state)
+GENERIC InfMaipPeerTextToText::on_finish([[maybe_unused]] InfTextToTextProcessor* out_processor, size_type out_total_token_size, InfTextToTextProcessor::finish_state out_finish_state)
 {
     // Called if the token generation is finished for a reason stated in argument out_finish_state
     if(mPeer->is_connected())
@@ -126,7 +127,7 @@ GENERIC InfMaipPeerTextToText::on_finish(InfTextToTextProcessor* out_processor, 
             tmpPacketBuilder.set_kval("SPECIAL", 0);
         }
 
-        InfProgram::maip_err_code finishCode;
+        InfProgram::maip_err_code finishCode = InfProgram::maip_err_code::EXEC_MESSAGE_FINISH;
         if(out_finish_state == InfTextToTextProcessor::finish_state::FINISHED)
         {
             finishCode = InfProgram::maip_err_code::EXEC_MESSAGE_FINISH;
@@ -141,7 +142,7 @@ GENERIC InfMaipPeerTextToText::on_finish(InfTextToTextProcessor* out_processor, 
         {
             finishCode = InfProgram::maip_err_code::EXEC_ABANDONED;
         }
-
+        tmpPacketBuilder.set_kval("TOTAL", out_total_token_size);
         tmpPacketBuilder.set_response_message((U16)finishCode);
         tmpPacketBuilder.generate_payload(outPayload, mLastToken.mTokenString);
         mPeer->write_data(outPayload.c_str(), outPayload.size());

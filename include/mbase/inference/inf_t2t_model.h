@@ -35,7 +35,6 @@ public:
 	InfModelTextToText();
 	~InfModelTextToText();
 
-	bool is_initialize_failed() const;
 	bool is_available(const U32& in_context_size) const;
 	bool is_embedding_model() const;
 	llama_model* get_raw_model();

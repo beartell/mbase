@@ -8,7 +8,7 @@ InfProcessorBase::InfProcessorBase() :
 	mTargetModel_md_model(NULL),
 	mIsRunning(false),
 	mIsRegistered(false),
-	mProcessorType(processor_type::UNDEFINED),
+	mModelCategory(inf_model_category::UNDEFINED),
 	mContextLength(0),
 	mInactivityThreshold(0),
 	mTargetWatcher(NULL)

@@ -54,13 +54,13 @@ add_library(mb_core SHARED pc_state.cpp
 
 add_library(mb_inference SHARED inf_client.cpp 
     inf_common.cpp
-    inf_embedder.cpp
+    #inf_embedder.cpp
     inf_gguf_meta_configurator.cpp
-    #inf_maip_callbacks.cpp
+    inf_maip_callbacks.cpp
     inf_maip_model_description.cpp
     inf_maip_peer_base.cpp
     inf_maip_peer_t2t.cpp
-    #inf_maip_server.cpp
+    inf_maip_server.cpp
     inf_maip_user.cpp
     inf_model.cpp
     inf_processor.cpp
@@ -70,8 +70,8 @@ add_library(mb_inference SHARED inf_client.cpp
     inf_t2t_processor.cpp    
 )
 
-# target_compile_options(mb_core PRIVATE -Wall -Wextra -Wpedantic -O3)
-# target_compile_options(mb_inference PRIVATE -Wall -Wextra -Wpedantic -O3)
+target_compile_options(mb_core PRIVATE -Wall -Wextra -Wpedantic -O3)
+target_compile_options(mb_inference PRIVATE -Wall -Wextra -Wpedantic -O3)
 
 target_include_directories(mb_core PUBLIC ${MBASE_PROJECT_COMMON_INCLUDES})
 target_include_directories(mb_inference PUBLIC ${MBASE_INFERENCE_TARGET_INCLUDES})

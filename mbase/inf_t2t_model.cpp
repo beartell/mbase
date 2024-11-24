@@ -637,7 +637,6 @@ GENERIC InfModelTextToText::_destroy_model()
 	mModelPath.clear();
 	mEndOfToken = 0;
 	mOccupiedContext = 0;
-	mModelTimer.clear_timers();
 
 	/* RESETTING ALL SIGNALS ON LOGIC LOOP */
 	mDestroySignal.set_signal_finished();

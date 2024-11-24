@@ -324,6 +324,11 @@ InfTextToTextProcessor::flags InfTextToTextProcessor::next(const decode_behavior
 		return flags::INF_PROC_SUCCESS;
 	}
 
+	if(!mTokenizedInput.size())
+	{
+		return flags::INF_PROC_ERR_INPUT_IS_EMPTY;
+	}
+
 	if(!is_running())
 	{
 		return flags::INF_PROC_INFO_HALTED;
@@ -516,7 +521,8 @@ GENERIC InfTextToTextProcessor::_decode_input()
 
 	mContextCursor = mInputBatch.n_tokens;
 	mFinishState = finish_state::CONTINUE;
-
+	mTokenizedInput.clear();
+	
 	I32 decodeResult = llama_decode(mModelContext, mInputBatch);
 	mInputSignal.set_signal_finished();
 }
