@@ -44,7 +44,7 @@ protected:
 
 class MBASE_API InfProgram : public mbase::PcProgramBase {
 public:
-	using actively_loading_models = mbase::vector<mbase::string>;
+	using actively_loading_models = std::unordered_map<mbase::string, InfModelBase*>;
 	using accepted_client_map = std::unordered_map<mbase::string, InfMaipPeerBase*>;
 	using registered_model_map = std::unordered_map<mbase::string, InfModelBase*>;
 	using model_description_map = std::unordered_map<mbase::string, InfMaipModelDescription>;
@@ -118,7 +118,7 @@ public:
 	maip_err_code inf_get_accessible_models(const mbase::string& in_session_token, mbase::vector<mbase::string>& out_models);
 	maip_err_code inf_get_context_ids(const mbase::string& in_session_token, mbase::vector<U64>& out_contexts);
 	maip_err_code inf_create_context(const mbase::string& in_session_token, std::shared_ptr<mbase::PcNetPeerClient> in_peer, const mbase::string& in_model, const U32& in_ctsize);
-	maip_err_code inf_clear_context_history(const mbase::string& in_session_token, const U64& in_ctxId);
+	maip_err_code inf_clear_context_history(const mbase::string& in_session_token);
 	maip_err_code inf_get_context_status(const mbase::string& in_session_token, const U64& in_ctxId);
 	maip_err_code inf_destroy_context(const mbase::string& in_session_token, const U64& in_ctxId);
 	maip_err_code inf_get_program_models(const mbase::string& in_session_token, mbase::vector<mbase::string>& out_models);

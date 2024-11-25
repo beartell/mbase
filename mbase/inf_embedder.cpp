@@ -411,7 +411,7 @@ GENERIC InfEmbedderProcessor::update()
     {
         if(signal_embedding_vector_generated())
         {
-            InfClientBase* t2tClient = get_assigned_client();
+            [[maybe_unused]] InfClientBase* t2tClient = get_assigned_client(); // To suppress compiler warnings
 			mEmbeddingSignal.reset_signal_with_state();
             mVectorGenerated.reset_signal_with_state();
             /*if(t2tClient)
@@ -469,7 +469,7 @@ GENERIC InfEmbedderProcessor::on_initializing()
 
 }
 
-GENERIC InfEmbedderProcessor::on_initialize_fail(init_fail_code out_code)
+GENERIC InfEmbedderProcessor::on_initialize_fail([[maybe_unused]] init_fail_code out_code)
 {
 
 }

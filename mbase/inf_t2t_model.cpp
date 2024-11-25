@@ -23,16 +23,13 @@ if(!this->is_initialized())\
 InfModelTextToText::InfModelTextToText() :
 	mModel(NULL),
 	mEndOfToken(0),
-	mUsrStart(),
-	mSystemStart(),
-	mAssistantStart(),
+	mModelSize(0),
 	mOccupiedContext(0),
 	mTotalContextSize(0),
 	mBlockCount(0),
 	mHeadCount(0),
 	mEmbeddingLength(0),
 	mQuantizationCoefficient(0.0f),
-	mModelSize(0),
 	mIsEmbeddingModel(false)
 {
 	mModelCategory = inf_model_category::TEXT_TO_TEXT;
@@ -216,6 +213,7 @@ InfModelTextToText::flags InfModelTextToText::get_vocab_count(I32& out_count)
 InfModelTextToText::flags InfModelTextToText::get_size(size_type& out_size)
 {
 	MBASE_INF_T2T_MODEL_RETURN_UNINITIALIZED;
+	out_size = 0; // COME BACK HERE LATER
 	return flags::INF_MODEL_SUCCESS;
 }
 
@@ -662,6 +660,10 @@ GENERIC InfModelTextToText::_get_special_tokens(mbase::vector<mbase::string>& ou
 	{
 		IBYTE myChars[128] = { 0 };
 		I32 tokenLength = llama_token_to_piece(mModel, n, myChars, 128, 1, true);
+		if(!tokenLength || tokenLength < 0)
+		{
+			continue;
+		}
 		out_tokens.push_back(myChars);
 	}
 }

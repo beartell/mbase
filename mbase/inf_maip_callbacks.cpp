@@ -2,14 +2,15 @@
 
 MBASE_BEGIN
 
-bool access_request_cb(InfProgram& in_program, std::shared_ptr<PcNetPeerClient> in_peer, const maip_peer_request& in_request, const mbase::string& in_session_id, maip_packet_builder& out_packet)
+bool access_request_cb(InfProgram& in_program, [[maybe_unused]] std::shared_ptr<PcNetPeerClient> in_peer, const maip_peer_request& in_request, [[maybe_unused]] const mbase::string& in_session_id, maip_packet_builder& out_packet)
 {
     mbase::string username = in_request.get_kval<mbase::string>("USERNAME");
     mbase::string accessToken = in_request.get_kval<mbase::string>("ACCTOK");
+    mbase::string category = in_request.get_kval<mbase::string>("CATEGORY");
 
     mbase::string outToken;
 
-    InfProgram::maip_err_code errCode = in_program.inf_access_request(username, accessToken, in_peer, "T2T", outToken);
+    InfProgram::maip_err_code errCode = in_program.inf_access_request(username, accessToken, in_peer, category, outToken);
     if(errCode == InfProgram::maip_err_code::INF_SUCCESS)
     {
         out_packet.set_kval("STOK", outToken);
@@ -19,14 +20,14 @@ bool access_request_cb(InfProgram& in_program, std::shared_ptr<PcNetPeerClient> 
     return true;
 }
 
-bool destroy_session_cb(InfProgram& in_program, std::shared_ptr<PcNetPeerClient> in_peer, const maip_peer_request& in_request, const mbase::string& in_session_id, maip_packet_builder& out_packet)
+bool destroy_session_cb(InfProgram& in_program, [[maybe_unused]] std::shared_ptr<PcNetPeerClient> in_peer, [[maybe_unused]] const maip_peer_request& in_request, const mbase::string& in_session_id, maip_packet_builder& out_packet)
 {
     InfProgram::maip_err_code errCode = in_program.inf_destroy_session(in_session_id);
     out_packet.set_response_message((U16)errCode);
     return true;
 }
 
-bool get_accessible_models_cb(InfProgram& in_program, std::shared_ptr<PcNetPeerClient> in_peer, const maip_peer_request& in_request, const mbase::string& in_session_id, maip_packet_builder& out_packet)
+bool get_accessible_models_cb(InfProgram& in_program, [[maybe_unused]] std::shared_ptr<PcNetPeerClient> in_peer, [[maybe_unused]] const maip_peer_request& in_request, const mbase::string& in_session_id, maip_packet_builder& out_packet)
 {
     mbase::vector<mbase::string> modelsVector;
     InfProgram::maip_err_code errCode = in_program.inf_get_accessible_models(in_session_id, modelsVector);
@@ -40,7 +41,7 @@ bool get_accessible_models_cb(InfProgram& in_program, std::shared_ptr<PcNetPeerC
     return true;
 }
 
-bool get_context_ids_cb(InfProgram& in_program, std::shared_ptr<PcNetPeerClient> in_peer, const maip_peer_request& in_request, const mbase::string& in_session_id, maip_packet_builder& out_packet)
+bool get_context_ids_cb(InfProgram& in_program, [[maybe_unused]] std::shared_ptr<PcNetPeerClient> in_peer, [[maybe_unused]] const maip_peer_request& in_request, const mbase::string& in_session_id, maip_packet_builder& out_packet)
 {
     mbase::vector<U64> ctxIds;
     InfProgram::maip_err_code errCode = in_program.inf_get_context_ids(in_session_id, ctxIds);
@@ -54,7 +55,7 @@ bool get_context_ids_cb(InfProgram& in_program, std::shared_ptr<PcNetPeerClient>
     return true;
 }
 
-bool create_context_cb(InfProgram& in_program, std::shared_ptr<PcNetPeerClient> in_peer, const maip_peer_request& in_request, const mbase::string& in_session_id, maip_packet_builder& out_packet)
+bool create_context_cb(InfProgram& in_program, [[maybe_unused]] std::shared_ptr<PcNetPeerClient> in_peer, const maip_peer_request& in_request, const mbase::string& in_session_id, maip_packet_builder& out_packet)
 {
     mbase::string myModel = in_request.get_kval<mbase::string>("MODEL");
     U32 mCtxSize = in_request.get_kval<U32>("CTXSIZE");
@@ -72,16 +73,15 @@ bool create_context_cb(InfProgram& in_program, std::shared_ptr<PcNetPeerClient> 
     return true;
 }
 
-bool clear_context_history_cb(InfProgram& in_program, std::shared_ptr<PcNetPeerClient> in_peer, const maip_peer_request& in_request, const mbase::string& in_session_id, maip_packet_builder& out_packet)
+bool clear_context_history_cb(InfProgram& in_program, [[maybe_unused]] std::shared_ptr<PcNetPeerClient> in_peer, [[maybe_unused]] const maip_peer_request& in_request, const mbase::string& in_session_id, maip_packet_builder& out_packet)
 {
-    U32 ctxId = in_request.get_kval<U32>("CTXID");
-    InfProgram::maip_err_code errCode = in_program.inf_clear_context_history(in_session_id, ctxId);
+    InfProgram::maip_err_code errCode = in_program.inf_clear_context_history(in_session_id);
     out_packet.set_response_message((U16)errCode);
 
     return true;
 }
 
-bool get_context_status_cb(InfProgram& in_program, std::shared_ptr<PcNetPeerClient> in_peer, const maip_peer_request& in_request, const mbase::string& in_session_id, maip_packet_builder& out_packet)
+bool get_context_status_cb(InfProgram& in_program, [[maybe_unused]] std::shared_ptr<PcNetPeerClient> in_peer, const maip_peer_request& in_request, const mbase::string& in_session_id, maip_packet_builder& out_packet)
 {
     U32 ctxId = in_request.get_kval<U32>("CTXID");
     InfProgram::maip_err_code errCode = in_program.inf_get_context_status(in_session_id, ctxId);
@@ -89,7 +89,7 @@ bool get_context_status_cb(InfProgram& in_program, std::shared_ptr<PcNetPeerClie
     return true;
 }
 
-bool destroy_context_cb(InfProgram& in_program, std::shared_ptr<PcNetPeerClient> in_peer, const maip_peer_request& in_request, const mbase::string& in_session_id, maip_packet_builder& out_packet)
+bool destroy_context_cb(InfProgram& in_program, [[maybe_unused]] std::shared_ptr<PcNetPeerClient> in_peer, const maip_peer_request& in_request, const mbase::string& in_session_id, maip_packet_builder& out_packet)
 {
     U32 ctxId = in_request.get_kval<U32>("CTXID");
     InfProgram::maip_err_code errCode = in_program.inf_destroy_context(in_session_id, ctxId);
@@ -97,7 +97,7 @@ bool destroy_context_cb(InfProgram& in_program, std::shared_ptr<PcNetPeerClient>
     return true;
 }
 
-bool get_program_models_cb(InfProgram& in_program, std::shared_ptr<PcNetPeerClient> in_peer, const maip_peer_request& in_request, const mbase::string& in_session_id, maip_packet_builder& out_packet)
+bool get_program_models_cb(InfProgram& in_program, [[maybe_unused]] std::shared_ptr<PcNetPeerClient> in_peer, [[maybe_unused]] const maip_peer_request& in_request, const mbase::string& in_session_id, maip_packet_builder& out_packet)
 {
     mbase::vector<mbase::string> programModels;
     InfProgram::maip_err_code errCode = in_program.inf_get_program_models(in_session_id, programModels);
@@ -109,7 +109,7 @@ bool get_program_models_cb(InfProgram& in_program, std::shared_ptr<PcNetPeerClie
     return true;
 }
 
-bool load_model_cb(InfProgram& in_program, std::shared_ptr<PcNetPeerClient> in_peer, const maip_peer_request& in_request, const mbase::string& in_session_id, maip_packet_builder& out_packet)
+bool load_model_cb(InfProgram& in_program, [[maybe_unused]] std::shared_ptr<PcNetPeerClient> in_peer, const maip_peer_request& in_request, const mbase::string& in_session_id, maip_packet_builder& out_packet)
 {
     mbase::string modelName = in_request.get_kval<mbase::string>("MODEL");
     U32 ctxSize = in_request.get_kval<U32>("CTXSIZE");
@@ -125,7 +125,7 @@ bool load_model_cb(InfProgram& in_program, std::shared_ptr<PcNetPeerClient> in_p
     return true;
 }
 
-bool unload_model_cb(InfProgram& in_program, std::shared_ptr<PcNetPeerClient> in_peer, const maip_peer_request& in_request, const mbase::string& in_session_id, maip_packet_builder& out_packet)
+bool unload_model_cb(InfProgram& in_program, [[maybe_unused]] std::shared_ptr<PcNetPeerClient> in_peer, const maip_peer_request& in_request, const mbase::string& in_session_id, maip_packet_builder& out_packet)
 {
     mbase::string modelName = in_request.get_kval<mbase::string>("MODEL");
     InfProgram::maip_err_code errCode = in_program.inf_unload_model(in_session_id, modelName);
@@ -133,7 +133,7 @@ bool unload_model_cb(InfProgram& in_program, std::shared_ptr<PcNetPeerClient> in
     return true;
 }
 
-bool create_new_user_cb(InfProgram& in_program, std::shared_ptr<PcNetPeerClient> in_peer, const maip_peer_request& in_request, const mbase::string& in_session_id, maip_packet_builder& out_packet)
+bool create_new_user_cb(InfProgram& in_program, [[maybe_unused]] std::shared_ptr<PcNetPeerClient> in_peer, const maip_peer_request& in_request, const mbase::string& in_session_id, maip_packet_builder& out_packet)
 {
     mbase::string username = in_request.get_kval<mbase::string>("USERNAME");
     mbase::string accTok = in_request.get_kval<mbase::string>("ACCTOK");
@@ -180,7 +180,7 @@ bool create_new_user_cb(InfProgram& in_program, std::shared_ptr<PcNetPeerClient>
     return true;
 }
 
-bool delete_user_cb(InfProgram& in_program, std::shared_ptr<PcNetPeerClient> in_peer, const maip_peer_request& in_request, const mbase::string& in_session_id, maip_packet_builder& out_packet)
+bool delete_user_cb(InfProgram& in_program, [[maybe_unused]] std::shared_ptr<PcNetPeerClient> in_peer, const maip_peer_request& in_request, const mbase::string& in_session_id, maip_packet_builder& out_packet)
 {
     mbase::string username = in_request.get_kval<mbase::string>("USERNAME");
     mbase::string accTok = in_request.get_kval<mbase::string>("ACCTOK");
@@ -191,7 +191,7 @@ bool delete_user_cb(InfProgram& in_program, std::shared_ptr<PcNetPeerClient> in_
     return true;
 }
 
-bool modify_user_model_access_limit_cb(InfProgram& in_program, std::shared_ptr<PcNetPeerClient> in_peer, const maip_peer_request& in_request, const mbase::string& in_session_id, maip_packet_builder& out_packet)
+bool modify_user_model_access_limit_cb(InfProgram& in_program, [[maybe_unused]] std::shared_ptr<PcNetPeerClient> in_peer, const maip_peer_request& in_request, const mbase::string& in_session_id, maip_packet_builder& out_packet)
 {
     mbase::string username = in_request.get_kval<mbase::string>("USERNAME");
     U32 accessLimit = in_request.get_kval<U32>("ACCLIMIT");
@@ -202,7 +202,7 @@ bool modify_user_model_access_limit_cb(InfProgram& in_program, std::shared_ptr<P
     return true;
 }
 
-bool modify_user_maximum_context_length_cb(InfProgram& in_program, std::shared_ptr<PcNetPeerClient> in_peer, const maip_peer_request& in_request, const mbase::string& in_session_id, maip_packet_builder& out_packet)
+bool modify_user_maximum_context_length_cb(InfProgram& in_program, [[maybe_unused]] std::shared_ptr<PcNetPeerClient> in_peer, const maip_peer_request& in_request, const mbase::string& in_session_id, maip_packet_builder& out_packet)
 {
     mbase::string username = in_request.get_kval<mbase::string>("USERNAME");
     U32 ctxLength = in_request.get_kval<U32>("CTXLENGTH");
@@ -213,7 +213,7 @@ bool modify_user_maximum_context_length_cb(InfProgram& in_program, std::shared_p
     return true;
 }
 
-bool modify_user_batch_size_cb(InfProgram& in_program, std::shared_ptr<PcNetPeerClient> in_peer, const maip_peer_request& in_request, const mbase::string& in_session_id, maip_packet_builder& out_packet)
+bool modify_user_batch_size_cb(InfProgram& in_program, [[maybe_unused]] std::shared_ptr<PcNetPeerClient> in_peer, const maip_peer_request& in_request, const mbase::string& in_session_id, maip_packet_builder& out_packet)
 {
     mbase::string username = in_request.get_kval<mbase::string>("USERNAME");
     U32 batchSet = in_request.get_kval<U32>("BATCH_SET");
@@ -224,7 +224,7 @@ bool modify_user_batch_size_cb(InfProgram& in_program, std::shared_ptr<PcNetPeer
     return true;
 }
 
-bool modify_user_processor_thread_count_cb(InfProgram& in_program, std::shared_ptr<PcNetPeerClient> in_peer, const maip_peer_request& in_request, const mbase::string& in_session_id, maip_packet_builder& out_packet)
+bool modify_user_processor_thread_count_cb(InfProgram& in_program, [[maybe_unused]] std::shared_ptr<PcNetPeerClient> in_peer, const maip_peer_request& in_request, const mbase::string& in_session_id, maip_packet_builder& out_packet)
 {
     mbase::string username = in_request.get_kval<mbase::string>("USERNAME");
     U32 procThreads = in_request.get_kval<U32>("PROC_THREADS");
@@ -235,7 +235,7 @@ bool modify_user_processor_thread_count_cb(InfProgram& in_program, std::shared_p
     return true;
 }
 
-bool modify_user_max_processor_thread_count_cb(InfProgram& in_program, std::shared_ptr<PcNetPeerClient> in_peer, const maip_peer_request& in_request, const mbase::string& in_session_id, maip_packet_builder& out_packet)
+bool modify_user_max_processor_thread_count_cb(InfProgram& in_program, [[maybe_unused]] std::shared_ptr<PcNetPeerClient> in_peer, const maip_peer_request& in_request, const mbase::string& in_session_id, maip_packet_builder& out_packet)
 {
     mbase::string username = in_request.get_kval<mbase::string>("USERNAME");
     U32 maxProcThreads = in_request.get_kval<U32>("MAX_PROC_THREADS");
@@ -246,7 +246,7 @@ bool modify_user_max_processor_thread_count_cb(InfProgram& in_program, std::shar
     return true;
 }
 
-bool modify_user_system_prompt_cb(InfProgram& in_program, std::shared_ptr<PcNetPeerClient> in_peer, const maip_peer_request& in_request, const mbase::string& in_session_id, maip_packet_builder& out_packet)
+bool modify_user_system_prompt_cb(InfProgram& in_program, [[maybe_unused]] std::shared_ptr<PcNetPeerClient> in_peer, const maip_peer_request& in_request, const mbase::string& in_session_id, maip_packet_builder& out_packet)
 {
     mbase::string username = in_request.get_kval<mbase::string>("USERNAME");
     mbase::string systemPromptString;
@@ -263,7 +263,7 @@ bool modify_user_system_prompt_cb(InfProgram& in_program, std::shared_ptr<PcNetP
     return true;
 }
 
-bool modify_user_make_superuser_cb(InfProgram& in_program, std::shared_ptr<PcNetPeerClient> in_peer, const maip_peer_request& in_request, const mbase::string& in_session_id, maip_packet_builder& out_packet)
+bool modify_user_make_superuser_cb(InfProgram& in_program, [[maybe_unused]] std::shared_ptr<PcNetPeerClient> in_peer, const maip_peer_request& in_request, const mbase::string& in_session_id, maip_packet_builder& out_packet)
 {
     mbase::string username = in_request.get_kval<mbase::string>("USERNAME");
     mbase::string accessToken = in_request.get_kval<mbase::string>("ACCTOK");
@@ -274,7 +274,7 @@ bool modify_user_make_superuser_cb(InfProgram& in_program, std::shared_ptr<PcNet
     return true;
 }
 
-bool modify_user_unmake_superuser_cb(InfProgram& in_program, std::shared_ptr<PcNetPeerClient> in_peer, const maip_peer_request& in_request, const mbase::string& in_session_id, maip_packet_builder& out_packet)
+bool modify_user_unmake_superuser_cb(InfProgram& in_program, [[maybe_unused]] std::shared_ptr<PcNetPeerClient> in_peer, const maip_peer_request& in_request, const mbase::string& in_session_id, maip_packet_builder& out_packet)
 {
     mbase::string username = in_request.get_kval<mbase::string>("USERNAME");
     mbase::string accessToken = in_request.get_kval<mbase::string>("ACCTOK");
@@ -285,7 +285,7 @@ bool modify_user_unmake_superuser_cb(InfProgram& in_program, std::shared_ptr<PcN
     return true;
 }
 
-bool modify_user_accept_models_cb(InfProgram& in_program, std::shared_ptr<PcNetPeerClient> in_peer, const maip_peer_request& in_request, const mbase::string& in_session_id, maip_packet_builder& out_packet)
+bool modify_user_accept_models_cb(InfProgram& in_program, [[maybe_unused]] std::shared_ptr<PcNetPeerClient> in_peer, const maip_peer_request& in_request, const mbase::string& in_session_id, maip_packet_builder& out_packet)
 {
     mbase::string username = in_request.get_kval<mbase::string>("USERNAME");
     mbase::vector<mbase::string> models = in_request.get_kval<mbase::vector<mbase::string>>("MODEL");
@@ -311,7 +311,7 @@ bool modify_user_accept_models_cb(InfProgram& in_program, std::shared_ptr<PcNetP
     return true;
 }
 
-bool modify_user_set_authority_flags_cb(InfProgram& in_program, std::shared_ptr<PcNetPeerClient> in_peer, const maip_peer_request& in_request, const mbase::string& in_session_id, maip_packet_builder& out_packet)
+bool modify_user_set_authority_flags_cb(InfProgram& in_program, [[maybe_unused]] std::shared_ptr<PcNetPeerClient> in_peer, const maip_peer_request& in_request, const mbase::string& in_session_id, maip_packet_builder& out_packet)
 {
     mbase::string username = in_request.get_kval<mbase::string>("USERNAME");
     mbase::vector<mbase::string> authFlags = in_request.get_kval<mbase::vector<mbase::string>>("AUTHFLAGS");
@@ -327,7 +327,7 @@ bool modify_user_set_authority_flags_cb(InfProgram& in_program, std::shared_ptr<
     return true;
 }
 
-bool create_model_description_cb(InfProgram& in_program, std::shared_ptr<PcNetPeerClient> in_peer, const maip_peer_request& in_request, const mbase::string& in_session_id, maip_packet_builder& out_packet)
+bool create_model_description_cb(InfProgram& in_program, [[maybe_unused]] std::shared_ptr<PcNetPeerClient> in_peer, const maip_peer_request& in_request, const mbase::string& in_session_id, maip_packet_builder& out_packet)
 {
     mbase::string originalName = in_request.get_kval<mbase::string>("ORIGINAL");
     mbase::string customName = in_request.get_kval<mbase::string>("CUSTOM");
@@ -366,7 +366,7 @@ bool create_model_description_cb(InfProgram& in_program, std::shared_ptr<PcNetPe
     return true;
 }
 
-bool modify_model_original_model_name_cb(InfProgram& in_program, std::shared_ptr<PcNetPeerClient> in_peer, const maip_peer_request& in_request, const mbase::string& in_session_id, maip_packet_builder& out_packet)
+bool modify_model_original_model_name_cb(InfProgram& in_program, [[maybe_unused]] std::shared_ptr<PcNetPeerClient> in_peer, const maip_peer_request& in_request, const mbase::string& in_session_id, maip_packet_builder& out_packet)
 {
     mbase::string modelName = in_request.get_kval<mbase::string>("MODEL");
     mbase::string originalName = in_request.get_kval<mbase::string>("ORIGINAL");
@@ -382,7 +382,7 @@ bool modify_model_original_model_name_cb(InfProgram& in_program, std::shared_ptr
     return true;
 }
 
-bool modify_model_custom_model_name_cb(InfProgram& in_program, std::shared_ptr<PcNetPeerClient> in_peer, const maip_peer_request& in_request, const mbase::string& in_session_id, maip_packet_builder& out_packet)
+bool modify_model_custom_model_name_cb(InfProgram& in_program, [[maybe_unused]] std::shared_ptr<PcNetPeerClient> in_peer, const maip_peer_request& in_request, const mbase::string& in_session_id, maip_packet_builder& out_packet)
 {
     mbase::string modelName = in_request.get_kval<mbase::string>("MODEL");
     mbase::string customName = in_request.get_kval<mbase::string>("CUSTOM");
@@ -398,7 +398,7 @@ bool modify_model_custom_model_name_cb(InfProgram& in_program, std::shared_ptr<P
     return true;
 }
 
-bool modify_model_description_cb(InfProgram& in_program, std::shared_ptr<PcNetPeerClient> in_peer, const maip_peer_request& in_request, const mbase::string& in_session_id, maip_packet_builder& out_packet)
+bool modify_model_description_cb(InfProgram& in_program, [[maybe_unused]] std::shared_ptr<PcNetPeerClient> in_peer, const maip_peer_request& in_request, const mbase::string& in_session_id, maip_packet_builder& out_packet)
 {
     mbase::string modelName = in_request.get_kval<mbase::string>("MODEL");
     mbase::string modelDescription = in_request.get_kval<mbase::string>("DESC");
@@ -414,7 +414,7 @@ bool modify_model_description_cb(InfProgram& in_program, std::shared_ptr<PcNetPe
     return true;
 }
 
-bool modify_model_system_prompt_cb(InfProgram& in_program, std::shared_ptr<PcNetPeerClient> in_peer, const maip_peer_request& in_request, const mbase::string& in_session_id, maip_packet_builder& out_packet)
+bool modify_model_system_prompt_cb(InfProgram& in_program, [[maybe_unused]] std::shared_ptr<PcNetPeerClient> in_peer, const maip_peer_request& in_request, const mbase::string& in_session_id, maip_packet_builder& out_packet)
 {
     mbase::string modelName = in_request.get_kval<mbase::string>("MODEL");
     const char_stream& systemPromptStream = in_request.get_data();
@@ -436,7 +436,7 @@ bool modify_model_system_prompt_cb(InfProgram& in_program, std::shared_ptr<PcNet
     return true;
 }
 
-bool modify_model_model_file_cb(InfProgram& in_program, std::shared_ptr<PcNetPeerClient> in_peer, const maip_peer_request& in_request, const mbase::string& in_session_id, maip_packet_builder& out_packet)
+bool modify_model_model_file_cb(InfProgram& in_program, [[maybe_unused]] std::shared_ptr<PcNetPeerClient> in_peer, const maip_peer_request& in_request, const mbase::string& in_session_id, maip_packet_builder& out_packet)
 {
     mbase::string modelName = in_request.get_kval<mbase::string>("MODEL");
     mbase::string category = in_request.get_kval<mbase::string>("CATEGORY");
@@ -456,7 +456,7 @@ bool modify_model_model_file_cb(InfProgram& in_program, std::shared_ptr<PcNetPee
     return true;
 }
 
-bool modify_model_tags_cb(InfProgram& in_program, std::shared_ptr<PcNetPeerClient> in_peer, const maip_peer_request& in_request, const mbase::string& in_session_id, maip_packet_builder& out_packet)
+bool modify_model_tags_cb(InfProgram& in_program, [[maybe_unused]] std::shared_ptr<PcNetPeerClient> in_peer, const maip_peer_request& in_request, const mbase::string& in_session_id, maip_packet_builder& out_packet)
 {
     mbase::string modelName = in_request.get_kval<mbase::string>("MODEL");
     mbase::vector<mbase::string> tags = in_request.get_kval<mbase::vector<mbase::string>>("TAGS");
@@ -472,7 +472,7 @@ bool modify_model_tags_cb(InfProgram& in_program, std::shared_ptr<PcNetPeerClien
     return true;
 }
 
-bool modify_model_context_length_cb(InfProgram& in_program, std::shared_ptr<PcNetPeerClient> in_peer, const maip_peer_request& in_request, const mbase::string& in_session_id, maip_packet_builder& out_packet)
+bool modify_model_context_length_cb(InfProgram& in_program, [[maybe_unused]] std::shared_ptr<PcNetPeerClient> in_peer, const maip_peer_request& in_request, const mbase::string& in_session_id, maip_packet_builder& out_packet)
 {
     mbase::string modelName = in_request.get_kval<mbase::string>("MODEL");
     U32 ctxLength = in_request.get_kval<U32>("CTXLENGTH");
@@ -488,17 +488,17 @@ bool modify_model_context_length_cb(InfProgram& in_program, std::shared_ptr<PcNe
     return true;
 }
 
-bool execution_set_input_cb(InfProgram& in_program, std::shared_ptr<PcNetPeerClient> in_peer, const maip_peer_request& in_request, const mbase::string& in_session_id, maip_packet_builder& out_packet)
+bool execution_set_input_cb([[maybe_unused]] InfProgram& in_program, [[maybe_unused]] std::shared_ptr<PcNetPeerClient> in_peer, [[maybe_unused]] const maip_peer_request& in_request, [[maybe_unused]] const mbase::string& in_session_id, [[maybe_unused]] maip_packet_builder& out_packet)
 {
     return true;
 }
 
-bool execution_execute_input_cb(InfProgram& in_program, std::shared_ptr<PcNetPeerClient> in_peer, const maip_peer_request& in_request, const mbase::string& in_session_id, maip_packet_builder& out_packet)
+bool execution_execute_input_cb([[maybe_unused]] InfProgram& in_program, [[maybe_unused]] std::shared_ptr<PcNetPeerClient> in_peer, [[maybe_unused]] const maip_peer_request& in_request, [[maybe_unused]] const mbase::string& in_session_id, [[maybe_unused]] maip_packet_builder& out_packet)
 {
     return true;
 }
 
-bool execution_next_cb(InfProgram& in_program, std::shared_ptr<PcNetPeerClient> in_peer, const maip_peer_request& in_request, const mbase::string& in_session_id, maip_packet_builder& out_packet)
+bool execution_next_cb([[maybe_unused]] InfProgram& in_program, [[maybe_unused]] std::shared_ptr<PcNetPeerClient> in_peer, [[maybe_unused]] const maip_peer_request& in_request, [[maybe_unused]] const mbase::string& in_session_id, [[maybe_unused]] maip_packet_builder& out_packet)
 {
     return true;
 }

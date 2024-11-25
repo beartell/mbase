@@ -52,7 +52,7 @@ public:
 
 	GENERIC on_informatic_request(const maip_peer_request& out_request, std::shared_ptr<PcNetPeerClient> out_peer) override;
 	GENERIC on_execution_request(const maip_peer_request& out_request, std::shared_ptr<PcNetPeerClient> out_peer) override;
-	GENERIC on_custom_request(const maip_peer_request& out_request, std::shared_ptr<PcNetPeerClient> out_peer) override;
+	GENERIC on_custom_request([[maybe_unused]] const maip_peer_request& out_request, [[maybe_unused]] std::shared_ptr<PcNetPeerClient> out_peer) override;
 
 	GENERIC on_listen() override;
 	GENERIC on_stop() override;

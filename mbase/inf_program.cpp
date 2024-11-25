@@ -16,7 +16,7 @@ if(!this->is_session_token_valid(in_session_token))\
 {\
 	return maip_err_code::INF_SESSION_TOKEN_MISMATCH;\
 }\
-InfMaipPeerBase* clientSession = mSessionMap[in_session_token];
+[[maybe_unused]] InfMaipPeerBase* clientSession = mSessionMap[in_session_token];
 
 #define MBASE_DESC_MODIF_CONTROL \
 maip_err_code result = common_description_modification_control(clientSession, in_model_target);\
@@ -46,7 +46,7 @@ InfMaipModelTextToText::InfMaipModelTextToText(InfProgram* in_program, const mba
 {
 }
 
-GENERIC InfMaipModelTextToText::on_initialize_fail(init_fail_code out_fail_code)
+GENERIC InfMaipModelTextToText::on_initialize_fail([[maybe_unused]] init_fail_code out_fail_code)
 {
 	mProgramInstance->remove_loading_model(mDefinedModelName);
 	delete this;
@@ -257,7 +257,7 @@ InfProgram::maip_err_code InfProgram::inf_create_context(const mbase::string& in
 	return maip_err_code::INF_SUCCESS;
 }
 
-InfProgram::maip_err_code InfProgram::inf_clear_context_history(const mbase::string& in_session_token, const U64& in_ctxId)
+InfProgram::maip_err_code InfProgram::inf_clear_context_history(const mbase::string& in_session_token)
 {
 	MBASE_SESSION_CONTROL;
 	
@@ -269,7 +269,7 @@ InfProgram::maip_err_code InfProgram::inf_clear_context_history(const mbase::str
 	return maip_err_code::INF_SUCCESS;
 }
 
-InfProgram::maip_err_code InfProgram::inf_get_context_status(const mbase::string& in_session_token, const U64& in_ctxId)
+InfProgram::maip_err_code InfProgram::inf_get_context_status(const mbase::string& in_session_token, [[maybe_unused]] const U64& in_ctxId)
 {
 	MBASE_SESSION_CONTROL;
 
@@ -370,7 +370,7 @@ InfProgram::maip_err_code InfProgram::inf_load_model(const mbase::string& in_ses
 
 	for(auto& n : mLoadingModels)
 	{
-		if(n == in_modelname)
+		if(n.first == in_modelname)
 		{
 			return maip_err_code::INF_LOADING_MODEL;
 		}
@@ -380,7 +380,7 @@ InfProgram::maip_err_code InfProgram::inf_load_model(const mbase::string& in_ses
 	{
 		if(n.first == in_modelname)
 		{
-			if(!mbase::is_file_valid(mbase::from_utf8(n.first)))
+			if(!mbase::is_file_valid(mDescriptionDirectory + mbase::from_utf8(n.first + ".mbsf")))
 			{
 				return maip_err_code::INF_UNABLE_TO_OPEN_MODEL_FILE;
 			}
@@ -402,7 +402,7 @@ InfProgram::maip_err_code InfProgram::inf_load_model(const mbase::string& in_ses
 					return maip_err_code::INF_MODEL_NOT_LOADED;
 				}
 
-				mLoadingModels.push_back(n.first);
+				mLoadingModels[in_modelname] = t2tModel;
 				return maip_err_code::INF_LOADING_MODEL;
 			}
 		}
@@ -487,8 +487,6 @@ InfProgram::maip_err_code InfProgram::inf_create_new_user(
 		return maip_err_code::INF_USER_ALREADY_EXISTS;
 	}
 
-	U32 modelAccessLimit = in_model_access_limit;
-	U32 maximumContextLength = in_maximum_context_length;
 	mbase::string accessToken = in_access_token;
 
 	if(!accessToken.size())
@@ -638,11 +636,7 @@ InfProgram::maip_err_code InfProgram::inf_delete_user(const mbase::string& in_se
 
 	mUserMap.erase(It);
 
-	mbase::string usernameSanitized = in_username;
-	usernameSanitized.remove_all('/'); // Reason I am doing this is if the user attempts to exploit the file path
-	usernameSanitized.remove_all('*'); // Reason I am doing this is if the user attempts to exploit the file path
-
-	mbase::wstring fileToBeDeleted = mClientStateDirectory + mbase::from_utf8(usernameSanitized) + L".mbfs";
+	mbase::wstring fileToBeDeleted = mClientStateDirectory + mbase::from_utf8(in_username) + L".mbfs";
 	if(mbase::is_file_valid(fileToBeDeleted))
 	{
 		mbase::delete_file(fileToBeDeleted);
@@ -672,6 +666,7 @@ InfProgram::maip_err_code InfProgram::inf_modify_user_model_access_limit(const m
 	InfMaipUser& maipUser = mUserMap[in_username]; // Guaranteed success
 
 	maipUser.set_distinct_model_access_limit(in_new_access_limit);
+	maipUser.update_state_file(mClientStateDirectory);
 
 	return maip_err_code::INF_SUCCESS;
 }
@@ -696,6 +691,7 @@ InfProgram::maip_err_code InfProgram::inf_modify_user_maximum_context_length(con
 
 	InfMaipUser& maipUser = mUserMap[in_username];
 	maipUser.set_maximum_context_length(in_maximum_context_length);
+	maipUser.update_state_file(mClientStateDirectory);
 
 	return maip_err_code::INF_SUCCESS;
 }
@@ -727,6 +723,7 @@ InfProgram::maip_err_code InfProgram::inf_modify_user_batch_size(const mbase::st
 	}
 
 	maipUser.set_batch_size(tmpBatchSize);
+	maipUser.update_state_file(mClientStateDirectory);
 
 	return maip_err_code::INF_SUCCESS;
 }
@@ -758,6 +755,7 @@ InfProgram::maip_err_code InfProgram::inf_modify_user_processor_thread_count(con
 	}
 
 	maipUser.set_processor_thread_count(tmpThreadCount);
+	maipUser.update_state_file(mClientStateDirectory);
 
 	return maip_err_code::INF_SUCCESS;
 }
@@ -775,6 +773,7 @@ InfProgram::maip_err_code InfProgram::inf_modify_user_max_processor_thread_count
 	InfMaipUser& maipUser = mUserMap[in_username];
 
 	maipUser.set_processor_max_thread_count(in_thread_count);
+	maipUser.update_state_file(mClientStateDirectory);
 
 	return maip_err_code::INF_SUCCESS;
 }
@@ -793,6 +792,7 @@ InfProgram::maip_err_code InfProgram::inf_modify_user_system_prompt(const mbase:
 	InfMaipUser& maipUser = mUserMap[in_username];
 
 	maipUser.set_system_prompt(in_system_prompt);
+	maipUser.update_state_file(mClientStateDirectory);
 
 	return maip_err_code::INF_SUCCESS;
 }
@@ -829,6 +829,7 @@ InfProgram::maip_err_code InfProgram::inf_modify_user_make_superuser(const mbase
 	}
 
 	maipUser.make_superuser();
+	maipUser.update_state_file(mClientStateDirectory);
 
 	return maip_err_code::INF_SUCCESS;
 }
@@ -864,6 +865,7 @@ InfProgram::maip_err_code InfProgram::inf_modify_user_unmake_superuser(const mba
 	}
 
 	maipUser.unmake_superuser();
+	maipUser.update_state_file(mClientStateDirectory);
 
 	return maip_err_code::INF_SUCCESS;
 }
@@ -906,7 +908,7 @@ InfProgram::maip_err_code InfProgram::inf_modify_user_accept_models(const mbase:
 	{
 		maipUser.add_accessible_model(*It);
 	}
-
+	maipUser.update_state_file(mClientStateDirectory);
 	return maip_err_code::INF_SUCCESS;
 }
 
@@ -1423,13 +1425,13 @@ GENERIC InfProgram::initialize(InfProgramInformation in_program_information)
 		in_program_information.mConfigPath + L"mbase_inference_config"
 	);
 
-	mbase::string tmpApplicationName;
-	mbase::string tmpHostName;
-	mbase::string productId;
-	mbase::string defaultUsername;
-	mbase::string defaultAccessToken;
-	mbase::string versionString;
-	I32 tmpHostPort = 0;
+	// mbase::string tmpApplicationName;
+	// mbase::string tmpHostName;
+	// mbase::string productId;
+	// mbase::string defaultUsername;
+	// mbase::string defaultAccessToken;
+	// mbase::string versionString;
+	// I32 tmpHostPort = 0;
 
 	//mInferenceConfigurator.get_config_param("models_directory", mModelDirectory);
 
@@ -1556,7 +1558,7 @@ InfProgram::flags InfProgram::create_user(
 GENERIC InfProgram::remove_loading_model(const mbase::string& in_model_name)
 {
 	// 100% success, no need for further control
-	actively_loading_models::iterator It = mbase::find(mLoadingModels.begin(), mLoadingModels.end(), in_model_name);
+	actively_loading_models::iterator It = mLoadingModels.find(in_model_name);
 	mLoadingModels.erase(It);
 }
 
@@ -1680,6 +1682,14 @@ InfProgram::maip_err_code InfProgram::common_description_modification_control(In
 
 GENERIC InfProgram::update()
 {
+	for(actively_loading_models::iterator It = mLoadingModels.begin(); It != mLoadingModels.end();)
+	{
+		InfModelBase* tmpModel = It->second;
+		It = ++It; // We are doing this because model update will delete itself from the end
+
+		tmpModel->update();
+	}
+
 	for(registered_model_map::iterator It = mRegisteredModels.begin(); It != mRegisteredModels.end();)
 	{
 		InfModelBase* t2tModel = It->second;

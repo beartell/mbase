@@ -8,7 +8,6 @@ MBASE_BEGIN
 
 GENERIC InfMaipServerBase::on_accept(std::shared_ptr<PcNetPeerClient> out_peer)
 {
-	std::cout << "Connection received" << std::endl;
 	out_peer->send_read_signal();
 }
 
@@ -29,7 +28,7 @@ GENERIC InfMaipServerBase::on_data(std::shared_ptr<PcNetPeerClient> out_peer, CB
 GENERIC InfMaipServerBase::on_disconnect(std::shared_ptr<PcNetPeerClient> out_peer)
 {
 	// Remove the peer from accumulation map if it exists
-	std::cout << "Connection left" << std::endl;
+	mAccumulationMap.erase(out_peer->get_raw_socket());
 }
 
 GENERIC InfMaipServerBase::register_request_callback(const mbase::string& in_operation, maip_request_callback in_callback)
@@ -286,7 +285,7 @@ GENERIC InfMaipDefaultServer::on_execution_request(const maip_peer_request& out_
 	out_peer->send_read_signal();
 }
 
-GENERIC InfMaipDefaultServer::on_custom_request(const maip_peer_request& out_request, std::shared_ptr<PcNetPeerClient> out_peer)
+GENERIC InfMaipDefaultServer::on_custom_request([[maybe_unused]] const maip_peer_request& out_request, [[maybe_unused]] std::shared_ptr<PcNetPeerClient> out_peer)
 {
 
 }

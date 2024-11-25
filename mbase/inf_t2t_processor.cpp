@@ -498,7 +498,7 @@ GENERIC InfTextToTextProcessor::on_initializing()
 
 }
 
-GENERIC InfTextToTextProcessor::on_initialize_fail(last_fail_code out_code)
+GENERIC InfTextToTextProcessor::on_initialize_fail([[maybe_unused]] last_fail_code out_code)
 {
 
 }
@@ -523,7 +523,7 @@ GENERIC InfTextToTextProcessor::_decode_input()
 	mFinishState = finish_state::CONTINUE;
 	mTokenizedInput.clear();
 	
-	I32 decodeResult = llama_decode(mModelContext, mInputBatch);
+	[[maybe_unused]] I32 decodeResult = llama_decode(mModelContext, mInputBatch);
 	mInputSignal.set_signal_finished();
 }
 

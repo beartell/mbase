@@ -57,15 +57,18 @@
 
 #if MBASE_CPP_VERSION >= 20
 	#define MBASE_ND(in_reason) [[nodiscard(in_reason)]]
+	#define MBASE_UNUSED [[maybe_unused]]
 	#define MBASE_INLINE inline
 	#define MBASE_INLINE_EXPR constexpr inline
 #else
 #if MBASE_CPP_VERSION < 17
 	#define MBASE_ND(in_reason)
+	#define MBASE_UNUSED
 	#define MBASE_INLINE
 	#define MBASE_INLINE_EXPR
 #else
 	#define MBASE_ND(in_reason) [[nodiscard]]
+	#define MBASE_UNUSED [[maybe_unused]]
 	#define MBASE_INLINE inline
 	#define MBASE_INLINE_EXPR inline
 #endif

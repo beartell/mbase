@@ -9,12 +9,13 @@ MBASE_BEGIN
 
 template<typename Type>
 struct argument_get_numeric {
-    static bool value(const U32& in_index, const I32& in_argc, IBYTEBUFFER* in_argv, Type& out_value)
+    static bool value(const I32& in_index, const I32& in_argc, IBYTEBUFFER* in_argv, Type& out_value)
     {
-        if (in_index >= in_argc || in_index + 1 == in_argc)
+        if (in_index >= in_argc || in_index + 1 == in_argc || in_index < 0)
         {
             // If index is bigger or equal to argc, invocation is invalid
             // If index + 1 is equal to argc, it means that it does not have a value to set
+            // If index is less than 0, invocation is invalid
             return false;
         }
 
@@ -24,7 +25,7 @@ struct argument_get_numeric {
 };
 
 struct argument_get_string {
-    static bool value(const U32& in_index, const I32& in_argc, IBYTEBUFFER* in_argv, mbase::string& out_value)
+    static bool value(const I32& in_index, const I32& in_argc, IBYTEBUFFER* in_argv, mbase::string& out_value)
     {
         if (in_index >= in_argc || in_index + 1 == in_argc)
         {
@@ -41,7 +42,7 @@ struct argument_get_string {
 template<typename Type>
 struct argument_get {
     using get_type = std::conditional_t<std::is_same_v<Type, mbase::string>, argument_get_string, argument_get_numeric<Type>>;
-    static bool value(const U32& in_index, const I32& in_argc, IBYTEBUFFER* in_argv, Type& out_value)
+    static bool value(const I32& in_index, const I32& in_argc, IBYTEBUFFER* in_argv, Type& out_value)
     {
         return get_type::value(in_index, in_argc, in_argv, out_value);
     }

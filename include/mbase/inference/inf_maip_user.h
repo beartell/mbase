@@ -94,7 +94,7 @@ private:
 	mbase::string mAssistantPrefix = "";
 	inf_sampling_set mSamplingSet;
 	bool mIsSuperUser = false;
-	bool mIsStatic = false; // If this is true, new clients won't be able to associate themselves with this user.
+	bool mIsStatic = false;
 };
 
 MBASE_END

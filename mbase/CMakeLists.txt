@@ -54,7 +54,7 @@ add_library(mb_core SHARED pc_state.cpp
 
 add_library(mb_inference SHARED inf_client.cpp 
     inf_common.cpp
-    #inf_embedder.cpp
+    inf_embedder.cpp
     inf_gguf_meta_configurator.cpp
     inf_maip_callbacks.cpp
     inf_maip_model_description.cpp
