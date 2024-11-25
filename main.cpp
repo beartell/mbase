@@ -272,7 +272,7 @@ int main(int argc, char** argv)
     InfProgram::maip_err_code errCode = instanceProgram.inf_load_model(
         outToken,
         "custom_lama",
-        1024
+        60000
     );
 
     instanceProgram.inf_modify_model_context_length(
@@ -289,12 +289,35 @@ int main(int argc, char** argv)
         "T2T"
     );
 
-    printf("%d\n", errCode);
+    
+    mbase::sleep(2000);
+    instanceProgram.update();
+
+    instanceProgram.inf_create_context(
+        outToken,
+        NULL,
+        "custom_lama",
+        4096
+    );
+    mbase::sleep(2000);
+    instanceProgram.update();
+
+    mbase::vector<U32> messageIds;
+
+    U32 msgId = 0;
+    instanceProgram.exec_set_input(outToken, 1, mbase::context_role::SYSTEM, "You are a helpful assistant.", msgId);
+    messageIds.push_back(msgId);
+    instanceProgram.exec_set_input(outToken, 1, mbase::context_role::USER, "Give me a 100 word essay about climate change.", msgId);
+    messageIds.push_back(msgId);
+
+    errCode = instanceProgram.exec_execute_input(outToken, 1, messageIds);
+
     while(1)
     {
+        //instanceProgram.exec_next(outToken, NULL, 1);
+        errCode = instanceProgram.exec_next(outToken, NULL, 1);
         instanceProgram.update();
     }
-    
 
     //std::cout << (I32)result << std::endl;  
     

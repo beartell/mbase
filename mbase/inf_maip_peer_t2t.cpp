@@ -81,7 +81,7 @@ GENERIC InfMaipPeerTextToText::on_write(InfTextToTextProcessor* out_processor, c
     // Called every time a next token is generated
     inf_token_description tokenDescription;
     out_processor->token_to_description(out_token[0], tokenDescription);
-
+    out_processor->next({1, false});
     if(out_is_finish)
     {
         mLastToken = tokenDescription;
@@ -130,7 +130,6 @@ GENERIC InfMaipPeerTextToText::on_finish([[maybe_unused]] InfTextToTextProcessor
         InfProgram::maip_err_code finishCode = InfProgram::maip_err_code::EXEC_MESSAGE_FINISH;
         if(out_finish_state == InfTextToTextProcessor::finish_state::FINISHED)
         {
-            finishCode = InfProgram::maip_err_code::EXEC_MESSAGE_FINISH;
         }
 
         else if(out_finish_state == InfTextToTextProcessor::finish_state::TOKEN_LIMIT_REACHED)

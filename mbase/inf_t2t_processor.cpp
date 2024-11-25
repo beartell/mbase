@@ -324,9 +324,9 @@ InfTextToTextProcessor::flags InfTextToTextProcessor::next(const decode_behavior
 		return flags::INF_PROC_SUCCESS;
 	}
 
-	if(!mTokenizedInput.size())
+	if(signal_state_decode_process())
 	{
-		return flags::INF_PROC_ERR_INPUT_IS_EMPTY;
+		return flags::INF_PROC_ERR_ALREADY_PROCESSING;
 	}
 
 	if(!is_running())
@@ -520,11 +520,11 @@ GENERIC InfTextToTextProcessor::_decode_input()
 	mInputBatch = llama_batch_get_one(mTokenizedInput.data(), mTokenizedInput.size());
 
 	mContextCursor = mInputBatch.n_tokens;
-	mFinishState = finish_state::CONTINUE;
 	mTokenizedInput.clear();
 	
 	[[maybe_unused]] I32 decodeResult = llama_decode(mModelContext, mInputBatch);
 	mInputSignal.set_signal_finished();
+	mFinishState = finish_state::CONTINUE;
 }
 
 GENERIC InfTextToTextProcessor::_decode_next()
@@ -790,9 +790,7 @@ GENERIC InfTextToTextProcessor::update()
 
 	if(signal_state_decode_process())
 	{
-		mDecodeSignal.reset_signal_state();
-		
-		InfModelTextToText* t2tModel = static_cast<InfModelTextToText*>(this->mTargetModel_md_model);
+		mDecodeSignal.reset_signal_state();		
 		bool isFinish = false;
 
 		if(mFinishState != finish_state::CONTINUE)
