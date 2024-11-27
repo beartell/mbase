@@ -14,7 +14,10 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/")
 set(CMAKE_CXX_STANDARD 20)
 
 add_executable(mbase_test_program main.cpp)
-add_subdirectory(mbase)
+
+include(MBASEStdSys)
+include(MBASECoreSys)
+include(MBASEInferenceSys)
 
 target_include_directories(mbase_test_program PUBLIC ${MBASE_INFERENCE_TARGET_INCLUDES})
 target_link_libraries(mbase_test_program PRIVATE mb_core mb_inference)

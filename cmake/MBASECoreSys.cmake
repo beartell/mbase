@@ -1,0 +1,43 @@
+include_guard(GLOBAL)
+
+include(MBASECommonConfig)
+include(MBASEStdSys)
+
+set(MBASE_CORE_SYS_STRING "MBASE Core")
+set(MBASE_CORE_PATH_STRING "pc")
+
+mbase_build_version(1 0 0 ${MBASE_VERSION_ALPHA} MBASE_CORE_VERSION)
+mbase_build_include_install_path(${MBASE_CORE_PATH_STRING} MBASE_CORE_INCLUDE_INSTALL_PATH)
+
+message("${MBASE_CORE_SYS_STRING} library version: ${MBASE_CORE_VERSION}")
+message("${MBASE_CORE_SYS_STRING} install source path: ${MBASE_CORE_INCLUDE_INSTALL_PATH}")
+
+list(APPEND MBASE_CORE_INCLUDE_DEPENDS ${MBASE_STD_INCLUDES})
+
+list(APPEND MBASE_CORE_INCLUDE_STABLE_FILES
+    pc_config.h
+    pc_diagnostics.h
+    pc_io_manager.h
+    pc_net_manager.h
+    pc_program.h
+    pc_state.h
+    pc_stream_manager.h
+    pc_termination_handler.h
+)
+
+add_library(mb_core SHARED
+    ${MBASE_GLOBAL_SOURCE_DIRECTORY}pc_config.cpp
+    ${MBASE_GLOBAL_SOURCE_DIRECTORY}pc_state.cpp
+    ${MBASE_GLOBAL_SOURCE_DIRECTORY}pc_io_manager.cpp
+    ${MBASE_GLOBAL_SOURCE_DIRECTORY}pc_stream_manager.cpp
+    ${MBASE_GLOBAL_SOURCE_DIRECTORY}pc_program.cpp
+    ${MBASE_GLOBAL_SOURCE_DIRECTORY}pc_diagnostics.cpp
+    ${MBASE_GLOBAL_SOURCE_DIRECTORY}pc_net_manager.cpp
+)
+
+target_compile_definitions(mb_core PRIVATE MBASE_BUILD=1 MBASE_INTERNAL_API=1)
+target_include_directories(mb_core PUBLIC ${MBASE_CORE_INCLUDE_DEPENDS})
+
+foreach(MB_INCLUDE_FILE IN LISTS MBASE_CORE_INCLUDE_STABLE_FILES)
+    list(APPEND MBASE_CORE_INCLUDE_INSTALL_FILES ${MBASE_CORE_INCLUDE_INSTALL_PATH}${MB_INCLUDE_FILE})
+endforeach()

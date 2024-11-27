@@ -168,26 +168,6 @@ using namespace mbase;
 
 int main(int argc, char** argv)
 {
-    
-    // mbase::vector<mbase::string> aa = {"hello", "world", "how"};
-
-    // for(auto& n : aa)
-    // {
-    //     std::cout << n.size() << "-" << n.get_serialized_size() << std::endl;
-    // }
-
-    // deep_char_stream dcs(aa.get_serialized_size());
-    // aa.serialize(dcs);
-    // SIZE_T pro;
-    // mbase::vector<mbase::string> cc = aa.deserialize(dcs.get_buffer(), dcs.buffer_length(), pro);
-
-    // for(auto& n : cc)
-    // {   
-    //     std::cout << n << std::endl;
-    // }
-
-    // return 0;
-    
     mbase::InfSamplerDescription topKSampling;
     mbase::InfSamplerDescription topPSampling;
     mbase::InfSamplerDescription minPSampling;
@@ -290,115 +270,34 @@ int main(int argc, char** argv)
     );
 
     
-    mbase::sleep(2000);
-    instanceProgram.update();
+    // mbase::sleep(2000);
+    // instanceProgram.update();
 
-    instanceProgram.inf_create_context(
-        outToken,
-        NULL,
-        "custom_lama",
-        4096
-    );
-    mbase::sleep(2000);
-    instanceProgram.update();
+    // instanceProgram.inf_create_context(
+    //     outToken,
+    //     NULL,
+    //     "custom_lama",
+    //     4096
+    // );
+    // mbase::sleep(2000);
+    // instanceProgram.update();
 
-    mbase::vector<U32> messageIds;
+    // mbase::vector<U32> messageIds;
 
-    U32 msgId = 0;
-    instanceProgram.exec_set_input(outToken, 1, mbase::context_role::SYSTEM, "You are a helpful assistant.", msgId);
-    messageIds.push_back(msgId);
-    instanceProgram.exec_set_input(outToken, 1, mbase::context_role::USER, "Give me a 100 word essay about climate change.", msgId);
-    messageIds.push_back(msgId);
+    // U32 msgId = 0;
+    // instanceProgram.exec_set_input(outToken, 1, mbase::context_role::SYSTEM, "You are a helpful assistant.", msgId);
+    // messageIds.push_back(msgId);
+    // instanceProgram.exec_set_input(outToken, 1, mbase::context_role::USER, "Give me a 100 word essay about climate change.", msgId);
+    // messageIds.push_back(msgId);
 
-    errCode = instanceProgram.exec_execute_input(outToken, 1, messageIds);
+    // errCode = instanceProgram.exec_execute_input(outToken, 1, messageIds);
 
-    while(1)
-    {
-        //instanceProgram.exec_next(outToken, NULL, 1);
-        errCode = instanceProgram.exec_next(outToken, NULL, 1);
-        instanceProgram.update();
-    }
-
-    //std::cout << (I32)result << std::endl;  
-    
-    // InfProgram ifp;
-    // InfMaipDefaultServer IDS(ifp);
-
-    // modelDescription.set_custom_name("cuser");
-    // modelDescription.set_embedding(false);
-    // modelDescription.set_maximum_context_length(12000);
-    // modelDescription.set_original_name("Qwen 2.5 Instruct");
-    // modelDescription.set_tags({"SQL"});
-
-    // modelDescription.update_state_file(L"./");
-    // modelDescription.update_state_file(L"./", true);
-
-    // mbase::InfProgram ifp;
-    // mbase::InfMaipDefaultServer ids(ifp);
-    // PcNetManager pcn;
-    // pcn.create_server("127.0.0.1", 4553, ids);
-    // ids.listen();
     // while(1)
     // {
-    //     ids.update();
+    //     //instanceProgram.exec_next(outToken, NULL, 1);
+    //     errCode = instanceProgram.exec_next(outToken, NULL, 1);
+    //     instanceProgram.update();
     // }
-
-    /*mbase::string customName = modelDescription.get_custom_name();
-    mbase::string description = modelDescription.get_description();
-    bool isEmbedder = modelDescription.get_embedding();
-    U32 maxContextLength = modelDescription.get_maximum_context_length();
-    mbase::string modelFile = modelDescription.get_model_file();
-    mbase::string originalName = modelDescription.get_original_name();
-    mbase::string systemPrompt = modelDescription.get_system_prompt();
-    mbase::vector<mbase::string> tags = modelDescription.get_tags();
-
-    std::cout << "Custom name: " << customName << std::endl;
-    std::cout << "Description: " << description << std::endl;
-    std::cout << "Is embedder: " << isEmbedder << std::endl;
-    std::cout << "Max context length: " << maxContextLength << std::endl;
-    std::cout << "Model file: " << modelFile << std::endl;
-    std::cout << "Original name: " << originalName << std::endl;
-    std::cout << "System prompt: " << systemPrompt << std::endl;
-    std::cout << "Tags: " << std::endl;
-    for(auto& n : tags)
-    {
-        std::cout << "- " << n << std::endl; 
-    }*/
-
-    /*InfProgram mainProgram;
-    mbase::InfProgramInformation programInformation;
-
-    programInformation.mProgramInformation.mMbaseVersion = "1.0.0";
-    programInformation.mProgramInformation.mProductAuthor = "Mustafa Emre Erdog";
-    programInformation.mProgramInformation.mProductId = "12345";
-    programInformation.mProgramInformation.mProductLicence = "MIT";
-    programInformation.mProgramInformation.mProductName = "MBASE Inference Engine";
-    programInformation.mProgramInformation.mProductVersion = "0.1.0";
-    programInformation.mProgramInformation.mVersionMajor = 0;
-    programInformation.mProgramInformation.mVersionMinor = 1;
-    programInformation.mProgramInformation.mVersionPatch = 0;
-
-    programInformation.mDataPath = L"./";
-    programInformation.mExecutionPath = L"./";
-    programInformation.mTempPath = L"./";
-
-    mainProgram.initialize(programInformation);
-    mbase::string outAccToken;
-    mainProgram.create_user("admin", 9, 4096, true, false, "yumniye99", MAIP_ADAPTER_LOAD_UNLOAD, true, outAccToken);
-    mainProgram.create_user("emreerdog", 3, 4096, false, false, "159753", MAIP_MODEL_LOAD_UNLOAD | MAIP_ADAPTER_LOAD_UNLOAD, true, outAccToken);
-    mainProgram.create_user("qwen2-tooler", 1, 4096, false, false, "1df215a571", MAIP_MODEL_LOAD_UNLOAD | MAIP_ADAPTER_LOAD_UNLOAD, true, outAccToken);
-    mainProgram.create_user("llama3", 5, 4096, false, false, "yumniye99", MAIP_MODEL_LOAD_UNLOAD | MAIP_ADAPTER_LOAD_UNLOAD, true, outAccToken);
-
-    mainProgram.authorize_user_on_model("emreerdog", "qwen2-7b-instruct-q3_k_m.gguf");
-
-    mbase::InfMaipDefaultServer defaultMaipServer(mainProgram);
-    mainProgram.get_net_manager()->create_server("127.0.0.1", 4553, defaultMaipServer);
-    defaultMaipServer.listen();
-    while(1)
-    {
-        defaultMaipServer.update();
-        mainProgram.update();
-    }*/
 
     getchar();
     return 0;
