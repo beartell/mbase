@@ -88,9 +88,19 @@ endforeach()
 
 #This type of config management is the only exception for mbase std library
 
-configure_file(
-    ${MBASE_GLOBAL_CONFIG_IN_DIRECTORY}mbase-std-config.cmake.in
-    ${CMAKE_BINARY_DIR}/mbase-std-config.cmake
-    @ONLY
-)
+# configure_file(
+#     ${MBASE_GLOBAL_CONFIG_IN_DIRECTORY}mbase-std-config.cmake.in
+#     ${CMAKE_BINARY_DIR}/mbase-std-config.cmake
+#     @ONLY
+# )
+
+include(GNUInstallDirs)
+
+# install(FILES ${MBASE_STD_INCLUDE_INSTALL_FILES}
+#         PERMISSIONS
+#             OWNER_READ
+#             OWNER_WRITE
+#             GROUP_READ
+#             WORLD_READ
+#         DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 

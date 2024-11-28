@@ -1,5 +1,14 @@
 include_guard(GLOBAL)
 
+include(GNUInstallDirs)
+
+message("System install directory: ${CMAKE_INSTALL_PREFIX}")
+message("User executables dir: ${CMAKE_INSTALL_FULL_BINDIR}")
+message("System executables dir: ${CMAKE_INSTALL_FULL_SBINDIR}")
+message("Program executables dir: ${CMAKE_INSTALL_FULL_LIBEXECDIR}")
+message("Read only data dir: ${CMAKE_INSTALL_FULL_SYSCONFDIR}")
+message("Modifiable arch independent data dir: ${CMAKE_INSTALL_SHAREDSTATEDIR}")
+
 set(MBASE_GLOBAL_INCLUDE ${CMAKE_SOURCE_DIR}/include/)
 set(MBASE_GLOBAL_SOURCE_DIRECTORY ${CMAKE_SOURCE_DIR}/mbase/)
 set(MBASE_GLOBAL_CONFIG_IN_DIRECTORY ${CMAKE_SOURCE_DIR}/cmake_config_in/)
