@@ -4,13 +4,17 @@ include(MBASECommonConfig)
 include(MBASEStdSys)
 
 set(MBASE_CORE_SYS_STRING "MBASE Core")
-set(MBASE_CORE_PATH_STRING "pc")
+set(MBASE_CORE_LIB_NAME "pc")
 
 mbase_build_version(1 0 0 ${MBASE_VERSION_ALPHA} MBASE_CORE_VERSION)
-mbase_build_include_install_path(${MBASE_CORE_PATH_STRING} MBASE_CORE_INCLUDE_INSTALL_PATH)
+mbase_build_include_install_path(${MBASE_CORE_LIB_NAME} MBASE_CORE_INCLUDE_INSTALL_PATH)
+mbase_build_lib_path(${MBASE_CORE_LIB_NAME} MBASE_CORE_LIB_PATH)
+
+message("Core library path ${MBASE_CORE_LIB_PATH}")
 
 message("${MBASE_CORE_SYS_STRING} library version: ${MBASE_CORE_VERSION}")
 message("${MBASE_CORE_SYS_STRING} install source path: ${MBASE_CORE_INCLUDE_INSTALL_PATH}")
+message("${MBASE_CORE_SYS_STRING} lib source path: ${MBASE_CORE_LIB_PATH}")
 
 list(APPEND MBASE_CORE_INCLUDE_DEPENDS ${MBASE_STD_INCLUDES})
 
@@ -26,13 +30,13 @@ list(APPEND MBASE_CORE_INCLUDE_STABLE_FILES
 )
 
 add_library(mb_core SHARED
-    ${MBASE_GLOBAL_SOURCE_DIRECTORY}pc_config.cpp
-    ${MBASE_GLOBAL_SOURCE_DIRECTORY}pc_state.cpp
-    ${MBASE_GLOBAL_SOURCE_DIRECTORY}pc_io_manager.cpp
-    ${MBASE_GLOBAL_SOURCE_DIRECTORY}pc_stream_manager.cpp
-    ${MBASE_GLOBAL_SOURCE_DIRECTORY}pc_program.cpp
-    ${MBASE_GLOBAL_SOURCE_DIRECTORY}pc_diagnostics.cpp
-    ${MBASE_GLOBAL_SOURCE_DIRECTORY}pc_net_manager.cpp
+    ${MBASE_CORE_LIB_PATH}pc_config.cpp
+    ${MBASE_CORE_LIB_PATH}pc_state.cpp
+    ${MBASE_CORE_LIB_PATH}pc_io_manager.cpp
+    ${MBASE_CORE_LIB_PATH}pc_stream_manager.cpp
+    ${MBASE_CORE_LIB_PATH}pc_program.cpp
+    ${MBASE_CORE_LIB_PATH}pc_diagnostics.cpp
+    ${MBASE_CORE_LIB_PATH}pc_net_manager.cpp
 )
 
 target_compile_definitions(mb_core PRIVATE MBASE_BUILD=1 MBASE_INTERNAL_API=1)

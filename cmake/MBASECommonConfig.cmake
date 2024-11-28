@@ -2,6 +2,7 @@ include_guard(GLOBAL)
 
 set(MBASE_GLOBAL_INCLUDE ${CMAKE_SOURCE_DIR}/include/)
 set(MBASE_GLOBAL_SOURCE_DIRECTORY ${CMAKE_SOURCE_DIR}/mbase/)
+set(MBASE_GLOBAL_CONFIG_IN_DIRECTORY ${CMAKE_SOURCE_DIR}/cmake_config_in/)
 
 list(APPEND MBASE_STABILITY_CATEGORIES
     alpha    
@@ -26,6 +27,10 @@ function(mbase_build_include_install_path in_path_string out_install_path)
     else()
         set(${out_install_path} ${MBASE_GLOBAL_INCLUDE}mbase/${in_path_string}/ PARENT_SCOPE)
     endif()
+endfunction()
+
+function(mbase_build_lib_path in_lib_name out_lib_path)
+    set(${out_lib_path} ${MBASE_GLOBAL_SOURCE_DIRECTORY}${in_lib_name}/ PARENT_SCOPE)
 endfunction()
 
 

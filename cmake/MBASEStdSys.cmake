@@ -3,10 +3,11 @@ include_guard(GLOBAL)
 include(MBASECommonConfig)
 
 set(MBASE_STD_SYS_STRING "MBASE Standard")
-set(MBASE_STD_PATH_STRING " ")
+set(MBASE_STD_LIB_NAME " ")
+set(MBASE_STD_LIB_NAME_EXCEPTION "std")
 
 mbase_build_version(1 0 0 ${MBASE_VERSION_ALPHA} MBASE_STD_VERSION)
-mbase_build_include_install_path(${MBASE_STD_PATH_STRING} MBASE_STD_INCLUDE_INSTALL_PATH)
+mbase_build_include_install_path(${MBASE_STD_LIB_NAME} MBASE_STD_INCLUDE_INSTALL_PATH)
 
 message("${MBASE_STD_SYS_STRING} library version: ${MBASE_STD_VERSION}")
 message("${MBASE_STD_SYS_STRING} install source path: ${MBASE_STD_INCLUDE_INSTALL_PATH}")
@@ -79,6 +80,17 @@ list(APPEND MBASE_STD_INCLUDE_STABLE_FILES
     wsa_init.h
 )
 
+message("Cmake binary directory: ${CMAKE_BINARY_DIR}")
+
 foreach(MB_INCLUDE_FILE IN LISTS MBASE_STD_INCLUDE_STABLE_FILES)
     list(APPEND MBASE_STD_INCLUDE_INSTALL_FILES ${MBASE_STD_INCLUDE_INSTALL_PATH}${MB_INCLUDE_FILE})
 endforeach()
+
+#This type of config management is the only exception for mbase std library
+
+configure_file(
+    ${MBASE_GLOBAL_CONFIG_IN_DIRECTORY}mbase-std-config.cmake.in
+    ${CMAKE_BINARY_DIR}/mbase-std-config.cmake
+    @ONLY
+)
+
