@@ -22,16 +22,17 @@ include(MBASEInferenceSys)
 include(InstallRequiredSystemLibraries)
 
 # add CPack to project
-set(CPACK_GENERATOR "NSIS")
-set(CPACK_PACKAGE_NAME "MBASE Libraries")
+set(CPACK_GENERATOR "DEB")
+set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Saul E. Erdog")
+set(CPACK_PACKAGE_NAME "MBASE-Libraries")
 set(CPACK_PACKAGE_VENDOR "mbaselibs.com")
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY
-    "MBASE Libraries - Installation Wizard")
+    "MBASELibraries-Installation Wizard")
 set(CPACK_PACKAGE_VERSION "1.3.142stable")
 set(CPACK_PACKAGE_VERSION_MAJOR "1")
 set(CPACK_PACKAGE_VERSION_MINOR "3")
 set(CPACK_PACKAGE_VERSION_PATCH "142")
-set(CPACK_PACKAGE_INSTALL_DIRECTORY "MBASE Libraries")
+set(CPACK_PACKAGE_INSTALL_DIRECTORY "MBASELibraries")
 
 # This must always be after all CPACK\_\* variables are defined
 include(CPack)

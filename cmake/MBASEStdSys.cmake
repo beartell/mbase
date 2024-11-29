@@ -83,7 +83,7 @@ list(APPEND MBASE_STD_INCLUDE_STABLE_FILES
 message("Cmake binary directory: ${CMAKE_BINARY_DIR}")
 
 foreach(MB_INCLUDE_FILE IN LISTS MBASE_STD_INCLUDE_STABLE_FILES)
-    list(APPEND MBASE_STD_INCLUDE_INSTALL_FILES ${MBASE_STD_INCLUDE_INSTALL_PATH}${MB_INCLUDE_FILE})
+    list(APPEND MBASE_STD_INCLUDE_INSTALL_FILES ${MBASE_STD_INCLUDE_INSTALL_PATH}mbase/${MB_INCLUDE_FILE})
 endforeach()
 
 #This type of config management is the only exception for mbase std library
@@ -96,11 +96,11 @@ endforeach()
 
 include(GNUInstallDirs)
 
-# install(FILES ${MBASE_STD_INCLUDE_INSTALL_FILES}
-#         PERMISSIONS
-#             OWNER_READ
-#             OWNER_WRITE
-#             GROUP_READ
-#             WORLD_READ
-#         DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+install(FILES ${MBASE_STD_INCLUDE_INSTALL_FILES}
+        PERMISSIONS
+            OWNER_READ
+            OWNER_WRITE
+            GROUP_READ
+            WORLD_READ
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mbase)
 
