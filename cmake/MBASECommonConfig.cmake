@@ -1,6 +1,7 @@
 include_guard(GLOBAL)
 
 include(GNUInstallDirs)
+include(CMakePackageConfigHelpers)
 
 message("System install directory: ${CMAKE_INSTALL_PREFIX}")
 message("User executables dir: ${CMAKE_INSTALL_FULL_BINDIR}")
@@ -9,9 +10,10 @@ message("Program executables dir: ${CMAKE_INSTALL_FULL_LIBEXECDIR}")
 message("Read only data dir: ${CMAKE_INSTALL_FULL_SYSCONFDIR}")
 message("Modifiable arch independent data dir: ${CMAKE_INSTALL_SHAREDSTATEDIR}")
 
-set(MBASE_GLOBAL_INCLUDE ${CMAKE_SOURCE_DIR}/include/)
-set(MBASE_GLOBAL_SOURCE_DIRECTORY ${CMAKE_SOURCE_DIR}/mbase/)
-set(MBASE_GLOBAL_CONFIG_IN_DIRECTORY ${CMAKE_SOURCE_DIR}/cmake_config_in/)
+set(MBASE_GLOBAL_INCLUDE ${CMAKE_SOURCE_DIR}/include)
+set(MBASE_GLOBAL_SOURCE_DIRECTORY ${CMAKE_SOURCE_DIR}/mbase)
+set(MBASE_GLOBAL_CONFIG_IN_DIRECTORY ${CMAKE_SOURCE_DIR}/cmake_config_in)
+set(MBASE_CURRENT_DIR ${CMAKE_CURRENT_BINARY_DIR})
 
 list(APPEND MBASE_STABILITY_CATEGORIES
     alpha    
@@ -34,12 +36,63 @@ function(mbase_build_include_install_path in_path_string out_install_path)
         # this is the only exception for mbase std library
         set(${out_install_path} ${MBASE_GLOBAL_INCLUDE} PARENT_SCOPE)
     else()
-        set(${out_install_path} ${MBASE_GLOBAL_INCLUDE}mbase/${in_path_string}/ PARENT_SCOPE)
+        set(${out_install_path} ${MBASE_GLOBAL_INCLUDE}/mbase/${in_path_string}/ PARENT_SCOPE)
     endif()
 endfunction()
 
 function(mbase_build_lib_path in_lib_name out_lib_path)
-    set(${out_lib_path} ${MBASE_GLOBAL_SOURCE_DIRECTORY}${in_lib_name}/ PARENT_SCOPE)
+    list(APPEND MBASE_CREATED_LIBRARY_LIST ${in_lib_name})
+    set(MBASE_TMP_CREATED_LIBRARY_LIST ${MBASE_CREATED_LIBRARY_LIST})
+    set(MBASE_CREATED_LIBRARY_LIST ${MBASE_TMP_CREATED_LIBRARY_LIST} PARENT_SCOPE)
+    set(${out_lib_path} ${MBASE_GLOBAL_SOURCE_DIRECTORY}/${in_lib_name}/ PARENT_SCOPE)
 endfunction()
 
+function(mbase_install_libraries)
+    foreach(MBASE_TMP_LIB IN LISTS MBASE_CREATED_LIBRARY_LIST)
+        string(TOUPPER ${MBASE_TMP_LIB} MBASE_LIB_NAME_UPPERCASE)
+        set(MBASE_${MBASE_LIB_NAME_UPPERCASE}_BIN_INSTALL_DIR ${CMAKE_INSTALL_BINDIR})
+        set(MBASE_${MBASE_LIB_NAME_UPPERCASE}_LIB_INSTALL_DIR ${CMAKE_INSTALL_LIBDIR})
+        set(MBASE_${MBASE_LIB_NAME_UPPERCASE}_INCLUDE_INSTALL_DIR ${CMAKE_INSTALL_INCLUDEDIR})
 
+        set(MBASE_GENERATED_BIN_INSTALL_DIR ${MBASE_${MBASE_LIB_NAME_UPPERCASE}_BIN_INSTALL_DIR})
+        set(MBASE_GENERATED_LIB_INSTALL_DIR ${MBASE_${MBASE_LIB_NAME_UPPERCASE}_LIB_INSTALL_DIR})
+        set(MBASE_GENERATED_INCLUDE_INSTALL_DIR ${MBASE_${MBASE_LIB_NAME_UPPERCASE}_INCLUDE_INSTALL_DIR})
+        message("Include install dirs: ${MBASE_GENERATED_INCLUDE_INSTALL_DIR}")
+        configure_package_config_file(
+            ${MBASE_GLOBAL_CONFIG_IN_DIRECTORY}/mbase-${MBASE_TMP_LIB}-config.cmake.in
+            ${CMAKE_CURRENT_BINARY_DIR}/mbase-${MBASE_TMP_LIB}-config.cmake
+            INSTALL_DESTINATION ${MBASE_GENERATED_LIB_INSTALL_DIR}/cmake/mbase-${MBASE_TMP_LIB}
+            PATH_VARS
+                MBASE_${MBASE_LIB_NAME_UPPERCASE}_INCLUDE_INSTALL_DIR
+                MBASE_${MBASE_LIB_NAME_UPPERCASE}_LIB_INSTALL_DIR
+                MBASE_${MBASE_LIB_NAME_UPPERCASE}_BIN_INSTALL_DIR
+        )
+
+        install(
+            TARGETS mb_${MBASE_TMP_LIB}
+            RUNTIME DESTINATION ${MBASE_GENERATED_BIN_INSTALL_DIR}
+            LIBRARY DESTINATION ${MBASE_GENERATED_LIB_INSTALL_DIR}
+            ARCHIVE DESTINATION ${MBASE_GENERATED_LIB_INSTALL_DIR}
+        )
+
+        install(
+            FILES ${MBASE_${MBASE_LIB_NAME_UPPERCASE}_INCLUDE_INSTALL_FILES}
+            PERMISSIONS
+                OWNER_READ
+                OWNER_WRITE
+                GROUP_READ
+                WORLD_READ
+            DESTINATION ${MBASE_GENERATED_INCLUDE_INSTALL_DIR}/mbase/${MBASE_TMP_LIB}
+        )
+
+        install(
+            FILES ${CMAKE_CURRENT_BINARY_DIR}/mbase-${MBASE_TMP_LIB}-config.cmake
+            PERMISSIONS
+                OWNER_READ
+                OWNER_WRITE
+                GROUP_READ
+                WORLD_READ
+            DESTINATION ${MBASE_GENERATED_LIB_INSTALL_DIR}/cmake/mbase.libs
+        )
+    endforeach()
+endfunction()

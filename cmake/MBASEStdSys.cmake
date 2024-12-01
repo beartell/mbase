@@ -80,21 +80,26 @@ list(APPEND MBASE_STD_INCLUDE_STABLE_FILES
     wsa_init.h
 )
 
-message("Cmake binary directory: ${CMAKE_BINARY_DIR}")
-
 foreach(MB_INCLUDE_FILE IN LISTS MBASE_STD_INCLUDE_STABLE_FILES)
-    list(APPEND MBASE_STD_INCLUDE_INSTALL_FILES ${MBASE_STD_INCLUDE_INSTALL_PATH}mbase/${MB_INCLUDE_FILE})
+    list(APPEND MBASE_STD_INCLUDE_INSTALL_FILES ${MBASE_STD_INCLUDE_INSTALL_PATH}/mbase/${MB_INCLUDE_FILE})
 endforeach()
 
-#This type of config management is the only exception for mbase std library
+set(MBASE_STD_BIN_INSTALL_DIR ${CMAKE_INSTALL_BINDIR})
+set(MBASE_STD_INCLUDE_INSTALL_DIR ${CMAKE_INSTALL_INCLUDEDIR})
+set(MBASE_STD_LIB_INSTALL_DIR ${CMAKE_INSTALL_LIBDIR})
+set(MBASE_STD_CMAKE_CONFIG_NAME_IN mbase-std-config.cmake.in)
+set(MBASE_STD_CMAKE_CONFIG_NAME mbase-std-config.cmake)
+set(MBASE_STD_CMAKE_INSTALL_DESTINATION ${MBASE_STD_LIB_INSTALL_DIR}/cmake/mbase.libs)
 
-# configure_file(
-#     ${MBASE_GLOBAL_CONFIG_IN_DIRECTORY}mbase-std-config.cmake.in
-#     ${CMAKE_BINARY_DIR}/mbase-std-config.cmake
-#     @ONLY
-# )
-
-include(GNUInstallDirs)
+configure_package_config_file(
+            ${CMAKE_SOURCE_DIR}/cmake_config_in/mbase-std-config.cmake.in
+            ${CMAKE_BINARY_DIR}/mbase-std-config.cmake
+            INSTALL_DESTINATION ${MBASE_STD_CMAKE_INSTALL_DESTINATION}
+            PATH_VARS
+            MBASE_STD_INCLUDE_INSTALL_DIR
+            MBASE_STD_LIB_INSTALL_DIR
+            MBASE_STD_BIN_INSTALL_DIR
+        )
 
 install(FILES ${MBASE_STD_INCLUDE_INSTALL_FILES}
         PERMISSIONS
@@ -102,5 +107,11 @@ install(FILES ${MBASE_STD_INCLUDE_INSTALL_FILES}
             OWNER_WRITE
             GROUP_READ
             WORLD_READ
-        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mbase)
+        DESTINATION ${MBASE_STD_INCLUDE_INSTALL_DIR}/mbase)
 
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${MBASE_STD_CMAKE_CONFIG_NAME} 
+        PERMISSIONS
+            OWNER_READ
+            GROUP_READ
+            WORLD_READ
+        DESTINATION ${MBASE_STD_CMAKE_INSTALL_DESTINATION})
