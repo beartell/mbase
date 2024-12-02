@@ -8,13 +8,14 @@ set_and_check(MBASE_STD_INCLUDE_DIRS "@PACKAGE_MBASE_STD_INCLUDE_INSTALL_DIR@")
 
 set(MBASE_STD_NAME_DESCRIPTIVE "MBASE @MBASE_STD_LIB_NAME_EXCEPTION@ library @MBASE_STD_VERSION@")
 
+@MBASE_EMBEDDED_FIND_UUID_CMAKE@
+
 if(UNIX)
-    find_package(UUID REQUIRED)
     if(NOT UUID_FOUND)
         message(FATAL "Standard library has a dependency on uuid library. On ubuntu, you can install it using 'sudo apt-get install uuid-dev'.")    
     endif()
     list(APPEND MBASE_STD_INCLUDE_DIRS ${UUID_INCLUDE_DIRS})
-    list(APPEND MBASE_STD_LIBS ${UUID_LIBRARIES})
+    list(APPEND MBASE_STD_LIBRARIES ${UUID_LIBRARIES})
 
     set(MBASE_STD_FOUND TRUE)
 endif()

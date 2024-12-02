@@ -57,7 +57,6 @@ function(mbase_install_libraries)
         set(MBASE_GENERATED_BIN_INSTALL_DIR ${MBASE_${MBASE_LIB_NAME_UPPERCASE}_BIN_INSTALL_DIR})
         set(MBASE_GENERATED_LIB_INSTALL_DIR ${MBASE_${MBASE_LIB_NAME_UPPERCASE}_LIB_INSTALL_DIR})
         set(MBASE_GENERATED_INCLUDE_INSTALL_DIR ${MBASE_${MBASE_LIB_NAME_UPPERCASE}_INCLUDE_INSTALL_DIR})
-        message("Include install dirs: ${MBASE_GENERATED_INCLUDE_INSTALL_DIR}")
         configure_package_config_file(
             ${MBASE_GLOBAL_CONFIG_IN_DIRECTORY}/mbase-${MBASE_TMP_LIB}-config.cmake.in
             ${CMAKE_CURRENT_BINARY_DIR}/mbase-${MBASE_TMP_LIB}-config.cmake

@@ -9,7 +9,7 @@ set_and_check(MBASE_PC_INCLUDE_DIRS "@PACKAGE_MBASE_PC_INCLUDE_INSTALL_DIR@")
 set(MBASE_PC_NAME_DESCRIPTIVE "MBASE @MBASE_PC_LIB_NAME@ library @MBASE_PC_VERSION@")
 
 find_library(
-    MBASE_PC_LIBS
+    MBASE_PC_LIBRARIES
     NAMES mb_pc
     HINTS ${MBASE_PC_LIB_DIR}
     REQUIRED
@@ -19,12 +19,12 @@ include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(
     MBASE_PC
     DEFAULT_MSG
-    MBASE_PC_LIBS
+    MBASE_PC_LIBRARIES
     MBASE_PC_INCLUDE_DIRS
 )
 
 if(MBASE_PC_FOUND)
     find_package(mbase-std HINTS ${MBASE_CURRENT_CONFIG_DIRECTORY})
-    list(APPEND MBASE_PC_LIBS ${MBASE_STD_LIBS}) # In UNIX, there is a dependency on UUID library so, it is necessary
+    list(APPEND MBASE_PC_LIBRARIES ${MBASE_STD_LIBRARIES}) # In UNIX, there is a dependency on UUID library so, it is necessary
 endif()
 
