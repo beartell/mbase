@@ -26,5 +26,8 @@ find_package_handle_standard_args(
 if(MBASE_PC_FOUND)
     find_package(mbase-std HINTS ${MBASE_CURRENT_CONFIG_DIRECTORY})
     list(APPEND MBASE_PC_LIBRARIES ${MBASE_STD_LIBRARIES}) # In UNIX, there is a dependency on UUID library so, it is necessary
+    add_library(mbase.pc INTERFACE)
+    target_link_libraries(mbase.pc INTERFACE ${MBASE_PC_LIBRARIES})
+    target_include_directories(mbase.pc INTERFACE ${MBASE_PC_INCLUDE_DIRS})
 endif()
 

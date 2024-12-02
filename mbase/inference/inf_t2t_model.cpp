@@ -282,12 +282,10 @@ InfModelTextToText::flags InfModelTextToText::initialize_model(const mbase::wstr
 	// TODO: Check if the given total context size is too small
 
 	mSuppliedParams = llama_model_default_params();
+	
 	mTotalContextSize = in_total_context_size;
-	if(ggml_cpu_has_cuda())
-	{
-		mSuppliedParams.n_gpu_layers = in_gpu_layers;
-		mSuppliedParams.split_mode = LLAMA_SPLIT_MODE_NONE;
-	}
+	mSuppliedParams.n_gpu_layers = in_gpu_layers;
+	mSuppliedParams.split_mode = LLAMA_SPLIT_MODE_ROW;
 	
 	mModelPath = in_path;
 	mRegisteredProcessors.clear(); // Since the registered processors is not on the destruction list, make sure it is fresh

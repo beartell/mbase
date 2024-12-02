@@ -31,8 +31,6 @@ list(APPEND MBASE_INFERENCE_INCLUDE_DEPENDS
 
 list(APPEND MBASE_INFERENCE_LIB_DEPENDS
     ${MBASE_STD_LIBS}
-    ${llama_LIBRARY}
-    ${ggml_LIBRARY}
     mb_pc
 )
 
@@ -78,10 +76,10 @@ add_library(mb_inference SHARED
     ${MBASE_INFERENCE_LIB_PATH}inf_t2t_processor.cpp
 )
 
-target_compile_definitions(mb_inference PRIVATE MBASE_BUILD=1 MBASE_INTERNAL_API=1)
+target_compile_definitions(mb_inference PRIVATE MBASE_BUILD=1 MBASE_INTERNAL_API=1 llama)
 
-target_include_directories(mb_inference PUBLIC ${MBASE_INFERENCE_INCLUDE_DEPENDS})
-target_link_libraries(mb_inference PRIVATE ${MBASE_INFERENCE_LIB_DEPENDS})
+target_include_directories(mb_inference PUBLIC ${MBASE_INFERENCE_INCLUDE_DEPENDS} llama)
+target_link_libraries(mb_inference PRIVATE ${MBASE_INFERENCE_LIB_DEPENDS} llama)
 
 foreach(MB_INCLUDE_FILE IN LISTS MBASE_INFERENCE_INCLUDE_STABLE_FILES)
     list(APPEND MBASE_INFERENCE_INCLUDE_INSTALL_FILES ${MBASE_INFERENCE_INCLUDE_INSTALL_PATH}${MB_INCLUDE_FILE})

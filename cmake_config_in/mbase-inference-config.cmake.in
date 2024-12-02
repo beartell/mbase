@@ -27,9 +27,12 @@ if(MBASE_INFERENCE_FOUND)
     find_package(mbase-pc HINTS ${MBASE_CURRENT_CONFIG_DIRECTORY})
     find_package(llama REQUIRED)
     
-    list(APPEND MBASE_INFERENCE_LIBRARIES ${MBASE_PC_LIBRARIES} ${_llama_link_deps})
+    list(APPEND MBASE_INFERENCE_LIBRARIES ${MBASE_PC_LIBRARIES})
     list(APPEND MBASE_INFERENCE_INCLUDE_DIRS ${LLAMA_INCLUDE_DIR})
-    list(APPEND MBASE_INFERENCE_OPTIONS ${_llama_link_opts})
-    list(APPEND MBASE_INFERENCE_DEFINITIONS ${_llama_transient_defines})
+
+    add_library(mbase.inference INTERFACE)
+    target_link_libraries(mbase.inference INTERFACE ${MBASE_INFERENCE_LIBRARIES} llama)
+    target_include_directories(mbase.inference INTERFACE ${MBASE_INFERENCE_INCLUDE_DIRS} llama)
+    target_compile_definitions(mbase.inference INTERFACE llama)
 
 endif()
