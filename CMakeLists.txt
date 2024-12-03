@@ -16,6 +16,7 @@ set(CMAKE_CXX_STANDARD 20)
 #add_executable(mbase_test_program main.cpp)
 
 include(MBASEStdSys)
+include(MBASEJsonSys)
 include(MBASEFrameworkSys)
 include(MBASECoreSys)
 include(MBASEInferenceSys)

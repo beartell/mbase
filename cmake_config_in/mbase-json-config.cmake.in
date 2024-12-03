@@ -1,0 +1,33 @@
+include_guard(GLOBAL)
+
+@PACKAGE_INIT@
+
+set_and_check(MBASE_JSON_BIN_DIR "@PACKAGE_MBASE_JSON_BIN_INSTALL_DIR@")
+set_and_check(MBASE_JSON_LIB_DIR "@PACKAGE_MBASE_JSON_LIB_INSTALL_DIR@")
+set_and_check(MBASE_JSON_INCLUDE_DIRS "@PACKAGE_MBASE_JSON_INCLUDE_INSTALL_DIR@")
+
+set(MBASE_JSON_NAME_DESCRIPTIVE "MBASE @MBASE_JSON_LIB_NAME@ library @MBASE_JSON_VERSION@")
+
+find_library(
+    MBASE_JSON_LIBRARIES
+    NAMES mb_json
+    HINTS ${MBASE_JSON_LIB_DIR}
+    REQUIRED
+)
+
+include(FindPackageHandleStandardArgs)
+find_package_handle_standard_args(
+    MBASE_JSON
+    DEFAULT_MSG
+    MBASE_JSON_LIBRARIES
+    MBASE_JSON_INCLUDE_DIRS
+)
+
+if(MBASE_JSON_FOUND)
+    find_package(mbase-std HINTS ${MBASE_CURRENT_CONFIG_DIRECTORY})
+    list(APPEND MBASE_JSON_LIBRARIES ${MBASE_STD_LIBRARIES}) # In UNIX, there is a dependency on UUID library so, it is necessary
+    add_library(mbase.json INTERFACE)
+    target_link_libraries(mbase.json INTERFACE ${MBASE_JSON_LIBRARIES})
+    target_include_directories(mbase.json INTERFACE ${MBASE_JSON_INCLUDE_DIRS})
+endif()
+
