@@ -143,12 +143,7 @@ GENERIC modelRetrieveHandler(const httplib::Request& in_req, httplib::Response& 
     in_resp.set_content(responseString.c_str(), responseString.size(), "application/json");
 }
 
-GENERIC completionHandler(const httplib::Request& in_req, httplib::Response& in_resp)
-{
-
-}
-
-GENERIC chatCompletionHandler(const httplib::Request& in_req, httplib::Response& in_resp)
+GENERIC chatCompletionInternal(const httplib::Request& in_req, httplib::Response& in_resp, bool is_chat_completion)
 {
     // curl https://api.openai.com/v1/chat/completions \
     // -H "Content-Type: application/json" \
@@ -172,7 +167,6 @@ GENERIC chatCompletionHandler(const httplib::Request& in_req, httplib::Response&
         // Invalid request, handle later
     }
     mbase::string reqBody(in_req.body.c_str(), in_req.body.size());
-    std::cout << "Received request body: " << reqBody << std::endl;
     std::pair<mbase::Json::Status, mbase::Json> parseResult = mbase::Json::parse(reqBody);
 
     if(parseResult.first != mbase::Json::Status::success)
@@ -181,7 +175,7 @@ GENERIC chatCompletionHandler(const httplib::Request& in_req, httplib::Response&
     }
 
     mbase::Json jsonObject = parseResult.second;
-    if(!jsonObject.contains("model") || !jsonObject.contains("message"))
+    if(!jsonObject["model"].isString() || !jsonObject["message"].isString())
     {
         // Mandatory fields are not present. Handle later...
     }
@@ -195,7 +189,7 @@ GENERIC chatCompletionHandler(const httplib::Request& in_req, httplib::Response&
     for(mbase::vector<mbase::Json>::iterator It = messageObject.begin(); It != messageObject.end(); ++It)
     {
         mbase::Json& messageJson = *It;
-        if(!messageJson.contains("role") || !messageJson.contains("content"))
+        if(!messageJson["role"].isString() || !messageJson["content"].isString())
         {
             // Mandatory fiels for message array are not present. Handle later...
         }
@@ -258,7 +252,7 @@ GENERIC chatCompletionHandler(const httplib::Request& in_req, httplib::Response&
     dbd.mTokenAtMost = 1;
     dbd.mHaltOnWrite = false;
     
-    std::cout << (int)openaiProcessor.next(dbd) << std::endl;
+    openaiProcessor.next(dbd);
     while(openaiT2tClient.is_processing())
     {
 
@@ -268,49 +262,19 @@ GENERIC chatCompletionHandler(const httplib::Request& in_req, httplib::Response&
     in_resp.set_content(totalOutput.c_str(), totalOutput.size(), "text/plain");
 }
 
+GENERIC completionHandler(const httplib::Request& in_req, httplib::Response& in_resp)
+{
+    chatCompletionInternal(in_req, in_resp, false);
+}
+
+GENERIC chatCompletionHandler(const httplib::Request& in_req, httplib::Response& in_resp)
+{
+    chatCompletionInternal(in_req, in_resp, true);
+}
+
 GENERIC httpServerThread()
 {
     httplib::Server svr;
-    svr.Get("/chunked", [&](const httplib::Request& req, httplib::Response& res) {
-        res.set_chunked_content_provider(
-            "text/plain",
-            [](size_t offset, httplib::DataSink &sink) {
-            
-            OpenAiTextToTextClient openaiT2tClient;
-            OpenAiTextToTextProcessor openait2tProcessor;
-            gHostedModel.register_context_process(&openait2tProcessor, 4096, 512, 32, true, {});
-            
-            while(!openait2tProcessor.is_registered())
-            {
-                
-            }
-            
-            U32 msgId = 0;
-            mbase::context_line ctxLine;
-            mbase::inf_text_token_vector tokenVector;
-            
-            openaiT2tClient.set_http_data_sink(sink);
-            openaiT2tClient.add_message("Hello, what is your name?. Answer short.", mbase::context_role::USER, msgId);
-            openaiT2tClient.get_message(msgId, ctxLine);
-            
-            openait2tProcessor.set_inference_client(&openaiT2tClient);
-            openait2tProcessor.tokenize_input(&ctxLine, 1, tokenVector);
-            openait2tProcessor.execute_input(tokenVector, false);
-            
-            mbase::decode_behavior_description dbd;
-            dbd.mTokenAtMost = 1;
-            dbd.mHaltOnWrite = false;
-            
-            openait2tProcessor.next(dbd);
-            while(openaiT2tClient.is_processing())
-            {
-                
-            }
-            sink.done();
-            return true; // return 'false' if you want to cancel the process.
-            }
-        );
-    });
 
     svr.Get("/v1/models", modelListHandler);
     svr.Post("/completion", completionHandler);
@@ -323,9 +287,14 @@ GENERIC httpServerThread()
 
 int main(int argc, char** argv)
 {
+    mbase::Json myJson;
+    std::cout << myJson["cars"].isString() << std::endl;
+
+    getchar();
+    return 0;
     mbase::thread serverThread(httpServerThread);
     serverThread.run();
-    gHostedModel.initialize_model_sync(L"/home/erdog/Downloads/Llama-3.2-1B-Instruct-Q8_0.gguf", 99999999, 99);
+    gHostedModel.initialize_model_sync(L"./llama-3.2-1b-instruct-q8_0.gguf", 99999999, 99);
 
     while(gHostedModel.is_initialized())
     {

@@ -105,6 +105,10 @@ typedef unsigned __ckd_intmax __ckd_uintmax_t;
 #include <type_traits>
 #include <limits>
 
+// It is necessary for windows
+#undef min
+#undef max
+
 template <typename __T, typename __U, typename __V>
 inline bool ckd_add(__T *__res, __U __a, __V __b) {
   static_assert(std::is_integral<__T>::value &&
