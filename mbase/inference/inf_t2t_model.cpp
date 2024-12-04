@@ -3,6 +3,7 @@
 #include <mbase/inference/inf_embedder.h>
 #include <mbase/inference/inf_gguf_metadata_configurator.h>
 #include <mbase/inference/inf_chat_templates.h>
+#include <iostream>
 
 MBASE_BEGIN
 
@@ -546,7 +547,9 @@ GENERIC InfModelTextToText::_initialize_model()
 	// 	return;
 	// }
 
+
 	tempConfigurator.get_key("general.architecture", mModelArchitecture);
+	tempConfigurator.get_key("general.name", mModelName);
 
 	mbase::tokenizer_align_instruct_template(mModelArchitecture,
 		mSystemStart,

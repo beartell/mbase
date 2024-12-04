@@ -13,7 +13,7 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/")
 
 set(CMAKE_CXX_STANDARD 20)
 
-#add_executable(mbase_test_program main.cpp)
+add_executable(mbase_test_program main.cpp)
 
 include(MBASEStdSys)
 include(MBASEJsonSys)
@@ -49,6 +49,9 @@ install(
       WORLD_READ
   DESTINATION ${MBASE_LIBS_LIB_INSTALL_DIR}/cmake/mbase.libs
 )
+
+target_include_directories(mbase_test_program PUBLIC mb_pc mb_inference ${CMAKE_SOURCE_DIR}/external mb_json)
+target_link_libraries(mbase_test_program PRIVATE mb_pc mb_inference mb_json)
 # set(CPACK_GENERATOR "DEB")
 # set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Saul E. Erdog")
 # set(CPACK_PACKAGE_NAME "MBASE-Libraries")

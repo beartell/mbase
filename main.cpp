@@ -15,6 +15,8 @@
 #include <mbase/inference/inf_maip_model_description.h>
 #include <mbase/argument_get_value.h>
 #include <mbase/maip_client.h>
+#include <mbase/json/json.h>
+#include <cpp-httplib/httplib.h>
 #include <vector>
 #include <set>
 #include <unordered_map>
@@ -23,281 +25,312 @@
 
 using namespace mbase;
 
-class my_client : public mbase::InfClientTextToText {
+class OpenAiTextToTextHostedModel : public mbase::InfModelTextToText {
+
 public:
-    GENERIC on_register(InfProcessorBase* out_processor) override 
-    {
-        InfTextToTextProcessor* t2tProcessor = static_cast<InfTextToTextProcessor*>(out_processor);
-        mbase::string inputString;
-
-        U32 outMsgId = 0;
-        this->add_message("You are a helpful assistant.", mbase::context_role::SYSTEM, outMsgId);
-        msgIds.push_back(outMsgId);
-        std::string prompt;
-        std::getline(std::cin, prompt);
-        this->add_message(prompt.c_str(), prompt.size(), mbase::context_role::USER, outMsgId);
-        
-        msgIds.push_back(outMsgId);
-
-        mbase::vector<mbase::context_line> msgArray;
-        get_message_array(msgIds.data(), msgIds.size(), msgArray);
-        
-        inf_text_token_vector tokenVector;
-
-        decodeBehavior.mTokenAtMost = 5;
-        decodeBehavior.mHaltOnWrite = true;
-
-        t2tProcessor->tokenize_input(msgArray.data(), msgArray.size(), tokenVector);
-        t2tProcessor->execute_input(tokenVector);
-        t2tProcessor->next(decodeBehavior);
-    }
-
-    GENERIC on_write(InfTextToTextProcessor* out_processor, const inf_text_token_vector& out_token_vector, bool out_is_finish) override
-    {        
-        InfTextToTextProcessor* txtOut = static_cast<InfTextToTextProcessor*>(out_processor);
-        mbase::vector<inf_token_description> tokenDesc;
-        txtOut->tokens_to_description_vector(out_token_vector, tokenDesc);
-
-        fflush(stdout);
-        
-        txtOut->tokens_to_description_vector(out_token_vector, tokenDesc);
-        for(auto& n : tokenDesc)
-        {
-            if(!n.mIsSpecial)
-            {
-                totalMessage += n.mTokenString;
-            }
-            
-            printf("%s", n.mTokenString.c_str());
-        }
-        if(!out_is_finish)
-        {
-            txtOut->next(decodeBehavior);
-        }
-        
-    }
-
-    GENERIC on_finish(InfTextToTextProcessor* out_processor, size_type out_total_token_size, InfTextToTextProcessor::finish_state out_finish_state) override
-    {   
-        std::cout << std::endl;
-        U32 outMsgId = 0;
-        this->add_message(totalMessage, mbase::context_role::ASSISTANT, outMsgId);
-        msgIds.push_back(outMsgId);
-
-        std::string prompt;
-        std::getline(std::cin, prompt);
-        this->add_message(prompt.c_str(), prompt.size(), mbase::context_role::USER, outMsgId);
-        msgIds.push_back(outMsgId);
-
-        totalMessage.clear();
-        
-        InfTextToTextProcessor* t2tProcessor = static_cast<InfTextToTextProcessor*>(out_processor);
-        mbase::vector<mbase::context_line> msgArray;
-        get_message_array(msgIds.data(), msgIds.size(), msgArray);
-        
-        inf_text_token_vector tokenVector;
-
-        decodeBehavior.mTokenAtMost = 1;
-        decodeBehavior.mHaltOnWrite = false;
-
-        t2tProcessor->tokenize_input(msgArray.data(), msgArray.size(), tokenVector);
-        t2tProcessor->execute_input(tokenVector);
-        t2tProcessor->next(decodeBehavior);
-    }   
-    
-    GENERIC on_unregister(InfProcessorBase* out_processor) override
-    {
-
-    }
+    GENERIC on_initialize_fail(init_fail_code out_fail_code) override{ }
+	GENERIC on_initialize() override{std::cout << "Model is initialized" << std::endl; }
+	GENERIC on_destroy() override{}
 private:
-    decode_behavior_description decodeBehavior;
-    mbase::vector<U32> msgIds;
-    mbase::string totalMessage;
+
 };
 
-class my_context : public mbase::InfTextToTextProcessor {
+class OpenAiTextToTextProcessor : public mbase::InfTextToTextProcessor {
+
 public:
-    GENERIC on_initializing() override
-    {
-        std::cout << "WE ARE INITIALZINING!!" << std::endl;
-    }
-
-    GENERIC on_initialize_fail(last_fail_code out_code) override
-    {
-        std::cout << "INITIALIZE FAILED ;(" << std::endl;
-    }
-
     GENERIC on_initialize() override
     {
-        std::cout << "eeeee" << std::endl;
-        this->set_inference_client(&myCl);
     }
-
-    GENERIC on_destroy() override
-    {
-        std::cout << "I am dead" << std::endl;
-    }
+	GENERIC on_destroy() override{}
 private:
-    my_client myCl;
+
 };
 
-class my_model : public mbase::InfModelTextToText {
+class OpenAiTextToTextClient : public mbase::InfClientTextToText {
 public:
-    void on_initialize_fail(init_fail_code out_fail_code) override
+    bool is_processing()
     {
-        
+        return mProcessing;
     }
-    void on_initialize() override 
+    const mbase::string& get_total_output()
     {
-        register_context_process(&c1, 16000, 512, 16, true, {});
+        return mTotalGeneratedOutput;
     }
-    void on_destroy() override 
+    GENERIC set_stream_mod(bool in_stream_mode, httplib::DataSink* in_data_sink = NULL)
     {
-        std::cout << "Model is destroyed" << std::endl;
+        if(in_stream_mode && !in_data_sink)
+        {
+            // trying to setup stream mod without data sink
+            // interesting move there
+            return;
+        }
+        mStreamMod = in_stream_mode;
+        mDataSink = in_data_sink;
     }
+    GENERIC set_http_data_sink(httplib::DataSink& in_data_sink) 
+    {
+        mDataSink = &in_data_sink;
+    }
+    GENERIC on_register(InfProcessorBase* out_processor) override{}
+    GENERIC on_unregister(InfProcessorBase* out_processor) override{}
+    GENERIC on_write(InfTextToTextProcessor* out_processor, const inf_text_token_vector& out_token, bool out_is_finish) override
+    {
+        inf_token_description itd;
+        out_processor->token_to_description(out_token[0], itd);
+
+        printf("%s", itd.mTokenString.c_str());
+        if(out_is_finish)
+        {
+            mProcessing = false;
+        }
+        else
+        {
+            if(mStreamMod)
+            {
+                mDataSink->write(itd.mTokenString.c_str(), itd.mTokenString.size());
+            }
+            mTotalGeneratedOutput += std::move(itd.mTokenString);
+            mbase::decode_behavior_description dbd;
+            dbd.mTokenAtMost = 1;
+            dbd.mHaltOnWrite = false;
+            out_processor->next(dbd);
+        }
+    }
+    GENERIC on_finish(InfTextToTextProcessor* out_processor, size_type out_total_token_size, InfTextToTextProcessor::finish_state out_finish_state) override{}
 private:
-    my_context c1;
-    my_context c2;
-    my_context c3;
-    my_context c4;
-    my_context c5;
-    my_context c6;
+    bool mStreamMod = false;
+    bool mProcessing = true;
+    httplib::DataSink* mDataSink;
+    mbase::string mTotalGeneratedOutput; // this is for handling non stream mod
 };
 
-using namespace mbase;
+OpenAiTextToTextHostedModel gHostedModel;
+
+GENERIC modelListHandler(const httplib::Request& in_req, httplib::Response& in_resp)
+{
+    // WARNING: We are hosting single model
+    // An example will be implemented for multi-model hosting
+    mbase::string hostedModelName;
+    gHostedModel.get_model_name(hostedModelName);
+
+    mbase::Json dataObject;
+    dataObject.setArray();
+    dataObject[0]["id"] = hostedModelName;
+    dataObject[0]["object"] = "model";
+    dataObject[0]["created"] = (time_t)time(NULL);
+    dataObject[0]["owned_by"] = "MBASE Infrastructure Project";
+
+    mbase::Json responseJson;
+    responseJson["object"] = "list";
+    responseJson["data"] = dataObject;
+
+    mbase::string responseString = responseJson.toString();
+    in_resp.set_content(responseString.c_str(), responseString.size(), "application/json");
+}
+
+GENERIC modelRetrieveHandler(const httplib::Request& in_req, httplib::Response& in_resp)
+{
+    mbase::string hostedModelName;
+    gHostedModel.get_model_name(hostedModelName);
+
+    mbase::Json dataObject;
+    dataObject["id"] = hostedModelName;
+    dataObject["object"] = "model";
+    dataObject["created"] = (time_t)time(NULL);
+    dataObject["owned_by"] = "MBASE Infrastructure Project";
+
+    mbase::string responseString = dataObject.toString();
+    in_resp.set_content(responseString.c_str(), responseString.size(), "application/json");
+}
+
+GENERIC completionHandler(const httplib::Request& in_req, httplib::Response& in_resp)
+{
+
+}
+
+GENERIC chatCompletionHandler(const httplib::Request& in_req, httplib::Response& in_resp)
+{
+    // curl https://api.openai.com/v1/chat/completions \
+    // -H "Content-Type: application/json" \
+    // -H "Authorization: Bearer $OPENAI_API_KEY" \
+    // -d '{
+    //     "model": "gpt-4o",
+    //     "messages": [
+    //     {
+    //         "role": "system",
+    //         "content": "You are a helpful assistant."
+    //     },
+    //     {
+    //         "role": "user",
+    //         "content": "Hello!"
+    //     }
+    //     ],
+    //     "stream": true
+    // }'
+    if(!in_req.body.size())
+    {
+        // Invalid request, handle later
+    }
+    mbase::string reqBody(in_req.body.c_str(), in_req.body.size());
+    std::cout << "Received request body: " << reqBody << std::endl;
+    std::pair<mbase::Json::Status, mbase::Json> parseResult = mbase::Json::parse(reqBody);
+
+    if(parseResult.first != mbase::Json::Status::success)
+    {
+        // Parse failed, handle later
+    }
+
+    mbase::Json jsonObject = parseResult.second;
+    if(!jsonObject.contains("model") || !jsonObject.contains("message"))
+    {
+        // Mandatory fields are not present. Handle later...
+    }
+
+    mbase::string requestedModel = jsonObject["model"].getString();
+    mbase::vector<mbase::Json> messageObject = jsonObject["messages"].getArray();
+    
+    OpenAiTextToTextClient openaiT2tClient;
+
+    mbase::vector<U32> totalMessageArray;
+    for(mbase::vector<mbase::Json>::iterator It = messageObject.begin(); It != messageObject.end(); ++It)
+    {
+        mbase::Json& messageJson = *It;
+        if(!messageJson.contains("role") || !messageJson.contains("content"))
+        {
+            // Mandatory fiels for message array are not present. Handle later...
+        }
+        else
+        {
+            mbase::string messageRole = messageJson["role"].getString();
+            mbase::string messageContent = messageJson["content"].getString();
+            if(!messageContent.size()){ continue; }
+
+            U32 outMessageId;
+            if(messageRole == "system")
+            {
+                openaiT2tClient.add_message(messageContent, mbase::context_role::SYSTEM, outMessageId);
+            }
+            else if(messageRole == "assistant")
+            {
+                openaiT2tClient.add_message(messageContent, mbase::context_role::ASSISTANT, outMessageId);
+            }
+            else if(messageRole == "user")
+            {
+                openaiT2tClient.add_message(messageContent, mbase::context_role::USER, outMessageId);
+            }
+            else
+            {
+                // Invalid role, handle later
+            }
+
+            totalMessageArray.push_back(outMessageId);
+        }
+    }
+
+    if(!totalMessageArray.size())
+    {
+        // Message array is empty, do not bother processing, handle later...
+    }
+
+    OpenAiTextToTextProcessor openaiProcessor;
+    if(gHostedModel.register_context_process(&openaiProcessor, 4096, 512, 32, true, {}) != OpenAiTextToTextHostedModel::flags::INF_MODEL_INFO_REGISTERING_PROCESSOR)
+    {
+        // Registeration is not possible for some reason
+        // Always this motherfucker...
+        // handle later
+    }
+
+    while(!openaiProcessor.is_registered()){} // Wait for registration
+
+    mbase::vector<mbase::context_line> tmpContextLine;
+    mbase::inf_text_token_vector tokenVectorOut;
+    openaiT2tClient.get_message_array(totalMessageArray.data(), totalMessageArray.size(), tmpContextLine);
+
+    if(openaiProcessor.tokenize_input(tmpContextLine.data(), tmpContextLine.size(), tokenVectorOut) != OpenAiTextToTextProcessor::flags::INF_PROC_SUCCESS)
+    {
+        // tokenizer failed for some reason
+        // handler later
+    }
+    openaiProcessor.set_inference_client(&openaiT2tClient);
+    openaiProcessor.execute_input(tokenVectorOut);
+    
+    mbase::decode_behavior_description dbd;
+    dbd.mTokenAtMost = 1;
+    dbd.mHaltOnWrite = false;
+    
+    std::cout << (int)openaiProcessor.next(dbd) << std::endl;
+    while(openaiT2tClient.is_processing())
+    {
+
+    }
+
+    const mbase::string& totalOutput = openaiT2tClient.get_total_output();
+    in_resp.set_content(totalOutput.c_str(), totalOutput.size(), "text/plain");
+}
+
+GENERIC httpServerThread()
+{
+    httplib::Server svr;
+    svr.Get("/chunked", [&](const httplib::Request& req, httplib::Response& res) {
+        res.set_chunked_content_provider(
+            "text/plain",
+            [](size_t offset, httplib::DataSink &sink) {
+            
+            OpenAiTextToTextClient openaiT2tClient;
+            OpenAiTextToTextProcessor openait2tProcessor;
+            gHostedModel.register_context_process(&openait2tProcessor, 4096, 512, 32, true, {});
+            
+            while(!openait2tProcessor.is_registered())
+            {
+                
+            }
+            
+            U32 msgId = 0;
+            mbase::context_line ctxLine;
+            mbase::inf_text_token_vector tokenVector;
+            
+            openaiT2tClient.set_http_data_sink(sink);
+            openaiT2tClient.add_message("Hello, what is your name?. Answer short.", mbase::context_role::USER, msgId);
+            openaiT2tClient.get_message(msgId, ctxLine);
+            
+            openait2tProcessor.set_inference_client(&openaiT2tClient);
+            openait2tProcessor.tokenize_input(&ctxLine, 1, tokenVector);
+            openait2tProcessor.execute_input(tokenVector, false);
+            
+            mbase::decode_behavior_description dbd;
+            dbd.mTokenAtMost = 1;
+            dbd.mHaltOnWrite = false;
+            
+            openait2tProcessor.next(dbd);
+            while(openaiT2tClient.is_processing())
+            {
+                
+            }
+            sink.done();
+            return true; // return 'false' if you want to cancel the process.
+            }
+        );
+    });
+
+    svr.Get("/v1/models", modelListHandler);
+    svr.Post("/completion", completionHandler);
+    svr.Post("/completions", completionHandler);
+    svr.Post("/v1/completions", completionHandler);
+    svr.Post("/chat/completions", chatCompletionHandler);
+    svr.Post("/v1/chat/completions", chatCompletionHandler);
+    svr.listen("127.0.0.1", 8080);
+}
 
 int main(int argc, char** argv)
 {
-    mbase::InfSamplerDescription topKSampling;
-    mbase::InfSamplerDescription topPSampling;
-    mbase::InfSamplerDescription minPSampling;
-    mbase::InfSamplerDescription tempSampling;
-    mbase::InfSamplerDescription mirov2;
+    mbase::thread serverThread(httpServerThread);
+    serverThread.run();
+    gHostedModel.initialize_model_sync(L"/home/erdog/Downloads/Llama-3.2-1B-Instruct-Q8_0.gguf", 99999999, 99);
 
-    topKSampling.mSamplerType = mbase::InfSamplerDescription::SAMPLER::TOP_K;
-    topKSampling.mTopK = 40;
-
-    topPSampling.mSamplerType = mbase::InfSamplerDescription::SAMPLER::TOP_P;
-    topPSampling.mTopP = 0.9;
-
-    minPSampling.mSamplerType = mbase::InfSamplerDescription::SAMPLER::MIN_P;
-    minPSampling.mMinP = 0.1;
-
-    tempSampling.mSamplerType = mbase::InfSamplerDescription::SAMPLER::TEMP;
-    tempSampling.mTemp = 0.1;
-
-    mirov2.mSamplerType = mbase::InfSamplerDescription::SAMPLER::MIROSTAT_V2;
-    mirov2.mMiroV2.mTau = 1.0;
-    mirov2.mMiroV2.mEta = 0.01;
-
-    //// maipUser.update_state_file(L"./");
-
-    mbase::vector<mbase::string> userNameList = {"admin", "john", "sql_executor", "mustafa", "web_assistant"};
-    mbase::vector<mbase::string> acckeyList = {"1234", "chris", "yumniye", "hasankere88", "1df215a571"};
-    mbase::vector<U32> batchSizeList = {1024, 1024, 2048, 512, 8192};
-    mbase::vector<U32> accLimitList = {10, 3, 4, 3, 3};
-    mbase::vector<U32> maxContextLengthList = {16000, 12000, 4096, 4096, 7000};
-    mbase::vector<U32> maxProcThreadCount = {16, 16, 8, 4, 4};
-    mbase::vector<U32> procThreadCount = {4, 8, 12, 6, 8};
-
-    mbase::InfProgramInformation programInfo;
-    programInfo.mConfigPath = L"./";
-    programInfo.mDataPath = L"./";
-    programInfo.mTempPath = L"./";
-    
-    mbase::InfProgram instanceProgram;
-    instanceProgram.initialize(programInfo);
-
-    for(I32 i = 0; i < 5; i++)
+    while(gHostedModel.is_initialized())
     {
-       mbase::string accTok;
-       mbase::InfProgram::flags result = instanceProgram.create_user(
-           userNameList[i],
-           acckeyList[i],
-           "",
-           MAIP_MODEL_LOAD_UNLOAD,
-           accLimitList[i],
-           maxContextLengthList[i],
-           batchSizeList[i],
-           maxProcThreadCount[i],
-           procThreadCount[i],
-           true,
-           true,
-           {topKSampling, topPSampling, minPSampling, tempSampling, mirov2},
-           accTok
-       );
+        gHostedModel.update();
     }
-    mbase::string outToken;
-    instanceProgram.inf_access_request(
-       "admin",
-       "1234",
-       NULL,
-       "T2T",
-       outToken
-    );
-    instanceProgram.inf_create_model_description(
-       outToken,
-       "llama_model",
-       "custom_lama",
-       "Website assitant",
-       "",
-       "Llama3.1.gguf",
-       {"SQL", "Web", "Assistant"},
-       "T2T",
-       false,
-       true,
-       4096
-    );
-    
-    InfProgram::maip_err_code errCode = instanceProgram.inf_load_model(
-        outToken,
-        "custom_lama",
-        60000
-    );
-
-    instanceProgram.inf_modify_model_context_length(
-        outToken,
-        "custom_lama",
-        60000
-    );
-
-    instanceProgram.inf_modify_model_model_file(
-        outToken,
-        "custom_lama",
-        "Llama-3.2-1B-Instruct-Q4_0.gguf",
-        false,
-        "T2T"
-    );
-
-    
-    // mbase::sleep(2000);
-    // instanceProgram.update();
-
-    // instanceProgram.inf_create_context(
-    //     outToken,
-    //     NULL,
-    //     "custom_lama",
-    //     4096
-    // );
-    // mbase::sleep(2000);
-    // instanceProgram.update();
-
-    // mbase::vector<U32> messageIds;
-
-    // U32 msgId = 0;
-    // instanceProgram.exec_set_input(outToken, 1, mbase::context_role::SYSTEM, "You are a helpful assistant.", msgId);
-    // messageIds.push_back(msgId);
-    // instanceProgram.exec_set_input(outToken, 1, mbase::context_role::USER, "Give me a 100 word essay about climate change.", msgId);
-    // messageIds.push_back(msgId);
-
-    // errCode = instanceProgram.exec_execute_input(outToken, 1, messageIds);
-
-    // while(1)
-    // {
-    //     //instanceProgram.exec_next(outToken, NULL, 1);
-    //     errCode = instanceProgram.exec_next(outToken, NULL, 1);
-    //     instanceProgram.update();
-    // }
 
     getchar();
     return 0;

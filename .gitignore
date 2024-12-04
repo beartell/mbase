@@ -2,7 +2,5 @@
 .vscode/
 out/
 build/
-external/
-external/**
 scripts/__pycache__
 change_log.txt
