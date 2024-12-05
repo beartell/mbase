@@ -14,6 +14,11 @@ InfClientTextToText::InfClientTextToText(const InfClientTextToText& in_rhs)
 	mMessageIndexer = in_rhs.mMessageIndexer;
 }
 
+InfClientTextToText::~InfClientTextToText()
+{
+	
+}
+
 InfClientTextToText& InfClientTextToText::operator=(const InfClientTextToText& in_rhs)
 {
 	// TODO, IMPLEMENTED HERE

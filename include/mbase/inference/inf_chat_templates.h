@@ -106,6 +106,16 @@ struct InfTemplateZephyr {
 	mbase::string userEnd = "<|endoftext|>\n";
 };
 
+struct InfTemplateGemma2 {
+	mbase::string systemStart = "<start_of_turn>system\n";
+	mbase::string assistantStart = "<start_of_turn>model\n";
+	mbase::string userStart = "<start_of_turn>user\n";
+
+	mbase::string systemEnd = "<end_of_turn>\n";
+	mbase::string assistantEnd = "<end_of_turn>\n";
+	mbase::string userEnd = "<end_of_turn>\n";
+};
+
 MBASE_EXTERN_C_BEGIN
 
 GENERIC tokenizer_align_instruct_template(const mbase::string& in_template,
@@ -219,6 +229,17 @@ GENERIC tokenizer_align_instruct_template(const mbase::string& in_template,
 	else if(in_template == "zephyr")
 	{
 		InfTemplateZephyr chatTemplate;
+		out_system_start = chatTemplate.systemStart;
+		out_assistant_start = chatTemplate.assistantStart;
+		out_user_start = chatTemplate.userStart;
+
+		out_system_end = chatTemplate.systemEnd;
+		out_assistant_end = chatTemplate.assistantEnd;
+		out_user_end = chatTemplate.userEnd;
+	}
+	else if(in_template == "gemma2")
+	{
+		InfTemplateGemma2 chatTemplate;
 		out_system_start = chatTemplate.systemStart;
 		out_assistant_start = chatTemplate.assistantStart;
 		out_user_start = chatTemplate.userStart;

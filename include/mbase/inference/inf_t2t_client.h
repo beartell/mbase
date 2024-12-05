@@ -21,6 +21,7 @@ public:
 
 	InfClientTextToText();
 	InfClientTextToText(const InfClientTextToText& in_rhs);
+	~InfClientTextToText();
 
 	InfClientTextToText& operator=(const InfClientTextToText& in_rhs);
 
