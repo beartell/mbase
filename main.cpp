@@ -126,7 +126,7 @@ public:
 
                 activeJson["choices"] = choicesArray;
 
-                mbase::string completionJsonString = activeJson.toStringPretty();
+                mbase::string completionJsonString = "data: " + activeJson.toString() + "\n\n";
                 mDataSink->write(completionJsonString.c_str(), completionJsonString.size());
             }
             else
@@ -211,8 +211,8 @@ public:
 
             // {"id":"chatcmpl-123","object":"chat.completion.chunk","created":1694268190,"model":"gpt-4o-mini", "system_fingerprint": "fp_44709d6fcb", "choices":[{"index":0,"delta":{},"logprobs":null,"finish_reason":"stop"}]}
 
-            mbase::string completionJsonString = activeJson.toString();
-
+            mbase::string completionJsonString = "data: " + activeJson.toString() + "\n\n";
+            
             mDataSink->write(completionJsonString.c_str(), completionJsonString.size());
             mDataSink->done();
         }
@@ -381,7 +381,9 @@ GENERIC chatCompletionInternal(const httplib::Request& in_req, httplib::Response
         );
         return;
     }
+
     mbase::string reqBody(in_req.body.c_str(), in_req.body.size());
+    std::cout << reqBody << std::endl;
     std::pair<mbase::Json::Status, mbase::Json> parseResult = mbase::Json::parse(reqBody);
 
     if(parseResult.first != mbase::Json::Status::success)
@@ -514,8 +516,35 @@ GENERIC chatCompletionInternal(const httplib::Request& in_req, httplib::Response
         }
     }
 
+    // temperature
+    // mirostat
+    // top_k
+    // top_p
+    // min_p
+    //
+
+    InfSamplerDescription topkSampler;
+    InfSamplerDescription toppSampler;
+    InfSamplerDescription minpSampler;
+    InfSamplerDescription repetitionPenalty;
+
+    topkSampler.mSamplerType = InfSamplerDescription::SAMPLER::TOP_K;
+    topkSampler.mTopK = 40;
+
+    toppSampler.mSamplerType = InfSamplerDescription::SAMPLER::TOP_P;
+    toppSampler.mTopP = 1.0;
+
+    minpSampler.mSamplerType = InfSamplerDescription::SAMPLER::MIN_P;
+    minpSampler.mMinP = 0.3;
+
+    repetitionPenalty.mSamplerType = InfSamplerDescription::SAMPLER::REPETITION;
+    repetitionPenalty.mRepetition.mPenaltyN = 64;
+    repetitionPenalty.mRepetition.mRepeatPenalty = 1.0;
+    repetitionPenalty.mRepetition.mPenaltyFrequency = 0.0;
+    repetitionPenalty.mRepetition.mPenaltyPresent = 0.0;
+
     OpenAiTextToTextProcessor* openaiProcessor = new OpenAiTextToTextProcessor;
-    if(activeModel->register_context_process(openaiProcessor, gSampleParams.mContextLength, gSampleParams.mBatchLength, gSampleParams.mThreadCount, true, {}) != OpenAiTextToTextHostedModel::flags::INF_MODEL_INFO_REGISTERING_PROCESSOR)
+    if(activeModel->register_context_process(openaiProcessor, gSampleParams.mContextLength, gSampleParams.mBatchLength, gSampleParams.mThreadCount, true, {topkSampler, toppSampler, minpSampler, repetitionPenalty}) != OpenAiTextToTextHostedModel::flags::INF_MODEL_INFO_REGISTERING_PROCESSOR)
     {
         // Registeration is not possible for some reason
         // Always this motherfucker...
@@ -575,7 +604,7 @@ GENERIC chatCompletionInternal(const httplib::Request& in_req, httplib::Response
         if(jsonObject["stream"].getBool())
         {
             in_resp.set_chunked_content_provider(
-                "application/json",
+                "text/event-stream",
                 [openaiT2tClient, openaiProcessor](size_t offset, httplib::DataSink &sink) {
                     openaiT2tClient->set_stream_mod(true, &sink);
                     mbase::decode_behavior_description dbd;
