@@ -51,7 +51,7 @@ install(
 )
 
 target_include_directories(mbase_openai_sample PUBLIC mb_pc mb_inference ${CMAKE_SOURCE_DIR}/external mb_json)
-target_link_libraries(mbase_openai_sample PRIVATE ${MBASE_STD_LIBS} mb_pc mb_inference mb_json)
+target_link_libraries(mbase_openai_sample PRIVATE ${MBASE_STD_LIBS} mb_pc mb_inference mb_json llama)
 # set(CPACK_GENERATOR "DEB")
 # set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Saul E. Erdog")
 # set(CPACK_PACKAGE_NAME "MBASE-Libraries")

@@ -29,5 +29,7 @@ if(MBASE_JSON_FOUND)
     add_library(mbase.json INTERFACE)
     target_link_libraries(mbase.json INTERFACE ${MBASE_JSON_LIBRARIES})
     target_include_directories(mbase.json INTERFACE ${MBASE_JSON_INCLUDE_DIRS})
+
+    set_property(TARGET mbase.json PROPERTY POSITION_INDEPENDENT_CODE ON)
 endif()
 

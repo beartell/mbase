@@ -29,5 +29,7 @@ if(MBASE_PC_FOUND)
     add_library(mbase.pc INTERFACE)
     target_link_libraries(mbase.pc INTERFACE ${MBASE_PC_LIBRARIES})
     target_include_directories(mbase.pc INTERFACE ${MBASE_PC_INCLUDE_DIRS})
+    
+    set_property(TARGET mbase.pc PROPERTY POSITION_INDEPENDENT_CODE ON)
 endif()
 

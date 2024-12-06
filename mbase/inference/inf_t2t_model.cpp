@@ -3,6 +3,7 @@
 #include <mbase/inference/inf_embedder.h>
 #include <mbase/inference/inf_gguf_metadata_configurator.h>
 #include <mbase/inference/inf_chat_templates.h>
+#include <mbase/inference/inf_device_desc.h>
 #include <iostream>
 
 MBASE_BEGIN
@@ -262,13 +263,13 @@ U32 InfModelTextToText::get_occupied_context_size() const
 	return mOccupiedContext;
 }
 
-InfModelTextToText::flags InfModelTextToText::initialize_model(const mbase::wstring& in_path, const U32& in_total_context_size, const I32& in_gpu_layers)
+InfModelTextToText::flags InfModelTextToText::initialize_model_ex(const mbase::wstring& in_path, const U32& in_total_context_size, const I32& in_gpu_layers, bool in_use_mmap, bool in_use_mlock, mbase::vector<InfDeviceDescription> in_devices)
 {
 	if(is_initialized())
 	{
 		return flags::INF_MODEL_SUCCESS;
 	}
-
+	
 	if(signal_initializing())
 	{
 		return flags::INF_MODEL_INFO_INITIALIZING_MODEL;
@@ -283,11 +284,43 @@ InfModelTextToText::flags InfModelTextToText::initialize_model(const mbase::wstr
 	// TODO: Check if the given total context size is too small
 
 	mSuppliedParams = llama_model_default_params();
-	
+	mSuppliedParams.use_mmap = in_use_mmap;
+	mSuppliedParams.use_mlock = in_use_mlock;
+
+	mbase::vector<ggml_backend_dev_t> deviceList;
+	I32 gpuCount = 0;
+
+	if(in_devices.size())
+	{
+		for(auto& tmpDeviceDesc : in_devices)
+		{
+			if(tmpDeviceDesc.get_device_type() == mbase::InfDeviceDescription::device_type::GPU)
+			{
+				gpuCount++;
+			}
+			deviceList.push_back(tmpDeviceDesc.get_internal_dev_handle());
+		}	
+
+		if(deviceList.size())
+		{
+			// llama.cpp expects null terminated device list
+			deviceList.push_back(NULL);
+			mSuppliedParams.devices = deviceList.data();
+		}
+
+		if(gpuCount)
+		{
+			mSuppliedParams.n_gpu_layers = in_gpu_layers;
+			mSuppliedParams.split_mode = LLAMA_SPLIT_MODE_NONE;
+			if(gpuCount > 1)
+			{
+				// If there are more than one gpus, enable row split mode
+				mSuppliedParams.split_mode = LLAMA_SPLIT_MODE_ROW;
+			}
+		}
+	}
+
 	mTotalContextSize = in_total_context_size;
-	mSuppliedParams.n_gpu_layers = in_gpu_layers;
-	mSuppliedParams.split_mode = LLAMA_SPLIT_MODE_ROW;
-	
 	mModelPath = in_path;
 	mRegisteredProcessors.clear(); // Since the registered processors is not on the destruction list, make sure it is fresh
 
@@ -296,9 +329,14 @@ InfModelTextToText::flags InfModelTextToText::initialize_model(const mbase::wstr
 	return flags::INF_MODEL_INFO_INITIALIZING_MODEL;
 }
 
-InfModelTextToText::flags InfModelTextToText::initialize_model_sync(const mbase::wstring& in_path, const U32& in_total_context_size, const I32& in_gpu_layers)
+InfModelTextToText::flags InfModelTextToText::initialize_model(const mbase::wstring& in_path, const U32& in_total_context_size, const I32& in_gpu_layers)
 {
-	initialize_model(in_path, in_total_context_size, in_gpu_layers);
+	return initialize_model_ex(in_path, in_total_context_size, in_gpu_layers, false, true);
+}
+
+InfModelTextToText::flags InfModelTextToText::initialize_model_ex_sync(const mbase::wstring& in_path, const U32& in_total_context_size, const I32& in_gpu_layers, bool in_use_mmap, bool in_use_mlock, mbase::vector<InfDeviceDescription> in_devices)
+{
+	initialize_model_ex(in_path, in_total_context_size, in_gpu_layers, in_use_mmap, in_use_mlock, in_devices);
 
 	while(signal_initializing())
 	{
@@ -311,6 +349,11 @@ InfModelTextToText::flags InfModelTextToText::initialize_model_sync(const mbase:
 	}
 
 	return flags::INF_MODEL_INFO_INITIALIZING_MODEL;
+}
+
+InfModelTextToText::flags InfModelTextToText::initialize_model_sync(const mbase::wstring& in_path, const U32& in_total_context_size, const I32& in_gpu_layers)
+{
+	return initialize_model_ex_sync(in_path, in_total_context_size, in_gpu_layers, false, true);
 }
 
 InfModelTextToText::flags InfModelTextToText::destroy()
@@ -564,7 +607,8 @@ GENERIC InfModelTextToText::_initialize_model()
 	// Before diving into loading model, 
 	// calculate how much memory we need to load the model 
 	// if there is not enough memory for loading the model, abort.
-	
+	mSuppliedParams.use_mmap = false;
+	mSuppliedParams.use_mlock = true;
 	mModel = llama_load_model_from_file(mbase::to_utf8(mModelPath).c_str(), mSuppliedParams);
 	if (!mModel)
 	{
@@ -586,6 +630,7 @@ GENERIC InfModelTextToText::_initialize_model()
 
 	llama_context* dummyContext = NULL;
 	llama_context_params lcp = llama_context_default_params();
+	
 	lcp.n_ctx = 32;
 	lcp.n_batch = 32;
 	lcp.n_ubatch = 32;

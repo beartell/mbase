@@ -3,6 +3,7 @@
 
 #include <mbase/inference/inf_model.h>
 #include <mbase/inference/inf_sampling_set.h>
+#include <mbase/inference/inf_device_desc.h>
 
 MBASE_BEGIN
 
@@ -64,8 +65,11 @@ public:
 
 	static bool get_mbase_chat_template_id(const mbase::string& in_architecture, mbase::string& out_id);
 
+	flags initialize_model_ex(const mbase::wstring& in_path, const U32& in_total_context_size, const I32& in_gpu_layers, bool in_use_mmap, bool in_use_mlock, mbase::vector<InfDeviceDescription> in_devices = mbase::vector<InfDeviceDescription>());
 	flags initialize_model(const mbase::wstring& in_path, const U32& in_total_context_size, const I32& in_gpu_layers = -1);
+	flags initialize_model_ex_sync(const mbase::wstring& in_path, const U32& in_total_context_size, const I32& in_gpu_layers, bool in_use_mmap, bool in_use_mlock, mbase::vector<InfDeviceDescription> in_devices = mbase::vector<InfDeviceDescription>());
 	flags initialize_model_sync(const mbase::wstring& in_path, const U32& in_total_context_size, const I32& in_gpu_layers = -1);
+
 	flags destroy();
 	flags destroy_sync();
 	flags register_context_process(

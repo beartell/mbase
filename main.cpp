@@ -13,6 +13,7 @@
 #include <mbase/inference/inf_maip_server.h>
 #include <mbase/inference/inf_gguf_metadata_configurator.h>
 #include <mbase/inference/inf_maip_model_description.h>
+#include <mbase/inference/inf_device_desc.h>
 #include <mbase/argument_get_value.h>
 #include <mbase/maip_client.h>
 #include <mbase/json/json.h>
@@ -82,7 +83,6 @@ public:
     }
     GENERIC set_stream_mod(bool in_stream_mode, httplib::DataSink* in_data_sink = NULL)
     {
-        
         mStreamMod = in_stream_mode;
         mDataSink = in_data_sink;
     }
@@ -96,7 +96,7 @@ public:
     {
         inf_token_description itd;
         out_processor->token_to_description(out_token[0], itd);
-
+        
         if(out_is_finish)
         {
         }
@@ -667,6 +667,8 @@ GENERIC httpServerThread()
 
 int main(int argc, char** argv)
 {
+    llama_backend_init();
+
     if(argc < 2)
     {
         // print help
@@ -711,6 +713,11 @@ int main(int argc, char** argv)
             mbase::argument_get<I32>::value(i, argc, argv, gSampleParams.mContextLength);
         }
 
+        else if(argumentString == "--batch-length" || argumentString == "-b")
+        {
+            mbase::argument_get<I32>::value(i, argc, argv, gSampleParams.mBatchLength);
+        }
+
         else if(argumentString == "--help")
         {
             // print help
@@ -731,7 +738,7 @@ int main(int argc, char** argv)
             return 1;
         }
         OpenAiTextToTextHostedModel* newModel = new OpenAiTextToTextHostedModel;
-        newModel->initialize_model_sync(mbase::from_utf8(*It), 99999999, 99);
+        newModel->initialize_model_ex_sync(mbase::from_utf8(*It), 99999999, 99, true, true);
         newModel->update();
 
         if(newModel->is_initialize_failed())
@@ -743,8 +750,6 @@ int main(int argc, char** argv)
         gHostedModelArray.push_back(newModel);
     }
 
-
-
     mbase::thread serverThread(httpServerThread);
     serverThread.run();
 
@@ -755,6 +760,8 @@ int main(int argc, char** argv)
             OpenAiTextToTextHostedModel* hostedModel = *It;
             hostedModel->update();
         }
+        mbase::sleep(5);
+
     }
     serverThread.join();
 

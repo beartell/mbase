@@ -39,6 +39,7 @@ list(APPEND MBASE_INFERENCE_INCLUDE_STABLE_FILES
     inf_client.h
     inf_common.h
     inf_context_line.h
+    inf_device_desc.h
     inf_embedder_client.h
     inf_embedder.h
     inf_gguf_metadata_configurator.h
@@ -59,6 +60,7 @@ list(APPEND MBASE_INFERENCE_INCLUDE_STABLE_FILES
 
 add_library(mb_inference SHARED 
     ${MBASE_INFERENCE_LIB_PATH}inf_client.cpp
+    ${MBASE_INFERENCE_LIB_PATH}inf_device_desc.cpp
     ${MBASE_INFERENCE_LIB_PATH}inf_common.cpp
     ${MBASE_INFERENCE_LIB_PATH}inf_embedder.cpp
     ${MBASE_INFERENCE_LIB_PATH}inf_gguf_meta_configurator.cpp
@@ -77,9 +79,10 @@ add_library(mb_inference SHARED
 )
 
 target_compile_definitions(mb_inference PRIVATE MBASE_BUILD=1 MBASE_INTERNAL_API=1 llama)
-
 target_include_directories(mb_inference PUBLIC ${MBASE_INFERENCE_INCLUDE_DEPENDS} llama)
 target_link_libraries(mb_inference PRIVATE ${MBASE_INFERENCE_LIB_DEPENDS} llama)
+
+set_property(TARGET mb_inference PROPERTY POSITION_INDEPENDENT_CODE ON)
 
 foreach(MB_INCLUDE_FILE IN LISTS MBASE_INFERENCE_INCLUDE_STABLE_FILES)
     list(APPEND MBASE_INFERENCE_INCLUDE_INSTALL_FILES ${MBASE_INFERENCE_INCLUDE_INSTALL_PATH}${MB_INCLUDE_FILE})

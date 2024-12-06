@@ -23,6 +23,8 @@ add_library(double-conversion STATIC
     ${CMAKE_SOURCE_DIR}/external/double-conversion/strtod.cc
 )
 
+set_property(TARGET double-conversion PROPERTY POSITION_INDEPENDENT_CODE ON)
+
 message("JSON Include depends: ${MBASE_JSON_INCLUDE_DEPENDS}")
 
 list(APPEND MBASE_JSON_INCLUDE_STABLE_FILES
@@ -38,6 +40,10 @@ add_library(mb_json SHARED
     ${MBASE_JSON_LIB_PATH}/json.cpp
 )
 
+
+
 target_compile_definitions(mb_json PRIVATE MBASE_BUILD=1 MBASE_INTERNAL_API=1)
 target_include_directories(mb_json PUBLIC ${MBASE_JSON_INCLUDE_DEPENDS})
 target_link_libraries(mb_json PRIVATE double-conversion)
+
+set_property(TARGET mb_json PROPERTY POSITION_INDEPENDENT_CODE ON)

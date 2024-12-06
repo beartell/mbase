@@ -35,4 +35,6 @@ if(MBASE_INFERENCE_FOUND)
     target_include_directories(mbase.inference INTERFACE ${MBASE_INFERENCE_INCLUDE_DIRS} llama)
     target_compile_definitions(mbase.inference INTERFACE llama)
 
+    set_property(TARGET mbase.inference POSITION_INDEPENDENT_CODE ON)
+
 endif()
