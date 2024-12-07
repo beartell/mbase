@@ -287,9 +287,8 @@ InfModelTextToText::flags InfModelTextToText::initialize_model_ex(const mbase::w
 	mSuppliedParams.use_mmap = in_use_mmap;
 	mSuppliedParams.use_mlock = in_use_mlock;
 
-	mbase::vector<ggml_backend_dev_t> deviceList;
 	I32 gpuCount = 0;
-
+	mPhysicalDevices.clear();
 	if(in_devices.size())
 	{
 		for(auto& tmpDeviceDesc : in_devices)
@@ -298,14 +297,14 @@ InfModelTextToText::flags InfModelTextToText::initialize_model_ex(const mbase::w
 			{
 				gpuCount++;
 			}
-			deviceList.push_back(tmpDeviceDesc.get_internal_dev_handle());
-		}	
+			mPhysicalDevices.push_back(tmpDeviceDesc.get_internal_dev_handle());
+		}
 
-		if(deviceList.size())
+		if(mPhysicalDevices.size())
 		{
 			// llama.cpp expects null terminated device list
-			deviceList.push_back(NULL);
-			mSuppliedParams.devices = deviceList.data();
+			mPhysicalDevices.push_back(nullptr);
+			mSuppliedParams.devices = mPhysicalDevices.data();
 		}
 
 		if(gpuCount)

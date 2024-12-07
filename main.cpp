@@ -32,7 +32,7 @@ struct mbase_openai_sample_params {
     mbase::vector<mbase::string> mModelFiles; // --model-path || -m
     I32 mThreadCount = 16; // --thread-count || -t
     I32 mContextLength = 4096; // --context-length || -c
-    I32 mBatchLength = 512; // --batch-length || -b
+    I32 mBatchLength = 128; // --batch-length || -b
 };
 
 class OpenAiTextToTextHostedModel : public mbase::InfModelTextToText {
@@ -669,6 +669,19 @@ int main(int argc, char** argv)
 {
     llama_backend_init();
 
+    mbase::vector<InfDeviceDescription> deviceDesc = mbase::inf_query_devices();
+
+    for(auto& n : deviceDesc)
+    {
+        std::cout << "Device name: " << n.get_device_description() << std::endl;
+        std::cout << "Device index: " << n.get_device_index() << std::endl;
+        std::cout << "Free mem: " << n.get_free_memory() << std::endl;
+        std::cout << "Total mem: " << n.get_total_memory() / (1024*1024) << std::endl;
+    }
+
+    mbase::vector<InfDeviceDescription> cpuDevice;
+    cpuDevice.push_back(deviceDesc.back());
+    
     if(argc < 2)
     {
         // print help
@@ -738,7 +751,7 @@ int main(int argc, char** argv)
             return 1;
         }
         OpenAiTextToTextHostedModel* newModel = new OpenAiTextToTextHostedModel;
-        newModel->initialize_model_ex_sync(mbase::from_utf8(*It), 99999999, 99, true, true);
+        newModel->initialize_model_ex_sync(mbase::from_utf8(*It), 99999999, 99, false, false, cpuDevice);
         newModel->update();
 
         if(newModel->is_initialize_failed())

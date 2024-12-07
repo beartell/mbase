@@ -113,6 +113,7 @@ private:
 	mbase::vector<inf_text_token> mSystemStartTokenized;
 	mbase::vector<inf_text_token> mAssistantStartTokenized;
 	mbase::vector<inf_text_token> mUserStartTokenized;
+	mbase::vector<ggml_backend_dev_t> mPhysicalDevices;
 	U64 mModelSize;
 	U32 mOccupiedContext;
 	U32 mTotalContextSize;

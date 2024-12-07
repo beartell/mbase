@@ -282,7 +282,7 @@ InfTextToTextProcessor::flags InfTextToTextProcessor::execute_input(const inf_te
 		return flags::INF_PROC_ERR_INPUT_IS_EMPTY;
 	}
 
-	if(in_tokens.size() > mContextLength)
+	if(in_tokens.size() > mBatchSize)
 	{
 		return flags::INF_PROC_ERR_INPUT_EXCEED_TOKEN_LIMIT;
 	}
@@ -585,11 +585,11 @@ GENERIC InfTextToTextProcessor::_initialize_context()
 {
 	llama_context_params ctxParams = llama_context_default_params();
 	ctxParams.n_ctx = mContextLength;
-	ctxParams.n_batch = mContextLength;
+	ctxParams.n_batch = mBatchSize;
 	ctxParams.n_seq_max = 1;
 	ctxParams.n_threads = mThreadCount;
 	ctxParams.n_threads_batch = mThreadCount;
-	ctxParams.n_ubatch = mBatchSize;
+	ctxParams.n_ubatch = mBatchSize / 4;
 	ctxParams.flash_attn = mFlashAttention;
 
 	InfModelTextToText* t2tModel = static_cast<InfModelTextToText*>(this->mTargetModel_md_model);
