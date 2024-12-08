@@ -66,6 +66,7 @@ public:
 	~logical_processor() 
 	{ 
 		stop_processor();
+		mIsProcessorRunning = false;
 	}
 
 	bool is_processor_running() { return mIsProcessorRunning; }
@@ -73,6 +74,7 @@ public:
 	static GENERIC _update_t_static(logical_processor* in_self) 
 	{
 		in_self->update_t();
+		in_self->mIsProcessorRunning = false;
 	}
 
 	GENERIC start_processor() 
@@ -82,17 +84,18 @@ public:
 			// if it is running, do nothing
 			return;
 		}
+		else
+		{
+			mProcessorThread.join(); // Internally checks the validity of the thread
+		}
 		mIsProcessorRunning = true;
 		mProcessorThread.run();
 	}
 
 	GENERIC stop_processor()
 	{
-		if(mIsProcessorRunning)
-		{
-			mIsProcessorRunning = false;
-			mProcessorThread.join();
-		}
+		mIsProcessorRunning = false;
+		mProcessorThread.join(); // Internally checks the validity of the thread
 	}
 	GENERIC acquire_synchronizer() { mLogicSynchronizer.acquire(); }
 	GENERIC release_synchronizer() { mLogicSynchronizer.release(); }

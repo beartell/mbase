@@ -104,12 +104,18 @@ public:
         {
             if(is_stream_mod())
             {
+                if(!mDataSink->is_writable())
+                {
+                    // Means client is disconnected
+                    mProcessing = false;
+                    return;
+                }
                 // {"id":"chatcmpl-123","object":"chat.completion.chunk","created":1694268190,"model":"gpt-4o-mini", "system_fingerprint": "fp_44709d6fcb", "choices":[{"index":0,"delta":{"role":"assistant","content":""},"logprobs":null,"finish_reason":null}]}
                 mbase::Json activeJson;
                 mbase::Json choicesArray;
                 mbase::Json choiceFirstItem;
 
-                activeJson["id"] = mClientId;
+                activeJson["id"] = "chatcmpl-" + mClientId;
                 activeJson["object"] = "chat.completion.chunk";
                 activeJson["created"] = (time_t)time(NULL);
                 activeJson["model"] = mUsedModel;
@@ -131,7 +137,7 @@ public:
             }
             else
             {
-                mTotalGeneratedOutput += std::move(itd.mTokenString);    
+                mTotalGeneratedOutput += std::move(itd.mTokenString);
             }
             
             mbase::decode_behavior_description dbd;
@@ -141,45 +147,12 @@ public:
         }
     }
     GENERIC on_finish(InfTextToTextProcessor* out_processor, size_type out_total_token_size, InfTextToTextProcessor::finish_state out_finish_state) override
-    {
-        // {
-        // "id": "chatcmpl-123456",
-        // "object": "chat.completion",
-        // "created": 1728933352,
-        // "model": "gpt-4o-2024-08-06",
-        // "choices": [
-        //     {
-        //     "index": 0,
-        //     "message": {
-        //         "role": "assistant",
-        //         "content": "Hi there! How can I assist you today?",
-        //         "refusal": null
-        //     },
-        //     "logprobs": null,
-        //     "finish_reason": "stop"
-        //     }
-        // ],
-        // "usage": {
-        //     "prompt_tokens": 19,
-        //     "completion_tokens": 10,
-        //     "total_tokens": 29,
-        //     "prompt_tokens_details": {
-        //     "cached_tokens": 0
-        //     },
-        //     "completion_tokens_details": {
-        //     "reasoning_tokens": 0,
-        //     "accepted_prediction_tokens": 0,
-        //     "rejected_prediction_tokens": 0
-        //     }
-        // },
-        // "system_fingerprint": "fp_6b68a8204b"
-        // }
-        
+    {  
         mbase::Json activeJson;
         mbase::Json choicesArray;
         mbase::Json choiceFirstItem;
 
-        activeJson["id"] = mClientId;
+        activeJson["id"] = "chatcmpl-" + mClientId;
         activeJson["object"] = "chat.completion";
         activeJson["created"] = (time_t)time(NULL);
         activeJson["model"] = mUsedModel;
@@ -254,6 +227,7 @@ private:
 mbase_openai_sample_params gSampleParams;
 mbase::vector<OpenAiTextToTextHostedModel*> gHostedModelArray;
 bool gIsServerListening = true;
+mbase::mutex gContextDestructionSync;
 
 mbase::string buildOpenaiError(
     const mbase::string& in_message,
@@ -592,7 +566,9 @@ GENERIC chatCompletionInternal(const httplib::Request& in_req, httplib::Response
             "invalid_request_error",
             "max_tokens_exceeded"
         );
+        gContextDestructionSync.acquire();
         delete openaiProcessor;
+        gContextDestructionSync.release();
         delete openaiT2tClient;
         return;
     }
@@ -616,7 +592,9 @@ GENERIC chatCompletionInternal(const httplib::Request& in_req, httplib::Response
                     {
                         mbase::sleep(50);
                     }
+                    gContextDestructionSync.acquire();
                     delete openaiProcessor;
+                    gContextDestructionSync.release();
                     delete openaiT2tClient;
                     return true;
                 }
@@ -633,7 +611,9 @@ GENERIC chatCompletionInternal(const httplib::Request& in_req, httplib::Response
     {
         mbase::sleep(50);
     }
+    gContextDestructionSync.acquire();
     delete openaiProcessor;
+    gContextDestructionSync.release();
     delete openaiT2tClient;
 }
 
@@ -669,7 +649,7 @@ int main(int argc, char** argv)
 {
     llama_backend_init();
 
-    mbase::vector<InfDeviceDescription> deviceDesc = mbase::inf_query_devices();
+    mbase::vector<InfDeviceDescription> deviceDesc = mbase::inf_query_gpu_devices();
 
     for(auto& n : deviceDesc)
     {
@@ -678,9 +658,6 @@ int main(int argc, char** argv)
         std::cout << "Free mem: " << n.get_free_memory() << std::endl;
         std::cout << "Total mem: " << n.get_total_memory() / (1024*1024) << std::endl;
     }
-
-    mbase::vector<InfDeviceDescription> cpuDevice;
-    cpuDevice.push_back(deviceDesc.back());
     
     if(argc < 2)
     {
@@ -751,7 +728,7 @@ int main(int argc, char** argv)
             return 1;
         }
         OpenAiTextToTextHostedModel* newModel = new OpenAiTextToTextHostedModel;
-        newModel->initialize_model_ex_sync(mbase::from_utf8(*It), 99999999, 99, false, false, cpuDevice);
+        newModel->initialize_model_ex_sync(mbase::from_utf8(*It), 99999999, 99, true, true, deviceDesc);
         newModel->update();
 
         if(newModel->is_initialize_failed())
@@ -768,12 +745,14 @@ int main(int argc, char** argv)
 
     while(gIsServerListening)
     {
+        gContextDestructionSync.acquire();
         for(mbase::vector<OpenAiTextToTextHostedModel*>::iterator It = gHostedModelArray.begin(); It != gHostedModelArray.end(); ++It)
         {
             OpenAiTextToTextHostedModel* hostedModel = *It;
             hostedModel->update();
         }
-        mbase::sleep(5);
+        gContextDestructionSync.release();
+        mbase::sleep(15);
 
     }
     serverThread.join();

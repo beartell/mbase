@@ -608,6 +608,7 @@ GENERIC InfModelTextToText::_initialize_model()
 	// if there is not enough memory for loading the model, abort.
 	mSuppliedParams.use_mmap = false;
 	mSuppliedParams.use_mlock = true;
+	
 	mModel = llama_load_model_from_file(mbase::to_utf8(mModelPath).c_str(), mSuppliedParams);
 	if (!mModel)
 	{

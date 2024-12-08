@@ -50,6 +50,11 @@ bool InfProcessorBase::signal_destroying() const
 	return mDestroySignal.get_signal();
 }
 
+bool InfProcessorBase::has_client() const
+{
+	return mAssignedClient != NULL;
+}
+
 U32 InfProcessorBase::get_context_size()
 {
 	return mContextLength;

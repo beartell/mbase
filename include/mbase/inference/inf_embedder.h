@@ -6,12 +6,16 @@
 
 MBASE_BEGIN
 
+struct embedder_behavior_description {
+    U32 mEmbeddingAtMost = 1;
+    bool mHaltOnWrite = false;
+};
+
 class InfModelTextToText;
 
 class MBASE_API InfEmbedderProcessor : public mbase::InfProcessorBase {
 public:
-
-    enum class init_fail_code {
+    enum class last_fail_code {
         MODEL_NOT_INITIALIZED,
         NOT_ENOUGH_MEMORY,
         INVALID_MODEL_TYPE
@@ -20,18 +24,20 @@ public:
     InfEmbedderProcessor();
     ~InfEmbedderProcessor();
 
-    init_fail_code get_last_fail_code() const;
+    last_fail_code get_last_fail_code() const;
+    bool is_init_failed() const;
     bool is_available() const;
-    bool signal_init_method() const;
-	bool signal_destroy_method() const;
-	bool signal_init_fail_method() const;
+    bool signal_state_embedding_process() const;
     bool signal_embedding_process() const;
-    bool signal_embedding_vector_generated() const;
     const U32& get_embedding_length();
     const U32& get_max_token_length();
 
+    flags get_processor_status() const;
+
     flags tokenize_input(CBYTEBUFFER in_data, size_type in_size, inf_text_token_vector& out_tokens);
-    flags execute_input(const inf_text_token_vector& in_tokens, bool in_abandon = false);
+    flags execute_input(const mbase::vector<inf_text_token_vector>& in_tokens, const embedder_behavior_description& in_description, bool in_abandon = false);
+    flags next(const embedder_behavior_description& in_description);
+    flags next_sync(const embedder_behavior_description& in_description);
     flags set_inference_client(InfClientBase* in_client);
     flags initialize(
         InfModelTextToText* in_model,
@@ -53,7 +59,7 @@ public:
     GENERIC update_t() override;
 
     virtual GENERIC on_initializing();
-	virtual GENERIC on_initialize_fail(init_fail_code out_code);
+	virtual GENERIC on_initialize_fail(last_fail_code out_code);
 	virtual GENERIC on_destroying();
 	virtual GENERIC on_initialize() = 0;
 	virtual GENERIC on_destroy() = 0;
@@ -68,14 +74,14 @@ private:
     U32 mEmbeddingLength;
     U32 mBatchSize;
     U32 mThreadCount;
-    inf_text_token_vector mTokenizedInput;
-    inf_embedding_vector mEmbeddingVector;
+    U32 mEmbeddingVectorIndex;
+    mbase::vector<inf_text_token_vector> mTokenizedInput;
+    mbase::vector<inf_embedding_vector> mEmbeddingVector;
     processor_signal mEmbeddingSignal;
-    processor_signal mVectorGenerated;
-    processor_signal mInitializeMethodSignal;
-    processor_signal mDestroyMethodSignal;
-    processor_signal mInitializeFailSignal;
-    init_fail_code mInitFailCode;
+    last_fail_code mLastFailCode;
+    finish_state mFinishState;
+    bool mIsInitializeFailed;
+    embedder_behavior_description mEmbedderBehavior;
 };
 
 MBASE_END

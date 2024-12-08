@@ -17,26 +17,39 @@ MBASE_BEGIN
 /* === UPDATE_T template for all kinds of processors === */
 
 /*
-	while(is_processor_running())
+	if(is_registered())
     {
-        if(is_registered())
+        if(signal_destroying())
         {
-            if(signal_destroying())
-            {
-                _destroy_context();
-            }
-
-			if(is_running())
-			{
-				// signal based processing goes here
-			}
+            _destroy_context();
         }
-        else
+
+        if(is_running())
         {
-            if(signal_initializing())
+			... 
+            while(is_processor_running())
             {
-                _initialize_context();
+				... // Processing
+                if(...)
+                {
+                    ...
+                }
+                else if(!<processor_behavior>.mHaltOnWrite)
+                {
+                    mbase::sleep(15);
+                }
+                else
+                {
+                    break;
+                }
             }
+        }
+    }
+    else
+    {
+        if(signal_initializing())
+        {
+            _initialize_context();
         }
     }
 */
@@ -77,7 +90,8 @@ public:
 		FINISHED,
 		CONTINUE,
 		ABANDONED,
-		TOKEN_LIMIT_REACHED
+		TOKEN_LIMIT_REACHED,
+		FAILED_ABANDONED
 	};
 
 	InfProcessorBase();
@@ -89,6 +103,7 @@ public:
 	bool signal_state_destroying() const;
 	bool signal_initializing() const;
 	bool signal_destroying() const;
+	bool has_client() const;
 
 	U32 get_context_size();
 	InfModelBase* get_processed_model();

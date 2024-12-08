@@ -123,11 +123,6 @@ GENERIC InfTextToTextProcessor::get_available_samplers(inf_sampling_set& out_sam
 	out_samplers = mSamplerDescriptions;
 }
 
-bool InfTextToTextProcessor::has_client() const
-{
-	return mAssignedClient != NULL;
-}
-
 InfTextToTextProcessor::flags InfTextToTextProcessor::get_processor_status() const
 {
 	if(signal_initializing())
@@ -326,7 +321,7 @@ InfTextToTextProcessor::flags InfTextToTextProcessor::next(const decode_behavior
 
 	if(signal_state_decode_process())
 	{
-		return flags::INF_PROC_ERR_ALREADY_PROCESSING;
+		return flags::INF_PROC_INFO_NEED_UPDATE;
 	}
 
 	if(!is_running())
@@ -334,11 +329,11 @@ InfTextToTextProcessor::flags InfTextToTextProcessor::next(const decode_behavior
 		return flags::INF_PROC_INFO_HALTED;
 	}
 
-	start_processor();
 	mGeneratedTokenVector.clear();
 	mDecodeBehavior = in_description;
 	mDecodeSignal.set_signal();
-	
+	start_processor();
+
 	return flags::INF_PROC_SUCCESS;
 }
 
@@ -459,8 +454,8 @@ InfTextToTextProcessor::flags InfTextToTextProcessor::destroy()
 	release_inference_client();
 	on_destroying();
 
-	start_processor();
 	mDestroySignal.set_signal();
+	start_processor();
 	return flags::INF_PROC_INFO_DESTROYING;
 }
 
@@ -758,7 +753,6 @@ GENERIC InfTextToTextProcessor::update()
 	if(signal_state_destroying())
 	{
 		// Reset all signals on destruction
-		stop_processor();
 		reset_base_signals();
 		mDecodeSignal.reset_signal_with_state();
 		mInputSignal.reset_signal_with_state();
@@ -769,7 +763,6 @@ GENERIC InfTextToTextProcessor::update()
 	if(signal_state_initializing())
 	{
 		mInitializeSignal.reset_signal_state();
-		stop_processor();
 		if(is_init_failed())
 		{
 			this->release_object_watcher();
@@ -781,11 +774,6 @@ GENERIC InfTextToTextProcessor::update()
 			mIsRegistered = true;
 			on_initialize();
 		}
-	}
-
-	if(signal_state_input_process())
-	{
-		
 	}
 
 	if(signal_state_decode_process())
@@ -809,11 +797,6 @@ GENERIC InfTextToTextProcessor::update()
 		if(t2tClient)
 		{
 			inf_text_token_vector tokenVector = mGeneratedTokenVector;
-			if(mDecodeBehavior.mHaltOnWrite)
-			{
-				stop_processor();
-			}
-
 			t2tClient->on_write(this, tokenVector, isFinish);
 			if(isFinish)
 			{
@@ -825,40 +808,45 @@ GENERIC InfTextToTextProcessor::update()
 
 GENERIC InfTextToTextProcessor::update_t()
 {
-	while(is_processor_running())
+	if(is_registered())
 	{
-		if(is_registered())
+		if (signal_destroying())
 		{
-			if (signal_destroying())
+			_destroy_context();
+		}
+
+		if (is_running())
+		{
+			if (signal_input_process())
 			{
-				_destroy_context();
-				continue;
+				_decode_input();
 			}
-
-			if (is_running())
+			
+			while(is_processor_running())
 			{
-				if (signal_input_process())
-				{
-					_decode_input();
-					continue;
-				}
-
 				if (signal_decode_process())
 				{
 					_decode_next();
 				}
+
+				else if(!mDecodeBehavior.mHaltOnWrite)
+				{
+					// If it is not halt on write, busy wait for logic thread to process the generated tokens
+					mbase::sleep(15);
+				}
+
+				else
+				{
+					break;
+				}
 			}
 		}
-		else
+	}
+	else
+	{
+		if(signal_initializing())
 		{
-			if(signal_initializing())
-			{
-				_initialize_context();
-			}
-			else
-			{
-				mbase::sleep(15);
-			}
+			_initialize_context();
 		}
 	}
 }

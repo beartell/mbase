@@ -63,6 +63,7 @@ add_library(mb_inference SHARED
     ${MBASE_INFERENCE_LIB_PATH}inf_device_desc.cpp
     ${MBASE_INFERENCE_LIB_PATH}inf_common.cpp
     ${MBASE_INFERENCE_LIB_PATH}inf_embedder.cpp
+    #${MBASE_INFERENCE_LIB_PATH}inf_embedder_client.cpp
     ${MBASE_INFERENCE_LIB_PATH}inf_gguf_meta_configurator.cpp
     ${MBASE_INFERENCE_LIB_PATH}inf_maip_callbacks.cpp
     ${MBASE_INFERENCE_LIB_PATH}inf_maip_model_description.cpp

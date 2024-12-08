@@ -41,7 +41,6 @@ public:
 	U32 get_max_token_length();
 	bool has_sampler(InfSamplerDescription::SAMPLER in_sampler_type, InfSamplerDescription& out_sampler);
 	GENERIC get_available_samplers(inf_sampling_set& out_samplers);
-	bool has_client() const;
 	flags get_processor_status() const;
 	flags token_to_description(const inf_text_token& in_token, inf_token_description& out_description);
 	flags tokens_to_description_vector(const mbase::vector<inf_text_token>& in_tokens, mbase::vector<inf_token_description>& out_descriptions);
