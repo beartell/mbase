@@ -83,6 +83,11 @@ typename InfModelBase::const_reverse_iterator InfModelBase::crend() const noexce
 	return mRegisteredProcessors.crend();
 }
 
+typename InfModelBase::context_processor_list& InfModelBase::get_registered_processors()
+{
+	return mRegisteredProcessors;
+}
+
 inf_model_category InfModelBase::get_model_category() const
 {
 	return mModelCategory;

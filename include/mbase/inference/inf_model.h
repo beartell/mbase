@@ -51,6 +51,7 @@ public:
 	const_reverse_iterator crbegin() const noexcept;
 	const_reverse_iterator crend() const noexcept;
 
+	context_processor_list& get_registered_processors();
 	inf_model_category get_model_category() const;
 	bool is_initialize_failed() const;
 	bool is_initialized() const;

@@ -26,11 +26,13 @@
 
 using namespace mbase;
 
+#define MBASE_OPENAI_SERVER_VERSION "v1.0.1"
+
 GENERIC print_usage()
 {
     printf("========================================\n");
     printf("#Program name:      mbase-openai-server\n");
-    printf("#Version:           1.0.1\n");
+    printf("#Version:           %s\n", MBASE_OPENAI_SERVER_VERSION);
     printf("#Type:              Example\n");
     printf("#Further docs: \n");
     printf("***** DESCRIPTION *****\n");
@@ -39,17 +41,21 @@ GENERIC print_usage()
     printf("The chat completion api is implemented however the plain completion and embedding api is missing for now.\n");
     printf("They will be implemented in the future.\n");
     printf("========================================\n\n");
-    printf("Usage: mbase-openai-server -m <model_path> *[<option> [<value>]]\n");
+    printf("Usage: mbase-openai-server *[<option> [<value>]]\n");
     printf("Options: \n\n");
     printf("--help                          Print usage.\n");
     printf("-v, --version                   Shows program version.\n");
+    printf("--api-key <str>                 Api key.\n");
     printf("-h, --hostname <str>            Hostname to listen to (default=127.0.0.1).\n");
     printf("-p, --port <int>                Port to assign to (default=8080).\n");
+    printf("-al, --access-limit <int>       Amount of clients that can access concurrently (default=-1).\n");
     printf("-m, --model-path <str>          Model file to be hosted. To host multiple models, pass this argument multiple times.\n");
     printf("-t, --thread-count <int>        Amount of threads to use for output processing (default=16).\n");
     printf("-bt, --batch-thread-count <int> Amount of threads to use for initial batch processing (default=8).\n");
     printf("-c, --context-length <int>      Total context length (default=8192).\n");
     printf("-b, --batch-length <int>        Batch length (default=4096).\n");
+    printf("-gl, --gpu-layers <int>         GPU layers to offload to (default=999).\n\n");
+
     // printf("-tk, --top-k <int>              Top k tokens to pick from (default=20, min=1, max=<model_vocabulary_size>).\n");
     // printf("-tp, --top-p <float>            Token probability at most (default=1.0, min=0.1, max=1.0).\n");
     // printf("-mp, --min-p <float>            Token probability at least (default=0.3), min=0.1, max=1.0.\n");
@@ -60,13 +66,16 @@ GENERIC print_usage()
 }
 
 struct mbase_openai_sample_params {
+    mbase::string mApiKey;
     mbase::string mHostname = "127.0.0.1"; // --hostname || -h
     I32 mPort = 8080; // --port || -p
+    U32 mAccessLimit = -1;
     mbase::vector<mbase::string> mModelFiles; // --model-path || -m
     I32 mThreadCount = 16; // --thread-count || -t
     I32 mBatchThreadCount = 8; // --batch-thread-count || -bt
     I32 mContextLength = 8192; // --context-length || -c
     I32 mBatchLength = 4096; // --batch-length || -b
+    I32 mGpuLayer = 999; // --gpu-layers || -gl
 };
 
 class OpenAiTextToTextHostedModel : public mbase::InfModelTextToText {
@@ -144,7 +153,6 @@ public:
                     mProcessing = false;
                     return;
                 }
-                // {"id":"chatcmpl-123","object":"chat.completion.chunk","created":1694268190,"model":"gpt-4o-mini", "system_fingerprint": "fp_44709d6fcb", "choices":[{"index":0,"delta":{"role":"assistant","content":""},"logprobs":null,"finish_reason":null}]}
                 mbase::Json activeJson;
                 mbase::Json choicesArray;
                 mbase::Json choiceFirstItem;
@@ -279,6 +287,45 @@ mbase::string buildOpenaiError(
     return openaiError.toString();
 }
 
+// returns true if authorization is successful
+bool openaiAuthCheck(const httplib::Request& in_req, httplib::Response& in_resp, mbase::string& out_provided_key)
+{
+    if(!gSampleParams.mApiKey.size())
+    {
+        return true;
+    }
+
+    if(in_req.has_header("Authorization"))
+    {
+        std::string authToken = in_req.get_header_value("Authorization");
+        mbase::string authTokenField(authToken.c_str(), authToken.size());
+        mbase::vector<mbase::string> seperatedField;
+
+        authTokenField.split(" ", seperatedField);
+        if(seperatedField.size() != 2) // 'Bearer' and 'key'
+        {
+            return false;
+        }
+
+        mbase::string bearerString = seperatedField[0];
+        out_provided_key = seperatedField[1];
+
+        if(bearerString != "Bearer")
+        {
+            return false;
+        }
+
+        if(out_provided_key != gSampleParams.mApiKey)
+        {
+            return false;
+        }
+
+        return true;
+    }
+    
+    return false;
+}
+
 GENERIC sendOpenaiError(
     const httplib::Request& in_req, 
     httplib::Response& in_resp,
@@ -293,6 +340,20 @@ GENERIC sendOpenaiError(
 
 GENERIC modelListHandler(const httplib::Request& in_req, httplib::Response& in_resp)
 {
+    mbase::string providedKey = "";
+    if(!openaiAuthCheck(in_req, in_resp, providedKey))
+    {
+        in_resp.status = 401;
+        sendOpenaiError(
+            in_req,
+            in_resp,
+            mbase::string::from_format("Invalid API key provided: [%s]", providedKey.c_str()),
+            "invalid_request_error",
+            "missing_parameter"
+        );
+        return;
+    }
+
     mbase::Json dataObject;
     dataObject.setArray();
 
@@ -304,7 +365,7 @@ GENERIC modelListHandler(const httplib::Request& in_req, httplib::Response& in_r
         dataObject[i]["id"] = hostedModelName;
         dataObject[i]["object"] = "model";
         dataObject[i]["created"] = tmpHostedModel->get_creation_date_in_epoch();
-        dataObject[i]["owned_by"] = "MBASE Infrastructure Project";
+        dataObject[i]["owned_by"] = "MBASE Inference Infrastructure";
     }
 
     mbase::Json responseJson;
@@ -317,8 +378,23 @@ GENERIC modelListHandler(const httplib::Request& in_req, httplib::Response& in_r
 
 GENERIC modelRetrieveHandler(const httplib::Request& in_req, httplib::Response& in_resp)
 {
+    mbase::string providedKey = "";
+    if(!openaiAuthCheck(in_req, in_resp, providedKey))
+    {
+        in_resp.status = 401;
+        sendOpenaiError(
+            in_req,
+            in_resp,
+            mbase::string::from_format("Invalid API key provided: [%s]", providedKey.c_str()),
+            "invalid_request_error",
+            "missing_parameter"
+        );
+        return;
+    }
+
     if(!in_req.path_params.at("model").size())
     {
+        in_resp.status = 400;
         sendOpenaiError(
             in_req,
             in_resp,
@@ -361,6 +437,20 @@ GENERIC modelRetrieveHandler(const httplib::Request& in_req, httplib::Response& 
 
 GENERIC chatCompletionInternal(const httplib::Request& in_req, httplib::Response& in_resp, bool is_chat_completion)
 {
+    mbase::string providedKey = "";
+    if(!openaiAuthCheck(in_req, in_resp, providedKey))
+    {
+        in_resp.status = 401;
+        sendOpenaiError(
+            in_req,
+            in_resp,
+            mbase::string::from_format("Invalid API key provided: [%s]", providedKey.c_str()),
+            "invalid_request_error",
+            "missing_parameter"
+        );
+        return;
+    }
+
     if(!in_req.body.size())
     {
         sendOpenaiError(
@@ -374,7 +464,6 @@ GENERIC chatCompletionInternal(const httplib::Request& in_req, httplib::Response
     }
 
     mbase::string reqBody(in_req.body.c_str(), in_req.body.size());
-    std::cout << reqBody << std::endl;
     std::pair<mbase::Json::Status, mbase::Json> parseResult = mbase::Json::parse(reqBody);
 
     if(parseResult.first != mbase::Json::Status::success)
@@ -535,7 +624,7 @@ GENERIC chatCompletionInternal(const httplib::Request& in_req, httplib::Response
     repetitionPenalty.mRepetition.mPenaltyPresent = 0.0;
 
     OpenAiTextToTextProcessor* openaiProcessor = new OpenAiTextToTextProcessor;
-    if(activeModel->register_context_process(openaiProcessor, gSampleParams.mContextLength, gSampleParams.mBatchLength, gSampleParams.mThreadCount, gSampleParams.mBatchThreadCount, true, {topkSampler, toppSampler, minpSampler, repetitionPenalty}) != OpenAiTextToTextHostedModel::flags::INF_MODEL_INFO_REGISTERING_PROCESSOR)
+    if(activeModel->register_context_process(openaiProcessor, gSampleParams.mContextLength, gSampleParams.mBatchLength, gSampleParams.mThreadCount, gSampleParams.mBatchThreadCount, true, {}) != OpenAiTextToTextHostedModel::flags::INF_MODEL_INFO_REGISTERING_PROCESSOR)
     {
         // Registeration is not possible for some reason
         // Always this motherfucker...
@@ -676,7 +765,18 @@ int main(int argc, char** argv)
     for(I32 i = 0; i < argc; i++)
     {
         mbase::string argumentString = argv[i];
-        if(argumentString == "--hostname" || argumentString == "-h")
+        if(argumentString == "-v" || argumentString == "--version")
+        {
+            printf("MBASE Openai server %s\n", MBASE_OPENAI_SERVER_VERSION);
+            return 0;
+        }
+
+        else if(argumentString == "--api-key")
+        {
+            mbase::argument_get<mbase::string>::value(i, argc, argv, gSampleParams.mApiKey);
+        }
+
+        else if(argumentString == "--hostname" || argumentString == "-h")
         {
             mbase::argument_get<mbase::string>::value(i, argc, argv, gSampleParams.mHostname);
         }
@@ -684,6 +784,11 @@ int main(int argc, char** argv)
         else if(argumentString == "--port" || argumentString == "-p")
         {
             mbase::argument_get<I32>::value(i, argc, argv, gSampleParams.mPort);
+        }
+
+        else if(argumentString == "--access-limit" || argumentString == "-al")
+        {
+            mbase::argument_get<U32>::value(i, argc, argv, gSampleParams.mAccessLimit);
         }
 
         else if(argumentString == "--model-path" || argumentString == "-m")
@@ -716,6 +821,11 @@ int main(int argc, char** argv)
             mbase::argument_get<I32>::value(i, argc, argv, gSampleParams.mBatchLength);
         }
 
+        else if(argumentString == "--gpu-layers" || argumentString == "-gl")
+        {
+            mbase::argument_get<I32>::value(i, argc, argv, gSampleParams.mGpuLayer);
+        }
+
         else if(argumentString == "--batch-thread-count" || argumentString == "-bt")
         {
             mbase::argument_get<I32>::value(i, argc, argv, gSampleParams.mBatchThreadCount);
@@ -730,31 +840,64 @@ int main(int argc, char** argv)
 
     if(!gSampleParams.mModelFiles.size())
     {
-        printf("No model is given");
+        printf("ERROR: Model must be supplied\n");
         return 1;
+    }
+
+    if(!gSampleParams.mThreadCount)
+    {
+        printf("ERROR: Thread count can't be zero\n");
+        return 1;
+    }
+    
+    if(!gSampleParams.mBatchThreadCount)
+    {
+        printf("ERROR: Batch thread count can't be zero\n");
+        return 1;
+    }
+
+    if(gSampleParams.mContextLength < 32)
+    {
+        printf("WARNING: Context length is too short %d, rounded up to: %d\n", gSampleParams.mContextLength, 32);
+        gSampleParams.mContextLength = 32; 
+    }
+
+    if(gSampleParams.mBatchLength < 32)
+    {
+        printf("WARNING: Batch length is too short %d, rounded up to: %d\n", gSampleParams.mBatchLength, 32);
+    }
+
+    if(gSampleParams.mBatchLength > gSampleParams.mContextLength)
+    {
+        printf("WARNING: Batch length can't be greater than context length, clamp applied.\n");
     }
 
     for(mbase::vector<mbase::string>::iterator It = gSampleParams.mModelFiles.begin(); It != gSampleParams.mModelFiles.end(); ++It)
     {
         if(!mbase::is_file_valid(mbase::from_utf8(*It)))
         {
-            printf("Invalid file: %s\n", It->c_str());
+            printf("ERROR: Invalid file: %s\n", It->c_str());
             return 1;
         }
         OpenAiTextToTextHostedModel* newModel = new OpenAiTextToTextHostedModel;
-        newModel->initialize_model_ex_sync(mbase::from_utf8(*It), 99999999, 99, true, true, deviceDesc);
+        newModel->initialize_model_ex_sync(mbase::from_utf8(*It), 99999999, gSampleParams.mGpuLayer, true, true, deviceDesc);
         newModel->update();
 
         if(newModel->is_initialize_failed())
         {
-            printf("Failed to initialize model: %s\n", It->c_str());
+            printf("ERROR: Failed to initialize model: %s\n", It->c_str());
             return 1;
         }
 
         gHostedModelArray.push_back(newModel);
     }
 
-    printf("Host device: %s\n", deviceDesc.back().get_device_description().c_str());
+    printf("Active devices: \n");
+
+    for(auto& activeDevice : deviceDesc)
+    {
+        printf("- %s\n", activeDevice.get_device_description().c_str());
+    }
 
     mbase::thread serverThread(httpServerThread);
     serverThread.run();
@@ -773,6 +916,6 @@ int main(int argc, char** argv)
     }
     serverThread.join();
 
-    printf("Cant listen host: %s on port: %d\n", gSampleParams.mHostname.c_str(), gSampleParams.mPort);
+    printf("ERROR: Cant listen host: %s on port: %d\n", gSampleParams.mHostname.c_str(), gSampleParams.mPort);
     return 0;
 }

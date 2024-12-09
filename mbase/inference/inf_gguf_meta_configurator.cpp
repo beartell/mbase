@@ -218,15 +218,6 @@ GgufMetaConfigurator::param_application_error GgufMetaConfigurator::apply_mbase_
 		case LLAMA_FTYPE_MOSTLY_BF16:
 			quantizationCoefficient = 16.0f;
 			break;
-		case LLAMA_FTYPE_MOSTLY_Q4_0_4_4:
-			quantizationCoefficient = 4.0f;
-			break;
-		case LLAMA_FTYPE_MOSTLY_Q4_0_4_8:
-			quantizationCoefficient = 4.0f;
-			break;
-		case LLAMA_FTYPE_MOSTLY_Q4_0_8_8:
-			quantizationCoefficient = 4.0f;
-			break;
 		case LLAMA_FTYPE_MOSTLY_TQ1_0:
 			quantizationCoefficient = 1.0f;
 			break;

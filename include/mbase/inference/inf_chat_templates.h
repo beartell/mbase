@@ -237,7 +237,7 @@ GENERIC tokenizer_align_instruct_template(const mbase::string& in_template,
 		out_assistant_end = chatTemplate.assistantEnd;
 		out_user_end = chatTemplate.userEnd;
 	}
-	else if(in_template == "gemma2")
+	else if(in_template == "gemma2" || in_template == "gemma")
 	{
 		InfTemplateGemma2 chatTemplate;
 		out_system_start = chatTemplate.systemStart;

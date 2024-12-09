@@ -591,7 +591,6 @@ GENERIC InfModelTextToText::_initialize_model()
 	// 	return;
 	// }
 
-
 	tempConfigurator.get_key("general.architecture", mModelArchitecture);
 	tempConfigurator.get_key("general.name", mModelName);
 
@@ -603,7 +602,7 @@ GENERIC InfModelTextToText::_initialize_model()
 		mAssistantEnd,
 		mUserEnd
 	);
-
+	
 	tempConfigurator.get_key(mModelArchitecture + ".embedding_length", mEmbeddingLength);
 	// Before diving into loading model, 
 	// calculate how much memory we need to load the model 
