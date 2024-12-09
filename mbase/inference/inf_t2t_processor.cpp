@@ -35,6 +35,7 @@ InfTextToTextProcessor::InfTextToTextProcessor():
 	mContextCursor(0),
 	mBatchSize(0),
 	mThreadCount(0),
+	mBatchProcessThreadCount(0),
 	mFinishState(finish_state::FINISHED),
 	mLastFailCode(last_fail_code::MODEL_NOT_INITIALIZED),
 	mFlashAttention(false),
@@ -379,6 +380,7 @@ InfTextToTextProcessor::flags InfTextToTextProcessor::initialize(
 	const mbase::string& in_context_id,
 	const U32& in_batch_size,
 	const U32& in_thread_count,
+	const U32& in_batch_thread_count,
 	const bool& in_flash_attention,
 	const inf_sampling_set& in_sampler_set
 )
@@ -403,6 +405,7 @@ InfTextToTextProcessor::flags InfTextToTextProcessor::initialize(
 	mContextIdentifier = in_context_id;
 	mBatchSize = in_batch_size;
 	mThreadCount = in_thread_count;
+	mBatchProcessThreadCount = in_batch_thread_count;
 	mSamplerDescriptions = in_sampler_set;
 	mFlashAttention = in_flash_attention;
 
@@ -418,6 +421,7 @@ InfTextToTextProcessor::flags InfTextToTextProcessor::initialize_sync(
 	const mbase::string& in_context_id,
 	const U32& in_batch_size,
 	const U32& in_thread_count,
+	const U32& in_batch_thread_count,
 	const bool& in_flash_attention,
 	const inf_sampling_set& in_sampler_set
 )
@@ -428,6 +432,7 @@ InfTextToTextProcessor::flags InfTextToTextProcessor::initialize_sync(
 		in_context_id,
 		in_batch_size,
 		in_thread_count,
+		in_batch_thread_count,
 		in_flash_attention,
 		in_sampler_set
 	);
@@ -583,7 +588,7 @@ GENERIC InfTextToTextProcessor::_initialize_context()
 	ctxParams.n_batch = mBatchSize;
 	ctxParams.n_seq_max = 1;
 	ctxParams.n_threads = mThreadCount;
-	ctxParams.n_threads_batch = mThreadCount;
+	ctxParams.n_threads_batch = mBatchProcessThreadCount;
 	ctxParams.n_ubatch = mBatchSize / 4;
 	ctxParams.flash_attn = mFlashAttention;
 

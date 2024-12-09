@@ -1,4 +1,4 @@
-﻿#include <iostream>
+#include <iostream>
 #include <mbase/mbase_std.h>
 #include <mbase/pc/pc_program.h>
 #include <mbase/pc/pc_state.h>
@@ -26,13 +26,47 @@
 
 using namespace mbase;
 
+GENERIC print_usage()
+{
+    printf("========================================\n");
+    printf("#Program name:      mbase-openai-server\n");
+    printf("#Version:           1.0.1\n");
+    printf("#Type:              Example\n");
+    printf("#Further docs: \n");
+    printf("***** DESCRIPTION *****\n");
+    printf("Openai api compatible http server for serving llms.\n");
+    printf("Keep in mind that this implementation is an example that show what is possible with MBASE.\n");
+    printf("The chat completion api is implemented however the plain completion and embedding api is missing for now.\n");
+    printf("They will be implemented in the future.\n");
+    printf("========================================\n\n");
+    printf("Usage: mbase-openai-server -m <model_path> *[<option> [<value>]]\n");
+    printf("Options: \n\n");
+    printf("--help                          Print usage.\n");
+    printf("-v, --version                   Shows program version.\n");
+    printf("-h, --hostname <str>            Hostname to listen to (default=127.0.0.1).\n");
+    printf("-p, --port <int>                Port to assign to (default=8080).\n");
+    printf("-m, --model-path <str>          Model file to be hosted. To host multiple models, pass this argument multiple times.\n");
+    printf("-t, --thread-count <int>        Amount of threads to use for output processing (default=16).\n");
+    printf("-bt, --batch-thread-count <int> Amount of threads to use for initial batch processing (default=8).\n");
+    printf("-c, --context-length <int>      Total context length (default=8192).\n");
+    printf("-b, --batch-length <int>        Batch length (default=4096).\n");
+    // printf("-tk, --top-k <int>              Top k tokens to pick from (default=20, min=1, max=<model_vocabulary_size>).\n");
+    // printf("-tp, --top-p <float>            Token probability at most (default=1.0, min=0.1, max=1.0).\n");
+    // printf("-mp, --min-p <float>            Token probability at least (default=0.3), min=0.1, max=1.0.\n");
+    // printf("-pn, --penatly-n <int>          Apply repetition penalty on last 'n' tokens (default=64).\n");
+    // printf("-pr, --penalty-repeat <float>   Discourages repeating exact tokens based on their past presence (default=1.0, min=1.0, max=2.0).\n");
+    // printf("-temp, --temperature <float>    Higher values may make model go crazy (default=0.1, min=0.1, max=1.4).\n");
+
+}
+
 struct mbase_openai_sample_params {
     mbase::string mHostname = "127.0.0.1"; // --hostname || -h
     I32 mPort = 8080; // --port || -p
     mbase::vector<mbase::string> mModelFiles; // --model-path || -m
     I32 mThreadCount = 16; // --thread-count || -t
-    I32 mContextLength = 4096; // --context-length || -c
-    I32 mBatchLength = 128; // --batch-length || -b
+    I32 mBatchThreadCount = 8; // --batch-thread-count || -bt
+    I32 mContextLength = 8192; // --context-length || -c
+    I32 mBatchLength = 4096; // --batch-length || -b
 };
 
 class OpenAiTextToTextHostedModel : public mbase::InfModelTextToText {
@@ -327,23 +361,6 @@ GENERIC modelRetrieveHandler(const httplib::Request& in_req, httplib::Response& 
 
 GENERIC chatCompletionInternal(const httplib::Request& in_req, httplib::Response& in_resp, bool is_chat_completion)
 {
-    // curl https://api.openai.com/v1/chat/completions \
-    // -H "Content-Type: application/json" \
-    // -H "Authorization: Bearer $OPENAI_API_KEY" \
-    // -d '{
-    //     "model": "gpt-4o",
-    //     "messages": [
-    //     {
-    //         "role": "system",
-    //         "content": "You are a helpful assistant."
-    //     },
-    //     {
-    //         "role": "user",
-    //         "content": "Hello!"
-    //     }
-    //     ],
-    //     "stream": true
-    // }'
     if(!in_req.body.size())
     {
         sendOpenaiError(
@@ -518,7 +535,7 @@ GENERIC chatCompletionInternal(const httplib::Request& in_req, httplib::Response
     repetitionPenalty.mRepetition.mPenaltyPresent = 0.0;
 
     OpenAiTextToTextProcessor* openaiProcessor = new OpenAiTextToTextProcessor;
-    if(activeModel->register_context_process(openaiProcessor, gSampleParams.mContextLength, gSampleParams.mBatchLength, gSampleParams.mThreadCount, true, {topkSampler, toppSampler, minpSampler, repetitionPenalty}) != OpenAiTextToTextHostedModel::flags::INF_MODEL_INFO_REGISTERING_PROCESSOR)
+    if(activeModel->register_context_process(openaiProcessor, gSampleParams.mContextLength, gSampleParams.mBatchLength, gSampleParams.mThreadCount, gSampleParams.mBatchThreadCount, true, {topkSampler, toppSampler, minpSampler, repetitionPenalty}) != OpenAiTextToTextHostedModel::flags::INF_MODEL_INFO_REGISTERING_PROCESSOR)
     {
         // Registeration is not possible for some reason
         // Always this motherfucker...
@@ -649,19 +666,10 @@ int main(int argc, char** argv)
 {
     llama_backend_init();
 
-    mbase::vector<InfDeviceDescription> deviceDesc = mbase::inf_query_gpu_devices();
-
-    for(auto& n : deviceDesc)
-    {
-        std::cout << "Device name: " << n.get_device_description() << std::endl;
-        std::cout << "Device index: " << n.get_device_index() << std::endl;
-        std::cout << "Free mem: " << n.get_free_memory() << std::endl;
-        std::cout << "Total mem: " << n.get_total_memory() / (1024*1024) << std::endl;
-    }
-    
+    mbase::vector<InfDeviceDescription> deviceDesc = mbase::inf_query_devices();
     if(argc < 2)
     {
-        // print help
+        print_usage();
         return 0;
     }
 
@@ -708,9 +716,15 @@ int main(int argc, char** argv)
             mbase::argument_get<I32>::value(i, argc, argv, gSampleParams.mBatchLength);
         }
 
+        else if(argumentString == "--batch-thread-count" || argumentString == "-bt")
+        {
+            mbase::argument_get<I32>::value(i, argc, argv, gSampleParams.mBatchThreadCount);
+        }
+
         else if(argumentString == "--help")
         {
-            // print help
+            print_usage();
+            return 1;
         }
     }
 
@@ -739,6 +753,8 @@ int main(int argc, char** argv)
 
         gHostedModelArray.push_back(newModel);
     }
+
+    printf("Host device: %s\n", deviceDesc.back().get_device_description().c_str());
 
     mbase::thread serverThread(httpServerThread);
     serverThread.run();

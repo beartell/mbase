@@ -13,8 +13,6 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/")
 
 set(CMAKE_CXX_STANDARD 20)
 
-add_executable(mbase_openai_sample main.cpp)
-
 include(MBASEStdSys)
 include(MBASEJsonSys)
 include(MBASEFrameworkSys)
@@ -50,8 +48,7 @@ install(
   DESTINATION ${MBASE_LIBS_LIB_INSTALL_DIR}/cmake/mbase.libs
 )
 
-target_include_directories(mbase_openai_sample PUBLIC mb_pc mb_inference ${CMAKE_SOURCE_DIR}/external mb_json)
-target_link_libraries(mbase_openai_sample PRIVATE ${MBASE_STD_LIBS} mb_pc mb_inference mb_json llama)
+add_subdirectory(examples/openai-server)
 # set(CPACK_GENERATOR "DEB")
 # set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Saul E. Erdog")
 # set(CPACK_PACKAGE_NAME "MBASE-Libraries")

@@ -242,6 +242,7 @@ InfProgram::maip_err_code InfProgram::inf_create_context(const mbase::string& in
 			in_ctsize,
 			maipUser.get_batch_size(),
 			maipUser.get_processor_thread_count(),
+			maipUser.get_processor_thread_count()/2,
 			true,
 			maipUser.get_sampling_set()
 		);

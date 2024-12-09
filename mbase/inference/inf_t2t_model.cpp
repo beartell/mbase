@@ -406,6 +406,7 @@ InfModelTextToText::flags InfModelTextToText::register_context_process
 	const U32& in_context_length, 
 	U32 in_batch_size,
 	U32 in_thread_count,
+	U32 in_batch_thread_count,
 	const bool& in_flash_attention,
 	const inf_sampling_set& in_sampler_set
 )
@@ -470,6 +471,7 @@ InfModelTextToText::flags InfModelTextToText::register_context_process
 		mbase::string::generate_uuid(),
 		in_batch_size,
 		in_thread_count,
+		in_batch_thread_count,
 		in_flash_attention,
 		in_sampler_set
 	); // 100% success

@@ -56,6 +56,7 @@ public:
 		const mbase::string& in_context_id,
 		const U32& in_batch_size,
 		const U32& in_thread_count,
+		const U32& in_batch_thread_count,
 		const bool& in_flash_attention,
 		const inf_sampling_set& in_sampler_set
 	);
@@ -65,6 +66,7 @@ public:
 		const mbase::string& in_context_id,
 		const U32& in_batch_size,
 		const U32& in_thread_count,
+		const U32& in_batch_thread_count,
 		const bool& in_flash_attention,
 		const inf_sampling_set& in_sampler_set
 	);
@@ -97,6 +99,7 @@ private:
 	U32 mContextCursor; // -----> if it exceeds the context size, stop generating
 	U32 mBatchSize;
 	U32 mThreadCount;
+	U32 mBatchProcessThreadCount;
 	processor_signal mInputSignal;
 	processor_signal mDecodeSignal;
 	finish_state mFinishState;
