@@ -28,7 +28,7 @@ if(!this->is_running())\
 	return flags::INF_PROC_ERR_HALTED;\
 }
 
-InfTextToTextProcessor::InfTextToTextProcessor():
+InfProcessorTextToText::InfProcessorTextToText():
 	mSamplerChain(NULL),
 	mModelContext(NULL),
 	mPresetCandidates(),
@@ -44,7 +44,7 @@ InfTextToTextProcessor::InfTextToTextProcessor():
 	mModelCategory = inf_model_category::TEXT_TO_TEXT;
 }
 
-InfTextToTextProcessor::~InfTextToTextProcessor()
+InfProcessorTextToText::~InfProcessorTextToText()
 {
 	if(mModelContext)
 	{
@@ -60,17 +60,17 @@ InfTextToTextProcessor::~InfTextToTextProcessor()
 	}
 }
 
-InfTextToTextProcessor::last_fail_code InfTextToTextProcessor::get_last_fail_code() const
+InfProcessorTextToText::last_fail_code InfProcessorTextToText::get_last_fail_code() const
 {
 	return mLastFailCode;
 }
 
-bool InfTextToTextProcessor::is_init_failed() const
+bool InfProcessorTextToText::is_init_failed() const
 {
 	return mIsInitializeFailed;
 }
 
-bool InfTextToTextProcessor::is_available() const
+bool InfProcessorTextToText::is_available() const
 {
 	if (signal_input_process() || signal_decode_process() || signal_state_decode_process() || signal_state_input_process())
 	{
@@ -80,32 +80,32 @@ bool InfTextToTextProcessor::is_available() const
 	return true;
 }
 
-bool InfTextToTextProcessor::signal_state_input_process() const
+bool InfProcessorTextToText::signal_state_input_process() const
 {
 	return mInputSignal.get_signal_state();
 }
 
-bool InfTextToTextProcessor::signal_state_decode_process() const
+bool InfProcessorTextToText::signal_state_decode_process() const
 {
 	return mDecodeSignal.get_signal_state();
 }
 
-bool InfTextToTextProcessor::signal_input_process() const
+bool InfProcessorTextToText::signal_input_process() const
 {
 	return mInputSignal.get_signal();
 }
 
-bool InfTextToTextProcessor::signal_decode_process() const
+bool InfProcessorTextToText::signal_decode_process() const
 {
 	return mDecodeSignal.get_signal();
 }
 
-U32 InfTextToTextProcessor::get_max_token_length()
+U32 InfProcessorTextToText::get_max_token_length()
 {
 	return mContextLength;
 }
 
-bool InfTextToTextProcessor::has_sampler(InfSamplerDescription::SAMPLER in_sampler_type, InfSamplerDescription& out_sampler)
+bool InfProcessorTextToText::has_sampler(InfSamplerDescription::SAMPLER in_sampler_type, InfSamplerDescription& out_sampler)
 {
 	for(inf_sampling_set::iterator It = mSamplerDescriptions.begin(); It != mSamplerDescriptions.end(); ++It)
 	{
@@ -119,12 +119,12 @@ bool InfTextToTextProcessor::has_sampler(InfSamplerDescription::SAMPLER in_sampl
 	return false;
 }
 
-GENERIC InfTextToTextProcessor::get_available_samplers(inf_sampling_set& out_samplers)
+GENERIC InfProcessorTextToText::get_available_samplers(inf_sampling_set& out_samplers)
 {
 	out_samplers = mSamplerDescriptions;
 }
 
-InfTextToTextProcessor::flags InfTextToTextProcessor::get_processor_status() const
+InfProcessorTextToText::flags InfProcessorTextToText::get_processor_status() const
 {
 	if(signal_initializing())
 	{
@@ -149,7 +149,7 @@ InfTextToTextProcessor::flags InfTextToTextProcessor::get_processor_status() con
 	return flags::INF_PROC_INFO_NEED_UPDATE;
 }
 
-InfTextToTextProcessor::flags InfTextToTextProcessor::token_to_description(const inf_text_token& in_token, inf_token_description& out_description)
+InfProcessorTextToText::flags InfProcessorTextToText::token_to_description(const inf_text_token& in_token, inf_token_description& out_description)
 {
 	MBASE_INF_T2T_PROC_RETURN_UNREGISTERED;
 	InfModelTextToText* t2tModel = static_cast<InfModelTextToText*>(this->mTargetModel_md_model);
@@ -173,7 +173,7 @@ InfTextToTextProcessor::flags InfTextToTextProcessor::token_to_description(const
 	return flags::INF_PROC_SUCCESS;
 }
 
-InfTextToTextProcessor::flags InfTextToTextProcessor::tokens_to_description_vector(const mbase::vector<inf_text_token>& in_tokens, mbase::vector<inf_token_description>& out_descriptions)
+InfProcessorTextToText::flags InfProcessorTextToText::tokens_to_description_vector(const mbase::vector<inf_text_token>& in_tokens, mbase::vector<inf_token_description>& out_descriptions)
 {
 	MBASE_INF_T2T_PROC_RETURN_UNREGISTERED;
 	InfModelTextToText* t2tModel = static_cast<InfModelTextToText*>(this->mTargetModel_md_model);
@@ -194,7 +194,7 @@ InfTextToTextProcessor::flags InfTextToTextProcessor::tokens_to_description_vect
 	return flags::INF_PROC_SUCCESS;
 }
 
-InfTextToTextProcessor::flags InfTextToTextProcessor::tokenize_input(CBYTEBUFFER in_data, size_type in_size, inf_text_token_vector& out_tokens)
+InfProcessorTextToText::flags InfProcessorTextToText::tokenize_input(CBYTEBUFFER in_data, size_type in_size, inf_text_token_vector& out_tokens)
 {
 	MBASE_INF_T2T_PROC_RETURN_UNREGISTERED;
 	
@@ -215,7 +215,7 @@ InfTextToTextProcessor::flags InfTextToTextProcessor::tokenize_input(CBYTEBUFFER
 	return flags::INF_PROC_SUCCESS;
 }
 
-InfTextToTextProcessor::flags InfTextToTextProcessor::tokenize_input(context_line* in_lines, size_type in_count, inf_text_token_vector& out_tokens, bool in_append_assistant_token)
+InfProcessorTextToText::flags InfProcessorTextToText::tokenize_input(context_line* in_lines, size_type in_count, inf_text_token_vector& out_tokens, bool in_append_assistant_token)
 {
 	MBASE_INF_T2T_PROC_RETURN_UNREGISTERED;
 	
@@ -269,7 +269,7 @@ InfTextToTextProcessor::flags InfTextToTextProcessor::tokenize_input(context_lin
 	return tokenize_input(totalMessage.data(), totalMessage.size(), out_tokens);
 }
 
-InfTextToTextProcessor::flags InfTextToTextProcessor::execute_input(const inf_text_token_vector& in_tokens, bool in_abandon)
+InfProcessorTextToText::flags InfProcessorTextToText::execute_input(const inf_text_token_vector& in_tokens, bool in_abandon)
 {
 	MBASE_INF_T2T_PROC_RETURN_UNREGISTERED;
 
@@ -310,7 +310,7 @@ InfTextToTextProcessor::flags InfTextToTextProcessor::execute_input(const inf_te
 	return flags::INF_PROC_SUCCESS;
 }
 
-InfTextToTextProcessor::flags InfTextToTextProcessor::next(const decode_behavior_description& in_description)
+InfProcessorTextToText::flags InfProcessorTextToText::next(const decode_behavior_description& in_description)
 {
 	MBASE_INF_T2T_PROC_RETURN_UNREGISTERED;
 
@@ -338,7 +338,7 @@ InfTextToTextProcessor::flags InfTextToTextProcessor::next(const decode_behavior
 	return flags::INF_PROC_SUCCESS;
 }
 
-InfTextToTextProcessor::flags InfTextToTextProcessor::next_sync(const decode_behavior_description& in_description)
+InfProcessorTextToText::flags InfProcessorTextToText::next_sync(const decode_behavior_description& in_description)
 {
 	MBASE_INF_T2T_PROC_RETURN_UNREGISTERED;
 
@@ -347,7 +347,7 @@ InfTextToTextProcessor::flags InfTextToTextProcessor::next_sync(const decode_beh
 	return next(in_description);
 }
 
-InfTextToTextProcessor::flags InfTextToTextProcessor::set_inference_client(InfClientBase* in_client)
+InfProcessorTextToText::flags InfProcessorTextToText::set_inference_client(InfClientBase* in_client)
 {
 	MBASE_INF_T2T_PROC_RETURN_UNREGISTERED;
 
@@ -374,7 +374,7 @@ InfTextToTextProcessor::flags InfTextToTextProcessor::set_inference_client(InfCl
 	return flags::INF_PROC_SUCCESS;
 }
 
-InfTextToTextProcessor::flags InfTextToTextProcessor::initialize(
+InfProcessorTextToText::flags InfProcessorTextToText::initialize(
 	InfModelTextToText* in_model, 
 	const U32& in_context_length, 
 	const mbase::string& in_context_id,
@@ -415,7 +415,7 @@ InfTextToTextProcessor::flags InfTextToTextProcessor::initialize(
 	return flags::INF_PROC_INFO_INITIALIZING;
 }
 
-InfTextToTextProcessor::flags InfTextToTextProcessor::initialize_sync(
+InfProcessorTextToText::flags InfProcessorTextToText::initialize_sync(
 	InfModelTextToText* in_model, 
 	const U32& in_context_length, 
 	const mbase::string& in_context_id,
@@ -444,7 +444,7 @@ InfTextToTextProcessor::flags InfTextToTextProcessor::initialize_sync(
 	return flags::INF_PROC_INFO_NEED_UPDATE;
 }
 
-InfTextToTextProcessor::flags InfTextToTextProcessor::destroy()
+InfProcessorTextToText::flags InfProcessorTextToText::destroy()
 {
 	if(!is_registered())
 	{
@@ -464,7 +464,7 @@ InfTextToTextProcessor::flags InfTextToTextProcessor::destroy()
 	return flags::INF_PROC_INFO_DESTROYING;
 }
 
-InfTextToTextProcessor::flags InfTextToTextProcessor::destroy_sync()
+InfProcessorTextToText::flags InfProcessorTextToText::destroy_sync()
 {
 	destroy();
 	while(signal_destroying())
@@ -475,12 +475,12 @@ InfTextToTextProcessor::flags InfTextToTextProcessor::destroy_sync()
 	return flags::INF_PROC_INFO_NEED_UPDATE;
 }
 
-GENERIC InfTextToTextProcessor::clear_token_candidates()
+GENERIC InfProcessorTextToText::clear_token_candidates()
 {
 	mPresetCandidates.clear();
 }
 
-GENERIC InfTextToTextProcessor::clear_samplers()
+GENERIC InfProcessorTextToText::clear_samplers()
 {
 	// TODO: Do not allow clearing when processing tokens
 	// TODO: Delete the return when the sampler interface is properly working
@@ -493,22 +493,22 @@ GENERIC InfTextToTextProcessor::clear_samplers()
 	}
 }
 
-GENERIC InfTextToTextProcessor::on_initializing()
+GENERIC InfProcessorTextToText::on_initializing()
 {
 
 }
 
-GENERIC InfTextToTextProcessor::on_initialize_fail([[maybe_unused]] last_fail_code out_code)
+GENERIC InfProcessorTextToText::on_initialize_fail([[maybe_unused]] last_fail_code out_code)
 {
 
 }
 
-GENERIC InfTextToTextProcessor::on_destroying()
+GENERIC InfProcessorTextToText::on_destroying()
 {
 
 }
 
-GENERIC InfTextToTextProcessor::_decode_input()
+GENERIC InfProcessorTextToText::_decode_input()
 {
 	// if the input signal is set, process
 	if(llama_get_kv_cache_used_cells(mModelContext))
@@ -527,7 +527,7 @@ GENERIC InfTextToTextProcessor::_decode_input()
 	mFinishState = finish_state::CONTINUE;
 }
 
-GENERIC InfTextToTextProcessor::_decode_next()
+GENERIC InfProcessorTextToText::_decode_next()
 {
 	// Main Decode loop
 	for(U32 i = 0; i < mDecodeBehavior.mTokenAtMost; i++)
@@ -581,7 +581,7 @@ GENERIC InfTextToTextProcessor::_decode_next()
 	mDecodeSignal.set_signal_finished();
 }
 
-GENERIC InfTextToTextProcessor::_initialize_context()
+GENERIC InfProcessorTextToText::_initialize_context()
 {
 	llama_context_params ctxParams = llama_context_default_params();
 	ctxParams.n_ctx = mContextLength;
@@ -722,7 +722,7 @@ GENERIC InfTextToTextProcessor::_initialize_context()
 	mInitializeSignal.set_signal_finished();
 }
 
-GENERIC InfTextToTextProcessor::_destroy_context()
+GENERIC InfProcessorTextToText::_destroy_context()
 {
 	// CONTEXT FACTORY RESET
 
@@ -749,7 +749,7 @@ GENERIC InfTextToTextProcessor::_destroy_context()
 	mDestroySignal.set_signal_finished();
 }
 
-GENERIC InfTextToTextProcessor::update()
+GENERIC InfProcessorTextToText::update()
 {
 	if(signal_destroying())
 	{
@@ -811,7 +811,7 @@ GENERIC InfTextToTextProcessor::update()
 	}
 }
 
-GENERIC InfTextToTextProcessor::update_t()
+GENERIC InfProcessorTextToText::update_t()
 {
 	if(is_registered())
 	{

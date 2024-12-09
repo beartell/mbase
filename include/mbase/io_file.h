@@ -481,6 +481,37 @@ MBASE_INLINE typename io_file::size_type io_file::read_data(char_stream& in_src,
 #endif
 }
 
+MBASE_INLINE mbase::string read_file_as_string(mbase::io_file& in_iof)
+{
+	mbase::string fileContent;
+
+	while(true)
+	{
+		IBYTE fileData[512] = {0};
+		SIZE_T bytesRead = in_iof.read_data(fileData, 512);
+		if(!bytesRead)
+		{
+			break;
+		}
+
+		fileContent.append(fileData, bytesRead);
+	}
+
+	return fileContent;
+}
+
+MBASE_INLINE mbase::string read_file_as_string(const mbase::wstring& in_path)
+{
+	mbase::io_file iof;
+	iof.open_file(in_path, mbase::io_file::access_mode::READ_ACCESS, mbase::io_file::disposition::OPEN);
+	if(!iof.is_file_open())
+	{
+		return mbase::string();
+	}
+
+	return read_file_as_string(iof);
+}
+
 MBASE_STD_END
 
 #endif // MBASE_IOFILE_H

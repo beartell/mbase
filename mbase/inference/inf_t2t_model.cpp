@@ -374,7 +374,7 @@ InfModelTextToText::flags InfModelTextToText::destroy()
 			It = mRegisteredProcessors.erase(It->mItSelf);
 			continue;
 		}
-		InfTextToTextProcessor* baseProcessor = static_cast<InfTextToTextProcessor*>(It->mSubject);
+		InfProcessorTextToText* baseProcessor = static_cast<InfProcessorTextToText*>(It->mSubject);
 		baseProcessor->stop_processor();
 		baseProcessor->destroy();
 		++It;
@@ -402,7 +402,7 @@ InfModelTextToText::flags InfModelTextToText::destroy_sync()
 
 InfModelTextToText::flags InfModelTextToText::register_context_process
 (
-	InfTextToTextProcessor* in_processor, 
+	InfProcessorTextToText* in_processor, 
 	const U32& in_context_length, 
 	U32 in_batch_size,
 	U32 in_thread_count,

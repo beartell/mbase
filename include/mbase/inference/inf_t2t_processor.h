@@ -15,7 +15,7 @@ struct decode_behavior_description {
 
 class InfModelTextToText;
 
-class MBASE_API InfTextToTextProcessor : public mbase::InfProcessorBase {
+class MBASE_API InfProcessorTextToText : public mbase::InfProcessorBase {
 public:
 	using inf_text_token_candidates = mbase::vector<llama_token_data>;
 
@@ -25,8 +25,8 @@ public:
 		INVALID_MODEL_TYPE
 	};
 
-	InfTextToTextProcessor();
-	~InfTextToTextProcessor();
+	InfProcessorTextToText();
+	~InfProcessorTextToText();
 
 	last_fail_code get_last_fail_code() const;
 	bool is_init_failed() const;

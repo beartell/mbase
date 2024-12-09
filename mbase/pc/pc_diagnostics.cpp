@@ -29,6 +29,21 @@ PcDiagnostics::flags PcDiagnostics::log(flags in_log_type, flags in_log_importan
 	return flags::DIAGNOSTICS_SUCCESS;
 }
 
+PcDiagnostics::flags PcDiagnostics::log_stdout(flags in_log_type, flags in_log_importance, const mbase::string& in_message) noexcept
+{
+	if (!in_message.size())
+	{
+		return flags::DIAGNOSTICS_ERR_MISSING_MESSAGE;
+	}
+
+	mbase::string totalLog = _build_log_heading(in_log_type, in_log_importance);
+	totalLog += in_message + MBASE_PLATFORM_NEWLINE;
+
+	printf("%s", totalLog.c_str());
+
+	return flags::DIAGNOSTICS_SUCCESS;
+}
+
 GENERIC PcDiagnostics::flush_logs() noexcept
 {
 	mLogList.clear();

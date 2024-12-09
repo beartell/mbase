@@ -35,7 +35,7 @@ InfMaipPeerTextToText::~InfMaipPeerTextToText()
     mandatory_processor_cleanup(); // Must be called
 }
 
-GENERIC InfMaipPeerTextToText::on_init_fail(InfProcessorBase* out_processor, [[maybe_unused]] InfTextToTextProcessor::last_fail_code out_fail_code)
+GENERIC InfMaipPeerTextToText::on_init_fail(InfProcessorBase* out_processor, [[maybe_unused]] InfProcessorTextToText::last_fail_code out_fail_code)
 {
     if(mPeer->is_connected())
     {
@@ -76,7 +76,7 @@ GENERIC InfMaipPeerTextToText::on_unregister(InfProcessorBase* out_processor)
     delete out_processor;
 }
 
-GENERIC InfMaipPeerTextToText::on_write(InfTextToTextProcessor* out_processor, const inf_text_token_vector& out_token, bool out_is_finish)
+GENERIC InfMaipPeerTextToText::on_write(InfProcessorTextToText* out_processor, const inf_text_token_vector& out_token, bool out_is_finish)
 {
     // Called every time a next token is generated
     inf_token_description tokenDescription;
@@ -110,7 +110,7 @@ GENERIC InfMaipPeerTextToText::on_write(InfTextToTextProcessor* out_processor, c
     }
 }
 
-GENERIC InfMaipPeerTextToText::on_finish([[maybe_unused]] InfTextToTextProcessor* out_processor, size_type out_total_token_size, InfTextToTextProcessor::finish_state out_finish_state)
+GENERIC InfMaipPeerTextToText::on_finish([[maybe_unused]] InfProcessorTextToText* out_processor, size_type out_total_token_size, InfProcessorTextToText::finish_state out_finish_state)
 {
     // Called if the token generation is finished for a reason stated in argument out_finish_state
     if(mPeer->is_connected())
@@ -128,16 +128,16 @@ GENERIC InfMaipPeerTextToText::on_finish([[maybe_unused]] InfTextToTextProcessor
         }
 
         InfProgram::maip_err_code finishCode = InfProgram::maip_err_code::EXEC_MESSAGE_FINISH;
-        if(out_finish_state == InfTextToTextProcessor::finish_state::FINISHED)
+        if(out_finish_state == InfProcessorTextToText::finish_state::FINISHED)
         {
         }
 
-        else if(out_finish_state == InfTextToTextProcessor::finish_state::TOKEN_LIMIT_REACHED)
+        else if(out_finish_state == InfProcessorTextToText::finish_state::TOKEN_LIMIT_REACHED)
         {
             finishCode = InfProgram::maip_err_code::EXEC_TOKEN_LIMIT_EXCEEDED;
         }
 
-        else if(out_finish_state == InfTextToTextProcessor::finish_state::ABANDONED)
+        else if(out_finish_state == InfProcessorTextToText::finish_state::ABANDONED)
         {
             finishCode = InfProgram::maip_err_code::EXEC_ABANDONED;
         }

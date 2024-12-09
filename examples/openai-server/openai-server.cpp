@@ -26,7 +26,7 @@
 
 using namespace mbase;
 
-#define MBASE_OPENAI_SERVER_VERSION "v1.0.1"
+#define MBASE_OPENAI_SERVER_VERSION "v1.1.0"
 
 GENERIC print_usage()
 {
@@ -92,7 +92,7 @@ private:
     time_t mCreationDate;
 };
 
-class OpenAiTextToTextProcessor : public mbase::InfTextToTextProcessor {
+class OpenAiTextToTextProcessor : public mbase::InfProcessorTextToText {
 
 public:
     GENERIC on_initialize() override
@@ -135,7 +135,7 @@ public:
     }
     GENERIC on_register(InfProcessorBase* out_processor) override{}
     GENERIC on_unregister(InfProcessorBase* out_processor) override{}
-    GENERIC on_write(InfTextToTextProcessor* out_processor, const inf_text_token_vector& out_token, bool out_is_finish) override
+    GENERIC on_write(InfProcessorTextToText* out_processor, const inf_text_token_vector& out_token, bool out_is_finish) override
     {
         inf_token_description itd;
         out_processor->token_to_description(out_token[0], itd);
@@ -188,7 +188,7 @@ public:
             out_processor->next(dbd);
         }
     }
-    GENERIC on_finish(InfTextToTextProcessor* out_processor, size_type out_total_token_size, InfTextToTextProcessor::finish_state out_finish_state) override
+    GENERIC on_finish(InfProcessorTextToText* out_processor, size_type out_total_token_size, InfProcessorTextToText::finish_state out_finish_state) override
     {  
         mbase::Json activeJson;
         mbase::Json choicesArray;
@@ -203,11 +203,11 @@ public:
         choiceFirstItem["index"] = 0;
         choiceFirstItem["logprobs"] = nullptr;
 
-        if(out_finish_state == InfTextToTextProcessor::finish_state::FINISHED)
+        if(out_finish_state == InfProcessorTextToText::finish_state::FINISHED)
         {
             choiceFirstItem["finish_reason"] = "stop";
         }
-        else if(out_finish_state == InfTextToTextProcessor::finish_state::TOKEN_LIMIT_REACHED)
+        else if(out_finish_state == InfProcessorTextToText::finish_state::TOKEN_LIMIT_REACHED)
         {
             choiceFirstItem["finish_reason"] = "length";
         }
@@ -908,6 +908,7 @@ int main(int argc, char** argv)
         for(mbase::vector<OpenAiTextToTextHostedModel*>::iterator It = gHostedModelArray.begin(); It != gHostedModelArray.end(); ++It)
         {
             OpenAiTextToTextHostedModel* hostedModel = *It;
+            printf("Processor count: %d\n", hostedModel->get_registered_processors().size());
             hostedModel->update();
         }
         gContextDestructionSync.release();

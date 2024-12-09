@@ -7,7 +7,7 @@
 
 MBASE_BEGIN
 
-class InfTextToTextProcessor;
+class InfProcessorTextToText;
 class InfEmbedderProcessor;
 
 class MBASE_API InfModelTextToText : public InfModelBase {
@@ -73,7 +73,7 @@ public:
 	flags destroy();
 	flags destroy_sync();
 	flags register_context_process(
-		InfTextToTextProcessor* in_processor, 
+		InfProcessorTextToText* in_processor, 
 		const U32& in_context_length,
 		U32 in_batch_size,
 		U32 in_thread_count,

@@ -280,12 +280,12 @@ InfProgram::maip_err_code InfProgram::inf_get_context_status(const mbase::string
 	// 	return maip_err_code::INF_CONTEXT_ID_MISMATCH;
 	// }
 
-	// InfTextToTextProcessor* hostProc = NULL;
+	// InfProcessorTextToText* hostProc = NULL;
 	// It->second->get_host_processor(hostProc); // 100% success
 
-	// InfTextToTextProcessor::flags outStatus = hostProc->get_processor_status();
+	// InfProcessorTextToText::flags outStatus = hostProc->get_processor_status();
 
-	// if(outStatus == InfTextToTextProcessor::flags::INF_PROC_INFO_INITIALIZING)
+	// if(outStatus == InfProcessorTextToText::flags::INF_PROC_INFO_INITIALIZING)
 	// {
 	// 	return maip_err_code::INF_CONTEXT_INITIALIZING;
 	// }
