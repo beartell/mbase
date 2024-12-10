@@ -48,7 +48,8 @@ install(
   DESTINATION ${MBASE_LIBS_LIB_INSTALL_DIR}/cmake/mbase.libs
 )
 
-add_subdirectory(examples/openai-server)
+# add_subdirectory(examples/openai-server)
+add_subdirectory(examples/simple-conversation)
 # set(CPACK_GENERATOR "DEB")
 # set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Saul E. Erdog")
 # set(CPACK_PACKAGE_NAME "MBASE-Libraries")

@@ -5,6 +5,7 @@
 #include <mbase/inference/inf_processor.h>
 #include <mbase/inference/inf_sampling_set.h>
 #include <mbase/inference/inf_context_line.h>
+#include <mbase/inference/inf_t2t_proc_diagnostics.h>
 
 MBASE_BEGIN
 
@@ -28,6 +29,7 @@ public:
 	InfProcessorTextToText();
 	~InfProcessorTextToText();
 
+	InfProcT2TDiagnostics& get_diagnostics();
 	last_fail_code get_last_fail_code() const;
 	bool is_init_failed() const;
 	bool is_available() const;
@@ -89,6 +91,7 @@ private:
 	GENERIC _initialize_context();
 	GENERIC _destroy_context();
 
+	InfProcT2TDiagnostics mDiagnostics;
 	llama_sampler* mSamplerChain;
 	llama_context* mModelContext;
 	llama_batch mInputBatch;

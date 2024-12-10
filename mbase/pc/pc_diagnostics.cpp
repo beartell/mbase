@@ -3,9 +3,11 @@
 
 MBASE_BEGIN
 
-const typename PcDiagnostics::log_list& PcDiagnostics::get_log_list() const noexcept
+typename PcDiagnostics::log_list PcDiagnostics::get_log_list() noexcept
 {
-	return mLogList;
+	log_list logList = std::move(mLogList);
+	mLogList = log_list();
+	return logList;
 }
 
 bool PcDiagnostics::initialize(const mbase::string& in_diagnostics_name)

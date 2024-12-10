@@ -2549,6 +2549,26 @@ MBASE_INLINE mbase::wstring from_utf8(const mbase::string& in_str)
 #endif
 }
 
+MBASE_INLINE mbase::string get_line()
+{
+    mbase::string builtString;
+    for(I32 tmpChar; (tmpChar = getchar()) != '\n';)
+    {
+        builtString.push_back(tmpChar);
+    }
+    return builtString;
+}
+
+MBASE_INLINE mbase::wstring get_wline()
+{
+    mbase::wstring builtString;
+    for(wint_t tmpChar; (tmpChar = getwchar()) != '\n';)
+    {
+        builtString.push_back(tmpChar);
+    }
+    return builtString;
+}
+
 MBASE_STD_END
 template<>
 struct std::hash<mbase::string> {

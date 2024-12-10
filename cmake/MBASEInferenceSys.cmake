@@ -77,6 +77,7 @@ add_library(mb_inference SHARED
     ${MBASE_INFERENCE_LIB_PATH}inf_t2t_client.cpp
     ${MBASE_INFERENCE_LIB_PATH}inf_t2t_model.cpp
     ${MBASE_INFERENCE_LIB_PATH}inf_t2t_processor.cpp
+    ${MBASE_INFERENCE_LIB_PATH}inf_t2t_proc_diagnostics.cpp
 )
 
 target_compile_definitions(mb_inference PRIVATE MBASE_BUILD=1 MBASE_INTERNAL_API=1 llama)

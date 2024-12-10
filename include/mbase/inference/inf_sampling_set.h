@@ -2,6 +2,7 @@
 #define MBASE_INF_SAMPLING_SET_H
 
 #include <mbase/common.h>
+#include <mbase/string.h>
 #include <set>
 
 MBASE_BEGIN

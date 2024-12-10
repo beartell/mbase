@@ -523,6 +523,7 @@ GENERIC InfProcessorTextToText::_decode_input()
 	mTokenizedInput.clear();
 	
 	[[maybe_unused]] I32 decodeResult = llama_decode(mModelContext, mInputBatch);
+
 	mInputSignal.set_signal_finished();
 	mFinishState = finish_state::CONTINUE;
 }

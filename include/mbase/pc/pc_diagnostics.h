@@ -31,7 +31,7 @@ public:
 	PcDiagnostics() = default;
 	~PcDiagnostics() = default;
 
-	const log_list& get_log_list() const noexcept;
+	log_list get_log_list() noexcept;
 
 	bool initialize(const mbase::string& in_diagnostics_name);
 	flags log(flags in_log_type, flags in_log_importance, const mbase::string& in_message) noexcept;

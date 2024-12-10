@@ -145,6 +145,7 @@ public:
 	MBASE_INLINE_EXPR GENERIC push_back(const T& in_val) noexcept;
 	MBASE_INLINE_EXPR GENERIC push_back(T&& in_val) noexcept;
 	MBASE_INLINE_EXPR GENERIC pop_back() noexcept;
+	MBASE_INLINE_EXPR GENERIC pop_front() noexcept;
 	MBASE_INLINE_EXPR iterator insert(const_iterator in_pos, const T& in_val) noexcept;
 	MBASE_INLINE_EXPR iterator insert(const_iterator in_pos, T&& in_val) noexcept;
 	MBASE_INLINE_EXPR iterator insert(const_iterator in_pos, size_type in_count, const T& in_val) noexcept;
@@ -723,15 +724,51 @@ MBASE_INLINE_EXPR typename vector<T, Allocator>::iterator vector<T, Allocator>::
 }
 
 template<typename T, typename Allocator>
-MBASE_INLINE_EXPR typename vector<T, Allocator>::iterator vector<T, Allocator>::insert(const_iterator in_pos, const T& in_val) noexcept 
+template<typename InputIt, typename>
+MBASE_INLINE_EXPR typename vector<T, Allocator>::iterator vector<T, Allocator>::insert(const_iterator in_pos, InputIt in_begin, InputIt in_end) noexcept 
 {
-	return insert(in_pos, 1, in_val);
-}
+	if (in_pos == cend())
+	{
+		I32 awayFromEnd = 0;
+		for (in_begin; in_begin != in_end; in_begin++)
+		{
+			push_back(*in_begin);
+			++awayFromEnd;
+		}
 
-template<typename T, typename Allocator>
-MBASE_INLINE_EXPR typename vector<T, Allocator>::iterator vector<T, Allocator>::insert(const_iterator in_pos, T&& in_val) noexcept 
-{
-	return insert(in_pos, 1, std::move(in_val));
+		return end() - awayFromEnd;
+	}
+
+	else
+	{
+		if (mSize)
+		{
+			vector vc(mCapacity);
+			I32 iterIndex = 0;
+			I32 foundIndex = 0;
+			iterator mPos = const_cast<pointer>(in_pos.get());
+
+			for (iterator It = begin(); It != end(); It++)
+			{
+				if (mPos == It)
+				{
+					foundIndex = iterIndex;
+					for (in_begin; in_begin != in_end; in_begin++)
+					{
+						vc.push_back(*in_begin);
+					}
+				}
+				
+				vc.push_back(*It);
+				iterIndex++;
+			}
+
+			*this = std::move(vc);
+			return iterator(mRawData + foundIndex);
+		}
+	} 
+
+	return begin();
 }
 
 template<typename T, typename Allocator>
@@ -773,10 +810,8 @@ MBASE_INLINE_EXPR typename vector<T, Allocator>::iterator vector<T, Allocator>::
 						vc.push_back(in_val);
 					}
 				}
-				else
-				{
-					vc.push_back(*It);
-				}
+				vc.push_back(*It);
+				
 				++iterIndex;
 			}
 
@@ -789,53 +824,15 @@ MBASE_INLINE_EXPR typename vector<T, Allocator>::iterator vector<T, Allocator>::
 }
 
 template<typename T, typename Allocator>
-template<typename InputIt, typename>
-MBASE_INLINE_EXPR typename vector<T, Allocator>::iterator vector<T, Allocator>::insert(const_iterator in_pos, InputIt in_begin, InputIt in_end) noexcept 
+MBASE_INLINE_EXPR typename vector<T, Allocator>::iterator vector<T, Allocator>::insert(const_iterator in_pos, const T& in_val) noexcept 
 {
-	if (in_pos == cend())
-	{
-		I32 awayFromEnd = 0;
-		for (in_begin; in_begin != in_end; in_begin++)
-		{
-			push_back(*in_begin);
-			++awayFromEnd;
-		}
+	return insert(in_pos, 1, in_val);
+}
 
-		return end() - awayFromEnd;
-	}
-
-	else
-	{
-		if (mSize)
-		{
-			vector vc(mCapacity);
-			I32 iterIndex = 0;
-			I32 foundIndex = 0;
-			iterator mPos = const_cast<pointer>(in_pos.get());
-
-			for (iterator It = begin(); It != end(); It++)
-			{
-				if (mPos == It)
-				{
-					foundIndex = iterIndex;
-					for (in_begin; in_begin != in_end; in_begin++)
-					{
-						vc.push_back(*in_begin);
-					}
-				}
-				else
-				{
-					vc.push_back(*It);
-				}
-				iterIndex++;
-			}
-
-			*this = std::move(vc);
-			return iterator(mRawData + foundIndex);
-		}
-	}
-
-	return begin();
+template<typename T, typename Allocator>
+MBASE_INLINE_EXPR typename vector<T, Allocator>::iterator vector<T, Allocator>::insert(const_iterator in_pos, T&& in_val) noexcept 
+{
+	return insert(in_pos, 1, std::move(in_val));
 }
 
 template<typename T, typename Allocator>
@@ -891,6 +888,23 @@ MBASE_INLINE_EXPR GENERIC vector<T, Allocator>::pop_back() noexcept
 
 	pointer curObj = mRawData + --mSize;
 	curObj->~value_type();
+}
+
+template<typename T, typename Allocator>
+MBASE_INLINE_EXPR GENERIC vector<T, Allocator>::pop_front() noexcept
+{
+	if(!mSize)
+	{
+		return;
+	}
+
+	iterator It = begin() + 1;
+	vector vc(mCapacity);
+	for(; It != end(); It++)
+	{
+		vc.push_back(*It);
+	}
+	*this = std::move(vc);
 }
 
 template<typename T, typename Allocator>
