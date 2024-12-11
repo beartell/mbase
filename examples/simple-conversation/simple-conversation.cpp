@@ -15,14 +15,37 @@ class ConversationProcessor;
 class ConversationClient;
 
 struct program_parameters {
+    program_parameters()
+    {
+        mTkSampler.mSamplerType = InfSamplerDescription::SAMPLER::TOP_K;
+        mTpSampler.mSamplerType = InfSamplerDescription::SAMPLER::TOP_P;
+        mMpSampler.mSamplerType = InfSamplerDescription::SAMPLER::MIN_P;
+        mPenalty.mSamplerType = InfSamplerDescription::SAMPLER::REPETITION;
+        mTmp.mSamplerType = InfSamplerDescription::SAMPLER::TEMP;
+
+        mTkSampler.mTopK = 40;
+        mTpSampler.mTopP = 1.0f;
+        mMpSampler.mMinP = 0.2f;
+        mPenalty.mRepetition.mPenaltyN = 64;
+        mPenalty.mRepetition.mRepeatPenalty = 1.0f;
+        mPenalty.mRepetition.mPenaltyLinefeed = true;
+        mPenalty.mRepetition.mPenaltyEos = false;
+        mTmp.mTemp = 0.1f;
+    }
     mbase::string mModelFile;
     mbase::string mSystemPromptFile;
     mbase::string mSystemPrompt;
     I32 mThreadCount = 16;
     I32 mBatchThreadCount = 8;
-    I32 mContextLength = 1024;
-    I32 mBatchLength = 512;
+    I32 mContextLength = 8192;
+    I32 mBatchLength = 4096;
     I32 mGpuLayer = 999;
+    bool mIsGreeady = false;
+    InfSamplerDescription mTkSampler;
+    InfSamplerDescription mTpSampler;
+    InfSamplerDescription mMpSampler;
+    InfSamplerDescription mPenalty;
+    InfSamplerDescription mTmp;
 };
 
 mbase::vector<InfDeviceDescription> deviceDescription;
@@ -57,7 +80,14 @@ GENERIC print_usage()
     printf("-bt, --batch-thread-count <int>   Amount of threads to use for initial batch processing (default=8).\n");
     printf("-c, --context-length <int>        Total context length (default=8192).\n");
     printf("-b, --batch-length <int>          Batch length (default=4096).\n");
-    printf("-gl, --gpu-layers <int>           GPU layers to offload to (default=999).\n\n");
+    printf("-gl, --gpu-layers <int>           GPU layers to offload to (default=999).\n");
+    printf("-tk, --top-k <int>                Top k tokens to pick from (default=20, min=1, max=<model_vocabulary_size>).\n");
+    printf("-tp, --top-p <float>              Token probability at most (default=1.0, min=0.1, max=1.0).\n");
+    printf("-mp, --min-p <float>              Token probability at least (default=0.3), min=0.1, max=1.0.\n");
+    printf("-pn, --penatly-n <int>            Apply repetition penalty on last 'n' tokens (default=64).\n");
+    printf("-pr, --penalty-repeat <float>     Discourages repeating exact tokens based on their past presence (default=1.0, min=1.0, max=2.0).\n");
+    printf("-temp, --temperature <float>      Higher values increase the randomness (default=0.1, min=0.1, max=1.4).\n");
+    printf("-gr, --greedy                     Ignore all sampling techniques, pick the most probable token. (default=false).\n\n");
 }
 
 class ConversationModel : public InfModelTextToText {
@@ -239,6 +269,16 @@ int main(int argc, char** argv)
             }
         }
 
+        else if(argumentString == "--batch-thread-count" || argumentString == "-bt")
+        {
+            mbase::argument_get<I32>::value(i, argc, argv, gSampleParams.mBatchThreadCount);
+            if(gSampleParams.mBatchThreadCount <= 0)
+            {
+                printf("ERR: Thread must be at least 1 but given: %d\n", gSampleParams.mBatchThreadCount);
+                return 1;
+            }
+        }
+
         else if(argumentString == "--context-length" || argumentString == "-c")
         {
             mbase::argument_get<I32>::value(i, argc, argv, gSampleParams.mContextLength);
@@ -254,16 +294,41 @@ int main(int argc, char** argv)
             mbase::argument_get<I32>::value(i, argc, argv, gSampleParams.mGpuLayer);
         }
 
-        else if(argumentString == "--batch-thread-count" || argumentString == "-bt")
+        else if(argumentString == "-tk" || argumentString == "--top-k")
         {
-            mbase::argument_get<I32>::value(i, argc, argv, gSampleParams.mBatchThreadCount);
-            if(gSampleParams.mBatchThreadCount <= 0)
-            {
-                printf("ERR: Thread must be at least 1 but given: %d\n", gSampleParams.mBatchThreadCount);
-                return 1;
-            }
+            mbase::argument_get<U32>::value(i, argc, argv, gSampleParams.mTkSampler.mTopK);
         }
 
+        else if(argumentString == "-tp" || argumentString == "--top-p")
+        {
+            mbase::argument_get<F32>::value(i, argc, argv, gSampleParams.mTpSampler.mTopP);
+        }
+
+        else if(argumentString == "-mp" || argumentString == "--min-p")
+        {
+            mbase::argument_get<F32>::value(i, argc, argv, gSampleParams.mMpSampler.mMinP);
+        }
+
+        else if(argumentString == "-pn" || argumentString == "--penalty-n")
+        {
+            mbase::argument_get<U32>::value(i, argc, argv, gSampleParams.mPenalty.mRepetition.mPenaltyN);
+        }
+
+        else if(argumentString == "-pr" || argumentString == "--penalty-repeat")
+        {
+            mbase::argument_get<F32>::value(i, argc, argv, gSampleParams.mPenalty.mRepetition.mRepeatPenalty);
+        }
+
+        else if(argumentString == "-temp" || argumentString == "--temperature")
+        {
+            mbase::argument_get<F32>::value(i, argc, argv, gSampleParams.mTmp.mTemp);
+        }
+
+        else if(argumentString == "-gr" || argumentString == "--greedy")
+        {
+            gSampleParams.mIsGreeady = true;
+        }
+        
         else if(argumentString == "--help")
         {
             print_usage();
@@ -283,6 +348,16 @@ int main(int argc, char** argv)
     {
         printf("ERR: Unable to initialize model\n");
         return 1;
+    }
+
+    inf_sampling_set samplingSet;
+    if(!gSampleParams.mIsGreeady)
+    {
+        samplingSet.insert(gSampleParams.mTkSampler);
+        samplingSet.insert(gSampleParams.mTpSampler);
+        samplingSet.insert(gSampleParams.mMpSampler);
+        samplingSet.insert(gSampleParams.mPenalty);
+        samplingSet.insert(gSampleParams.mTmp);
     }
 
     cnvModel.register_context_process(
@@ -310,6 +385,7 @@ int main(int argc, char** argv)
     printf("- Batch processing threads: %u\n", gSampleParams.mBatchThreadCount);
     printf("- Generation threads: %u\n", gSampleParams.mThreadCount);
     printf("- Compute devices: \n");
+
     for(InfDeviceDescription& tmpDescription : deviceDescription)
     {
         mbase::string typeString;
@@ -331,6 +407,37 @@ int main(int argc, char** argv)
         printf("\t%s ## Type: %s\n", tmpDescription.get_device_description().c_str(), typeString.c_str());
     }
 
+    printf("- Samplers in order: \n");
+    if(gSampleParams.mIsGreeady)
+    {
+        printf("\t Greedy\n");
+    }
+    else
+    {
+        for(auto& tmpSampler : samplingSet)
+        {
+            if(tmpSampler.mSamplerType == InfSamplerDescription::SAMPLER::TOP_K)
+            {
+                printf("\t Top k: %d\n", tmpSampler.mTopK);
+            }
+            else if(tmpSampler.mSamplerType == InfSamplerDescription::SAMPLER::TOP_P)
+            {
+                printf("\t Top p: %f\n", tmpSampler.mTopP);
+            }
+            else if(tmpSampler.mSamplerType == InfSamplerDescription::SAMPLER::MIN_P)
+            {
+                printf("\t Min p: %f\n", tmpSampler.mMinP);
+            }
+            else if(tmpSampler.mSamplerType == InfSamplerDescription::SAMPLER::REPETITION)
+            {
+                printf("\t Penalty N: %d, Penalty Repeat: %f\n", tmpSampler.mRepetition.mPenaltyN, tmpSampler.mRepetition.mRepeatPenalty);
+            }
+            else if(tmpSampler.mSamplerType == InfSamplerDescription::SAMPLER::TEMP)
+            {
+                printf("\t Temperature: %f\n", tmpSampler.mTemp);
+            }
+        }
+    }
 
     while(gIsProgramRunning)
     {
