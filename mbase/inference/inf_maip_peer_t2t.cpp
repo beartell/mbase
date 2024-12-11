@@ -76,6 +76,11 @@ GENERIC InfMaipPeerTextToText::on_unregister(InfProcessorBase* out_processor)
     delete out_processor;
 }
 
+GENERIC InfMaipPeerTextToText::on_batch_processed(InfProcessorTextToText* out_processor, const U32& out_proc_batch_length)
+{
+
+}
+
 GENERIC InfMaipPeerTextToText::on_write(InfProcessorTextToText* out_processor, const inf_text_token_vector& out_token, bool out_is_finish)
 {
     // Called every time a next token is generated

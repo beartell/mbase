@@ -3,6 +3,8 @@
 #include <mbase/inference/inf_t2t_client.h>
 #include <mbase/argument_get_value.h>
 #include <mbase/filesystem.h>
+#include <chrono>
+#include <signal.h>
 
 #define MBASE_SIMPLE_CONVERSATION_VERSION "v1.0.0"
 
@@ -19,12 +21,19 @@ struct program_parameters {
     I32 mThreadCount = 16;
     I32 mBatchThreadCount = 8;
     I32 mContextLength = 8192;
-    I32 mBatchLength = 4096;
+    I32 mBatchLength = 2048;
     I32 mGpuLayer = 999;
 };
 
 mbase::vector<InfDeviceDescription> deviceDescription;
 program_parameters gSampleParams;
+bool gIsProgramRunning = true;
+
+GENERIC catching_interrupt_signal(I32 out_sig_id)
+{
+    printf("Program interrupted\n");
+    gIsProgramRunning = false;
+}
 
 GENERIC print_usage()
 {
@@ -107,7 +116,6 @@ public:
         {
             add_user_message(userPrompt);
         }
-        
         mbase::vector<U32> messageArray(mChatHistory.begin(), mChatHistory.end());
         mbase::vector<context_line> contextLines;
         if(mSystemPromptId)
@@ -132,36 +140,28 @@ public:
 
     GENERIC on_register(InfProcessorBase* out_processor) override
     {
-        printf("Compute devices: \n");
-        for(InfDeviceDescription& tmpDescription : deviceDescription)
-        {
-            mbase::string typeString;
-            switch (tmpDescription.get_device_type())
-            {
-            case InfDeviceDescription::device_type::CPU:
-                typeString = "CPU";
-                break;
-            case InfDeviceDescription::device_type::GPU:
-                typeString = "GPU";
-                break;
-            case InfDeviceDescription::device_type::CUSTOM:
-                typeString = "CUSTOM";
-                break;
-            case InfDeviceDescription::device_type::UNKNOWN:
-                typeString = "UNKNOWN";
-                break;
-            }
-            printf("- %s ## Type: %s\n", tmpDescription.get_device_description().c_str(), typeString.c_str());
-        }
-
         ConversationProcessor* hostProcessor = static_cast<ConversationProcessor*>(out_processor);
         printf("System >> %s\n", mSystemPromptString.c_str());
         start_conversation(hostProcessor);
     }
 
     GENERIC on_unregister(InfProcessorBase* out_processor) override{}
+    
+    GENERIC on_batch_processed(InfProcessorTextToText* out_processor, const U32& out_proc_batch_length) override
+    {
+        printf("Batch is processed: %d\n", out_proc_batch_length);
+    }
+
     GENERIC on_write(InfProcessorTextToText* out_processor, const inf_text_token_vector& out_token, bool out_is_finish) override
     {
+        mMessageCount++;
+        if(mMessageCount == 10)
+        {
+            mbase::string embedText = "'Here is the text that I embedded'";
+            mbase::inf_text_token_vector tokVec;
+            out_processor->tokenize_input(embedText.c_str(), embedText.size(), tokVec);
+            out_processor->execute_input_sync(tokVec);
+        }
         if(out_is_finish)
         {
             return;
@@ -194,6 +194,7 @@ private:
     mbase::string mSystemPromptString;
     mbase::string mGeneratedOutput;
     U32 mSystemPromptId = 0;
+    U32 mMessageCount = 0;
     mbase::vector<U32> mChatHistory;
 };
 
@@ -280,7 +281,7 @@ int main(int argc, char** argv)
             return 1;
         }
     }
-
+    
     deviceDescription = inf_query_devices();
 
     ConversationModel cnvModel;
@@ -305,21 +306,62 @@ int main(int argc, char** argv)
         {}
     );
 
-    while(true)
+    // Waiting for processor registration
+    while(!cnvProcessor.is_registered())
     {
-        cnvProcessor.set_inference_client(&cnvClient);
-        struct timespec ts;
-        clock_gettime(CLOCK_MONOTONIC, &ts);
-	    U64 currentTimeMs = ts.tv_nsec / 1000000;
-        cnvModel.update();
-        clock_gettime(CLOCK_MONOTONIC, &ts);
-        U64 nextTimeMs = ts.tv_nsec / 1000000;
+        cnvProcessor.update();
+        mbase::sleep(2);
+    }
 
-        if(nextTimeMs - currentTimeMs < 2)
+    //signal(SIGINT, catching_interrupt_signal);
+
+    printf("==== Session Information ====\n\n");
+    printf("- Context length: %u\n", gSampleParams.mContextLength);
+    printf("- Batch size: %u\n", gSampleParams.mBatchLength);
+    printf("- Batch processing threads: %u\n", gSampleParams.mBatchThreadCount);
+    printf("- Generation threads: %u\n", gSampleParams.mThreadCount);
+    printf("- Compute devices: \n");
+    for(InfDeviceDescription& tmpDescription : deviceDescription)
+    {
+        mbase::string typeString;
+        switch (tmpDescription.get_device_type())
+        {
+        case InfDeviceDescription::device_type::CPU:
+            typeString = "CPU";
+            break;
+        case InfDeviceDescription::device_type::GPU:
+            typeString = "GPU";
+            break;
+        case InfDeviceDescription::device_type::CUSTOM:
+            typeString = "CUSTOM";
+            break;
+        case InfDeviceDescription::device_type::UNKNOWN:
+            typeString = "UNKNOWN";
+            break;
+        }
+        printf("\t%s ## Type: %s\n", tmpDescription.get_device_description().c_str(), typeString.c_str());
+    }
+
+
+    while(gIsProgramRunning)
+    {
+        std::chrono::high_resolution_clock::time_point beginTime = std::chrono::high_resolution_clock::now();
+        cnvProcessor.set_inference_client(&cnvClient);
+        cnvModel.update();
+        std::chrono::high_resolution_clock::time_point endTime = std::chrono::high_resolution_clock::now();
+        
+        if(std::chrono::duration_cast<std::chrono::microseconds>(endTime - beginTime).count() < 2)
         {
             mbase::sleep(2);
         }
     }
+
+    cnvProcessor.release_inference_client();
+    InfProcT2TDiagnostics& t2tDiag = cnvProcessor.get_diagnostics();
+    printf("\n==== Processor diagnostics ====\n");
+    printf("| Context load delay         | %u ms\n", t2tDiag.loadTimeInMilliseconds);
+    printf("| Prompt processing rate(pp) | %f token/sec\n", t2tDiag.ppTokensPerSecond);
+    printf("| Token generation rate(tg)  | %f token/sec\n", t2tDiag.evalTokensPerSecond);
 
     return 0;
 }

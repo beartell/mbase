@@ -2554,6 +2554,10 @@ MBASE_INLINE mbase::string get_line()
     mbase::string builtString;
     for(I32 tmpChar; (tmpChar = getchar()) != '\n';)
     {
+        if(tmpChar < 32)
+        {
+            continue;
+        }
         builtString.push_back(tmpChar);
     }
     return builtString;

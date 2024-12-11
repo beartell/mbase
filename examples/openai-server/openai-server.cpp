@@ -135,6 +135,10 @@ public:
     }
     GENERIC on_register(InfProcessorBase* out_processor) override{}
     GENERIC on_unregister(InfProcessorBase* out_processor) override{}
+    GENERIC on_batch_processed(InfProcessorTextToText* out_processor, const U32& out_proc_batch_length) override
+    {
+
+    }
     GENERIC on_write(InfProcessorTextToText* out_processor, const inf_text_token_vector& out_token, bool out_is_finish) override
     {
         inf_token_description itd;
@@ -696,7 +700,7 @@ GENERIC chatCompletionInternal(const httplib::Request& in_req, httplib::Response
                     openaiProcessor->next(dbd);
                     while(openaiT2tClient->is_processing())
                     {
-                        mbase::sleep(50);
+                        mbase::sleep(2);
                     }
                     gContextDestructionSync.acquire();
                     delete openaiProcessor;
@@ -715,7 +719,7 @@ GENERIC chatCompletionInternal(const httplib::Request& in_req, httplib::Response
     openaiProcessor->next(dbd);
     while(openaiT2tClient->is_processing())
     {
-        mbase::sleep(50);
+        mbase::sleep(2);
     }
     gContextDestructionSync.acquire();
     delete openaiProcessor;
@@ -912,7 +916,7 @@ int main(int argc, char** argv)
             hostedModel->update();
         }
         gContextDestructionSync.release();
-        mbase::sleep(15);
+        mbase::sleep(2);
 
     }
     serverThread.join();

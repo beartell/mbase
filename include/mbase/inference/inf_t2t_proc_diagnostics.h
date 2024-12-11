@@ -10,7 +10,7 @@ class MBASE_API InfProcT2TDiagnostics : public mbase::PcDiagnostics {
 public:
     InfProcT2TDiagnostics();
 
-    U32 loadTimeInMilliseconds;
+    I64 loadTimeInMilliseconds;
     F32 ppTokensPerSecond;
     F32 evalTokensPerSecond;
 };

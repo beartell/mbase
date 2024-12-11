@@ -1,6 +1,7 @@
 #include <mbase/inference/inf_t2t_processor.h>
 #include <mbase/inference/inf_t2t_model.h>
 #include <mbase/inference/inf_t2t_client.h>
+#include <chrono>
 
 MBASE_BEGIN
 
@@ -36,6 +37,7 @@ InfProcessorTextToText::InfProcessorTextToText():
 	mBatchSize(0),
 	mThreadCount(0),
 	mBatchProcessThreadCount(0),
+	mProcessedBatchLength(0),
 	mFinishState(finish_state::FINISHED),
 	mLastFailCode(last_fail_code::MODEL_NOT_INITIALIZED),
 	mFlashAttention(false),
@@ -60,6 +62,11 @@ InfProcessorTextToText::~InfProcessorTextToText()
 	}
 }
 
+InfProcT2TDiagnostics& InfProcessorTextToText::get_diagnostics()
+{
+	return mDiagnostics;
+}
+
 InfProcessorTextToText::last_fail_code InfProcessorTextToText::get_last_fail_code() const
 {
 	return mLastFailCode;
@@ -72,7 +79,7 @@ bool InfProcessorTextToText::is_init_failed() const
 
 bool InfProcessorTextToText::is_available() const
 {
-	if (signal_input_process() || signal_decode_process() || signal_state_decode_process() || signal_state_input_process())
+	if (signal_input_process() || signal_decode_process() || signal_state_decode_process())
 	{
 		return false;
 	}
@@ -103,6 +110,11 @@ bool InfProcessorTextToText::signal_decode_process() const
 U32 InfProcessorTextToText::get_max_token_length()
 {
 	return mContextLength;
+}
+
+U32 InfProcessorTextToText::get_context_cursor_position()
+{
+	return mContextCursor;
 }
 
 bool InfProcessorTextToText::has_sampler(InfSamplerDescription::SAMPLER in_sampler_type, InfSamplerDescription& out_sampler)
@@ -301,6 +313,11 @@ InfProcessorTextToText::flags InfProcessorTextToText::execute_input(const inf_te
 		mInputSignal.reset_signal_with_state();
 		mDecodeSignal.reset_signal_with_state();
 		stop_processor();
+		if(llama_get_kv_cache_used_cells(mModelContext))
+		{
+			llama_kv_cache_clear(mModelContext);
+		}
+		mContextCursor = 0;
 	}
 
 	mTokenizedInput = in_tokens;
@@ -308,6 +325,22 @@ InfProcessorTextToText::flags InfProcessorTextToText::execute_input(const inf_te
 	start_processor();
 
 	return flags::INF_PROC_SUCCESS;
+}
+
+InfProcessorTextToText::flags InfProcessorTextToText::execute_input_sync(const inf_text_token_vector& in_tokens, bool in_abandon)
+{
+	MBASE_INF_T2T_PROC_RETURN_UNREGISTERED;
+	flags outResult = execute_input(in_tokens, in_abandon);
+	if(outResult == flags::INF_PROC_SUCCESS || outResult == flags::INF_PROC_ERR_ALREADY_PROCESSING)
+	{
+		while(signal_input_process())
+		{
+			mbase::sleep(2);
+		}
+		return flags::INF_PROC_INFO_NEED_UPDATE;
+	}
+
+	return outResult;
 }
 
 InfProcessorTextToText::flags InfProcessorTextToText::next(const decode_behavior_description& in_description)
@@ -342,9 +375,14 @@ InfProcessorTextToText::flags InfProcessorTextToText::next_sync(const decode_beh
 {
 	MBASE_INF_T2T_PROC_RETURN_UNREGISTERED;
 
-	while(signal_input_process()){}
+	flags nextResult = next(in_description);
+	if(nextResult == flags::INF_PROC_SUCCESS)
+	{
+		while(signal_decode_process()){ mbase::sleep(2); }
+		return flags::INF_PROC_INFO_NEED_UPDATE;
+	}
 
-	return next(in_description);
+	return nextResult;
 }
 
 InfProcessorTextToText::flags InfProcessorTextToText::set_inference_client(InfClientBase* in_client)
@@ -438,7 +476,7 @@ InfProcessorTextToText::flags InfProcessorTextToText::initialize_sync(
 	);
 	while(signal_initializing())
 	{
-
+		mbase::sleep(2);
 	}
 	
 	return flags::INF_PROC_INFO_NEED_UPDATE;
@@ -469,7 +507,7 @@ InfProcessorTextToText::flags InfProcessorTextToText::destroy_sync()
 	destroy();
 	while(signal_destroying())
 	{
-		// block until operation finishes
+		mbase::sleep(2);
 	}
 
 	return flags::INF_PROC_INFO_NEED_UPDATE;
@@ -511,18 +549,27 @@ GENERIC InfProcessorTextToText::on_destroying()
 GENERIC InfProcessorTextToText::_decode_input()
 {
 	// if the input signal is set, process
-	if(llama_get_kv_cache_used_cells(mModelContext))
-	{
-		llama_kv_cache_clear(mModelContext);
-	}
+	// if(llama_get_kv_cache_used_cells(mModelContext))
+	// {
+	// 	llama_kv_cache_clear(mModelContext);
+	// }
 	
 	llama_sampler_reset(mSamplerChain);
 	mInputBatch = llama_batch_get_one(mTokenizedInput.data(), mTokenizedInput.size());
 
-	mContextCursor = mInputBatch.n_tokens;
+	mProcessedBatchLength = mInputBatch.n_tokens;
+	mContextCursor += mInputBatch.n_tokens;
 	mTokenizedInput.clear();
 	
+	std::chrono::high_resolution_clock::time_point beginTime = std::chrono::high_resolution_clock::now();
+	printf("Decode started\n");
 	[[maybe_unused]] I32 decodeResult = llama_decode(mModelContext, mInputBatch);
+	printf("Decode finished\n");
+	std::chrono::high_resolution_clock::time_point endTime = std::chrono::high_resolution_clock::now();
+
+	I64 msPassed = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - beginTime).count();
+	F32 secondsPassed = (F32)msPassed / 1000.0f;
+	mDiagnostics.ppTokensPerSecond = mInputBatch.n_tokens / secondsPassed;
 
 	mInputSignal.set_signal_finished();
 	mFinishState = finish_state::CONTINUE;
@@ -531,6 +578,8 @@ GENERIC InfProcessorTextToText::_decode_input()
 GENERIC InfProcessorTextToText::_decode_next()
 {
 	// Main Decode loop
+	I64 totalMilliseconds = 1;
+	I64 totalGeneratedTokens = 0;
 	for(U32 i = 0; i < mDecodeBehavior.mTokenAtMost; i++)
 	{
 		I32 modelVocab = 0;
@@ -564,6 +613,7 @@ GENERIC InfProcessorTextToText::_decode_next()
 			if (mContextCursor == mContextLength)
 			{
 				// means token limit is reached
+				mContextCursor = 0;
 				llama_sampler_reset(mSamplerChain);
 				mFinishState = finish_state::TOKEN_LIMIT_REACHED;
 				llama_kv_cache_clear(mModelContext);
@@ -574,10 +624,17 @@ GENERIC InfProcessorTextToText::_decode_next()
 			{
 				mInputBatch = llama_batch_get_one(&tmpGeneratedToken, 1);
 				mContextCursor++;
+				std::chrono::high_resolution_clock::time_point beginTime = std::chrono::high_resolution_clock::now();
 				llama_decode(mModelContext, mInputBatch); // Handle error here
+				totalGeneratedTokens++;
+				std::chrono::high_resolution_clock::time_point endTime = std::chrono::high_resolution_clock::now();
+				totalMilliseconds += std::chrono::duration_cast<std::chrono::milliseconds>(endTime - beginTime).count();
 			}
 		}
 	}
+
+	F32 secondsPassed = (F32)totalMilliseconds / 1000.0f;
+	mDiagnostics.evalTokensPerSecond = totalGeneratedTokens / secondsPassed;
 
 	mDecodeSignal.set_signal_finished();
 }
@@ -604,6 +661,8 @@ GENERIC InfProcessorTextToText::_initialize_context()
 		return;
 	}
 
+	std::chrono::high_resolution_clock::time_point beginTime = std::chrono::high_resolution_clock::now();
+
 	mModelContext = llama_new_context_with_model(t2tModel->get_raw_model(), ctxParams);
 	if (!mModelContext)
 	{
@@ -614,6 +673,10 @@ GENERIC InfProcessorTextToText::_initialize_context()
 		return;
 	}
 	
+	std::chrono::high_resolution_clock::time_point endTime = std::chrono::high_resolution_clock::now();
+	
+	mDiagnostics.loadTimeInMilliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - beginTime).count();
+
 	mContextCursor = 0;
 		
 	I32 modelVocabCount = 0;
@@ -782,6 +845,16 @@ GENERIC InfProcessorTextToText::update()
 		}
 	}
 
+	if(signal_state_input_process())
+	{
+		mInputSignal.reset_signal_state();
+		InfClientTextToText* t2tClient = static_cast<InfClientTextToText*>(get_assigned_client());
+		if(t2tClient)
+		{
+			t2tClient->on_batch_processed(this, mProcessedBatchLength);
+		}
+	}
+
 	if(signal_state_decode_process())
 	{
 		mDecodeSignal.reset_signal_state();		
@@ -838,7 +911,7 @@ GENERIC InfProcessorTextToText::update_t()
 				else if(!mDecodeBehavior.mHaltOnWrite)
 				{
 					// If it is not halt on write, busy wait for logic thread to process the generated tokens
-					mbase::sleep(15);
+					mbase::sleep(mDecodeBehavior.mHaltDelay);
 				}
 
 				else
