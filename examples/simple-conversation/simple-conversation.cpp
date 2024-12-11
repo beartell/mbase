@@ -20,8 +20,8 @@ struct program_parameters {
     mbase::string mSystemPrompt;
     I32 mThreadCount = 16;
     I32 mBatchThreadCount = 8;
-    I32 mContextLength = 8192;
-    I32 mBatchLength = 2048;
+    I32 mContextLength = 1024;
+    I32 mBatchLength = 512;
     I32 mGpuLayer = 999;
 };
 
@@ -126,16 +126,10 @@ public:
         this->get_message_array(messageArray.data(), messageArray.size(), contextLines);
 
         mbase::inf_text_token_vector tokenVector;
-        mbase::decode_behavior_description dbd;
-        dbd.mTokenAtMost = 1;
-        dbd.mHaltOnWrite = false;
-        
         in_processor->tokenize_input(contextLines.data(), contextLines.size(), tokenVector);
         if(in_processor->execute_input(tokenVector) == ConversationProcessor::flags::INF_PROC_ERR_INPUT_EXCEED_TOKEN_LIMIT)
-        {
-            
+        {   
         }
-        in_processor->next(dbd);
     }
 
     GENERIC on_register(InfProcessorBase* out_processor) override
@@ -149,19 +143,15 @@ public:
     
     GENERIC on_batch_processed(InfProcessorTextToText* out_processor, const U32& out_proc_batch_length) override
     {
-        printf("Batch is processed: %d\n", out_proc_batch_length);
+        ConversationProcessor* hostProcessor = static_cast<ConversationProcessor*>(out_processor);
+        mbase::decode_behavior_description dbd;
+        dbd.mTokenAtMost = 1;
+        dbd.mHaltOnWrite = false;
+        hostProcessor->next(dbd);
     }
 
     GENERIC on_write(InfProcessorTextToText* out_processor, const inf_text_token_vector& out_token, bool out_is_finish) override
     {
-        mMessageCount++;
-        if(mMessageCount == 10)
-        {
-            mbase::string embedText = "'Here is the text that I embedded'";
-            mbase::inf_text_token_vector tokVec;
-            out_processor->tokenize_input(embedText.c_str(), embedText.size(), tokVec);
-            out_processor->execute_input_sync(tokVec);
-        }
         if(out_is_finish)
         {
             return;
@@ -194,7 +184,6 @@ private:
     mbase::string mSystemPromptString;
     mbase::string mGeneratedOutput;
     U32 mSystemPromptId = 0;
-    U32 mMessageCount = 0;
     mbase::vector<U32> mChatHistory;
 };
 
@@ -313,7 +302,7 @@ int main(int argc, char** argv)
         mbase::sleep(2);
     }
 
-    //signal(SIGINT, catching_interrupt_signal);
+    signal(SIGINT, catching_interrupt_signal);
 
     printf("==== Session Information ====\n\n");
     printf("- Context length: %u\n", gSampleParams.mContextLength);

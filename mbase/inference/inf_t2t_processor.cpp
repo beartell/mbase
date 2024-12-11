@@ -562,9 +562,7 @@ GENERIC InfProcessorTextToText::_decode_input()
 	mTokenizedInput.clear();
 	
 	std::chrono::high_resolution_clock::time_point beginTime = std::chrono::high_resolution_clock::now();
-	printf("Decode started\n");
 	[[maybe_unused]] I32 decodeResult = llama_decode(mModelContext, mInputBatch);
-	printf("Decode finished\n");
 	std::chrono::high_resolution_clock::time_point endTime = std::chrono::high_resolution_clock::now();
 
 	I64 msPassed = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - beginTime).count();
@@ -582,6 +580,7 @@ GENERIC InfProcessorTextToText::_decode_next()
 	I64 totalGeneratedTokens = 0;
 	for(U32 i = 0; i < mDecodeBehavior.mTokenAtMost; i++)
 	{
+		std::chrono::high_resolution_clock::time_point beginTime = std::chrono::high_resolution_clock::now();
 		I32 modelVocab = 0;
 		InfModelTextToText* t2tModel = static_cast<InfModelTextToText*>(this->mTargetModel_md_model);
 		t2tModel->get_vocab_count(modelVocab);
@@ -624,7 +623,6 @@ GENERIC InfProcessorTextToText::_decode_next()
 			{
 				mInputBatch = llama_batch_get_one(&tmpGeneratedToken, 1);
 				mContextCursor++;
-				std::chrono::high_resolution_clock::time_point beginTime = std::chrono::high_resolution_clock::now();
 				llama_decode(mModelContext, mInputBatch); // Handle error here
 				totalGeneratedTokens++;
 				std::chrono::high_resolution_clock::time_point endTime = std::chrono::high_resolution_clock::now();
