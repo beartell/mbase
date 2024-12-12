@@ -7,7 +7,7 @@
 #include <chrono>
 #include <signal.h>
 
-#define MBASE_SIMPLE_CONVERSATION_VERSION "v1.1.3"
+#define MBASE_SIMPLE_CONVERSATION_VERSION "v1.1.4"
 
 using namespace mbase;
 
@@ -229,6 +229,12 @@ int main(int argc, char** argv)
 
     mbase::argument_get<mbase::string>::value(0, argc, argv, gSampleParams.mModelFile);
     
+    if(gSampleParams.mModelFile == "-h" || gSampleParams.mModelFile == "--help")
+    {
+        print_usage();
+        return 1;
+    }
+
     if(!mbase::is_file_valid(mbase::from_utf8(gSampleParams.mModelFile)))
     {
         printf("ERR: Can't open model file: %s\n", gSampleParams.mModelFile.c_str());
@@ -381,8 +387,10 @@ int main(int argc, char** argv)
     }
 
     signal(SIGINT, catching_interrupt_signal);
-
+    mbase::string modelName;
+    cnvModel.get_model_name(modelName);
     printf("==== Session Information ====\n\n");
+    printf("- Model name: %s\n", modelName.c_str());
     printf("- Context length: %u\n", gSampleParams.mContextLength);
     printf("- Batch size: %u\n", gSampleParams.mBatchLength);
     printf("- Batch processing threads: %u\n", gSampleParams.mBatchThreadCount);

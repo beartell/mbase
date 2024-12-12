@@ -7,7 +7,7 @@
 #include <chrono>
 #include <signal.h>
 
-#define MBASE_TYPO_FIXER_VERSION "v1.0.1"
+#define MBASE_TYPO_FIXER_VERSION "v1.0.2"
 
 using namespace mbase;
 
@@ -194,6 +194,12 @@ int main(int argc, char** argv)
 
     mbase::argument_get<mbase::string>::value(0, argc, argv, gSampleParams.mModelFile);
     
+    if(gSampleParams.mModelFile == "-h" || gSampleParams.mModelFile == "--help")
+    {
+        print_usage();
+        return 1;
+    }
+
     if(!mbase::is_file_valid(mbase::from_utf8(gSampleParams.mModelFile)))
     {
         printf("ERR: Can't open model file: %s\n", gSampleParams.mModelFile.c_str());
@@ -320,9 +326,12 @@ int main(int argc, char** argv)
         mbase::sleep(2);
     }
 
-    //signal(SIGINT, catching_interrupt_signal);
+    signal(SIGINT, catching_interrupt_signal);
 
+    mbase::string modelName;
+    fixerModel.get_model_name(modelName);
     printf("==== Session Information ====\n\n");
+    printf("- Model name: %s\n", modelName.c_str());
     printf("- Context length: %u\n", tmpContextLength);
     printf("- Batch size: %u\n", tmpBatchLength);
     printf("- Batch processing threads: %u\n", gSampleParams.mBatchThreadCount);
