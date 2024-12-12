@@ -3,6 +3,7 @@
 #include <mbase/inference/inf_t2t_client.h>
 #include <mbase/argument_get_value.h>
 #include <mbase/filesystem.h>
+#include <math.h>
 #include <chrono>
 #include <signal.h>
 
@@ -219,6 +220,11 @@ private:
 
 int main(int argc, char** argv)
 {
+    auto result = log2(954);
+    result = ceil(result);
+    std::cout << "Top near power: " << pow(2, result) << std::endl;
+
+    return 0;   
     if(argc < 2)
     {
         printf("ERR: Model file is not supplied\n");

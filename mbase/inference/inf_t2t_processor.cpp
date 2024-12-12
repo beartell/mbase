@@ -107,6 +107,11 @@ bool InfProcessorTextToText::signal_decode_process() const
 	return mDecodeSignal.get_signal();
 }
 
+U32 InfProcessorTextToText::get_batch_size()
+{
+	return mBatchSize;
+}
+
 U32 InfProcessorTextToText::get_max_token_length()
 {
 	return mContextLength;
@@ -216,13 +221,21 @@ InfProcessorTextToText::flags InfProcessorTextToText::tokenize_input(CBYTEBUFFER
 	}
 	inf_text_token_vector tokenizedInput(in_size * 4);
 	InfModelTextToText* t2tModel = static_cast<InfModelTextToText*>(this->mTargetModel_md_model);
-	I32 tokenCount = llama_tokenize(t2tModel->get_raw_model(), in_data, in_size, tokenizedInput.data(), in_size * 4, false, true);
-	if(tokenCount == -1)
+	try
+	{
+		I32 tokenCount = llama_tokenize(t2tModel->get_raw_model(), in_data, in_size, tokenizedInput.data(), in_size * 4, false, true);
+		if(tokenCount == -1)
+		{
+			return flags::INF_PROC_ERR_UNABLE_TO_TOKENIZE_INPUT;
+		}
+
+		tokenizedInput.resize(tokenCount);
+	}
+	catch(const std::exception& e)
 	{
 		return flags::INF_PROC_ERR_UNABLE_TO_TOKENIZE_INPUT;
 	}
-
-	tokenizedInput.resize(tokenCount);
+	
 	out_tokens = std::move(tokenizedInput);
 	return flags::INF_PROC_SUCCESS;
 }
@@ -319,12 +332,23 @@ InfProcessorTextToText::flags InfProcessorTextToText::execute_input(const inf_te
 		}
 		mContextCursor = 0;
 	}
-
+	stop_processor(); // Stop the processor if it is not stopped already
 	mTokenizedInput = in_tokens;
 	mInputSignal.set_signal();
 	start_processor();
 
 	return flags::INF_PROC_SUCCESS;
+}
+
+InfProcessorTextToText::flags InfProcessorTextToText::execute_input(inf_text_token* in_tokens, size_type in_size, bool in_abandon)
+{
+	inf_text_token_vector tokenVector;
+	for(size_type i = 0; i < in_size; i++)
+	{
+		tokenVector.push_back(in_tokens[i]);
+	}
+
+	return execute_input(tokenVector, in_abandon);
 }
 
 InfProcessorTextToText::flags InfProcessorTextToText::execute_input_sync(const inf_text_token_vector& in_tokens, bool in_abandon)
@@ -631,8 +655,12 @@ GENERIC InfProcessorTextToText::_decode_next()
 		}
 	}
 
-	F32 secondsPassed = (F32)totalMilliseconds / 1000.0f;
-	mDiagnostics.evalTokensPerSecond = totalGeneratedTokens / secondsPassed;
+	
+	if(totalGeneratedTokens)
+	{
+		F32 secondsPassed = (F32)totalMilliseconds / 1000.0f;
+		mDiagnostics.evalTokensPerSecond = totalGeneratedTokens / secondsPassed;
+	}
 
 	mDecodeSignal.set_signal_finished();
 }

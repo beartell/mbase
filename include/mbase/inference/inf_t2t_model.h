@@ -30,6 +30,7 @@ public:
 		INF_MODEL_ERR_PROCESSOR_BELONGS_TO_ANOTHER_MODEL,
 		INF_MODEL_ERR_UNABLE_REGISTER_PROCESSOR,
 		INF_MODEL_ERR_NOT_INITIALIZED,
+		INF_MODEL_ERR_TOKENIZATION_FAILED,
 		INF_MODEL_ERR_GENERIC
 	};
 
@@ -69,7 +70,6 @@ public:
 	flags initialize_model(const mbase::wstring& in_path, const U32& in_total_context_size, const I32& in_gpu_layers = -1);
 	flags initialize_model_ex_sync(const mbase::wstring& in_path, const U32& in_total_context_size, const I32& in_gpu_layers, bool in_use_mmap, bool in_use_mlock, mbase::vector<InfDeviceDescription> in_devices = mbase::vector<InfDeviceDescription>());
 	flags initialize_model_sync(const mbase::wstring& in_path, const U32& in_total_context_size, const I32& in_gpu_layers = -1);
-
 	flags destroy();
 	flags destroy_sync();
 	flags register_context_process(
@@ -81,13 +81,13 @@ public:
 		const bool& in_flash_attention,
 		const inf_sampling_set& in_sampler_set
 	);
-	
 	flags register_context_process(
 		InfEmbedderProcessor* in_processor,
 		const U32& in_context_length,
 		U32 in_batch_size,
 		U32 in_thread_count
 	);
+	flags tokenize_input(CBYTEBUFFER in_data, size_type in_size, inf_text_token_vector& out_tokens);
 
 	GENERIC update() override;
 	GENERIC update_t() override;

@@ -566,6 +566,36 @@ InfModelTextToText::flags InfModelTextToText::register_context_process
 	return flags::INF_MODEL_INFO_REGISTERING_PROCESSOR;
 }
 
+InfModelTextToText::flags InfModelTextToText::tokenize_input(CBYTEBUFFER in_data, size_type in_size, inf_text_token_vector& out_tokens)
+{
+	MBASE_INF_T2T_MODEL_RETURN_UNINITIALIZED;
+
+	if(!in_data || !in_size)
+	{
+		return flags::INF_MODEL_ERR_INVALID_INPUT;
+	}
+
+	inf_text_token_vector tokenizedInput(in_size * 4);
+	llama_model* rawModel = get_raw_model();
+	try
+	{
+		I32 tokenCount = llama_tokenize(rawModel, in_data, in_size, tokenizedInput.data(), in_size * 4, false, true);
+		if(tokenCount == -1)
+		{
+			return flags::INF_MODEL_ERR_TOKENIZATION_FAILED;
+		}
+
+		tokenizedInput.resize(tokenCount);
+	}
+	catch(const std::exception& e)
+	{
+		return flags::INF_MODEL_ERR_TOKENIZATION_FAILED;
+	}
+	
+	out_tokens = std::move(tokenizedInput);
+	return flags::INF_MODEL_SUCCESS;
+}
+
 GENERIC InfModelTextToText::_initialize_model()
 {
 	mbase::GgufMetaConfigurator tempConfigurator(mModelPath);

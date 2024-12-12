@@ -41,6 +41,7 @@ public:
 	#ifdef MBASE_INTERNAL_API
 		inf_text_token_candidates& get_token_candidates();
 	#endif // MBASE_INTERNAL_API
+	U32 get_batch_size();
 	U32 get_max_token_length();
 	U32 get_context_cursor_position();
 	bool has_sampler(InfSamplerDescription::SAMPLER in_sampler_type, InfSamplerDescription& out_sampler);
@@ -51,6 +52,7 @@ public:
 	flags tokenize_input(CBYTEBUFFER in_data, size_type in_size, inf_text_token_vector& out_tokens);
 	flags tokenize_input(context_line* in_lines, size_type in_count, inf_text_token_vector& out_tokens, bool in_append_assistant_token = true);
 	flags execute_input(const inf_text_token_vector& in_tokens, bool in_abandon = false);
+	flags execute_input(inf_text_token* in_tokens, size_type in_size, bool in_abandon = false);
 	flags execute_input_sync(const inf_text_token_vector& in_tokens, bool in_abandon = false);
 	flags next(const decode_behavior_description& in_description);
 	flags next_sync(const decode_behavior_description& in_description);
