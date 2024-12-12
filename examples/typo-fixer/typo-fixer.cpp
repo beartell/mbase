@@ -7,7 +7,7 @@
 #include <chrono>
 #include <signal.h>
 
-#define MBASE_TYPO_FIXER_VERSION "v1.0.0"
+#define MBASE_TYPO_FIXER_VERSION "v1.0.1"
 
 using namespace mbase;
 
@@ -127,6 +127,7 @@ public:
         mTotalProcessedBatch += out_proc_batch_length;
         if(mTotalProcessedBatch >= mInputTokens.size())
         {
+            printf("Started fixing...\n");
             mbase::decode_behavior_description dbd;
             dbd.mTokenAtMost = 1;
             dbd.mHaltOnWrite = false;
@@ -163,13 +164,12 @@ public:
 
         mGeneratedOutput += tokenDesc.mTokenString;
 
-        fflush(stdout);
-        printf("%s", tokenDesc.mTokenString.c_str());
         hostProcessor->next(dbd);
     }
 
     GENERIC on_finish(InfProcessorTextToText* out_processor, size_type out_total_token_size, InfProcessorTextToText::finish_state out_finish_state) override
     {
+        printf("Fixed text is written to file: %s\n", gSampleParams.mOutputFile.c_str());
         mbase::io_file iof;
         iof.open_file(mbase::from_utf8(gSampleParams.mOutputFile));
         iof.write_data(mGeneratedOutput);
@@ -366,9 +366,9 @@ int main(int argc, char** argv)
     fixerProcessor.release_inference_client();
     InfProcT2TDiagnostics& t2tDiag = fixerProcessor.get_diagnostics();
     printf("\n==== Processor diagnostics ====\n");
-    printf("| Context load delay         | %u ms\n", t2tDiag.loadTimeInMilliseconds);
-    printf("| Prompt processing rate(pp) | %f token/sec\n", t2tDiag.ppTokensPerSecond);
-    printf("| Token generation rate(tg)  | %f token/sec\n", t2tDiag.evalTokensPerSecond);
+    printf("| Context load delay         | %lu ms\n", t2tDiag.loadTimeInMilliseconds);
+    printf("| Prompt processing rate(pp) | %f tokens/sec\n", t2tDiag.ppTokensPerSecond);
+    printf("| Token generation rate(tg)  | %f tokens/sec\n", t2tDiag.evalTokensPerSecond);
 
     return 0;
 }

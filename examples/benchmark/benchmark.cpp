@@ -7,7 +7,7 @@
 #include <chrono>
 #include <signal.h>
 
-#define MBASE_SIMPLE_CONVERSATION_VERSION "v1.1.3"
+#define MBASE_BENCHMARK_VERSION "v1.0.0"
 
 using namespace mbase;
 
@@ -16,37 +16,13 @@ class ConversationProcessor;
 class ConversationClient;
 
 struct program_parameters {
-    program_parameters()
-    {
-        mTkSampler.mSamplerType = InfSamplerDescription::SAMPLER::TOP_K;
-        mTpSampler.mSamplerType = InfSamplerDescription::SAMPLER::TOP_P;
-        mMpSampler.mSamplerType = InfSamplerDescription::SAMPLER::MIN_P;
-        mPenalty.mSamplerType = InfSamplerDescription::SAMPLER::REPETITION;
-        mTmp.mSamplerType = InfSamplerDescription::SAMPLER::TEMP;
-
-        mTkSampler.mTopK = 40;
-        mTpSampler.mTopP = 1.0f;
-        mMpSampler.mMinP = 0.2f;
-        mPenalty.mRepetition.mPenaltyN = 64;
-        mPenalty.mRepetition.mRepeatPenalty = 1.0f;
-        mPenalty.mRepetition.mPenaltyLinefeed = true;
-        mPenalty.mRepetition.mPenaltyEos = false;
-        mTmp.mTemp = 0.1f;
-    }
     mbase::string mModelFile;
-    mbase::string mSystemPromptFile;
-    mbase::string mSystemPrompt;
     I32 mThreadCount = 16;
     I32 mBatchThreadCount = 8;
-    I32 mContextLength = 8192;
-    I32 mBatchLength = 4096;
+    I32 mContextLength = 2048;
+    I32 mBatchLength = 512;
     I32 mGpuLayer = 999;
-    bool mIsGreeady = false;
-    InfSamplerDescription mTkSampler;
-    InfSamplerDescription mTpSampler;
-    InfSamplerDescription mMpSampler;
-    InfSamplerDescription mPenalty;
-    InfSamplerDescription mTmp;
+    I32 mUserCount = 1;
 };
 
 mbase::vector<InfDeviceDescription> deviceDescription;
@@ -62,33 +38,32 @@ GENERIC catching_interrupt_signal(I32 out_sig_id)
 GENERIC print_usage()
 {
     printf("========================================\n");
-    printf("#Program name:      mbase-simple-conversation\n");
-    printf("#Version:           %s\n", MBASE_SIMPLE_CONVERSATION_VERSION);
-    printf("#Type:              Example\n");
+    printf("#Program name:      mbase-benchmark-t2t\n");
+    printf("#Version:           %s\n", MBASE_BENCHMARK_VERSION);
+    printf("#Type:              Utility, Example\n");
     printf("#Further docs: \n");
     printf("***** DESCRIPTION *****\n");
-    printf("An example program for creating a conversation with the given TextToText LLM model.\n");
-    printf("The given implementation is stable and shows the basics of non-blocking LLM inference.\n");
-    printf("The code section here will mostly be used by other example programs.\n");
+    printf("This is a utility program to measure the performance of the given T2T LLM.\n");
+    printf("The program will do an inference based-off of the given context size, batch length, and n predict, simultaneusly on multiple users at the same time.\n");
+    printf("At the end of the inference, it will display the following metrics:\n");
+    printf("- The time it took to initialize the context in milliseconds.\n");
+    printf("- Prompt processing tokens per second(pp t/s).\n");
+    printf("- Token generation tokens per second(tg t/s).\n");
+    printf("### NOTE ###\n");
+    printf("If the context kv cache is filled and there still are tokens to predict, they will not be processed, since we are not doing context window shifting.\n");
     printf("========================================\n\n");
-    printf("Usage: mbase-simple-conversation <model_path> *[<option> [<value>]]\n");
+    printf("Usage: mbase-benchmark-t2t <model_path> *[<option> [<value>]]\n");
     printf("Options: \n\n");
     printf("--help                            Print usage.\n");
     printf("-v, --version                     Shows program version.\n");
-    printf("-sys, --system-prompt <str>       LLM system prompt (if this option is given after -fsys, it will overwrite it).\n");
-    printf("-fsys, --system-prompt-file <str> LLM system prompt file (if this option is given after -sys, it will overwrite it).\n");
     printf("-t, --thread-count <int>          Amount of threads to use for output processing (default=16).\n");
     printf("-bt, --batch-thread-count <int>   Amount of threads to use for initial batch processing (default=8).\n");
-    printf("-c, --context-length <int>        Total context length (default=8192).\n");
-    printf("-b, --batch-length <int>          Batch length (default=4096).\n");
+    printf("-c, --context-length <int>        Total context length (default=2048).\n");
+    printf("-b, --batch-length <int>          Batch length (default=512).\n");
     printf("-gl, --gpu-layers <int>           GPU layers to offload to (default=999).\n");
-    printf("-tk, --top-k <int>                Top k tokens to pick from (default=20, min=1, max=<model_vocabulary_size>).\n");
-    printf("-tp, --top-p <float>              Token probability at most (default=1.0, min=0.1, max=1.0).\n");
-    printf("-mp, --min-p <float>              Token probability at least (default=0.3), min=0.1, max=1.0.\n");
-    printf("-pn, --penatly-n <int>            Apply repetition penalty on last 'n' tokens (default=64).\n");
-    printf("-pr, --penalty-repeat <float>     Discourages repeating exact tokens based on their past presence (default=1.0, min=1.0, max=2.0).\n");
-    printf("-temp, --temperature <float>      Higher values increase the randomness (default=0.1, min=0.1, max=1.4).\n");
-    printf("-gr, --greedy                     Ignore all sampling techniques, pick the most probable token. (default=false).\n\n");
+    printf("-np, --n-predict <int>            Number of tokens to predict (default=256).\n");
+    printf("-uc, --user-count <int>           Number of users that will be processed in parallel. (default=1)\n");
+    printf("-jout, --json-output-path <str>   If the json output path is specified, result will be written there in file(mbase_bench.json) (default='').\n\n");
 }
 
 class ConversationModel : public InfModelTextToText {
@@ -220,6 +195,11 @@ private:
 
 int main(int argc, char** argv)
 {
+    auto result = log2(954);
+    result = ceil(result);
+    std::cout << "Top near power: " << pow(2, result) << std::endl;
+
+    return 0;   
     if(argc < 2)
     {
         printf("ERR: Model file is not supplied\n");
@@ -240,34 +220,28 @@ int main(int argc, char** argv)
         mbase::string argumentString = argv[i];
         if(argumentString == "-v" || argumentString == "--version")
         {
-            printf("MBASE Simple conversation %s\n", MBASE_SIMPLE_CONVERSATION_VERSION);
+            printf("MBASE Benchmark %s\n", MBASE_SIMPLE_CONVERSATION_VERSION);
             return 0;
-        }
-
-        else if(argumentString == "-sys" || argumentString == "--system-prompt")
-        {
-            mbase::argument_get<mbase::string>::value(i, argc, argv, gSampleParams.mSystemPrompt);
-        }
-
-        else if(argumentString == "-fsys" || argumentString == "--system-prompt-file")
-        {
-            mbase::argument_get<mbase::string>::value(i, argc, argv, gSampleParams.mSystemPromptFile);
-            if(!mbase::is_file_valid(mbase::from_utf8(gSampleParams.mSystemPromptFile)))
-            {
-                printf("ERR: Can't open system prompt file: %s\n", gSampleParams.mSystemPromptFile.c_str());
-                return 1;
-            }
-            gSampleParams.mSystemPrompt = mbase::read_file_as_string(mbase::from_utf8(gSampleParams.mSystemPromptFile));
         }
 
         else if(argumentString == "--thread-count" || argumentString == "-t")
         {
             mbase::argument_get<I32>::value(i, argc, argv, gSampleParams.mThreadCount);
+            if(gSampleParams.mThreadCount <= 0)
+            {
+                printf("ERR: Thread must be at least 1 but given: %d\n", gSampleParams.mThreadCount);
+                return 1;   
+            }
         }
 
         else if(argumentString == "--batch-thread-count" || argumentString == "-bt")
         {
             mbase::argument_get<I32>::value(i, argc, argv, gSampleParams.mBatchThreadCount);
+            if(gSampleParams.mBatchThreadCount <= 0)
+            {
+                printf("ERR: Thread must be at least 1 but given: %d\n", gSampleParams.mBatchThreadCount);
+                return 1;
+            }
         }
 
         else if(argumentString == "--context-length" || argumentString == "-c")
@@ -285,60 +259,18 @@ int main(int argc, char** argv)
             mbase::argument_get<I32>::value(i, argc, argv, gSampleParams.mGpuLayer);
         }
 
-        else if(argumentString == "-tk" || argumentString == "--top-k")
+        else if(argumentString == "--user-count" || argumentString == "-uc")
         {
-            mbase::argument_get<U32>::value(i, argc, argv, gSampleParams.mTkSampler.mTopK);
+            
         }
 
-        else if(argumentString == "-tp" || argumentString == "--top-p")
-        {
-            mbase::argument_get<F32>::value(i, argc, argv, gSampleParams.mTpSampler.mTopP);
-        }
-
-        else if(argumentString == "-mp" || argumentString == "--min-p")
-        {
-            mbase::argument_get<F32>::value(i, argc, argv, gSampleParams.mMpSampler.mMinP);
-        }
-
-        else if(argumentString == "-pn" || argumentString == "--penalty-n")
-        {
-            mbase::argument_get<U32>::value(i, argc, argv, gSampleParams.mPenalty.mRepetition.mPenaltyN);
-        }
-
-        else if(argumentString == "-pr" || argumentString == "--penalty-repeat")
-        {
-            mbase::argument_get<F32>::value(i, argc, argv, gSampleParams.mPenalty.mRepetition.mRepeatPenalty);
-        }
-
-        else if(argumentString == "-temp" || argumentString == "--temperature")
-        {
-            mbase::argument_get<F32>::value(i, argc, argv, gSampleParams.mTmp.mTemp);
-        }
-
-        else if(argumentString == "-gr" || argumentString == "--greedy")
-        {
-            gSampleParams.mIsGreeady = true;
-        }
-        
         else if(argumentString == "--help")
         {
             print_usage();
             return 1;
         }
     }
-
-    if(gSampleParams.mThreadCount <= 0)
-    {
-        printf("ERR: Thread must be at least 1 but given: %d\n", gSampleParams.mThreadCount);
-        return 1;   
-    }
     
-    if(gSampleParams.mBatchThreadCount <= 0)
-    {
-        printf("ERR: Batch thread must be at least 1 but given: %d\n", gSampleParams.mBatchThreadCount);
-        return 1;
-    }
-
     deviceDescription = inf_query_devices();
 
     ConversationModel cnvModel;
@@ -458,9 +390,9 @@ int main(int argc, char** argv)
     cnvProcessor.release_inference_client();
     InfProcT2TDiagnostics& t2tDiag = cnvProcessor.get_diagnostics();
     printf("\n==== Processor diagnostics ====\n");
-    printf("| Context load delay         | %lu ms\n", t2tDiag.loadTimeInMilliseconds);
-    printf("| Prompt processing rate(pp) | %f tokens/sec\n", t2tDiag.ppTokensPerSecond);
-    printf("| Token generation rate(tg)  | %f tokens/sec\n", t2tDiag.evalTokensPerSecond);
+    printf("| Context load delay         | %u ms\n", t2tDiag.loadTimeInMilliseconds);
+    printf("| Prompt processing rate(pp) | %f token/sec\n", t2tDiag.ppTokensPerSecond);
+    printf("| Token generation rate(tg)  | %f token/sec\n", t2tDiag.evalTokensPerSecond);
 
     return 0;
 }
