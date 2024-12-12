@@ -6,7 +6,7 @@
 #include <chrono>
 #include <signal.h>
 
-#define MBASE_SIMPLE_CONVERSATION_VERSION "v1.0.0"
+#define MBASE_SIMPLE_CONVERSATION_VERSION "v1.1.2"
 
 using namespace mbase;
 
