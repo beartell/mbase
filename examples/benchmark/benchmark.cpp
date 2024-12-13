@@ -281,17 +281,25 @@ int main(int argc, char** argv)
     }
 
     signal(SIGINT, catching_interrupt_signal);
-    llama_model* rawModel = benchModel.get_raw_model();
+    
+    SIZE_T modelSize = 0;
+    U32 embeddingLength = 0;
+    U32 headCount = 0;
+    U32 layerCount = 0;
+    benchModel.get_size(modelSize);
+    benchModel.get_embedding_length(embeddingLength);
+    benchModel.get_head_count(headCount);
+    benchModel.get_layer_count(layerCount);
     mbase::string modelName;
-    F32 tmpModelSize = (llama_model_size(rawModel) / (F32)(1024*1024*1024));
+    F32 tmpModelSize = (modelSize / (F32)(1024*1024*1024));
     benchModel.get_model_name(modelName);
     printf("==== Session Information ====\n\n");
     printf("- Model Information: \n");
     printf("\tName: %s\n", modelName.c_str());
     printf("\tModel size: %.2f %s", tmpModelSize, "GB\n");
-    printf("\tEmbedding length: %d\n", llama_n_embd(rawModel));
-    printf("\tHead count: %d\n", llama_n_head(rawModel));
-    printf("\tLayer count: %d\n", llama_n_layer(rawModel));
+    printf("\tEmbedding length: %d\n", embeddingLength);
+    printf("\tHead count: %d\n", headCount);
+    printf("\tLayer count: %d\n", layerCount);
     printf("- Context length: %u\n", gSampleParams.mContextLength);
     printf("- Batch size: %u\n", gSampleParams.mBatchLength);
     printf("- Batch processing threads: %u\n", gSampleParams.mBatchThreadCount);

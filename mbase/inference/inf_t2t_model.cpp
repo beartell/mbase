@@ -28,9 +28,6 @@ InfModelTextToText::InfModelTextToText() :
 	mModelSize(0),
 	mOccupiedContext(0),
 	mTotalContextSize(0),
-	mBlockCount(0),
-	mHeadCount(0),
-	mEmbeddingLength(0),
 	mQuantizationCoefficient(0.0f),
 	mIsEmbeddingModel(false)
 {
@@ -121,13 +118,6 @@ InfModelTextToText::flags InfModelTextToText::get_architecture(mbase::string& ou
 	return flags::INF_MODEL_SUCCESS;
 }
 
-InfModelTextToText::flags InfModelTextToText::get_embedding_length(U32& out_length)
-{
-	MBASE_INF_T2T_MODEL_RETURN_UNINITIALIZED;
-	out_length = mEmbeddingLength;
-	return flags::INF_MODEL_SUCCESS;
-}
-
 InfModelTextToText::flags InfModelTextToText::get_sys_start(mbase::string& out_start)
 {
 	MBASE_INF_T2T_MODEL_RETURN_UNINITIALIZED;
@@ -215,7 +205,28 @@ InfModelTextToText::flags InfModelTextToText::get_vocab_count(I32& out_count)
 InfModelTextToText::flags InfModelTextToText::get_size(size_type& out_size)
 {
 	MBASE_INF_T2T_MODEL_RETURN_UNINITIALIZED;
-	out_size = 0; // COME BACK HERE LATER
+	out_size = llama_model_size(mModel);
+	return flags::INF_MODEL_SUCCESS;
+}
+
+InfModelTextToText::flags InfModelTextToText::get_embedding_length(U32& out_length)
+{
+	MBASE_INF_T2T_MODEL_RETURN_UNINITIALIZED;
+	out_length = llama_n_embd(mModel);
+	return flags::INF_MODEL_SUCCESS;
+}
+
+InfModelTextToText::flags InfModelTextToText::get_head_count(U32& out_head_count)
+{
+	MBASE_INF_T2T_MODEL_RETURN_UNINITIALIZED;
+	out_head_count = llama_n_head(mModel);
+	return flags::INF_MODEL_SUCCESS;
+}
+
+InfModelTextToText::flags InfModelTextToText::get_layer_count(U32& out_layer_count)
+{
+	MBASE_INF_T2T_MODEL_RETURN_UNINITIALIZED;
+	out_layer_count = llama_n_layer(mModel);
 	return flags::INF_MODEL_SUCCESS;
 }
 
@@ -633,7 +644,6 @@ GENERIC InfModelTextToText::_initialize_model()
 		mUserEnd
 	);
 	
-	tempConfigurator.get_key(mModelArchitecture + ".embedding_length", mEmbeddingLength);
 	// Before diving into loading model, 
 	// calculate how much memory we need to load the model 
 	// if there is not enough memory for loading the model, abort.

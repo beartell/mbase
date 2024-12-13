@@ -44,7 +44,6 @@ public:
 	flags get_special_tokens(mbase::vector<mbase::string>& out_tokens);
 	flags get_model_name(mbase::string& out_name);
 	flags get_architecture(mbase::string& out_architecture);
-	flags get_embedding_length(U32& out_length);
 	flags get_sys_start(mbase::string& out_start);
 	flags get_sys_start(mbase::vector<inf_text_token>& out_tokens);
 	flags get_assistant_start(mbase::string& out_start);
@@ -58,6 +57,9 @@ public:
 	flags get_lf_token(inf_text_token& out_token);
 	flags get_vocab_count(I32& out_count);
 	flags get_size(size_type& out_size);
+	flags get_embedding_length(U32& out_embed_length);
+	flags get_head_count(U32& out_head_count);
+	flags get_layer_count(U32& out_layer_count);
 	bool is_token_eof_generation(inf_text_token in_token);
 	flags is_token_special(const mbase::string& in_string);
 	flags is_token_control(inf_text_token in_token);
@@ -118,9 +120,6 @@ private:
 	U64 mModelSize;
 	U32 mOccupiedContext;
 	U32 mTotalContextSize;
-	U32 mBlockCount;
-	U32 mHeadCount;
-	U32 mEmbeddingLength;
 	F32 mQuantizationCoefficient;
 	bool mIsEmbeddingModel; // Not supported if (llama_model_has_encoder(model) && llama_model_has_decoder(model) is true)
 };
