@@ -8,7 +8,7 @@
 #include <chrono>
 #include <signal.h>
 
-#define MBASE_BENCHMARK_VERSION "v1.2.0"
+#define MBASE_BENCHMARK_VERSION "v1.3.0"
 
 using namespace mbase;
 
@@ -19,6 +19,7 @@ class BenchmarkClient;
 struct program_parameters {
     mbase::string mModelFile;
     mbase::string mJsonOut;
+    mbase::string mMdOut;
     I32 mThreadCount = 16;
     I32 mBatchThreadCount = 8;
     I32 mContextLength = 768;
@@ -50,26 +51,30 @@ GENERIC print_usage()
     printf("***** DESCRIPTION *****\n");
     printf("This is a utility program to measure the performance of the given T2T LLM.\n");
     printf("The program will do an inference based-off of the given context size, batch length, and n predict, simultaneusly on multiple users at the same time.\n");
-    printf("At the end of the inference, it will display the following metrics:\n");
-    printf("- The time it took to initialize the context in milliseconds.\n");
-    printf("- Prompt processing tokens per second(pp t/s).\n");
-    printf("- Token generation tokens per second(tg t/s).\n");
+    printf("At the end of the inference, it will display the following metrics along with the model and session information:\n");
+    printf("- Total elapsed time in seconds.\n");
+    printf("- Average FPS.\n");
+    printf("- For each processor:\n");
+    printf("\tThe time it took to initialize the context in milliseconds.\n");
+    printf("\tPrompt processing tokens per second(pp t/s).\n");
+    printf("\tToken generation tokens per second(tg t/s).\n");
     printf("### NOTE ###\n");
     printf("If the context kv cache is filled and there still are tokens to predict, they will not be processed, since we are not doing context window shifting.\n");
     printf("========================================\n\n");
     printf("Usage: mbase-benchmark-t2t <model_path> *[<option> [<value>]]\n");
     printf("Options: \n\n");
-    printf("-h, --help                        Print usage.\n");
-    printf("-v, --version                     Shows program version.\n");
-    printf("-t, --thread-count <int>          Amount of threads to use for output processing (default=16).\n");
-    printf("-bt, --batch-thread-count <int>   Amount of threads to use for initial batch processing (default=8).\n");
-    printf("-c, --context-length <int>        Total context length (default=2048).\n");
-    printf("-b, --batch-length <int>          Batch length (default=512).\n");
-    printf("-gl, --gpu-layers <int>           GPU layers to offload to (default=999).\n");
-    printf("-np, --n-predict <int>            Number of tokens to predict (default=256).\n");
-    printf("-uc, --user-count <int>           Number of users that will be processed in parallel. (default=1)\n");
-    printf("-fps, --frame-per-second <int>    Max FPS of the main loop. This is for measuring the effects of inference engine on main application loop(default=500, min=10, max=1000).\n");
-    printf("-jout, --json-output-path <str>   If the json output path is specified, result will be written there in file(mbase_bench.json) (default='').\n\n");
+    printf("-h, --help                           Print usage.\n");
+    printf("-v, --version                        Shows program version.\n");
+    printf("-t, --thread-count <int>             Amount of threads to use for output processing (default=16).\n");
+    printf("-bt, --batch-thread-count <int>      Amount of threads to use for initial batch processing (default=8).\n");
+    printf("-c, --context-length <int>           Total context length (default=2048).\n");
+    printf("-b, --batch-length <int>             Batch length (default=512).\n");
+    printf("-gl, --gpu-layers <int>              GPU layers to offload to (default=999).\n");
+    printf("-np, --n-predict <int>               Number of tokens to predict (default=256).\n");
+    printf("-uc, --user-count <int>              Number of users that will be processed in parallel. (default=1)\n");
+    printf("-fps, --frame-per-second <int>       Max FPS of the main loop. This is for measuring the effects of inference engine on main application loop(default=500, min=10, max=1000).\n");
+    printf("-jout, --json-output-path <str>      If the json output path is specified, result will be written there in file(mbase_bench.json) (default='').\n");
+    printf("-mdout, --markdown-output-path <str> If the markdown output path is specified, result will be written there in file(mbase_bench.md) (default='').\n\n");
 }
 
 class BenchmarkModel : public InfModelTextToText {
@@ -396,7 +401,7 @@ int main(int argc, char** argv)
     for(BenchmarkProcessor* tmpProc : processorsList)
     {
         InfProcT2TDiagnostics& t2tDiag = tmpProc->get_diagnostics();
-        printf("\t%lld\t\t%.3f\t\t%.3f\n", t2tDiag.loadTimeInMilliseconds, t2tDiag.ppTokensPerSecond, t2tDiag.evalTokensPerSecond);
+        printf("%lld\t\t%.3f\t\t%.3f\n", t2tDiag.loadTimeInMilliseconds, t2tDiag.ppTokensPerSecond, t2tDiag.evalTokensPerSecond);
         tmpProc->release_inference_client_stacked();
     }
 
