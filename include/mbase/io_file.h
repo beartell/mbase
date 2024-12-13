@@ -298,7 +298,7 @@ typename io_file::size_type io_file::write_data(const mbase::string& in_src)
 
 #ifdef MBASE_PLATFORM_WINDOWS
 	DWORD dataWritten = 0;
-	size_type writeResult = WriteFile(mRawContext.raw_handle, in_src.c_str(), in_src.size() + 1, &dataWritten, nullptr);
+	size_type writeResult = WriteFile(mRawContext.raw_handle, in_src.c_str(), in_src.size(), &dataWritten, nullptr);
 
 	if (!writeResult)
 	{

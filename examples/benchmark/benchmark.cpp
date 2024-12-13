@@ -3,6 +3,7 @@
 #include <mbase/inference/inf_t2t_client.h>
 #include <mbase/argument_get_value.h>
 #include <mbase/filesystem.h>
+#include <mbase/json/json.h>
 #include <math.h>
 #include <chrono>
 #include <signal.h>
@@ -17,6 +18,7 @@ class BenchmarkClient;
 
 struct program_parameters {
     mbase::string mModelFile;
+    mbase::string mJsonOut;
     I32 mThreadCount = 16;
     I32 mBatchThreadCount = 8;
     I32 mContextLength = 768;
@@ -223,14 +225,19 @@ int main(int argc, char** argv)
             mbase::argument_get<I32>::value(i, argc, argv, gSampleParams.mPredictCount);
         }
 
+        else if(argumentString == "--user-count" || argumentString == "-uc")
+        {
+            mbase::argument_get<I32>::value(i, argc, argv, gSampleParams.mUserCount);
+        }
+
         else if(argumentString == "-fps" || argumentString == "--frame-per-second")
         {
             mbase::argument_get<I32>::value(i, argc, argv, gSampleParams.mFps);
         }
 
-        else if(argumentString == "--user-count" || argumentString == "-uc")
+        else if(argumentString == "-jout" || argumentString == "--json-output-path")
         {
-            mbase::argument_get<I32>::value(i, argc, argv, gSampleParams.mUserCount);
+            mbase::argument_get<mbase::string>::value(i, argc, argv, gSampleParams.mJsonOut);
         }
     }
     
@@ -393,6 +400,76 @@ int main(int argc, char** argv)
         tmpProc->release_inference_client_stacked();
     }
 
+    if(gSampleParams.mJsonOut.size())
+    {
+        gSampleParams.mJsonOut.push_back('/');
+        mbase::string jsonFile = gSampleParams.mJsonOut + "mbase_bench.json";
+
+        mbase::Json jsOut;
+        jsOut.setObject();
+        jsOut["model_information"]["name"] = modelName;
+        jsOut["model_information"]["model_size_gb"] = tmpModelSize;
+        jsOut["model_information"]["embedding_length"] = embeddingLength;
+        jsOut["model_information"]["head_count"] = headCount;
+        jsOut["model_information"]["layer_count"] = layerCount;
+        jsOut["session_information"]["context_length"] = gSampleParams.mContextLength;
+        jsOut["session_information"]["batch_size"] = gSampleParams.mBatchLength;
+        jsOut["session_information"]["batch_proc_threads"] = gSampleParams.mBatchThreadCount;
+        jsOut["session_information"]["generation_threads"] = gSampleParams.mThreadCount;
+        jsOut["session_information"]["user_count"] = gSampleParams.mUserCount;
+        jsOut["session_information"]["predict"] = gSampleParams.mPredictCount;
+
+        mbase::Json computeDevices;
+        computeDevices.setArray();
+
+        I32 i = 0;
+
+        for(InfDeviceDescription& tmpDescription : deviceDescription)
+        {
+            mbase::string typeString;
+            switch (tmpDescription.get_device_type())
+            {
+            case InfDeviceDescription::device_type::CPU:
+                typeString = "CPU";
+                break;
+            case InfDeviceDescription::device_type::GPU:
+                typeString = "GPU";
+                break;
+            case InfDeviceDescription::device_type::CUSTOM:
+                typeString = "CUSTOM";
+                break;
+            case InfDeviceDescription::device_type::UNKNOWN:
+                typeString = "UNKNOWN";
+                break;
+            }
+            computeDevices[i]["device_name"] = tmpDescription.get_device_description();
+            computeDevices[i]["type"] = typeString;
+            ++i;
+        }
+        i = 0;
+        jsOut["session_information"]["compute_devices"] = computeDevices;
+        jsOut["useful_metrics"]["total_elapsed_time_seconds"] = std::chrono::duration_cast<std::chrono::milliseconds>(programEndTime - programBeginTime).count() / 1000.0f;
+        jsOut["useful_metrics"]["average_fps"] = diagnosticFps / (F32)nonResetFrameCounter;
+        
+        mbase::Json processorDiagnostics;
+        processorDiagnostics.setArray();
+
+        for(BenchmarkProcessor* tmpProc : processorsList)
+        {
+            InfProcT2TDiagnostics& t2tDiag = tmpProc->get_diagnostics();
+            processorDiagnostics[i]["load_delay_ms"] = t2tDiag.loadTimeInMilliseconds;
+            processorDiagnostics[i]["pp tokens per sec"] = t2tDiag.ppTokensPerSecond;
+            processorDiagnostics[i]["tg tokens per sec"] = t2tDiag.evalTokensPerSecond;
+            ++i;
+        }
+
+        jsOut["processor_diagnostics"] = processorDiagnostics;
+
+        mbase::string outString = jsOut.toStringPretty();
+        mbase::io_file iof;
+        iof.open_file(mbase::from_utf8(jsonFile));
+        iof.write_data(outString);
+    }
 
     return 0;
 }
