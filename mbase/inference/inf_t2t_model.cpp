@@ -648,7 +648,7 @@ GENERIC InfModelTextToText::_initialize_model()
 		mIsInitFailed = true;
 		return;
 	}
-
+	
 	if(llama_model_has_encoder(mModel) && llama_model_has_decoder(mModel))
 	{
 		mIsEmbeddingModel = false;

@@ -7,27 +7,29 @@
 #include <chrono>
 #include <signal.h>
 
-#define MBASE_BENCHMARK_VERSION "v1.0.0"
+#define MBASE_BENCHMARK_VERSION "v1.1.0"
 
 using namespace mbase;
 
-class ConversationModel;
-class ConversationProcessor;
-class ConversationClient;
+class BenchmarkModel;
+class BenchmarkProcessor;
+class BenchmarkClient;
 
 struct program_parameters {
     mbase::string mModelFile;
     I32 mThreadCount = 16;
     I32 mBatchThreadCount = 8;
-    I32 mContextLength = 2048;
+    I32 mContextLength = 768;
     I32 mBatchLength = 512;
     I32 mGpuLayer = 999;
+    I32 mPredictCount = 256;
     I32 mUserCount = 1;
 };
 
 mbase::vector<InfDeviceDescription> deviceDescription;
 program_parameters gSampleParams;
 bool gIsProgramRunning = true;
+I32 gFinishedProcessors = 0;
 
 GENERIC catching_interrupt_signal(I32 out_sig_id)
 {
@@ -54,7 +56,7 @@ GENERIC print_usage()
     printf("========================================\n\n");
     printf("Usage: mbase-benchmark-t2t <model_path> *[<option> [<value>]]\n");
     printf("Options: \n\n");
-    printf("--help                            Print usage.\n");
+    printf("-h, --help                        Print usage.\n");
     printf("-v, --version                     Shows program version.\n");
     printf("-t, --thread-count <int>          Amount of threads to use for output processing (default=16).\n");
     printf("-bt, --batch-thread-count <int>   Amount of threads to use for initial batch processing (default=8).\n");
@@ -66,7 +68,7 @@ GENERIC print_usage()
     printf("-jout, --json-output-path <str>   If the json output path is specified, result will be written there in file(mbase_bench.json) (default='').\n\n");
 }
 
-class ConversationModel : public InfModelTextToText {
+class BenchmarkModel : public InfModelTextToText {
 public:
     GENERIC on_initialize_fail(init_fail_code out_fail_code) override{}
     GENERIC on_initialize() override{}
@@ -74,8 +76,9 @@ public:
 private:
 };
 
-class ConversationProcessor : public InfProcessorTextToText {
+class BenchmarkProcessor : public InfProcessorTextToText {
 public:
+    BenchmarkProcessor() : mNPredict(gSampleParams.mPredictCount) {}
     GENERIC on_initialize() override{}
     GENERIC on_initialize_fail(last_fail_code out_code) override
     {
@@ -85,71 +88,25 @@ public:
         exit(1);
     }
     GENERIC on_destroy() override{}
+    GENERIC decrement_predict() {--mNPredict;}
+    I32 get_predict_count(){ return mNPredict; }
 private:
+    I32 mNPredict = 0;
 };
 
-class ConversationClient : public InfClientTextToText {
+class BenchmarkClient : public InfClientTextToText {
 public:
-    ConversationClient(const mbase::string& in_system_prompt)
-    {
-        // Setting up system prompt on constructor
-        if(in_system_prompt.size())
-        {
-            mSystemPromptString = in_system_prompt;
-            this->add_message(in_system_prompt, mbase::context_role::SYSTEM, mSystemPromptId);
-        }
-    }
-
-    GENERIC add_assistant_message(const mbase::string& in_message)
-    {
-        U32 outMessageId = 0;
-        this->add_message(in_message, mbase::context_role::ASSISTANT, outMessageId);
-        mChatHistory.push_back(outMessageId);
-    }
-
-    GENERIC add_user_message(const mbase::string& in_message)
-    {
-        U32 outMessageId = 0;
-        this->add_message(in_message, mbase::context_role::USER, outMessageId);
-        mChatHistory.push_back(outMessageId);
-    }
-
-    GENERIC start_conversation(ConversationProcessor* in_processor)
-    {
-        printf("User >> ");
-        mbase::string userPrompt = mbase::get_line();
-        if(userPrompt.size())
-        {
-            add_user_message(userPrompt);
-        }
-        mbase::vector<U32> messageArray(mChatHistory.begin(), mChatHistory.end());
-        mbase::vector<context_line> contextLines;
-        if(mSystemPromptId)
-        {
-            messageArray.insert(messageArray.begin(), mSystemPromptId);
-        }
-
-        this->get_message_array(messageArray.data(), messageArray.size(), contextLines);
-
-        mbase::inf_text_token_vector tokenVector;
-        in_processor->tokenize_input(contextLines.data(), contextLines.size(), tokenVector);
-        if(in_processor->execute_input(tokenVector) == ConversationProcessor::flags::INF_PROC_ERR_INPUT_EXCEED_TOKEN_LIMIT)
-        {   
-        }
-    }
-
     GENERIC on_register(InfProcessorBase* out_processor) override
     {
-        ConversationProcessor* hostProcessor = static_cast<ConversationProcessor*>(out_processor);
-        printf("System >> %s\n", mSystemPromptString.c_str());
-        start_conversation(hostProcessor);
     }
 
-    GENERIC on_unregister(InfProcessorBase* out_processor) override{}
+    GENERIC on_unregister(InfProcessorBase* out_processor) override
+    {
+    }
     
     GENERIC on_batch_processed(InfProcessorTextToText* out_processor, const U32& out_proc_batch_length) override
     {
-        ConversationProcessor* hostProcessor = static_cast<ConversationProcessor*>(out_processor);
+        BenchmarkProcessor* hostProcessor = static_cast<BenchmarkProcessor*>(out_processor);
         mbase::decode_behavior_description dbd;
         dbd.mTokenAtMost = 1;
         dbd.mHaltOnWrite = false;
@@ -158,48 +115,46 @@ public:
 
     GENERIC on_write(InfProcessorTextToText* out_processor, const inf_text_token_vector& out_token, bool out_is_finish) override
     {
+        BenchmarkProcessor* hostProcessor = static_cast<BenchmarkProcessor*>(out_processor);
         if(out_is_finish)
         {
             return;
         }
+        else
+        {
+            if(!hostProcessor->get_predict_count())
+            {
+                hostProcessor->stop_processor();
+                gFinishedProcessors++;
+                if(gFinishedProcessors == gSampleParams.mUserCount)
+                {
+                    gIsProgramRunning = false;
+                }
+            }
+        }
 
-        ConversationProcessor* hostProcessor = static_cast<ConversationProcessor*>(out_processor);
+        hostProcessor->decrement_predict();
         mbase::inf_token_description tokenDesc;
         mbase::decode_behavior_description dbd;
         dbd.mTokenAtMost = 1;
         dbd.mHaltOnWrite = false;
-
-        hostProcessor->token_to_description(out_token[0], tokenDesc);
-
-        mGeneratedOutput += tokenDesc.mTokenString;
-
-        fflush(stdout);
-        printf("%s", tokenDesc.mTokenString.c_str());
         hostProcessor->next(dbd);
     }
 
     GENERIC on_finish(InfProcessorTextToText* out_processor, size_type out_total_token_size, InfProcessorTextToText::finish_state out_finish_state) override
     {
-        printf("\n\n");
-        ConversationProcessor* hostProcessor = static_cast<ConversationProcessor*>(out_processor);
-        add_assistant_message(mGeneratedOutput);
-        mGeneratedOutput.clear();
-        start_conversation(hostProcessor);
+        out_processor->release_inference_client_stacked();
+        gFinishedProcessors++;
+        if(gFinishedProcessors == gSampleParams.mUserCount)
+        {
+            gIsProgramRunning = false;
+        }
     }
 private:
-    mbase::string mSystemPromptString;
-    mbase::string mGeneratedOutput;
-    U32 mSystemPromptId = 0;
-    mbase::vector<U32> mChatHistory;
 };
 
 int main(int argc, char** argv)
 {
-    auto result = log2(954);
-    result = ceil(result);
-    std::cout << "Top near power: " << pow(2, result) << std::endl;
-
-    return 0;   
     if(argc < 2)
     {
         printf("ERR: Model file is not supplied\n");
@@ -208,6 +163,12 @@ int main(int argc, char** argv)
     }
 
     mbase::argument_get<mbase::string>::value(0, argc, argv, gSampleParams.mModelFile);
+
+    if(gSampleParams.mModelFile == "-h" || gSampleParams.mModelFile == "--help")
+    {
+        print_usage();
+        return 1;
+    }
     
     if(!mbase::is_file_valid(mbase::from_utf8(gSampleParams.mModelFile)))
     {
@@ -218,30 +179,26 @@ int main(int argc, char** argv)
     for(I32 i = 2; i < argc; i++)
     {
         mbase::string argumentString = argv[i];
-        if(argumentString == "-v" || argumentString == "--version")
+        if(argumentString == "--help" || argumentString == "-h")
         {
-            printf("MBASE Benchmark %s\n", MBASE_SIMPLE_CONVERSATION_VERSION);
+            print_usage();
+            return 1;
+        }
+
+        else if(argumentString == "-v" || argumentString == "--version")
+        {
+            printf("MBASE Benchmark %s\n", MBASE_BENCHMARK_VERSION);
             return 0;
         }
 
         else if(argumentString == "--thread-count" || argumentString == "-t")
         {
             mbase::argument_get<I32>::value(i, argc, argv, gSampleParams.mThreadCount);
-            if(gSampleParams.mThreadCount <= 0)
-            {
-                printf("ERR: Thread must be at least 1 but given: %d\n", gSampleParams.mThreadCount);
-                return 1;   
-            }
         }
 
         else if(argumentString == "--batch-thread-count" || argumentString == "-bt")
         {
             mbase::argument_get<I32>::value(i, argc, argv, gSampleParams.mBatchThreadCount);
-            if(gSampleParams.mBatchThreadCount <= 0)
-            {
-                printf("ERR: Thread must be at least 1 but given: %d\n", gSampleParams.mBatchThreadCount);
-                return 1;
-            }
         }
 
         else if(argumentString == "--context-length" || argumentString == "-c")
@@ -259,66 +216,88 @@ int main(int argc, char** argv)
             mbase::argument_get<I32>::value(i, argc, argv, gSampleParams.mGpuLayer);
         }
 
-        else if(argumentString == "--user-count" || argumentString == "-uc")
+        else if(argumentString == "-np" || argumentString == "--n-predict")
         {
-            
+            mbase::argument_get<I32>::value(i, argc, argv, gSampleParams.mPredictCount);
         }
 
-        else if(argumentString == "--help")
+        else if(argumentString == "--user-count" || argumentString == "-uc")
         {
-            print_usage();
-            return 1;
+            mbase::argument_get<I32>::value(i, argc, argv, gSampleParams.mUserCount);
         }
     }
     
+    if(gSampleParams.mThreadCount <= 0)
+    {
+        printf("ERR: Thread must be at least 1 but given: %d\n", gSampleParams.mThreadCount);
+        return 1;   
+    }
+
+    if(gSampleParams.mBatchThreadCount <= 0)
+    {
+        printf("ERR: Batch thread must be at least 1 but given: %d\n", gSampleParams.mBatchThreadCount);
+        return 1;
+    }
+
     deviceDescription = inf_query_devices();
 
-    ConversationModel cnvModel;
-    ConversationProcessor cnvProcessor;
-    ConversationClient cnvClient(gSampleParams.mSystemPrompt);
+    BenchmarkModel benchModel;
+    BenchmarkClient benchClient;
+    mbase::vector<BenchmarkProcessor*> processorsList; 
+    for(I32 i = 0; i < gSampleParams.mUserCount; i++)
+    {
+        processorsList.push_back(new BenchmarkProcessor); // os will release the resource on program termination anyways.
+    }
+
+    benchModel.initialize_model_ex_sync(mbase::from_utf8(gSampleParams.mModelFile), 1200000, gSampleParams.mGpuLayer, true, true, deviceDescription);
     
-    cnvModel.initialize_model_ex_sync(mbase::from_utf8(gSampleParams.mModelFile), 1200000, gSampleParams.mGpuLayer, true, true, deviceDescription);
-    
-    if(!cnvModel.is_initialized())
+    if(!benchModel.is_initialized())
     {
         printf("ERR: Unable to initialize model\n");
         return 1;
     }
 
-    inf_sampling_set samplingSet;
-    if(!gSampleParams.mIsGreeady)
-    {
-        samplingSet.insert(gSampleParams.mTkSampler);
-        samplingSet.insert(gSampleParams.mTpSampler);
-        samplingSet.insert(gSampleParams.mMpSampler);
-        samplingSet.insert(gSampleParams.mPenalty);
-        samplingSet.insert(gSampleParams.mTmp);
-    }
+    I32 i = 0;
 
-    cnvModel.register_context_process(
-        &cnvProcessor,
-        gSampleParams.mContextLength,
-        gSampleParams.mBatchLength,
-        gSampleParams.mThreadCount,
-        gSampleParams.mBatchThreadCount,
-        true,
-        {}
-    );
-
-    // Waiting for processor registration
-    while(!cnvProcessor.is_registered())
+    for(BenchmarkProcessor* tmpProc : processorsList)
     {
-        cnvProcessor.update();
-        mbase::sleep(2);
+        benchModel.register_context_process(
+            tmpProc,
+            gSampleParams.mContextLength,
+            gSampleParams.mBatchLength,
+            gSampleParams.mThreadCount,
+            gSampleParams.mBatchThreadCount,
+            true,
+            {}
+        );
+
+        while(!tmpProc->is_registered())
+        {
+            tmpProc->update();
+            mbase::sleep(2);
+        }
+        tmpProc->set_inference_client(&benchClient);
+        ++i;
     }
 
     signal(SIGINT, catching_interrupt_signal);
-
+    llama_model* rawModel = benchModel.get_raw_model();
+    mbase::string modelName;
+    F32 tmpModelSize = (llama_model_size(rawModel) / (F32)(1024*1024*1024));
+    benchModel.get_model_name(modelName);
     printf("==== Session Information ====\n\n");
+    printf("- Model Information: \n");
+    printf("\tName: %s\n", modelName.c_str());
+    printf("\tModel size: %.2f %s", tmpModelSize, "GB\n");
+    printf("\tEmbedding length: %d\n", llama_n_embd(rawModel));
+    printf("\tHead count: %d\n", llama_n_head(rawModel));
+    printf("\tLayer count: %d\n", llama_n_layer(rawModel));
     printf("- Context length: %u\n", gSampleParams.mContextLength);
     printf("- Batch size: %u\n", gSampleParams.mBatchLength);
     printf("- Batch processing threads: %u\n", gSampleParams.mBatchThreadCount);
     printf("- Generation threads: %u\n", gSampleParams.mThreadCount);
+    printf("- User count: %u\n", gSampleParams.mUserCount);
+    printf("- N Predict: %u\n", gSampleParams.mPredictCount);
     printf("- Compute devices: \n");
 
     for(InfDeviceDescription& tmpDescription : deviceDescription)
@@ -341,58 +320,59 @@ int main(int argc, char** argv)
         }
         printf("\t%s ## Type: %s\n", tmpDescription.get_device_description().c_str(), typeString.c_str());
     }
-
-    printf("- Samplers in order: \n");
-    if(gSampleParams.mIsGreeady)
+    for(BenchmarkProcessor* tmpProc : processorsList)
     {
-        printf("\t Greedy\n");
-    }
-    else
-    {
-        for(auto& tmpSampler : samplingSet)
-        {
-            if(tmpSampler.mSamplerType == InfSamplerDescription::SAMPLER::TOP_K)
-            {
-                printf("\t Top k: %d\n", tmpSampler.mTopK);
-            }
-            else if(tmpSampler.mSamplerType == InfSamplerDescription::SAMPLER::TOP_P)
-            {
-                printf("\t Top p: %f\n", tmpSampler.mTopP);
-            }
-            else if(tmpSampler.mSamplerType == InfSamplerDescription::SAMPLER::MIN_P)
-            {
-                printf("\t Min p: %f\n", tmpSampler.mMinP);
-            }
-            else if(tmpSampler.mSamplerType == InfSamplerDescription::SAMPLER::REPETITION)
-            {
-                printf("\t Penalty N: %d, Penalty Repeat: %f\n", tmpSampler.mRepetition.mPenaltyN, tmpSampler.mRepetition.mRepeatPenalty);
-            }
-            else if(tmpSampler.mSamplerType == InfSamplerDescription::SAMPLER::TEMP)
-            {
-                printf("\t Temperature: %f\n", tmpSampler.mTemp);
-            }
-        }
+        mbase::inf_text_token_vector tokVec(gSampleParams.mBatchLength, 1);
+        tmpProc->execute_input(tokVec);
     }
 
+    U64 frameCounter = 0;
+    U64 totalFps = 0;
+    U64 diagnosticFps = 0;
+    U64 nonResetFrameCounter = 0;
+
+    std::chrono::high_resolution_clock::time_point programBeginTime = std::chrono::high_resolution_clock::now();
     while(gIsProgramRunning)
     {
         std::chrono::high_resolution_clock::time_point beginTime = std::chrono::high_resolution_clock::now();
-        cnvProcessor.set_inference_client(&cnvClient);
-        cnvModel.update();
+        benchModel.update();
         std::chrono::high_resolution_clock::time_point endTime = std::chrono::high_resolution_clock::now();
         
-        if(std::chrono::duration_cast<std::chrono::microseconds>(endTime - beginTime).count() < 2)
+        U64 deltaTime = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - beginTime).count();
+        if(deltaTime < 2)
         {
+            beginTime = std::chrono::high_resolution_clock::now();
             mbase::sleep(2);
+            endTime = std::chrono::high_resolution_clock::now();
+            deltaTime = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - beginTime).count();
+        }
+        frameCounter++;
+        totalFps += 1 / (deltaTime / 1000.0f);
+        if(frameCounter == 500)
+        {
+            diagnosticFps += totalFps / frameCounter;
+            printf("\rAverage FPS per 500 frames: %lu", totalFps / frameCounter);
+            fflush(stdout);
+            frameCounter = 0;
+            totalFps = 0;
+            nonResetFrameCounter++;
         }
     }
-
-    cnvProcessor.release_inference_client();
-    InfProcT2TDiagnostics& t2tDiag = cnvProcessor.get_diagnostics();
+    std::chrono::high_resolution_clock::time_point programEndTime = std::chrono::high_resolution_clock::now();
+    printf("\n");
+    printf("\n==== Useful metrics ====\n");
+    printf("- Total elapsed time in seconds: %.2f\n", std::chrono::duration_cast<std::chrono::milliseconds>(programEndTime - programBeginTime).count() / 1000.0f);
+    printf("- Average FPS: %.1f\n", diagnosticFps / (F32)nonResetFrameCounter);
     printf("\n==== Processor diagnostics ====\n");
-    printf("| Context load delay         | %u ms\n", t2tDiag.loadTimeInMilliseconds);
-    printf("| Prompt processing rate(pp) | %f token/sec\n", t2tDiag.ppTokensPerSecond);
-    printf("| Token generation rate(tg)  | %f token/sec\n", t2tDiag.evalTokensPerSecond);
+    printf("| Load delay ms| pp t/s | tg t/s |\n");
+    
+    for(BenchmarkProcessor* tmpProc : processorsList)
+    {
+        InfProcT2TDiagnostics& t2tDiag = tmpProc->get_diagnostics();
+        printf("%lu\t\t%.3f\t\t%.3f\n", t2tDiag.loadTimeInMilliseconds, t2tDiag.ppTokensPerSecond, t2tDiag.evalTokensPerSecond);
+        tmpProc->release_inference_client_stacked();
+    }
+
 
     return 0;
 }

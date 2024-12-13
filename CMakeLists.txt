@@ -51,6 +51,7 @@ install(
 # add_subdirectory(examples/openai-server)
 add_subdirectory(examples/simple-conversation)
 add_subdirectory(examples/typo-fixer)
+add_subdirectory(examples/benchmark)
 # set(CPACK_GENERATOR "DEB")
 # set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Saul E. Erdog")
 # set(CPACK_PACKAGE_NAME "MBASE-Libraries")

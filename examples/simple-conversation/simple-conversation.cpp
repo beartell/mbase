@@ -457,7 +457,7 @@ int main(int argc, char** argv)
         cnvModel.update();
         std::chrono::high_resolution_clock::time_point endTime = std::chrono::high_resolution_clock::now();
         
-        if(std::chrono::duration_cast<std::chrono::microseconds>(endTime - beginTime).count() < 2)
+        if(std::chrono::duration_cast<std::chrono::milliseconds>(endTime - beginTime).count() < 2)
         {
             mbase::sleep(2);
         }
