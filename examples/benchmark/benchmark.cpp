@@ -7,7 +7,7 @@
 #include <chrono>
 #include <signal.h>
 
-#define MBASE_BENCHMARK_VERSION "v1.1.0"
+#define MBASE_BENCHMARK_VERSION "v1.2.0"
 
 using namespace mbase;
 
@@ -23,6 +23,7 @@ struct program_parameters {
     I32 mBatchLength = 512;
     I32 mGpuLayer = 999;
     I32 mPredictCount = 256;
+    I32 mFps = 500;
     I32 mUserCount = 1;
 };
 
@@ -65,6 +66,7 @@ GENERIC print_usage()
     printf("-gl, --gpu-layers <int>           GPU layers to offload to (default=999).\n");
     printf("-np, --n-predict <int>            Number of tokens to predict (default=256).\n");
     printf("-uc, --user-count <int>           Number of users that will be processed in parallel. (default=1)\n");
+    printf("-fps, --frame-per-second <int>    Max FPS of the main loop. This is for measuring the effects of inference engine on main application loop(default=500, min=10, max=1000).\n");
     printf("-jout, --json-output-path <str>   If the json output path is specified, result will be written there in file(mbase_bench.json) (default='').\n\n");
 }
 
@@ -221,6 +223,11 @@ int main(int argc, char** argv)
             mbase::argument_get<I32>::value(i, argc, argv, gSampleParams.mPredictCount);
         }
 
+        else if(argumentString == "-fps" || argumentString == "--frame-per-second")
+        {
+            mbase::argument_get<I32>::value(i, argc, argv, gSampleParams.mFps);
+        }
+
         else if(argumentString == "--user-count" || argumentString == "-uc")
         {
             mbase::argument_get<I32>::value(i, argc, argv, gSampleParams.mUserCount);
@@ -239,6 +246,12 @@ int main(int argc, char** argv)
         return 1;
     }
 
+    if(gSampleParams.mFps < 10 || gSampleParams.mFps > 1000)
+    {
+        printf("ERR: Invalid FPS value(%d). It must be between [10, 1000]\n", gSampleParams.mFps);
+    }
+    F32 roundedSeconds = std::round((1 / (F32)gSampleParams.mFps) * (1000));
+    gSampleParams.mFps = 1 / (roundedSeconds / 1000.0f);
     deviceDescription = inf_query_devices();
 
     BenchmarkModel benchModel;
@@ -256,8 +269,6 @@ int main(int argc, char** argv)
         printf("ERR: Unable to initialize model\n");
         return 1;
     }
-
-    I32 i = 0;
 
     for(BenchmarkProcessor* tmpProc : processorsList)
     {
@@ -277,7 +288,6 @@ int main(int argc, char** argv)
             mbase::sleep(2);
         }
         tmpProc->set_inference_client(&benchClient);
-        ++i;
     }
 
     signal(SIGINT, catching_interrupt_signal);
@@ -338,7 +348,8 @@ int main(int argc, char** argv)
     U64 totalFps = 0;
     U64 diagnosticFps = 0;
     U64 nonResetFrameCounter = 0;
-
+    I32 sleepInterval = roundedSeconds;
+    
     std::chrono::high_resolution_clock::time_point programBeginTime = std::chrono::high_resolution_clock::now();
     while(gIsProgramRunning)
     {
@@ -347,25 +358,26 @@ int main(int argc, char** argv)
         std::chrono::high_resolution_clock::time_point endTime = std::chrono::high_resolution_clock::now();
         
         U64 deltaTime = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - beginTime).count();
-        if(deltaTime < 2)
+        if(deltaTime < sleepInterval)
         {
             beginTime = std::chrono::high_resolution_clock::now();
-            mbase::sleep(2);
+            mbase::sleep(sleepInterval);
             endTime = std::chrono::high_resolution_clock::now();
-            deltaTime = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - beginTime).count();
+            deltaTime += std::chrono::duration_cast<std::chrono::milliseconds>(endTime - beginTime).count();
         }
         frameCounter++;
         totalFps += 1 / (deltaTime / 1000.0f);
-        if(frameCounter == 500)
+        if(frameCounter == gSampleParams.mFps)
         {
             diagnosticFps += totalFps / frameCounter;
-            printf("\rAverage FPS per 500 frames: %lu", totalFps / frameCounter);
+            printf("\rAverage FPS per %d frames: %llu", gSampleParams.mFps, totalFps / frameCounter);
             fflush(stdout);
             frameCounter = 0;
             totalFps = 0;
             nonResetFrameCounter++;
         }
     }
+
     std::chrono::high_resolution_clock::time_point programEndTime = std::chrono::high_resolution_clock::now();
     printf("\n");
     printf("\n==== Useful metrics ====\n");
@@ -377,7 +389,7 @@ int main(int argc, char** argv)
     for(BenchmarkProcessor* tmpProc : processorsList)
     {
         InfProcT2TDiagnostics& t2tDiag = tmpProc->get_diagnostics();
-        printf("%lu\t\t%.3f\t\t%.3f\n", t2tDiag.loadTimeInMilliseconds, t2tDiag.ppTokensPerSecond, t2tDiag.evalTokensPerSecond);
+        printf("\t%lld\t\t%.3f\t\t%.3f\n", t2tDiag.loadTimeInMilliseconds, t2tDiag.ppTokensPerSecond, t2tDiag.evalTokensPerSecond);
         tmpProc->release_inference_client_stacked();
     }
 

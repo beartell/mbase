@@ -7,6 +7,10 @@
 
 #ifdef MBASE_PLATFORM_WINDOWS
 #include <Windows.h>
+#include <timeapi.h>
+
+#pragma comment(lib, "Winmm.lib")
+
 #endif
 
 #ifdef MBASE_PLATFORM_UNIX
@@ -14,6 +18,26 @@
 #endif
 
 MBASE_STD_BEGIN
+
+#ifdef MBASE_PLATFORM_WINDOWS
+
+struct StaticTimeCapsQuery {
+	StaticTimeCapsQuery() : mTimeCaps({0})
+	{
+		timeGetDevCaps(&mTimeCaps, sizeof(mTimeCaps));
+		timeBeginPeriod(mTimeCaps.wPeriodMin);
+	}
+	~StaticTimeCapsQuery()
+	{
+		timeEndPeriod(mTimeCaps.wPeriodMin);
+	}
+
+	TIMECAPS mTimeCaps;
+};
+
+#endif
+
+static StaticTimeCapsQuery __time_caps_init;
 
 enum class thread_error : U32 {
 	THREAD_SUCCESS = 0,
