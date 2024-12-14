@@ -264,12 +264,17 @@ InfModelTextToText::flags InfModelTextToText::is_token_control(inf_text_token in
 	return flags::INF_MODEL_ERR_GENERIC;
 }
 
-U32 InfModelTextToText::get_total_context_size() const
+const mbase::string& InfModelTextToText::get_quantization_string() const
+{
+	return mQuantizationString;
+}
+
+const U32& InfModelTextToText::get_total_context_size() const
 {
 	return mTotalContextSize;
 }
 
-U32 InfModelTextToText::get_occupied_context_size() const
+const U32& InfModelTextToText::get_occupied_context_size() const
 {
 	return mOccupiedContext;
 }
@@ -350,7 +355,7 @@ InfModelTextToText::flags InfModelTextToText::initialize_model_ex_sync(const mba
 
 	while(signal_initializing())
 	{
-		
+		mbase::sleep(2);
 	}
 
 	if(!is_initialized())
@@ -406,6 +411,7 @@ InfModelTextToText::flags InfModelTextToText::destroy_sync()
 	destroy();
 	while(signal_destroying())
 	{
+		mbase::sleep(2);
 	}
 
 	return flags::INF_MODEL_SUCCESS;
@@ -618,22 +624,119 @@ GENERIC InfModelTextToText::_initialize_model()
 		return;
 	}
 
-	// if(!tempConfigurator.get_key("mbase.model_name", mModelName) 
-	// 	|| !tempConfigurator.get_key("mbase.model_architecture", mModelArchitecture)
-	// 	|| !tempConfigurator.get_key("mbase.quantization_coefficient", mQuantizationCoefficient)
-	// 	|| !tempConfigurator.get_key("mbase.block_count", mBlockCount)
-	// 	|| !tempConfigurator.get_key("mbase.head_count", mHeadCount)
-	// 	|| !tempConfigurator.get_key("mbase.embedding_length", mEmbeddingLength)
-	// 	|| !tempConfigurator.get_key("mbase.model_size", mModelSize))
-	// {
-	// 	mInitFailCode = init_fail_code::MBASE_PARAMS_DONT_MATCH;
-	// 	mInitializeSignal.reset_signal_with_state();
-	// 	mInitFailSignal.set_signal_with_state();
-	// 	return;
-	// }
+	U32 tmpModelQuantizationNumber = 0;
 
 	tempConfigurator.get_key("general.architecture", mModelArchitecture);
 	tempConfigurator.get_key("general.name", mModelName);
+	tempConfigurator.get_key("general.file_type", tmpModelQuantizationNumber);
+
+	llama_ftype fileType = (llama_ftype)tmpModelQuantizationNumber;
+
+	switch (fileType)
+	{
+	case LLAMA_FTYPE_ALL_F32:
+		mQuantizationString = "F32";
+		break;
+	case LLAMA_FTYPE_MOSTLY_F16:
+		mQuantizationString = "F16";
+		break;
+	case LLAMA_FTYPE_MOSTLY_Q4_0:
+		mQuantizationString = "Q4_0";
+		break;
+	case LLAMA_FTYPE_MOSTLY_Q4_1:
+		mQuantizationString = "Q4_1";
+		break;
+	case LLAMA_FTYPE_MOSTLY_Q8_0:
+		mQuantizationString = "Q8_0";
+		break;
+	case LLAMA_FTYPE_MOSTLY_Q5_0:
+		mQuantizationString = "Q5_0";
+		break;
+	case LLAMA_FTYPE_MOSTLY_Q5_1:
+		mQuantizationString = "Q5_1";
+		break;
+	case LLAMA_FTYPE_MOSTLY_Q2_K:
+		mQuantizationString = "Q2_K";
+		break;
+	case LLAMA_FTYPE_MOSTLY_Q3_K_S:
+		mQuantizationString = "Q3_K_S";
+		break;
+	case LLAMA_FTYPE_MOSTLY_Q3_K_M:
+		mQuantizationString = "Q3_K_M";
+		break;
+	case LLAMA_FTYPE_MOSTLY_Q3_K_L:
+		mQuantizationString = "Q3_K_L";
+		break;
+	case LLAMA_FTYPE_MOSTLY_Q4_K_S:
+		mQuantizationString = "Q4_K_S";
+		break;
+	case LLAMA_FTYPE_MOSTLY_Q4_K_M:
+		mQuantizationString = "Q4_K_M";
+		break;
+	case LLAMA_FTYPE_MOSTLY_Q5_K_S:
+		mQuantizationString = "Q5_K_S";
+		break;
+	case LLAMA_FTYPE_MOSTLY_Q5_K_M:
+		mQuantizationString = "Q5_K_M";
+		break;
+	case LLAMA_FTYPE_MOSTLY_Q6_K:
+		mQuantizationString = "Q6_K";
+		break;
+	case LLAMA_FTYPE_MOSTLY_IQ2_XXS:
+		mQuantizationString = "IQ2_XXS";
+		break;
+	case LLAMA_FTYPE_MOSTLY_IQ2_XS:
+		mQuantizationString = "IQ2_XS";
+		break;
+	case LLAMA_FTYPE_MOSTLY_Q2_K_S:
+		mQuantizationString = "Q2_K_S";
+		break;
+	case LLAMA_FTYPE_MOSTLY_IQ3_XS:
+		mQuantizationString = "IQ3_XS";
+		break;
+	case LLAMA_FTYPE_MOSTLY_IQ3_XXS:
+		mQuantizationString = "IQ3_XXS";
+		break;
+	case LLAMA_FTYPE_MOSTLY_IQ1_S:
+		mQuantizationString = "IQ1_S";
+		break;
+	case LLAMA_FTYPE_MOSTLY_IQ4_NL:
+		mQuantizationString = "IQ4_NL";
+		break;
+	case LLAMA_FTYPE_MOSTLY_IQ3_S:
+		mQuantizationString = "IQ3_S";
+		break;
+	case LLAMA_FTYPE_MOSTLY_IQ3_M:
+		mQuantizationString = "IQ3_M";
+		break;
+	case LLAMA_FTYPE_MOSTLY_IQ2_S:
+		mQuantizationString = "IQ2_S";
+		break;
+	case LLAMA_FTYPE_MOSTLY_IQ2_M:
+		mQuantizationString = "IQ2_M";
+		break;
+	case LLAMA_FTYPE_MOSTLY_IQ4_XS:
+		mQuantizationString = "IQ4_XS";
+		break;
+	case LLAMA_FTYPE_MOSTLY_IQ1_M:
+		mQuantizationString = "IQ1_M";
+		break;
+	case LLAMA_FTYPE_MOSTLY_BF16:
+		mQuantizationString = "BF16";
+		break;
+	case LLAMA_FTYPE_MOSTLY_TQ1_0:
+		mQuantizationString = "TQ1";
+		break;
+	case LLAMA_FTYPE_MOSTLY_TQ2_0:
+		mQuantizationString = "TQ2_0";
+		break;
+	case LLAMA_FTYPE_GUESSED:
+		mQuantizationString = "GUESSED";
+		break;
+	default:
+		mQuantizationString = "UNKNOWN";
+		break;
+	}
 
 	mbase::tokenizer_align_instruct_template(mModelArchitecture,
 		mSystemStart,

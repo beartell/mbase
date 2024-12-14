@@ -63,8 +63,9 @@ public:
 	bool is_token_eof_generation(inf_text_token in_token);
 	flags is_token_special(const mbase::string& in_string);
 	flags is_token_control(inf_text_token in_token);
-	U32 get_total_context_size() const;
-	U32 get_occupied_context_size() const;
+	const mbase::string& get_quantization_string() const;
+	const U32& get_total_context_size() const;
+	const U32& get_occupied_context_size() const;
 
 	static bool get_mbase_chat_template_id(const mbase::string& in_architecture, mbase::string& out_id);
 
@@ -101,6 +102,7 @@ private:
 	GENERIC _get_special_tokens(mbase::vector<mbase::string>& out_tokens);
 
 	llama_model* mModel;
+	mbase::string mQuantizationString;
 	mbase::string mModelName;
 	mbase::string mModelArchitecture;
 	mbase::string mEmbeddedSystemPrompt;

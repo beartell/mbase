@@ -8,7 +8,7 @@
 #include <chrono>
 #include <signal.h>
 
-#define MBASE_BENCHMARK_VERSION "v1.3.0"
+#define MBASE_BENCHMARK_VERSION "v1.4.0"
 
 using namespace mbase;
 
@@ -28,6 +28,7 @@ struct program_parameters {
     I32 mPredictCount = 256;
     I32 mFps = 500;
     I32 mUserCount = 1;
+    bool mFlashAttention = true;
 };
 
 mbase::vector<InfDeviceDescription> deviceDescription;
@@ -65,6 +66,7 @@ GENERIC print_usage()
     printf("Options: \n\n");
     printf("-h, --help                           Print usage.\n");
     printf("-v, --version                        Shows program version.\n");
+    printf("-dfa, --disable-flash-attention      Disables the flash attention, which is enabled by default.\n");
     printf("-t, --thread-count <int>             Amount of threads to use for output processing (default=16).\n");
     printf("-bt, --batch-thread-count <int>      Amount of threads to use for initial batch processing (default=8).\n");
     printf("-c, --context-length <int>           Total context length (default=2048).\n");
@@ -200,6 +202,11 @@ int main(int argc, char** argv)
             return 0;
         }
 
+        else if(argumentString == "-dfa" || argumentString == "--disable-flash-attention")
+        {
+            gSampleParams.mFlashAttention = false;
+        }
+
         else if(argumentString == "--thread-count" || argumentString == "-t")
         {
             mbase::argument_get<I32>::value(i, argc, argv, gSampleParams.mThreadCount);
@@ -243,6 +250,11 @@ int main(int argc, char** argv)
         else if(argumentString == "-jout" || argumentString == "--json-output-path")
         {
             mbase::argument_get<mbase::string>::value(i, argc, argv, gSampleParams.mJsonOut);
+        }
+
+        else if(argumentString == "-mdout" || argumentString == "--markdown-output-path")
+        {
+            mbase::argument_get<mbase::string>::value(i, argc, argv, gSampleParams.mMdOut);
         }
     }
     
@@ -290,7 +302,7 @@ int main(int argc, char** argv)
             gSampleParams.mBatchLength,
             gSampleParams.mThreadCount,
             gSampleParams.mBatchThreadCount,
-            true,
+            gSampleParams.mFlashAttention,
             {}
         );
 
@@ -319,6 +331,7 @@ int main(int argc, char** argv)
     printf("- Model Information: \n");
     printf("\tName: %s\n", modelName.c_str());
     printf("\tModel size: %.2f %s", tmpModelSize, "GB\n");
+    printf("\tQuantization: %s\n", benchModel.get_quantization_string().c_str());
     printf("\tEmbedding length: %d\n", embeddingLength);
     printf("\tHead count: %d\n", headCount);
     printf("\tLayer count: %d\n", layerCount);
@@ -328,6 +341,8 @@ int main(int argc, char** argv)
     printf("- Generation threads: %u\n", gSampleParams.mThreadCount);
     printf("- User count: %u\n", gSampleParams.mUserCount);
     printf("- N Predict: %u\n", gSampleParams.mPredictCount);
+    printf("- Flash attention: %s\n", gSampleParams.mFlashAttention ? "Enabled" : "Disabled");
+    printf("- GPU Offload layers: %ld\n", gSampleParams.mGpuLayer);
     printf("- Compute devices: \n");
 
     for(InfDeviceDescription& tmpDescription : deviceDescription)
@@ -389,19 +404,22 @@ int main(int argc, char** argv)
             nonResetFrameCounter++;
         }
     }
-
     std::chrono::high_resolution_clock::time_point programEndTime = std::chrono::high_resolution_clock::now();
+
+    F32 averageFps = diagnosticFps / (F32)nonResetFrameCounter;
+    F32 totalElapsedTimeInSeconds = std::chrono::duration_cast<std::chrono::milliseconds>(programEndTime - programBeginTime).count() / 1000.0f;
+
     printf("\n");
     printf("\n==== Useful metrics ====\n");
-    printf("- Total elapsed time in seconds: %.2f\n", std::chrono::duration_cast<std::chrono::milliseconds>(programEndTime - programBeginTime).count() / 1000.0f);
-    printf("- Average FPS: %.1f\n", diagnosticFps / (F32)nonResetFrameCounter);
+    printf("- Total elapsed time in seconds: %.2f\n", totalElapsedTimeInSeconds);
+    printf("- Average FPS: %.1f\n", averageFps);
     printf("\n==== Processor diagnostics ====\n");
-    printf("| Load delay ms| pp t/s | tg t/s |\n");
+    printf("| Load delay ms | pp t/s | tg t/s |\n");
     
     for(BenchmarkProcessor* tmpProc : processorsList)
     {
         InfProcT2TDiagnostics& t2tDiag = tmpProc->get_diagnostics();
-        printf("%lld\t\t%.3f\t\t%.3f\n", t2tDiag.loadTimeInMilliseconds, t2tDiag.ppTokensPerSecond, t2tDiag.evalTokensPerSecond);
+        printf("|%lld\t\t| %.2f |\t %.2f \t|\n", t2tDiag.loadTimeInMilliseconds, t2tDiag.ppTokensPerSecond, t2tDiag.evalTokensPerSecond);
         tmpProc->release_inference_client_stacked();
     }
 
@@ -417,12 +435,15 @@ int main(int argc, char** argv)
         jsOut["model_information"]["embedding_length"] = embeddingLength;
         jsOut["model_information"]["head_count"] = headCount;
         jsOut["model_information"]["layer_count"] = layerCount;
+        jsOut["model_information"]["quantization"] = benchModel.get_quantization_string();
         jsOut["session_information"]["context_length"] = gSampleParams.mContextLength;
         jsOut["session_information"]["batch_size"] = gSampleParams.mBatchLength;
         jsOut["session_information"]["batch_proc_threads"] = gSampleParams.mBatchThreadCount;
         jsOut["session_information"]["generation_threads"] = gSampleParams.mThreadCount;
         jsOut["session_information"]["user_count"] = gSampleParams.mUserCount;
         jsOut["session_information"]["predict"] = gSampleParams.mPredictCount;
+        jsOut["session_information"]["gpu_layers"] = gSampleParams.mGpuLayer;
+        jsOut["session_information"]["flash_attention"] = gSampleParams.mFlashAttention;
 
         mbase::Json computeDevices;
         computeDevices.setArray();
@@ -453,8 +474,8 @@ int main(int argc, char** argv)
         }
         i = 0;
         jsOut["session_information"]["compute_devices"] = computeDevices;
-        jsOut["useful_metrics"]["total_elapsed_time_seconds"] = std::chrono::duration_cast<std::chrono::milliseconds>(programEndTime - programBeginTime).count() / 1000.0f;
-        jsOut["useful_metrics"]["average_fps"] = diagnosticFps / (F32)nonResetFrameCounter;
+        jsOut["useful_metrics"]["total_elapsed_time_seconds"] = totalElapsedTimeInSeconds;
+        jsOut["useful_metrics"]["average_fps"] = averageFps;
         
         mbase::Json processorDiagnostics;
         processorDiagnostics.setArray();
@@ -473,8 +494,65 @@ int main(int argc, char** argv)
         mbase::string outString = jsOut.toStringPretty();
         mbase::io_file iof;
         iof.open_file(mbase::from_utf8(jsonFile));
-        iof.write_data(outString);
+        if(!iof.is_file_open())
+        {
+            printf("ERR: Unable to output mbase_bench.json on path: %s\n", gSampleParams.mJsonOut.c_str());
+        }
+        else
+        {
+            iof.write_data(outString);
+        }
     }
 
+    if(gSampleParams.mMdOut.size())
+    {
+        gSampleParams.mMdOut.push_back('/');
+        mbase::string markdownFile = gSampleParams.mJsonOut + "mbase_bench.md";
+
+        mbase::string modelInfoMd = "### Model Information\n" 
+        + mbase::string::from_format("__Name__: %s<br>\n", modelName.c_str()) 
+        + mbase::string::from_format("__Model size__: %.2f %s", tmpModelSize, "GB <br>\n")
+        + mbase::string::from_format("__Quantization__: %s<br>\n", benchModel.get_quantization_string().c_str())
+        + mbase::string::from_format("__Embedding length__: %ld<br>\n", embeddingLength)
+        + mbase::string::from_format("__Head count__: %ld<br>\n", headCount)
+        + mbase::string::from_format("__Layer count__: %ld<br>\n", layerCount);
+
+        mbase::string sessionInfoMd = "### Session Information\n"
+        + mbase::string::from_format("__Context length__: %ld<br>\n", gSampleParams.mContextLength)
+        + mbase::string::from_format("__Batch size__: %ld<br>\n", gSampleParams.mBatchLength)
+        + mbase::string::from_format("__Batch processing threads__: %ld<br>\n", gSampleParams.mBatchThreadCount)
+        + mbase::string::from_format("__Generation threads__: %ld<br>\n", gSampleParams.mThreadCount)
+        + mbase::string::from_format("__User count__: %ld<br>\n", gSampleParams.mUserCount)
+        + mbase::string::from_format("__Flash attention__: %s<br>\n", gSampleParams.mFlashAttention ? "Enabled" : "Disabled")
+        + mbase::string::from_format("__GPU offload layers__: %ld<br>\n", gSampleParams.mGpuLayer)
+        + mbase::string::from_format("__N Predict__: %ld<br>\n", gSampleParams.mPredictCount) + "__Compute devices__:\n";
+
+        for(InfDeviceDescription& tmpDescription : deviceDescription)
+        {
+            sessionInfoMd += "- " + tmpDescription.get_device_description() + '\n';
+        }
+
+        mbase::string usefulMetricsMd = "### Useful Metrics\n"
+        + mbase::string::from_format("__Total elapsed time in seconds__: %.2f<br>\n", totalElapsedTimeInSeconds)
+        + mbase::string::from_format("__Average FPS__: %1.f<br>\n", averageFps);
+
+        mbase::string processorDiagnostics = "### Performance Table\n"
+        + mbase::string("| Load delay ms | pp t/s | tg t/s |\n")
+        + mbase::string("| ------------- | ------ | ------ |\n");
+        for(BenchmarkProcessor* tmpProc : processorsList)
+        {
+            InfProcT2TDiagnostics& t2tDiag = tmpProc->get_diagnostics();
+            processorDiagnostics += mbase::string::from_format("| %lld | %.2f | %.2f |\n", t2tDiag.loadTimeInMilliseconds, t2tDiag.ppTokensPerSecond, t2tDiag.evalTokensPerSecond);
+        }
+        mbase::string totalMdContent = modelInfoMd + sessionInfoMd + usefulMetricsMd + processorDiagnostics;
+        
+        mbase::io_file iof;
+        iof.open_file(mbase::from_utf8(markdownFile));
+        if(!iof.is_file_open())
+        {
+            printf("ERR: Unable to output mbase_bench.md on path: %s\n", gSampleParams.mMdOut.c_str());
+        }
+        iof.write_data(totalMdContent);
+    }
     return 0;
 }
