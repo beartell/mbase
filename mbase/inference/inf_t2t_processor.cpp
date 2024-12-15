@@ -54,6 +54,11 @@ InfProcessorTextToText::~InfProcessorTextToText()
 		llama_free(mModelContext);
 		this->release_object_watcher();
 
+		if(mProcessedBatchLength)
+		{
+			llama_batch_free(mInputBatch);
+		}
+
 		if(mAssignedClient)
 		{
 			mAssignedClient->on_unregister(this);
@@ -330,10 +335,14 @@ InfProcessorTextToText::flags InfProcessorTextToText::execute_input(const inf_te
 		{
 			llama_kv_cache_clear(mModelContext);
 		}
-		mContextCursor = 0;
 	}
 	stop_processor(); // Stop the processor if it is not stopped already
 	mTokenizedInput = in_tokens;
+	if(mProcessedBatchLength)
+	{
+		llama_batch_free(mInputBatch);
+	}
+	mInputBatch = llama_batch_init(mTokenizedInput.size(), 0, 1);	
 	mInputSignal.set_signal();
 	start_processor();
 
@@ -571,24 +580,32 @@ GENERIC InfProcessorTextToText::on_destroying()
 }
 
 GENERIC InfProcessorTextToText::_decode_input()
-{
-	// if the input signal is set, process
-	// if(llama_get_kv_cache_used_cells(mModelContext))
-	// {
-	// 	llama_kv_cache_clear(mModelContext);
-	// }
-	
+{	
 	llama_sampler_reset(mSamplerChain);
-	mInputBatch = llama_batch_get_one(mTokenizedInput.data(), mTokenizedInput.size());
+	//mInputBatch = llama_batch_init(mTokenizedInput.size(), 0, 1);
+	//mInputBatch = llama_batch_get_one(mTokenizedInput.data(), mTokenizedInput.size());
 
-	mProcessedBatchLength = mInputBatch.n_tokens;
+	for(size_type i = 0; i < mTokenizedInput.size() - 1; i++)
+	{
+		inf_common_batch_add(mInputBatch, mTokenizedInput[i], i, {0}, false);
+	}
+
+	inf_common_batch_add(mInputBatch, mTokenizedInput.back(), mTokenizedInput.size() - 1, {0}, true);
+	if(mProcessedBatchLength)
+	{
+		mProcessedBatchLength = mInputBatch.n_tokens - mProcessedBatchLength;
+	}
+	else
+	{
+		mProcessedBatchLength = mInputBatch.n_tokens;
+	}
 	mContextCursor += mInputBatch.n_tokens;
 	mTokenizedInput.clear();
 	
 	std::chrono::high_resolution_clock::time_point beginTime = std::chrono::high_resolution_clock::now();
 	[[maybe_unused]] I32 decodeResult = llama_decode(mModelContext, mInputBatch);
+	
 	std::chrono::high_resolution_clock::time_point endTime = std::chrono::high_resolution_clock::now();
-
 	I64 msPassed = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - beginTime).count();
 	F32 secondsPassed = (F32)msPassed / 1000.0f;
 	mDiagnostics.ppTokensPerSecond = mInputBatch.n_tokens / secondsPassed;
@@ -610,6 +627,7 @@ GENERIC InfProcessorTextToText::_decode_next()
 		t2tModel->get_vocab_count(modelVocab);
 
 		PTRF32 logits = llama_get_logits_ith(mModelContext, mInputBatch.n_tokens - 1);
+		
 		for (llama_token token_id = 0; token_id < modelVocab; ++token_id)
 		{
 			mPresetCandidates.emplace_back(llama_token_data{ token_id, logits[token_id], 0.0f });
@@ -625,9 +643,12 @@ GENERIC InfProcessorTextToText::_decode_next()
 		if (llama_token_is_eog(t2tModel->get_raw_model(), tmpGeneratedToken))
 		{
 			// means end of generation
+			mContextCursor = 0;
+			mProcessedBatchLength = 0;
 			llama_sampler_reset(mSamplerChain);
-			mFinishState = finish_state::FINISHED;
+			llama_batch_free(mInputBatch);
 			llama_kv_cache_clear(mModelContext);
+			mFinishState = finish_state::FINISHED;
 			break;
 		}
 
@@ -637,16 +658,20 @@ GENERIC InfProcessorTextToText::_decode_next()
 			{
 				// means token limit is reached
 				mContextCursor = 0;
+				mProcessedBatchLength = 0;
 				llama_sampler_reset(mSamplerChain);
-				mFinishState = finish_state::TOKEN_LIMIT_REACHED;
+				llama_batch_free(mInputBatch);
 				llama_kv_cache_clear(mModelContext);
+				mFinishState = finish_state::TOKEN_LIMIT_REACHED;
 				break;
 			}
 
 			else
 			{
-				mInputBatch = llama_batch_get_one(&tmpGeneratedToken, 1);
+				mInputBatch.n_tokens = 0;
+				inf_common_batch_add(mInputBatch, tmpGeneratedToken, mContextCursor, {0}, true);
 				mContextCursor++;
+				//mInputBatch = llama_batch_get_one(&tmpGeneratedToken, 1);
 				llama_decode(mModelContext, mInputBatch); // Handle error here
 				totalGeneratedTokens++;
 				std::chrono::high_resolution_clock::time_point endTime = std::chrono::high_resolution_clock::now();
@@ -654,7 +679,6 @@ GENERIC InfProcessorTextToText::_decode_next()
 			}
 		}
 	}
-
 	
 	if(totalGeneratedTokens)
 	{
@@ -817,6 +841,10 @@ GENERIC InfProcessorTextToText::_destroy_context()
 	// CONTEXT FACTORY RESET
 
 	llama_free(mModelContext);
+	if(mProcessedBatchLength)
+	{
+		llama_batch_free(mInputBatch);
+	}
 	mModelContext = NULL;
 	mPresetCandidates.clear();
 	mTokenizedInput.clear();
@@ -825,6 +853,7 @@ GENERIC InfProcessorTextToText::_destroy_context()
 	mContextCursor = 0;
 	mBatchSize = 0;
 	mThreadCount = 0;
+	mProcessedBatchLength = 0;
 	mFlashAttention = false;
 	mIsRunning = false;
 	mIsInitializeFailed = false;
