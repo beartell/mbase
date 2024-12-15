@@ -35,9 +35,9 @@ struct StaticTimeCapsQuery {
 	TIMECAPS mTimeCaps;
 };
 
-#endif
-
 static StaticTimeCapsQuery __time_caps_init;
+
+#endif
 
 enum class thread_error : U32 {
 	THREAD_SUCCESS = 0,

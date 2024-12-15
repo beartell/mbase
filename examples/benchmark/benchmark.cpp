@@ -22,7 +22,7 @@ struct program_parameters {
     mbase::string mMdOut;
     I32 mThreadCount = 16;
     I32 mBatchThreadCount = 8;
-    I32 mContextLength = 768;
+    I32 mContextLength = 2048;
     I32 mBatchLength = 512;
     I32 mGpuLayer = 999;
     I32 mPredictCount = 256;
