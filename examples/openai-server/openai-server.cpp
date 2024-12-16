@@ -26,7 +26,7 @@
 
 using namespace mbase;
 
-#define MBASE_OPENAI_SERVER_VERSION "v1.1.0"
+#define MBASE_OPENAI_SERVER_VERSION "v1.2.0"
 
 GENERIC print_usage()
 {
@@ -912,7 +912,6 @@ int main(int argc, char** argv)
         for(mbase::vector<OpenAiTextToTextHostedModel*>::iterator It = gHostedModelArray.begin(); It != gHostedModelArray.end(); ++It)
         {
             OpenAiTextToTextHostedModel* hostedModel = *It;
-            printf("Processor count: %d\n", hostedModel->get_registered_processors().size());
             hostedModel->update();
         }
         gContextDestructionSync.release();

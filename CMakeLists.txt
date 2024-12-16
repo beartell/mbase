@@ -48,7 +48,7 @@ install(
   DESTINATION ${MBASE_LIBS_LIB_INSTALL_DIR}/cmake/mbase.libs
 )
 
-# add_subdirectory(examples/openai-server)
+add_subdirectory(examples/openai-server)
 add_subdirectory(examples/simple-conversation)
 add_subdirectory(examples/typo-fixer)
 add_subdirectory(examples/benchmark)
