@@ -584,6 +584,7 @@ GENERIC InfProcessorTextToText::_decode_input()
 	llama_batch tempBatch = llama_batch_init(mBatchSize, 0, 1);
 	for(size_type i = 0; i < mTokenizedInput.size() - 1; i++)
 	{
+		++tmpBatchCursor;
 		if(tmpBatchCursor == mBatchSize)
 		{
 			beginTime = std::chrono::high_resolution_clock::now();
@@ -595,10 +596,8 @@ GENERIC InfProcessorTextToText::_decode_input()
 			tmpBatchCursor = 0;
 		}
 		inf_common_batch_add(tempBatch, mTokenizedInput[i], i, {0}, false);
-		++tmpBatchCursor;
 		++mContextCursor;
 	}
-
 	inf_common_batch_add(tempBatch, mTokenizedInput.back(), mTokenizedInput.size() - 1, {0}, true);
 	beginTime = std::chrono::high_resolution_clock::now();
 	llama_decode(mModelContext, tempBatch);
@@ -664,7 +663,7 @@ GENERIC InfProcessorTextToText::_decode_next()
 
 			else
 			{
-				mInputBatch.n_tokens = 0;
+				tempBatch.n_tokens = 0;
 				inf_common_batch_add(tempBatch, tmpGeneratedToken, mContextCursor, {0}, true);
 				mContextCursor++;
 				//mInputBatch = llama_batch_get_one(&tmpGeneratedToken, 1);
@@ -837,10 +836,6 @@ GENERIC InfProcessorTextToText::_destroy_context()
 	// CONTEXT FACTORY RESET
 
 	llama_free(mModelContext);
-	if(mProcessedBatchLength)
-	{
-		llama_batch_free(mInputBatch);
-	}
 	mModelContext = NULL;
 	mPresetCandidates.clear();
 	mTokenizedInput.clear();
