@@ -327,10 +327,6 @@ InfProcessorTextToText::flags InfProcessorTextToText::execute_input(const inf_te
 		mInputSignal.reset_signal_with_state();
 		mDecodeSignal.reset_signal_with_state();
 		stop_processor();
-		if(llama_get_kv_cache_used_cells(mModelContext))
-		{
-			llama_kv_cache_clear(mModelContext);
-		}
 	}
 	stop_processor(); // Stop the processor if it is not stopped already
 	mTokenizedInput = in_tokens;
@@ -573,11 +569,11 @@ GENERIC InfProcessorTextToText::on_destroying()
 GENERIC InfProcessorTextToText::_decode_input()
 {
 	llama_kv_cache_clear(mModelContext);
+	llama_sampler_reset(mSamplerChain);
 	std::chrono::high_resolution_clock::time_point beginTime;
 	std::chrono::high_resolution_clock::time_point endTime;
 	mProcessedBatchLength = 0;
 	U32 tmpBatchCursor = 0;
-	U32 tmpNumOperated = 0;
 	I64 msPassed = 0;
 	llama_batch tempBatch = llama_batch_init(mBatchSize, 0, 1);
 	for(size_type i = 0; i < mTokenizedInput.size() - 1; i++)
@@ -590,7 +586,6 @@ GENERIC InfProcessorTextToText::_decode_input()
 			llama_decode(mModelContext, tempBatch);
 			endTime = std::chrono::high_resolution_clock::now();
 			msPassed += std::chrono::duration_cast<std::chrono::milliseconds>(endTime - beginTime).count();
-			tmpNumOperated++;
 			tempBatch.n_tokens = 0;
 			tmpBatchCursor = 0;
 		}
@@ -600,9 +595,9 @@ GENERIC InfProcessorTextToText::_decode_input()
 	beginTime = std::chrono::high_resolution_clock::now();
 	llama_decode(mModelContext, tempBatch);
 	mContextCursor = llama_get_kv_cache_token_count(mModelContext);
+	mProcessedBatchLength = mContextCursor;
 	endTime = std::chrono::high_resolution_clock::now();
 	msPassed += std::chrono::duration_cast<std::chrono::milliseconds>(endTime - beginTime).count();
-	tmpNumOperated++;
 	
 	F32 secondsPassed = (F32)msPassed / 1000.0f;
 	mDiagnostics.ppTokensPerSecond = mContextCursor / secondsPassed;
@@ -651,6 +646,7 @@ GENERIC InfProcessorTextToText::_decode_next()
 
 			else
 			{
+				tempBatch.n_tokens = 0;
 				inf_common_batch_add(tempBatch, tmpGeneratedToken, ++mContextCursor, {0}, true);
 				llama_decode(mModelContext, tempBatch); // Handle error here
 				totalGeneratedTokens++;

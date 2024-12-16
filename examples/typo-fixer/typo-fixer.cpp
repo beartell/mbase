@@ -108,15 +108,7 @@ public:
             printf("ERR: Tokenization failed for any reason.\n");
             exit(1);
         }
-        
-        if(mInputTokens.size() > hostProcessor->get_batch_size())
-        {
-            hostProcessor->execute_input(mInputTokens.data(), hostProcessor->get_batch_size());
-        }
-        else
-        {
-            hostProcessor->execute_input(mInputTokens);
-        }
+        hostProcessor->execute_input(mInputTokens);
     }
 
     GENERIC on_unregister(InfProcessorBase* out_processor) override{}
@@ -124,27 +116,12 @@ public:
     GENERIC on_batch_processed(InfProcessorTextToText* out_processor, const U32& out_proc_batch_length) override
     {
         FixerProcessor* hostProcessor = static_cast<FixerProcessor*>(out_processor);
-        mTotalProcessedBatch += out_proc_batch_length;
-        if(mTotalProcessedBatch >= mInputTokens.size())
-        {
-            printf("Started fixing...\n");
-            mbase::decode_behavior_description dbd;
-            dbd.mTokenAtMost = 1;
-            dbd.mHaltOnWrite = false;
-            hostProcessor->next(dbd);   
-        }
-        else
-        {
-            I32 calculatedBatch = mInputTokens.size() - mTotalProcessedBatch;
-            if(calculatedBatch > hostProcessor->get_batch_size())
-            {
-                hostProcessor->execute_input(mInputTokens.data() + mTotalProcessedBatch, hostProcessor->get_batch_size());
-            }
-            else
-            {
-                hostProcessor->execute_input(mInputTokens.data() + mTotalProcessedBatch, calculatedBatch);
-            }
-        }
+        
+        printf("Started fixing...\n");
+        mbase::decode_behavior_description dbd;
+        dbd.mTokenAtMost = 1;
+        dbd.mHaltOnWrite = false;
+        hostProcessor->next(dbd);
     }
 
     GENERIC on_write(InfProcessorTextToText* out_processor, const inf_text_token_vector& out_token, bool out_is_finish) override
@@ -177,7 +154,6 @@ public:
         gIsProgramRunning = false;
     }
 private:
-    U32 mTotalProcessedBatch = 0;
     mbase::inf_text_token_vector mInputTokens;
     mbase::string mGeneratedOutput;
     mbase::vector<U32> mChatHistory;

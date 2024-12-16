@@ -183,23 +183,25 @@ public:
 
     GENERIC on_write(InfProcessorTextToText* out_processor, const inf_text_token_vector& out_token, bool out_is_finish) override
     {
-        if(out_is_finish)
-        {
-            return;
-        }
-
         ConversationProcessor* hostProcessor = static_cast<ConversationProcessor*>(out_processor);
-        mbase::inf_token_description tokenDesc;
+        mbase::vector <mbase::inf_token_description> tokenDesc;
         mbase::decode_behavior_description dbd;
         dbd.mTokenAtMost = 1;
         dbd.mHaltOnWrite = false;
-
-        hostProcessor->token_to_description(out_token[0], tokenDesc);
-
-        mGeneratedOutput += tokenDesc.mTokenString;
-
-        fflush(stdout);
-        printf("%s", tokenDesc.mTokenString.c_str());
+        hostProcessor->tokens_to_description_vector(out_token, tokenDesc);
+        for(auto& n : tokenDesc)
+        {
+            if(n.mIsSpecial)
+            {
+                if(out_is_finish)
+                {
+                    return;
+                }
+            }
+            mGeneratedOutput += n.mTokenString;
+            fflush(stdout);
+            printf("%s", n.mTokenString.c_str());
+        }
         hostProcessor->next(dbd);
     }
 
