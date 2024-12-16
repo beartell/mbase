@@ -309,7 +309,7 @@ typename io_file::size_type io_file::write_data(const mbase::string& in_src)
 	return dataWritten;
 #endif
 #ifdef MBASE_PLATFORM_UNIX
-	ssize_t writeResult = write(mRawContext.raw_handle, in_src.c_str(), in_src.size() + 1);
+	ssize_t writeResult = write(mRawContext.raw_handle, in_src.c_str(), in_src.size());
 	if(writeResult == -1)
 	{
 		_set_last_error(errno);

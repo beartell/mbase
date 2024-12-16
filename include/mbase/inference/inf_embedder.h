@@ -6,11 +6,6 @@
 
 MBASE_BEGIN
 
-struct embedder_behavior_description {
-    U32 mEmbeddingAtMost = 1;
-    bool mHaltOnWrite = false;
-};
-
 class InfModelTextToText;
 
 class MBASE_API InfEmbedderProcessor : public mbase::InfProcessorBase {
@@ -35,9 +30,8 @@ public:
     flags get_processor_status() const;
 
     flags tokenize_input(CBYTEBUFFER in_data, size_type in_size, inf_text_token_vector& out_tokens);
-    flags execute_input(const mbase::vector<inf_text_token_vector>& in_tokens, const embedder_behavior_description& in_description, bool in_abandon = false);
-    flags next(const embedder_behavior_description& in_description);
-    flags next_sync(const embedder_behavior_description& in_description);
+    flags execute_input(const mbase::vector<inf_text_token_vector>& in_tokens, bool in_abandon = false);
+    flags next();
     flags set_inference_client(InfClientBase* in_client);
     flags initialize(
         InfModelTextToText* in_model,
@@ -74,14 +68,13 @@ private:
     U32 mEmbeddingLength;
     U32 mBatchSize;
     U32 mThreadCount;
-    U32 mEmbeddingVectorIndex;
+    U32 mSequenceEmbeddingCursor;
+    U32 mProcessedBatchLength;
     mbase::vector<inf_text_token_vector> mTokenizedInput;
-    mbase::vector<inf_embedding_vector> mEmbeddingVector;
     processor_signal mEmbeddingSignal;
     last_fail_code mLastFailCode;
     finish_state mFinishState;
     bool mIsInitializeFailed;
-    embedder_behavior_description mEmbedderBehavior;
 };
 
 MBASE_END

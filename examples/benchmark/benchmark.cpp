@@ -23,9 +23,10 @@ struct program_parameters {
     I32 mThreadCount = 16;
     I32 mBatchThreadCount = 8;
     I32 mContextLength = 2048;
-    I32 mBatchLength = 512;
+    I32 mBatchLength = 256;
     I32 mGpuLayer = 999;
     I32 mPredictCount = 256;
+    I32 mPromptLength = 1024;
     I32 mFps = 500;
     I32 mUserCount = 1;
     bool mFlashAttention = true;
@@ -71,6 +72,7 @@ GENERIC print_usage()
     printf("-bt, --batch-thread-count <int>      Amount of threads to use for initial batch processing (default=8).\n");
     printf("-c, --context-length <int>           Total context length (default=2048).\n");
     printf("-b, --batch-length <int>             Batch length (default=512).\n");
+    printf("-pr, --prompt-length <int>           Prompt length (default=1024).\n");
     printf("-gl, --gpu-layers <int>              GPU layers to offload to (default=999).\n");
     printf("-np, --n-predict <int>               Number of tokens to predict (default=256).\n");
     printf("-uc, --user-count <int>              Number of users that will be processed in parallel. (default=1)\n");
@@ -227,6 +229,11 @@ int main(int argc, char** argv)
             mbase::argument_get<I32>::value(i, argc, argv, gSampleParams.mBatchLength);
         }
 
+        else if(argumentString == "-pr" || argumentString == "--prompt-length")
+        {
+            mbase::argument_get<I32>::value(i, argc, argv, gSampleParams.mPromptLength);
+        }
+
         else if(argumentString == "--gpu-layers" || argumentString == "-gl")
         {
             mbase::argument_get<I32>::value(i, argc, argv, gSampleParams.mGpuLayer);
@@ -337,6 +344,7 @@ int main(int argc, char** argv)
     printf("\tLayer count: %d\n", layerCount);
     printf("- Context length: %u\n", gSampleParams.mContextLength);
     printf("- Batch size: %u\n", gSampleParams.mBatchLength);
+    printf("- Prompt length: %u\n", gSampleParams.mPromptLength);
     printf("- Batch processing threads: %u\n", gSampleParams.mBatchThreadCount);
     printf("- Generation threads: %u\n", gSampleParams.mThreadCount);
     printf("- User count: %u\n", gSampleParams.mUserCount);
@@ -367,7 +375,7 @@ int main(int argc, char** argv)
     }
     for(BenchmarkProcessor* tmpProc : processorsList)
     {
-        mbase::inf_text_token_vector tokVec(gSampleParams.mBatchLength, 1);
+        mbase::inf_text_token_vector tokVec(gSampleParams.mPromptLength, 1);
         tmpProc->execute_input(tokVec);
     }
 
@@ -438,6 +446,7 @@ int main(int argc, char** argv)
         jsOut["model_information"]["quantization"] = benchModel.get_quantization_string();
         jsOut["session_information"]["context_length"] = gSampleParams.mContextLength;
         jsOut["session_information"]["batch_size"] = gSampleParams.mBatchLength;
+        jsOut["session_information"]["prompt_length"] = gSampleParams.mPromptLength;
         jsOut["session_information"]["batch_proc_threads"] = gSampleParams.mBatchThreadCount;
         jsOut["session_information"]["generation_threads"] = gSampleParams.mThreadCount;
         jsOut["session_information"]["user_count"] = gSampleParams.mUserCount;
@@ -520,6 +529,7 @@ int main(int argc, char** argv)
         mbase::string sessionInfoMd = "### Session Information\n"
         + mbase::string::from_format("__Context length__: %ld<br>\n", gSampleParams.mContextLength)
         + mbase::string::from_format("__Batch size__: %ld<br>\n", gSampleParams.mBatchLength)
+        + mbase::string::from_format("__Prompt length__: %ld<br>\n", gSampleParams.mPromptLength)
         + mbase::string::from_format("__Batch processing threads__: %ld<br>\n", gSampleParams.mBatchThreadCount)
         + mbase::string::from_format("__Generation threads__: %ld<br>\n", gSampleParams.mThreadCount)
         + mbase::string::from_format("__User count__: %ld<br>\n", gSampleParams.mUserCount)

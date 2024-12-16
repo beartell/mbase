@@ -24,7 +24,8 @@ InfEmbedderProcessor::InfEmbedderProcessor():
     mEmbeddingLength(0),
     mBatchSize(0),
     mThreadCount(0),
-    mEmbeddingVectorIndex(0),
+    mSequenceEmbeddingCursor(0),
+    mProcessedBatchLength(0),
     mFinishState(finish_state::FINISHED),
     mIsInitializeFailed(false)
 {
@@ -130,7 +131,7 @@ InfEmbedderProcessor::flags InfEmbedderProcessor::tokenize_input(CBYTEBUFFER in_
     return flags::INF_PROC_SUCCESS;
 }
 
-InfEmbedderProcessor::flags InfEmbedderProcessor::execute_input(const mbase::vector<inf_text_token_vector>& in_tokens, const embedder_behavior_description& in_description, bool in_abandon)
+InfEmbedderProcessor::flags InfEmbedderProcessor::execute_input(const mbase::vector<inf_text_token_vector>& in_tokens, bool in_abandon)
 {
     MBASE_INF_EMBEDDER_PROC_RETURN_UNREGISTERED;
 
@@ -139,9 +140,18 @@ InfEmbedderProcessor::flags InfEmbedderProcessor::execute_input(const mbase::vec
 		return flags::INF_PROC_ERR_INPUT_IS_EMPTY;
 	}
 
+    U32 totalTokenCount = 0;
+    
     for(auto& tokenVector : in_tokens)
     {
-        if(tokenVector.size() > mContextLength)
+        if(tokenVector.size() > mBatchSize)
+        {
+            return flags::INF_PROC_ERR_INPUT_EXCEED_TOKEN_LIMIT;
+        }
+
+        totalTokenCount += tokenVector.size();
+
+        if(totalTokenCount > mContextLength)
         {
             return flags::INF_PROC_ERR_INPUT_EXCEED_TOKEN_LIMIT;
         }
@@ -166,23 +176,23 @@ InfEmbedderProcessor::flags InfEmbedderProcessor::execute_input(const mbase::vec
         stop_processor();
     }
 
-    mEmbeddingVectorIndex = 0;
-    mEmbedderBehavior = in_description;
+    mSequenceEmbeddingCursor = 0;
     mTokenizedInput = in_tokens;
+    mInputBatch = llama_batch_init(mBatchSize, 0, mTokenizedInput.size());
     mEmbeddingSignal.set_signal();
     start_processor();
 
     return flags::INF_PROC_SUCCESS;
 }
 
-InfEmbedderProcessor::flags InfEmbedderProcessor::next(const embedder_behavior_description& in_description)
+InfEmbedderProcessor::flags InfEmbedderProcessor::next()
 {
     MBASE_INF_EMBEDDER_PROC_RETURN_UNREGISTERED;
     
     if(signal_embedding_process())
     {
         // If it is already processing, ignore the request
-        return flags::INF_PROC_SUCCESS;
+        return flags::INF_PROC_ERR_ALREADY_PROCESSING;
     }
 
     if(signal_state_embedding_process())
@@ -195,25 +205,30 @@ InfEmbedderProcessor::flags InfEmbedderProcessor::next(const embedder_behavior_d
         return flags::INF_PROC_INFO_HALTED;
     }
 
-    mEmbeddingVector.clear();
-    mEmbedderBehavior = in_description;
-    mEmbeddingSignal.set_signal();
-    start_processor();
+    if(mFinishState != finish_state::CONTINUE)
+    {
+        return flags::INF_PROC_ERR_INPUT_IS_EMPTY;
+    }
+
+    PTRF32 embeddingsOut = llama_get_embeddings_seq(mModelContext, mSequenceEmbeddingCursor++);
+    if(mAssignedClient)
+    {
+        bool tmpIsFinished = false;
+        if(mSequenceEmbeddingCursor == mTokenizedInput.size())
+        {
+            mFinishState = finish_state::FINISHED;
+            tmpIsFinished = true;
+        }
+        InfClientEmbedder* embedderClient = static_cast<InfClientEmbedder*>(mAssignedClient);
+
+        embedderClient->on_write(this, embeddingsOut, mSequenceEmbeddingCursor - 1, tmpIsFinished);
+        if(tmpIsFinished)
+        {
+            embedderClient->on_finish(this, mEmbeddingLength * mSequenceEmbeddingCursor);
+        }
+    }
 
     return flags::INF_PROC_SUCCESS; 
-}
-
-InfEmbedderProcessor::flags InfEmbedderProcessor::next_sync(const embedder_behavior_description& in_description)
-{
-    MBASE_INF_EMBEDDER_PROC_RETURN_UNREGISTERED;
-    flags outFlag = next(in_description);
-    if(outFlag != flags::INF_PROC_SUCCESS)
-    {
-        return outFlag;
-    }
-    while(signal_embedding_process()){}
-
-	return flags::INF_PROC_INFO_NEED_UPDATE;
 }
 
 InfEmbedderProcessor::flags InfEmbedderProcessor::set_inference_client(InfClientBase* in_client)
@@ -337,11 +352,11 @@ GENERIC InfEmbedderProcessor::_initialize_context()
 {
     llama_context_params ctxParams = llama_context_default_params();
     ctxParams.n_ctx = mContextLength;
-    ctxParams.n_batch = mContextLength;
-    ctxParams.n_seq_max = 1;
+    ctxParams.n_batch = mBatchSize;
+    ctxParams.n_seq_max = 16;
     ctxParams.n_threads = mThreadCount;
     ctxParams.n_threads_batch = mThreadCount;
-    ctxParams.n_ubatch = mBatchSize;
+    ctxParams.n_ubatch = mBatchSize / 4;
     ctxParams.embeddings = true;
 
     InfModelTextToText* t2tModel = static_cast<InfModelTextToText*>(this->mTargetModel_md_model);
@@ -375,10 +390,9 @@ GENERIC InfEmbedderProcessor::_destroy_context()
     llama_free(mModelContext);
     mModelContext = NULL;
     mTokenizedInput.clear();
-    mEmbeddingVector.clear();
     mBatchSize = 0;
 	mThreadCount = 0;
-    mEmbeddingVectorIndex = 0;
+    mSequenceEmbeddingCursor = 0;
     mIsRunning = false;
     mFinishState = finish_state::FINISHED;
     mIsInitializeFailed = false;
@@ -392,29 +406,19 @@ GENERIC InfEmbedderProcessor::_destroy_context()
 
 GENERIC InfEmbedderProcessor::_calculate_embeddings()
 {
-    I32 tmpEmbeddingCalculationCount = 0;
-
-    for(; mEmbeddingVectorIndex < mTokenizedInput.size(); mEmbeddingVectorIndex++)
+    I32 sequenceCounter = 0;
+    mProcessedBatchLength = 0;
+    if(llama_get_kv_cache_token_count(mModelContext))
     {
-        if(tmpEmbeddingCalculationCount == mEmbedderBehavior.mEmbeddingAtMost)
-        {
-            if(tmpEmbeddingCalculationCount - 1 == mTokenizedInput.size())
-            {
-                mFinishState = finish_state::FINISHED;
-            }
-            break;
-        }
-
-        mFinishState = finish_state::CONTINUE;
-
         llama_kv_cache_clear(mModelContext);
+    }
 
-        inf_text_token_vector& tmpTokenVector = mTokenizedInput[mEmbeddingVectorIndex];
-        mInputBatch = llama_batch_init(tmpTokenVector.size(), 0, 1);
-
+    for(inf_text_token_vector& tmpTokenVector : mTokenizedInput)
+    {
+        mFinishState = finish_state::CONTINUE;
         for(size_type i = 0; i < tmpTokenVector.size(); ++i)
         {
-            inf_common_batch_add(mInputBatch, tmpTokenVector[i], i, {0}, true);
+            inf_common_batch_add(mInputBatch, tmpTokenVector[i], i, {sequenceCounter}, true);
         }
 
         InfModelTextToText* t2tModel = static_cast<InfModelTextToText*>(this->mTargetModel_md_model);
@@ -439,25 +443,11 @@ GENERIC InfEmbedderProcessor::_calculate_embeddings()
             mFinishState = finish_state::FAILED_ABANDONED;
             break;
         }
-
-        inf_embedding_vector tmpEmbeddingVector; // TODO: RESERVE THE VECTOR EQUAL TO THE SIZE OF EMBEDDING LENGTH OF THE MODEL
-        
-        // Means its good
-        PTRF32 embedd = llama_get_embeddings_seq(mModelContext, mInputBatch.seq_id[0][0]);
-        if(!embedd)
-        {
-            // Unable to get sequence embeddings
-            // Handle this problem
-            mFinishState = finish_state::FAILED_ABANDONED;
-            break;
-        }
-        
-        inf_common_embd_normalize(embedd, tmpEmbeddingVector.data(), tmpEmbeddingVector.size());
-        mEmbeddingVector.push_back(std::move(tmpEmbeddingVector));
-        
-        tmpEmbeddingCalculationCount++;
-        llama_batch_free(mInputBatch);
+        mProcessedBatchLength += mInputBatch.n_tokens;
+        mInputBatch.n_tokens = 0; // clear the batch
+        sequenceCounter++;
     }
+    llama_batch_free(mInputBatch);
     mEmbeddingSignal.set_signal_finished();
 }
 
@@ -498,27 +488,12 @@ GENERIC InfEmbedderProcessor::update()
     {
         mEmbeddingSignal.reset_signal_state();
         // Which means that the embeddings are generated
-        if(mEmbeddingVector.size())
+
+        InfClientBase* assignedClient = get_assigned_client();
+        if(assignedClient)
         {
-            InfClientBase* assignedClient = get_assigned_client();
-            if(assignedClient)
-            {
-                U32 embeddingCount = mEmbeddingVector.size() * mEmbeddingLength;
-                bool tmpIsFinished = false;
-                if(mFinishState != finish_state::CONTINUE)
-                {
-                    stop_processor();
-                    tmpIsFinished = true;
-                }
-
-                InfClientEmbedder* embedderClient = static_cast<InfClientEmbedder*>(assignedClient);
-                embedderClient->on_write(this, mEmbeddingVector, tmpIsFinished);
-
-                if(tmpIsFinished)
-                {
-                    embedderClient->on_finish(this, embeddingCount);
-                }
-            }
+            InfClientEmbedder* embedderClient = static_cast<InfClientEmbedder*>(assignedClient);
+            embedderClient->on_batch_processed(this, mProcessedBatchLength);
         }
     }
 }
@@ -534,20 +509,9 @@ GENERIC InfEmbedderProcessor::update_t()
 
         if(is_running())
         {
-            while(is_processor_running())
+            if(signal_embedding_process())
             {
-                if(signal_embedding_process())
-                {
-                    _calculate_embeddings();
-                }
-                else if(!mEmbedderBehavior.mHaltOnWrite)
-                {
-                    mbase::sleep(15);
-                }
-                else
-                {
-                    break;
-                }
+                _calculate_embeddings();
             }
         }
     }

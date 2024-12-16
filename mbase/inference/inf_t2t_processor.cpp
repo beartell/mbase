@@ -54,11 +54,6 @@ InfProcessorTextToText::~InfProcessorTextToText()
 		llama_free(mModelContext);
 		this->release_object_watcher();
 
-		if(mProcessedBatchLength)
-		{
-			llama_batch_free(mInputBatch);
-		}
-
 		if(mAssignedClient)
 		{
 			mAssignedClient->on_unregister(this);
@@ -308,7 +303,7 @@ InfProcessorTextToText::flags InfProcessorTextToText::execute_input(const inf_te
 		return flags::INF_PROC_ERR_INPUT_IS_EMPTY;
 	}
 
-	if(in_tokens.size() > mBatchSize)
+	if(in_tokens.size() > mContextLength)
 	{
 		return flags::INF_PROC_ERR_INPUT_EXCEED_TOKEN_LIMIT;
 	}
@@ -338,11 +333,6 @@ InfProcessorTextToText::flags InfProcessorTextToText::execute_input(const inf_te
 	}
 	stop_processor(); // Stop the processor if it is not stopped already
 	mTokenizedInput = in_tokens;
-	if(mProcessedBatchLength)
-	{
-		llama_batch_free(mInputBatch);
-	}
-	mInputBatch = llama_batch_init(mTokenizedInput.size(), 0, 1);	
 	mInputSignal.set_signal();
 	start_processor();
 
@@ -580,36 +570,45 @@ GENERIC InfProcessorTextToText::on_destroying()
 }
 
 GENERIC InfProcessorTextToText::_decode_input()
-{	
+{
 	llama_sampler_reset(mSamplerChain);
 	//mInputBatch = llama_batch_init(mTokenizedInput.size(), 0, 1);
 	//mInputBatch = llama_batch_get_one(mTokenizedInput.data(), mTokenizedInput.size());
-
+	std::chrono::high_resolution_clock::time_point beginTime;
+	std::chrono::high_resolution_clock::time_point endTime;
+	mProcessedBatchLength = 0;
+	mContextCursor = 0;
+	U32 tmpBatchCursor = 0;
+	U32 tmpNumOperated = 0;
+	I64 msPassed = 0;
+	llama_batch tempBatch = llama_batch_init(mBatchSize, 0, 1);
 	for(size_type i = 0; i < mTokenizedInput.size() - 1; i++)
 	{
-		inf_common_batch_add(mInputBatch, mTokenizedInput[i], i, {0}, false);
+		if(tmpBatchCursor == mBatchSize)
+		{
+			beginTime = std::chrono::high_resolution_clock::now();
+			llama_decode(mModelContext, tempBatch);
+			endTime = std::chrono::high_resolution_clock::now();
+			msPassed += std::chrono::duration_cast<std::chrono::milliseconds>(endTime - beginTime).count();
+			tmpNumOperated++;
+			tempBatch.n_tokens = 0;
+			tmpBatchCursor = 0;
+		}
+		inf_common_batch_add(tempBatch, mTokenizedInput[i], i, {0}, false);
+		++tmpBatchCursor;
+		++mContextCursor;
 	}
 
-	inf_common_batch_add(mInputBatch, mTokenizedInput.back(), mTokenizedInput.size() - 1, {0}, true);
-	if(mProcessedBatchLength)
-	{
-		mProcessedBatchLength = mInputBatch.n_tokens - mProcessedBatchLength;
-	}
-	else
-	{
-		mProcessedBatchLength = mInputBatch.n_tokens;
-	}
-	mContextCursor += mInputBatch.n_tokens;
-	mTokenizedInput.clear();
+	inf_common_batch_add(tempBatch, mTokenizedInput.back(), mTokenizedInput.size() - 1, {0}, true);
+	beginTime = std::chrono::high_resolution_clock::now();
+	llama_decode(mModelContext, tempBatch);
+	endTime = std::chrono::high_resolution_clock::now();
+	msPassed += std::chrono::duration_cast<std::chrono::milliseconds>(endTime - beginTime).count();
+	tmpNumOperated++;
 	
-	std::chrono::high_resolution_clock::time_point beginTime = std::chrono::high_resolution_clock::now();
-	[[maybe_unused]] I32 decodeResult = llama_decode(mModelContext, mInputBatch);
-	
-	std::chrono::high_resolution_clock::time_point endTime = std::chrono::high_resolution_clock::now();
-	I64 msPassed = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - beginTime).count();
 	F32 secondsPassed = (F32)msPassed / 1000.0f;
-	mDiagnostics.ppTokensPerSecond = mInputBatch.n_tokens / secondsPassed;
-
+	mDiagnostics.ppTokensPerSecond = mContextCursor / secondsPassed;
+	llama_batch_free(tempBatch);
 	mInputSignal.set_signal_finished();
 	mFinishState = finish_state::CONTINUE;
 }
@@ -619,6 +618,7 @@ GENERIC InfProcessorTextToText::_decode_next()
 	// Main Decode loop
 	I64 totalMilliseconds = 1;
 	I64 totalGeneratedTokens = 0;
+	llama_batch tempBatch = llama_batch_init(32, 0, 1);
 	for(U32 i = 0; i < mDecodeBehavior.mTokenAtMost; i++)
 	{
 		std::chrono::high_resolution_clock::time_point beginTime = std::chrono::high_resolution_clock::now();
@@ -626,8 +626,8 @@ GENERIC InfProcessorTextToText::_decode_next()
 		InfModelTextToText* t2tModel = static_cast<InfModelTextToText*>(this->mTargetModel_md_model);
 		t2tModel->get_vocab_count(modelVocab);
 
-		PTRF32 logits = llama_get_logits_ith(mModelContext, mInputBatch.n_tokens - 1);
-		
+		//PTRF32 logits = llama_get_logits_ith(mModelContext, mInputBatch.n_tokens - 1);
+		PTRF32 logits = llama_get_logits(mModelContext);
 		for (llama_token token_id = 0; token_id < modelVocab; ++token_id)
 		{
 			mPresetCandidates.emplace_back(llama_token_data{ token_id, logits[token_id], 0.0f });
@@ -644,9 +644,7 @@ GENERIC InfProcessorTextToText::_decode_next()
 		{
 			// means end of generation
 			mContextCursor = 0;
-			mProcessedBatchLength = 0;
 			llama_sampler_reset(mSamplerChain);
-			llama_batch_free(mInputBatch);
 			llama_kv_cache_clear(mModelContext);
 			mFinishState = finish_state::FINISHED;
 			break;
@@ -658,9 +656,7 @@ GENERIC InfProcessorTextToText::_decode_next()
 			{
 				// means token limit is reached
 				mContextCursor = 0;
-				mProcessedBatchLength = 0;
 				llama_sampler_reset(mSamplerChain);
-				llama_batch_free(mInputBatch);
 				llama_kv_cache_clear(mModelContext);
 				mFinishState = finish_state::TOKEN_LIMIT_REACHED;
 				break;
@@ -669,17 +665,17 @@ GENERIC InfProcessorTextToText::_decode_next()
 			else
 			{
 				mInputBatch.n_tokens = 0;
-				inf_common_batch_add(mInputBatch, tmpGeneratedToken, mContextCursor, {0}, true);
+				inf_common_batch_add(tempBatch, tmpGeneratedToken, mContextCursor, {0}, true);
 				mContextCursor++;
 				//mInputBatch = llama_batch_get_one(&tmpGeneratedToken, 1);
-				llama_decode(mModelContext, mInputBatch); // Handle error here
+				llama_decode(mModelContext, tempBatch); // Handle error here
 				totalGeneratedTokens++;
 				std::chrono::high_resolution_clock::time_point endTime = std::chrono::high_resolution_clock::now();
 				totalMilliseconds += std::chrono::duration_cast<std::chrono::milliseconds>(endTime - beginTime).count();
 			}
 		}
 	}
-	
+	llama_batch_free(tempBatch);
 	if(totalGeneratedTokens)
 	{
 		F32 secondsPassed = (F32)totalMilliseconds / 1000.0f;
