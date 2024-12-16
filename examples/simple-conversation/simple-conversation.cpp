@@ -376,7 +376,7 @@ int main(int argc, char** argv)
         gSampleParams.mThreadCount,
         gSampleParams.mBatchThreadCount,
         true,
-        {}
+        samplingSet
     );
 
     // Waiting for processor registration
@@ -386,7 +386,7 @@ int main(int argc, char** argv)
         mbase::sleep(2);
     }
 
-    signal(SIGINT, catching_interrupt_signal);
+    //signal(SIGINT, catching_interrupt_signal);
     mbase::string modelName;
     cnvModel.get_model_name(modelName);
     printf("==== Session Information ====\n\n");

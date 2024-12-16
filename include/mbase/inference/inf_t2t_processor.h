@@ -99,6 +99,7 @@ private:
 	InfProcT2TDiagnostics mDiagnostics;
 	llama_sampler* mSamplerChain;
 	llama_context* mModelContext;
+	llama_batch mInputBatch;
 	inf_text_token_candidates mPresetCandidates;
 	inf_text_token_vector mTokenizedInput;
 	inf_text_token_vector mGeneratedTokenVector;
