@@ -60,6 +60,7 @@ public:
 	flags get_embedding_length(U32& out_embed_length);
 	flags get_head_count(U32& out_head_count);
 	flags get_layer_count(U32& out_layer_count);
+	flags get_max_embedding_context(U32& out_context);
 	bool is_token_eof_generation(inf_text_token in_token);
 	flags is_token_special(const mbase::string& in_string);
 	flags is_token_control(inf_text_token in_token);
@@ -87,7 +88,6 @@ public:
 	flags register_context_process(
 		InfEmbedderProcessor* in_processor,
 		const U32& in_context_length,
-		U32 in_batch_size,
 		U32 in_thread_count
 	);
 	flags tokenize_input(CBYTEBUFFER in_data, size_type in_size, inf_text_token_vector& out_tokens);

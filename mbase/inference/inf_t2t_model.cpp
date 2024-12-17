@@ -230,6 +230,13 @@ InfModelTextToText::flags InfModelTextToText::get_layer_count(U32& out_layer_cou
 	return flags::INF_MODEL_SUCCESS;
 }
 
+InfModelTextToText::flags InfModelTextToText::get_max_embedding_context(U32& out_context)
+{
+	MBASE_INF_T2T_MODEL_RETURN_UNINITIALIZED;
+	out_context = llama_n_ctx_train(mModel);
+	return flags::INF_MODEL_SUCCESS;
+}
+
 bool InfModelTextToText::is_token_eof_generation(inf_text_token in_token)
 {
 	if (!this->is_initialized())
@@ -507,7 +514,6 @@ InfModelTextToText::flags InfModelTextToText::register_context_process
 (
 	InfEmbedderProcessor* in_processor,
 	const U32& in_context_length,
-	U32 in_batch_size,
 	U32 in_thread_count
 )
 {
@@ -550,16 +556,6 @@ InfModelTextToText::flags InfModelTextToText::register_context_process
 
 	mOccupiedContext += in_context_length;
 
-	if(!in_batch_size)
-	{
-		in_batch_size = in_context_length / 8;
-	}
-
-	if(in_batch_size > in_context_length)
-	{
-		in_batch_size = in_context_length;
-	}
-
 	if(!in_thread_count)
 	{
 		in_thread_count = 1;
@@ -569,7 +565,6 @@ InfModelTextToText::flags InfModelTextToText::register_context_process
 		this,
 		mbase::string::generate_uuid(),
 		in_context_length,
-		in_batch_size,
 		in_thread_count
 	); // 100% success
 	

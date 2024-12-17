@@ -6,6 +6,8 @@
 
 MBASE_BEGIN
 
+typedef I32 (*encoder_decoder_op)(llama_context*, llama_batch);
+
 class InfModelTextToText;
 
 class MBASE_API InfEmbedderProcessor : public mbase::InfProcessorBase {
@@ -28,8 +30,9 @@ public:
     const U32& get_max_token_length();
 
     flags get_processor_status() const;
-
     flags tokenize_input(CBYTEBUFFER in_data, size_type in_size, inf_text_token_vector& out_tokens);
+    flags tokenize_input(const mbase::string& in_string, inf_text_token_vector& out_tokens);
+    flags tokenize_input(const mbase::wstring& in_string, inf_text_token_vector& out_tokens);
     flags execute_input(const mbase::vector<inf_text_token_vector>& in_tokens, bool in_abandon = false);
     flags next();
     flags set_inference_client(InfClientBase* in_client);
@@ -37,14 +40,12 @@ public:
         InfModelTextToText* in_model,
         const mbase::string& in_context_id,
         const U32& in_context_length,
-        const U32& in_batch_size,
         const U32& in_thread_count
     );
     flags initialize_sync(
         InfModelTextToText* in_model,
         const mbase::string& in_context_id,
         const U32& in_context_length,
-        const U32& in_batch_size,
         const U32& in_thread_count
     );
     flags destroy() override;
@@ -63,6 +64,7 @@ private:
     GENERIC _destroy_context();
     GENERIC _calculate_embeddings();
 
+    encoder_decoder_op mOperationProcedure;
     llama_context* mModelContext;
     llama_batch mInputBatch;
     U32 mEmbeddingLength;
