@@ -42,8 +42,8 @@ GENERIC print_usage()
     printf("Options: \n\n");
     printf("-h, --help                      Print usage.\n");
     printf("-v, --version                   Shows program version.\n");
-    printf("-pf, --prompt-file <str>        File containing prompt or prompts seperated by the seperator (default='').\n");
-    printf("-p, --prompt <str>              Prompt or prompts seperated by the seperator (default='').\n");
+    printf("-pf, --prompt-file <str>        File containing prompt or prompts seperated by the seperator (default=''). If prompt is given, prompt file will be ignored\n");
+    printf("-p, --prompt <str>              Prompt or prompts seperated by the seperator (default=''). This will be used even if the prompt file is supplied\n");
     printf("-sp, --seperator <str>          Prompt seperator (default=\"<mbembd_sep>\").\n");
     printf("-t, --thread-count <int>        Threads used to compute embeddings (default=16).\n");
     printf("-gl, --gpu-layers <int>         GPU layers to offload to (default=999).\n");
@@ -148,9 +148,58 @@ int main(int argc, char** argv)
 
         else if(argumentString == "-pf" || argumentString == "--prompt-file")
         {
-            
+            mbase::argument_get<mbase::string>::value(i, argc, argv, gSampleParams.mPromptFile);
+        }
+
+        else if(argumentString == "-p" || argumentString == "--prompt")
+        {
+            mbase::argument_get<mbase::string>::value(i, argc, argv, gSampleParams.mPrompt);
+        }
+
+        else if(argumentString == "-sp" || argumentString == "--seperator")
+        {
+            mbase::argument_get<mbase::string>::value(i, argc, argv, gSampleParams.mSeperator);
+        }
+
+        else if(argumentString == "-t" || argumentString == "--thread-count")
+        {
+            mbase::argument_get<I32>::value(i, argc, argv, gSampleParams.mThreadCount);
+        }
+
+        else if(argumentString == "-gl" || argumentString == "--gpu-layers")
+        {
+            mbase::argument_get<I32>::value(i, argc, argv, gSampleParams.mGpuLayer);
+        }
+
+        else if(argumentString == "-jout" || argumentString == "--json-output-path")
+        {
+            mbase::argument_get<mbase::string>::value(i, argc, argv, gSampleParams.mJout);
         }
     }
+
+    if(!gSampleParams.mPrompt.size())
+    {
+        if(!gSampleParams.mPromptFile.size())
+        {
+            printf("ERR: Prompt is missing.\n");
+            return 1;
+        }
+
+        if(mbase::is_file_valid(mbase::from_utf8(gSampleParams.mPromptFile)))
+        {
+            printf("ERR: Unable to open prompt file: %s\n", gSampleParams.mPromptFile);
+            return 1;
+        }
+
+        gSampleParams.mPrompt = mbase::read_file_as_string(mbase::from_utf8(gSampleParams.mPromptFile));
+        if(!gSampleParams.mPrompt.size())
+        {
+            printf("ERR: Prompt is missing.\n");
+            return 1;
+        }
+    }
+
+    
 
     // EmbedderModel embdModel;
     // EmbedderProcessor embdProcessor;
