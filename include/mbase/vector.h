@@ -138,6 +138,7 @@ public:
 	MBASE_INLINE_EXPR GENERIC clear() noexcept;
 	MBASE_INLINE_EXPR GENERIC resize(size_type in_size) noexcept;
 	MBASE_INLINE_EXPR GENERIC resize(size_type in_size, const T& in_value) noexcept; // IMPLEMENT ONE DAY
+	MBASE_INLINE_EXPR GENERIC resize_on_preset(size_type in_size) noexcept; // BEFORE USING THIS, CAPACITY MUST BE ALIGNED FIRST!!!
 	MBASE_INLINE_EXPR GENERIC shrink_to_fit();
 	MBASE_INLINE_EXPR GENERIC reserve(size_type in_capacity) noexcept;
 	MBASE_INLINE_EXPR iterator erase(iterator in_pos) noexcept;
@@ -619,12 +620,47 @@ MBASE_INLINE_EXPR GENERIC vector<T, Allocator>::resize(size_type in_size) noexce
 		reserve(in_size * 2);
 	}
 	difference_type sizeDifference = mSize - in_size;
-	for(difference_type i = 0; i < sizeDifference; i++)
+	if(sizeDifference < 0)
 	{
-		pop_back();
+		for(; sizeDifference != 0; ++sizeDifference)
+		{
+			// populate the rest
+			push_back(T());
+		}
 	}
+	else
+	{
+		for(difference_type i = 0; i < sizeDifference; i++)
+		{
+			pop_back();
+		}
+	}
+}
 
-	mSize = in_size;
+template<typename T, typename Allocator>
+MBASE_INLINE_EXPR GENERIC vector<T, Allocator>::resize_on_preset(size_type in_size) noexcept
+{
+	if (in_size > mCapacity)
+	{
+		reserve(in_size * 2);
+	}
+	difference_type sizeDifference = mSize - in_size;
+	if(sizeDifference < 0)
+	{
+		size_type i = mSize;
+		for(; sizeDifference != 0; ++sizeDifference)
+		{
+			// populate the rest
+			push_back(*(mRawData + i++));
+		}
+	}
+	else
+	{
+		for(difference_type i = 0; i < sizeDifference; i++)
+		{
+			pop_back();
+		}
+	}
 }
 
 template<typename T, typename Allocator>

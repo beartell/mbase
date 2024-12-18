@@ -4,9 +4,10 @@
 #include <mbase/argument_get_value.h>
 #include <mbase/filesystem.h>
 #include <mbase/io_file.h>
+#include <mbase/json/json.h>
 #include <iostream>
 
-#define MBASE_EMBEDDING_SIMPLE_VERSION "v1.0.0"
+#define MBASE_EMBEDDING_SIMPLE_VERSION "v1.1.0"
 
 using namespace mbase;
 
@@ -24,10 +25,13 @@ struct program_parameters {
     I32 mGpuLayer = 999;
 };
 
+mbase::vector<mbase::vector<F32>> gAllGeneratedEmbeddings;
 mbase::vector<mbase::string> gLoadedPrompts;
 mbase::vector<mbase::string>::iterator gPromptIt;
 program_parameters gSampleParams;
+mbase::string gModelName;
 I32 gEmbeddingIndex = 0;
+I32 gTotalPromptTokenLength = 0; // For openai_embeddings.json
 
 GENERIC print_usage()
 {
@@ -49,7 +53,7 @@ GENERIC print_usage()
     printf("-sp, --seperator <str>          Prompt seperator (default=\"<embd_sep>\").\n");
     printf("-t, --thread-count <int>        Threads used to compute embeddings (default=16).\n");
     printf("-gl, --gpu-layers <int>         GPU layers to offload to (default=999).\n");
-    printf("-jout, --json-output-path <str> If the json output path is specified, result will be written there in file(generated_embeddings.json) (default='').\n\n");
+    printf("-jout, --json-output-path <str> If the json output path is specified, result will be written there in file(openai_embeddings.json) (default='').\n\n");
 }
 
 class EmbedderModel : public InfModelTextToText {
@@ -59,7 +63,10 @@ public:
         printf("ERR: Failed loading model.\n");
         exit(1);
     }
-    GENERIC on_initialize() override{}
+    GENERIC on_initialize() override
+    {
+        this->get_model_name(gModelName);
+    }
     GENERIC on_destroy() override{}
 private:
 };
@@ -76,14 +83,11 @@ class EmbedderClient : public InfClientEmbedder {
 public:
     GENERIC on_register(InfProcessorBase* out_processor) override
     {
-        for(auto&n : gLoadedPrompts)
-        {
-            printf("%s\n", n.c_str());
-        }
         gPromptIt = gLoadedPrompts.begin();
         InfEmbedderProcessor* hostProc = static_cast<InfEmbedderProcessor*>(out_processor);
         mbase::inf_text_token_vector tokVec;
         hostProc->tokenize_input(*gPromptIt, tokVec);
+        gTotalPromptTokenLength += tokVec.size();
         if(hostProc->execute_input({tokVec}) == InfEmbedderProcessor::flags::INF_PROC_ERR_INPUT_EXCEED_TOKEN_LIMIT)
         {
             printf("ERR: Given prompt's token length is greater than embedder context length.\n");
@@ -105,10 +109,19 @@ public:
     GENERIC on_write(InfEmbedderProcessor* out_processor, PTRF32 out_embeddings, const U32& out_cursor, bool out_is_finished) override
     {
         printf("Index %d: ", gEmbeddingIndex);
-        for(I32 i = 0; i < 8; i++)
+        mbase::vector<F32> generatedEmbeddings;
+        inf_common_embd_normalize(out_embeddings, out_embeddings, out_processor->get_embedding_length());
+        I32 printLength = 8;
+        for(I32 i = 0; i < out_processor->get_embedding_length(); i++)
         {
-            printf("%.6f ", out_embeddings[i]);
+            generatedEmbeddings.push_back(out_embeddings[i]);
+            if(printLength)
+            {
+                printf("%f ", out_embeddings[i]);
+                --printLength;
+            }
         }
+        gAllGeneratedEmbeddings.push_back(generatedEmbeddings);
         printf("... (%d more)\n", out_processor->get_embedding_length() - 8);
     }
 
@@ -120,6 +133,7 @@ public:
         {
             mbase::inf_text_token_vector tokVec;
             hostProc->tokenize_input(*gPromptIt, tokVec);
+            gTotalPromptTokenLength += tokVec.size();
             if(hostProc->execute_input({tokVec}) == InfEmbedderProcessor::flags::INF_PROC_ERR_INPUT_EXCEED_TOKEN_LIMIT)
             {
                 printf("ERR: Given prompt's token length is greater than embedder context length.\n");
@@ -129,6 +143,43 @@ public:
         }
         else
         {
+            if(gSampleParams.mJout.size())
+            {
+                mbase::io_file iof;
+                gSampleParams.mJout += "openai_embeddings.json";
+                iof.open_file(mbase::from_utf8(gSampleParams.mJout));
+                if(!iof.is_file_open())
+                {
+                    printf("ERR: Unable to write embeddings to openai_embeddings.json\n");
+                    exit(1);
+                }
+                mbase::Json openaiJson;
+                openaiJson.setObject();
+                openaiJson["object"] = "list";
+                openaiJson["model"] = gModelName;
+                openaiJson["usage"]["prompt_tokens"] = gTotalPromptTokenLength;
+                openaiJson["usage"]["total_tokens"] = gTotalPromptTokenLength;
+                openaiJson["data"].setArray();
+                
+                for(size_type i = 0; i < gAllGeneratedEmbeddings.size(); ++i)
+                {
+                    mbase::Json currentData;
+
+                    currentData["object"] = "embedding",
+                    currentData["index"] = i;
+                    
+                    mbase::Json embeddingArray;
+                    embeddingArray.setArray();
+                    
+                    mbase::vector<F32> &activeVector = gAllGeneratedEmbeddings[i];
+                    for(size_type j = 0; j < activeVector.size(); ++j)
+                    {
+                        currentData["embedding"][j] = activeVector[j];
+                    }
+                    openaiJson["data"][i] = currentData;
+                }
+                iof.write_data(openaiJson.toStringPretty());
+            }
             exit(0);
         }
     }
@@ -249,6 +300,7 @@ int main(int argc, char** argv)
     {
         embdProcessor.set_inference_client(&embdClient);
         embdProcessor.update();    
+        mbase::sleep(2);
     }
 
     return 0;

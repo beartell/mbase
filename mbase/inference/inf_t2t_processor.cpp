@@ -229,7 +229,7 @@ InfProcessorTextToText::flags InfProcessorTextToText::tokenize_input(CBYTEBUFFER
 			return flags::INF_PROC_ERR_UNABLE_TO_TOKENIZE_INPUT;
 		}
 
-		tokenizedInput.resize(tokenCount);
+		tokenizedInput.resize_on_preset(tokenCount);
 	}
 	catch(const std::exception& e)
 	{

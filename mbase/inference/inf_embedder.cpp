@@ -121,14 +121,14 @@ InfEmbedderProcessor::flags InfEmbedderProcessor::tokenize_input(CBYTEBUFFER in_
 
     inf_text_token_vector tokenizedInput(in_size * 4);
     InfModelTextToText* t2tModel = static_cast<InfModelTextToText*>(this->mTargetModel_md_model);
-	I32 tokenCount = llama_tokenize(t2tModel->get_raw_model(), in_data, in_size, tokenizedInput.data(), in_size * 4, true, true);
+	I32 tokenCount = llama_tokenize(t2tModel->get_raw_model(), in_data, in_size, tokenizedInput.data(), in_size * 4, false, true);
 
     if(tokenCount == -1)
     {
         return flags::INF_PROC_ERR_UNABLE_TO_TOKENIZE_INPUT;
     }
 
-    tokenizedInput.resize(tokenCount);
+    tokenizedInput.resize_on_preset(tokenCount);
     out_tokens = std::move(tokenizedInput);
     return flags::INF_PROC_SUCCESS;
 }
@@ -225,7 +225,7 @@ InfEmbedderProcessor::flags InfEmbedderProcessor::next()
             tmpIsFinished = true;
         }
         InfClientEmbedder* embedderClient = static_cast<InfClientEmbedder*>(mAssignedClient);
-        inf_common_embd_normalize(embeddingsOut, embeddingsOut, mEmbeddingLength);
+        //inf_common_embd_normalize(embeddingsOut, embeddingsOut, mEmbeddingLength);
         embedderClient->on_write(this, embeddingsOut, mSequenceEmbeddingCursor - 1, tmpIsFinished);
         if(tmpIsFinished)
         {
@@ -359,7 +359,7 @@ GENERIC InfEmbedderProcessor::_initialize_context()
     ctxParams.n_seq_max = 1;
     ctxParams.n_threads = mThreadCount;
     ctxParams.n_threads_batch = mThreadCount;
-    ctxParams.n_ubatch = mBatchSize / 4;
+    ctxParams.n_ubatch = mBatchSize;
     ctxParams.embeddings = true;
 
     InfModelTextToText* t2tModel = static_cast<InfModelTextToText*>(this->mTargetModel_md_model);

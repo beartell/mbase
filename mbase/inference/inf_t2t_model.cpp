@@ -597,7 +597,7 @@ InfModelTextToText::flags InfModelTextToText::tokenize_input(CBYTEBUFFER in_data
 			return flags::INF_MODEL_ERR_TOKENIZATION_FAILED;
 		}
 
-		tokenizedInput.resize(tokenCount);
+		tokenizedInput.resize_on_preset(tokenCount);
 	}
 	catch(const std::exception& e)
 	{
