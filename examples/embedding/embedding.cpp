@@ -25,7 +25,9 @@ struct program_parameters {
 };
 
 mbase::vector<mbase::string> gLoadedPrompts;
+mbase::vector<mbase::string>::iterator gPromptIt;
 program_parameters gSampleParams;
+I32 gEmbeddingIndex = 0;
 
 GENERIC print_usage()
 {
@@ -44,7 +46,7 @@ GENERIC print_usage()
     printf("-v, --version                   Shows program version.\n");
     printf("-pf, --prompt-file <str>        File containing prompt or prompts seperated by the seperator (default=''). If prompt is given, prompt file will be ignored\n");
     printf("-p, --prompt <str>              Prompt or prompts seperated by the seperator (default=''). This will be used even if the prompt file is supplied\n");
-    printf("-sp, --seperator <str>          Prompt seperator (default=\"<mbembd_sep>\").\n");
+    printf("-sp, --seperator <str>          Prompt seperator (default=\"<embd_sep>\").\n");
     printf("-t, --thread-count <int>        Threads used to compute embeddings (default=16).\n");
     printf("-gl, --gpu-layers <int>         GPU layers to offload to (default=999).\n");
     printf("-jout, --json-output-path <str> If the json output path is specified, result will be written there in file(generated_embeddings.json) (default='').\n\n");
@@ -52,7 +54,11 @@ GENERIC print_usage()
 
 class EmbedderModel : public InfModelTextToText {
 public:
-    GENERIC on_initialize_fail(init_fail_code out_fail_code) override{}
+    GENERIC on_initialize_fail(init_fail_code out_fail_code) override
+    {
+        printf("ERR: Failed loading model.\n");
+        exit(1);
+    }
     GENERIC on_initialize() override{}
     GENERIC on_destroy() override{}
 private:
@@ -70,40 +76,61 @@ class EmbedderClient : public InfClientEmbedder {
 public:
     GENERIC on_register(InfProcessorBase* out_processor) override
     {
+        for(auto&n : gLoadedPrompts)
+        {
+            printf("%s\n", n.c_str());
+        }
+        gPromptIt = gLoadedPrompts.begin();
         InfEmbedderProcessor* hostProc = static_cast<InfEmbedderProcessor*>(out_processor);
-        printf("Client registered!!!\n");
         mbase::inf_text_token_vector tokVec;
-        hostProc->tokenize_input("What is TSNE", tokVec);
-        hostProc->execute_input({tokVec});
+        hostProc->tokenize_input(*gPromptIt, tokVec);
+        if(hostProc->execute_input({tokVec}) == InfEmbedderProcessor::flags::INF_PROC_ERR_INPUT_EXCEED_TOKEN_LIMIT)
+        {
+            printf("ERR: Given prompt's token length is greater than embedder context length.\n");
+            exit(1);
+        }
+        ++gPromptIt;
     }
 
 	GENERIC on_unregister(InfProcessorBase* out_processor) override
     {
-
     }
 
     GENERIC on_batch_processed(InfEmbedderProcessor* out_processor, const U32& out_proc_batch_length) override
     {
-        printf("Batch is processed: %d\n", out_proc_batch_length);
         InfEmbedderProcessor* hostProc = static_cast<InfEmbedderProcessor*>(out_processor);
         hostProc->next();
     }
 
     GENERIC on_write(InfEmbedderProcessor* out_processor, PTRF32 out_embeddings, const U32& out_cursor, bool out_is_finished) override
     {
-        for(I32 i = 0; i < out_processor->get_embedding_length(); i++)
+        printf("Index %d: ", gEmbeddingIndex);
+        for(I32 i = 0; i < 8; i++)
         {
             printf("%.6f ", out_embeddings[i]);
         }
-        printf("\n\n");
-        InfEmbedderProcessor* hostProc = static_cast<InfEmbedderProcessor*>(out_processor);
-        mbase::inf_text_token_vector tokVec;
-        hostProc->tokenize_input("What is TSNE", tokVec);
-        hostProc->execute_input({tokVec});
+        printf("... (%d more)\n", out_processor->get_embedding_length() - 8);
     }
 
     GENERIC on_finish(InfEmbedderProcessor* out_processor, const size_type& out_total_processed_embeddings) override
     {
+        ++gEmbeddingIndex;
+        InfEmbedderProcessor* hostProc = static_cast<InfEmbedderProcessor*>(out_processor);
+        if(gPromptIt != gLoadedPrompts.end())
+        {
+            mbase::inf_text_token_vector tokVec;
+            hostProc->tokenize_input(*gPromptIt, tokVec);
+            if(hostProc->execute_input({tokVec}) == InfEmbedderProcessor::flags::INF_PROC_ERR_INPUT_EXCEED_TOKEN_LIMIT)
+            {
+                printf("ERR: Given prompt's token length is greater than embedder context length.\n");
+                exit(1);
+            }
+            ++gPromptIt;
+        }
+        else
+        {
+            exit(0);
+        }
     }
 private:
 };
@@ -187,7 +214,7 @@ int main(int argc, char** argv)
 
         if(mbase::is_file_valid(mbase::from_utf8(gSampleParams.mPromptFile)))
         {
-            printf("ERR: Unable to open prompt file: %s\n", gSampleParams.mPromptFile);
+            printf("ERR: Unable to open prompt file: %s\n", gSampleParams.mPromptFile.c_str());
             return 1;
         }
 
@@ -199,24 +226,30 @@ int main(int argc, char** argv)
         }
     }
 
-    
+    gSampleParams.mPrompt.split_full(gSampleParams.mSeperator, gLoadedPrompts);
 
-    // EmbedderModel embdModel;
-    // EmbedderProcessor embdProcessor;
-    // EmbedderClient embdClient;
-    // embdModel.initialize_model_sync(L"/home/erdog/Downloads/nomic-embed-text-v1.Q8_0.gguf", 32000, -1);
-    // embdModel.update();
-    // U32 ctxLength = 0;
-    // embdModel.get_max_embedding_context(ctxLength);
-    // embdModel.register_context_process(&embdProcessor, ctxLength, 8);
+    EmbedderModel embdModel;
+    EmbedderProcessor embdProcessor;
+    EmbedderClient embdClient;
+    embdModel.initialize_model_sync(mbase::from_utf8(gSampleParams.mModelFile), 32000, -1);
+    embdModel.update();
 
-    // printf("EMBEDDING CONTEXT: %d\n", ctxLength);
+    if(!embdModel.is_embedding_model())
+    {
+        printf("ERR: Loaded model is not embedding model.\n");
+        printf("INFO: Embedding simple program does not generate token embeddings\n");
+        return 1;
+    }
 
-    // while(1)
-    // {
-    //     embdProcessor.set_inference_client(&embdClient);
-    //     embdProcessor.update();    
-    // }
+    U32 ctxLength = 0;
+    embdModel.get_max_embedding_context(ctxLength);
+    embdModel.register_context_process(&embdProcessor, ctxLength, gSampleParams.mThreadCount);
+
+    while(1)
+    {
+        embdProcessor.set_inference_client(&embdClient);
+        embdProcessor.update();    
+    }
 
     return 0;
 }

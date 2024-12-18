@@ -289,6 +289,8 @@ public:
     /* ===== NON-MODIFIER METHODS BEGIN ===== */
     template<typename SourceContainer>
     MBASE_INLINE GENERIC split(const character_sequence& in_delimiters, SourceContainer& out_strings) noexcept;
+    template<typename SourceContainer>
+    MBASE_INLINE GENERIC split_full(const character_sequence& in_string, SourceContainer& out_strings) noexcept;
     MBASE_ND(MBASE_RESULT_IGNORE) I32 to_i32() noexcept { return SeqBase::cnv_to_i32(this->c_str()); }
     MBASE_ND(MBASE_RESULT_IGNORE) I32 to_i64() noexcept { return SeqBase::cnv_to_i64(this->c_str()); }
     MBASE_ND(MBASE_RESULT_IGNORE) F32 to_f32() noexcept { return SeqBase::cnv_to_f32(this->c_str()); }
@@ -957,7 +959,7 @@ MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE typename character_sequence<SeqType, 
     const_pointer tmpResult = strstr(itBegin.get(), in_src);
     if (tmpResult)
     {
-        return tmpResult - (mRawData + in_pos);
+        return tmpResult - mRawData;
     }
 
     return npos;
@@ -976,7 +978,7 @@ MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE typename character_sequence<SeqType, 
     const_pointer tmpResult = strchr(itBegin.get(), in_char);
     if (tmpResult)
     {
-        return tmpResult - (mRawData + in_pos);
+        return tmpResult - mRawData;
     }
 
     return npos;
@@ -2323,6 +2325,48 @@ MBASE_INLINE GENERIC character_sequence<SeqType, SeqBase, Allocator>::split(cons
         stringOut = SeqBase::string_token(nullptr, delims);
     }
     *this = std::move(oldString);
+}
+
+template<typename SeqType, typename SeqBase, typename Allocator>
+template<typename SourceContainer>
+MBASE_INLINE GENERIC character_sequence<SeqType, SeqBase, Allocator>::split_full(const character_sequence& in_string, SourceContainer& out_strings) noexcept
+{
+    size_type stringIter = 0;
+    size_type firstIndex = this->find(in_string);
+    bool foundString = false;
+    while(firstIndex != npos)
+    {
+        foundString = true;
+        character_sequence<SeqType, SeqBase, Allocator> builtString;
+        for(; stringIter < firstIndex; ++stringIter)
+        {
+            builtString.push_back(this->at(stringIter));
+        }
+        stringIter += in_string.size();
+        if(builtString.size())
+        {
+            out_strings.push_back(std::move(builtString));
+        }
+        firstIndex = this->find(in_string, firstIndex + 1);
+    }
+
+    if(foundString)
+    {
+        if(stringIter != this->size())
+        {
+            character_sequence<SeqType, SeqBase, Allocator> builtString;
+            for(; stringIter < this->size(); ++stringIter)
+            {
+                builtString.push_back(this->at(stringIter));
+            }
+            out_strings.push_back(std::move(builtString));
+        }    
+    }
+
+    else
+    {
+        out_strings.push_back(*this);
+    }
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
