@@ -3,6 +3,7 @@
 
 #include <mbase/common.h>
 #include <mbase/string.h>
+#include <mbase/set.h>
 #include <set>
 
 MBASE_BEGIN
@@ -69,7 +70,7 @@ struct MBASE_API InfSamplerDescription {
 	};
 };
 
-using inf_sampling_set = std::set<InfSamplerDescription>;
+using inf_sampling_set = mbase::set<InfSamplerDescription>;
 
 MBASE_END
 

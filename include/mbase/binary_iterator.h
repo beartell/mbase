@@ -198,7 +198,7 @@ public:
     MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE bool operator!=(const const_bst_iterator& in_rhs) const noexcept;
     /* ===== OPERATOR NON-MODIFIER METHODS END ===== */
 
-    pointer _ptr;
+    const_pointer _ptr;
 };
 
 template<typename T, typename DataT>
@@ -276,7 +276,7 @@ public:
     MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE bool operator!=(const const_reverse_bst_iterator& in_rhs) const noexcept;
     /* ===== OPERATOR NON-MODIFIER METHODS END ===== */
 
-    pointer _ptr;
+    const_pointer _ptr;
 };
 
 

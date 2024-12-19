@@ -25,7 +25,7 @@ public:
 	using difference_type = PTRDIFF;
 	using key_compare = Compare;
 	using value_compare = Compare;
-	using _node_type = avl_node<Key, key_compare>;
+	using _node_type = avl_node<Key, Compare>;
 	using allocator_type = Allocator;
 	using reference = Key&;
 	using const_reference = const Key&;
@@ -159,8 +159,8 @@ MBASE_INLINE set<Key, Compare, Allocator>::set(const Compare& in_comp, const All
 
 template<typename Key, typename Compare, typename Allocator>
 MBASE_INLINE set<Key, Compare, Allocator>::set(const set& in_rhs) : mRootNode(nullptr), mSize(0) {
-	iterator itBegin = in_rhs.begin();
-	for (itBegin; itBegin != in_rhs.end(); itBegin++)
+	const_iterator itBegin = in_rhs.begin();
+	for (; itBegin != in_rhs.end(); itBegin++)
 	{
 		insert(*itBegin);
 	}
@@ -168,8 +168,8 @@ MBASE_INLINE set<Key, Compare, Allocator>::set(const set& in_rhs) : mRootNode(nu
 
 template<typename Key, typename Compare, typename Allocator>
 MBASE_INLINE set<Key, Compare, Allocator>::set(const set& in_rhs, const Allocator& in_alloc) : mRootNode(nullptr), mSize(0) {
-	iterator itBegin = in_rhs.begin();
-	for (itBegin; itBegin != in_rhs.end(); itBegin++)
+	const_iterator itBegin = in_rhs.begin();
+	for (; itBegin != in_rhs.end(); itBegin++)
 	{
 		insert(*itBegin);
 	}
@@ -459,7 +459,7 @@ MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE typename set<Key, Compare, Allocator>::c
 
 template<typename Key, typename Compare, typename Allocator>
 MBASE_INLINE std::pair<typename set<Key, Compare, Allocator>::iterator, bool> set<Key, Compare, Allocator>::insert(const value_type& in_value) {
-	std::pair<iterator, bool> insertResult = _node_type::insert_node(mRootNode, in_value, mRootNode);
+	std::pair<iterator, bool> insertResult = _node_type::template insert_node<iterator>(mRootNode, in_value, mRootNode);
 	if (insertResult.second)
 	{
 		++mSize;
@@ -470,7 +470,7 @@ MBASE_INLINE std::pair<typename set<Key, Compare, Allocator>::iterator, bool> se
 
 template<typename Key, typename Compare, typename Allocator>
 MBASE_INLINE std::pair<typename set<Key, Compare, Allocator>::iterator, bool> set<Key, Compare, Allocator>::insert(value_type&& in_value) {
-	std::pair<iterator, bool> insertResult = _node_type::insert_node(mRootNode, std::move(in_value), mRootNode);
+	std::pair<iterator, bool> insertResult = _node_type::template insert_node<iterator>(mRootNode, std::move(in_value), mRootNode);
 	if (insertResult.second)
 	{
 		++mSize;
@@ -509,9 +509,9 @@ MBASE_INLINE typename set<Key, Compare, Allocator>::iterator set<Key, Compare, A
 		return end();
 	}
 
-	iterator itBegin(in_pos._ptr, false);
+	_node_type* nt = const_cast<_node_type*>(in_pos._ptr);
+	iterator itBegin(nt, false);
 	++itBegin;
-	_node_type* nt = in_pos._ptr;
 	if (mRootNode == nt)
 	{
 		mRootNode->remove_node(nt, *in_pos);
@@ -521,8 +521,6 @@ MBASE_INLINE typename set<Key, Compare, Allocator>::iterator set<Key, Compare, A
 	{
 		mRootNode->remove_node(nt, *in_pos);
 	}
-	_node_type::balance(mRootNode); // FOR NOW, WE ARE BALANCING THE ENTIRE TREE ON EVERY DELETION, WE WILL GO BACK 
-
 	--mSize;
 	return itBegin;
 }

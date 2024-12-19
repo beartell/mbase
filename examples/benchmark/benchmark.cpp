@@ -350,7 +350,7 @@ int main(int argc, char** argv)
     printf("- User count: %u\n", gSampleParams.mUserCount);
     printf("- N Predict: %u\n", gSampleParams.mPredictCount);
     printf("- Flash attention: %s\n", gSampleParams.mFlashAttention ? "Enabled" : "Disabled");
-    printf("- GPU Offload layers: %ld\n", gSampleParams.mGpuLayer);
+    printf("- GPU Offload layers: %d\n", gSampleParams.mGpuLayer);
     printf("- Compute devices: \n");
 
     for(InfDeviceDescription& tmpDescription : deviceDescription)
@@ -405,7 +405,7 @@ int main(int argc, char** argv)
         if(frameCounter == gSampleParams.mFps)
         {
             diagnosticFps += totalFps / frameCounter;
-            printf("\rAverage FPS per %d frames: %llu", gSampleParams.mFps, totalFps / frameCounter);
+            printf("\rAverage FPS per %d frames: %lu", gSampleParams.mFps, totalFps / frameCounter);
             fflush(stdout);
             frameCounter = 0;
             totalFps = 0;
@@ -427,7 +427,7 @@ int main(int argc, char** argv)
     for(BenchmarkProcessor* tmpProc : processorsList)
     {
         InfProcT2TDiagnostics& t2tDiag = tmpProc->get_diagnostics();
-        printf("|%lld\t\t| %.2f |\t %.2f \t|\n", t2tDiag.loadTimeInMilliseconds, t2tDiag.ppTokensPerSecond, t2tDiag.evalTokensPerSecond);
+        printf("|%ld\t\t| %.2f |\t %.2f \t|\n", t2tDiag.loadTimeInMilliseconds, t2tDiag.ppTokensPerSecond, t2tDiag.evalTokensPerSecond);
         tmpProc->release_inference_client_stacked();
     }
 

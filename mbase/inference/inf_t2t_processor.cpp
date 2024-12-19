@@ -732,15 +732,10 @@ GENERIC InfProcessorTextToText::_initialize_context()
 				llama_sampler_chain_add(
 					mSamplerChain, 
 					llama_sampler_init_penalties(
-						modelVocabCount, 
-						eotToken, 
-						nlToken, 
 						repeatSampler.mPenaltyN, 
 						repeatSampler.mRepeatPenalty, 
 						repeatSampler.mPenaltyFrequency, 
-						repeatSampler.mPenaltyPresent, 
-						repeatSampler.mPenaltyLinefeed, 
-						repeatSampler.mPenaltyEos
+						repeatSampler.mPenaltyPresent
 					)
 				);
 			}

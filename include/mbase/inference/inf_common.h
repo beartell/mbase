@@ -16,7 +16,7 @@ using inf_embedding_vector = mbase::vector<F32>;
 
 template<typename TargetObject>
 struct inf_processor_watcher {
-    mbase::list<inf_processor_watcher<TargetObject>>::iterator mItSelf;
+    typename mbase::list<inf_processor_watcher<TargetObject>>::iterator mItSelf;
     TargetObject* mSubject = NULL;
     U32 mContextLength = 0;
 };
@@ -49,6 +49,11 @@ GENERIC inf_common_embd_normalize(
     const SIZE_T& in_n
 );
 
+F32 inf_common_cosine_similarity(
+    const PTRF32 in_data1,
+    const PTRF32 in_data2,
+    const I32& in_length
+);
 
 MBASE_END
 

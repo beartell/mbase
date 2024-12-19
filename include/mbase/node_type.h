@@ -190,7 +190,7 @@ struct avl_node {
         {
             in_node = new avl_node(std::move(in_value));
             in_node->parent = in_parent;
-            resultPair = std::make_pair(in_node, true);
+            resultPair = std::make_pair(ExternalIterator(in_node), true);
             balance(in_node);
         }
         else if (comparator(in_value, in_node->data))
@@ -332,87 +332,49 @@ struct avl_node {
             }
             else
             {
-                avl_node* oldNode = in_node;
-                if(in_node->left && in_node->right)
+                if (in_node->left && in_node->right)
                 {
-                    avl_node* traverseRemove = in_node->left;
-                    while(traverseRemove)
+                    avl_node* successor = in_node->right;
+                    while (successor->left)
                     {
-                        in_node = traverseRemove;
-                        traverseRemove = traverseRemove->right;
+                        successor = successor->left;
                     }
-
-                    oldNode->data = std::move(in_node->data);
-                    remove_node(in_node, in_node->data);
+                    in_node->data = std::move(successor->data);
+                    remove_node(in_node->right, successor->data);
                     return;
                 }
-
-                if(in_node->left)
+                
+                avl_node* child = in_node->left ? in_node->left : in_node->right;
+                avl_node* current = in_node;
+                
+                if (child)
                 {
+                    child->parent = in_node->parent;
                     if (in_node->parent)
                     {
-                        in_node->left->parent = in_node->parent;
                         if (in_node->parent->left == in_node)
-                        {
-                            in_node->parent->left = in_node->left;
-                        }
-                        else if (in_node->parent->right == in_node)
-                        {
-                            in_node->parent->right = in_node->left;
-                        }
+                            in_node->parent->left = child;
+                        else
+                            in_node->parent->right = child;
                     }
-                    else
-                    {
-                        in_node->left->parent = nullptr;
-                        in_node = in_node->left;
-                    }
-                }
-                else if(in_node->right)
-                {
-                    if(in_node->parent)
-                    {
-                        in_node->right->parent = in_node->parent;
-                        if(in_node->parent->left == in_node) 
-                        {
-                            in_node->parent->left = in_node->right;
-                        }
-                        else if(in_node->parent->right == in_node)
-                        {
-                            in_node->parent->right = in_node->right;
-                        }
-                    }
-                    else
-                    {
-                        in_node->right->parent = nullptr;
-                        in_node = in_node->right;
-                    }
+                    in_node = child;
                 }
                 else
                 {
-                    // MEANS WE ARE THE LEAF
-                    if(in_node->parent)
+                    if (in_node->parent)
                     {
-                        if(in_node->parent->right == in_node)
-                        {
-                            in_node->parent->right = nullptr;
-                        }
-                        else if(in_node->parent->left == in_node)
-                        {
+                        if (in_node->parent->left == in_node)
                             in_node->parent->left = nullptr;
-                        }
+                        else
+                            in_node->parent->right = nullptr;
                     }
-                    else
-                    {
-                        // MEANS WE ARE THE ROOT
-                        delete in_node;
-                        in_node = nullptr;
-                        return;
-                    }
+                    in_node = nullptr;
                 }
-
-                delete oldNode;
+                
+                delete current;
             }
         }
+        balance(in_node);
     }
 };
 

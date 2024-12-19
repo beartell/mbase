@@ -11,7 +11,7 @@ project("mbase.libs" VERSION 1.0.0 LANGUAGES CXX)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/")
 
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 17)
 
 include(MBASEStdSys)
 include(MBASEJsonSys)
@@ -53,6 +53,7 @@ add_subdirectory(examples/simple-conversation)
 add_subdirectory(examples/typo-fixer)
 add_subdirectory(examples/benchmark)
 add_subdirectory(examples/embedding)
+add_subdirectory(examples/retrieval)
 # set(CPACK_GENERATOR "DEB")
 # set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Saul E. Erdog")
 # set(CPACK_PACKAGE_NAME "MBASE-Libraries")

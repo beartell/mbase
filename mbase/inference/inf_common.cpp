@@ -46,4 +46,31 @@ GENERIC inf_common_embd_normalize(
     }
 }
 
+F32 inf_common_cosine_similarity(
+    const PTRF32 in_data1,
+    const PTRF32 in_data2,
+    const I32& in_length
+)
+{
+    F64 sum  = 0.0;
+    F64 sum1 = 0.0;
+    F64 sum2 = 0.0;
+
+    for (I32 i = 0; i < in_length; i++) {
+        sum  += in_data1[i] * in_data2[i];
+        sum1 += in_data1[i] * in_data1[i];
+        sum2 += in_data2[i] * in_data2[i];
+    }
+
+    // Handle the case where one or both vectors are zero vectors
+    if (sum1 == 0.0 || sum2 == 0.0) {
+        if (sum1 == 0.0 && sum2 == 0.0) {
+            return 1.0f; // two zero vectors are similar
+        }
+        return 0.0f;
+    }
+
+    return sum / (std::sqrt(sum1) * std::sqrt(sum2));
+}
+
 MBASE_END

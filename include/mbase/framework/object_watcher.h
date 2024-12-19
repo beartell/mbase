@@ -19,13 +19,13 @@ struct object_watcher {
 
 template<typename TargetObject>
 struct list_object_watcher {
-    mbase::list<list_object_watcher<TargetObject>>::iterator mItSelf;
+    typename mbase::list<list_object_watcher<TargetObject>>::iterator mItSelf;
     mutable TargetObject* mSubject = NULL;
 };
 
 template<typename TargetObject>
 struct vector_object_watcher {
-    mbase::list<vector_object_watcher<TargetObject>>::iterator mItSelf;
+    typename mbase::list<vector_object_watcher<TargetObject>>::iterator mItSelf;
     mutable TargetObject* mSubject = NULL;
 };
 
