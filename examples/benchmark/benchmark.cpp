@@ -183,6 +183,12 @@ int main(int argc, char** argv)
         return 1;
     }
     
+    if(gSampleParams.mModelFile == "-v" || gSampleParams.mModelFile == "--version")
+    {
+        printf("MBASE Benchmark %s\n", MBASE_BENCHMARK_VERSION);
+        return 0;
+    }
+
     if(!mbase::is_file_valid(mbase::from_utf8(gSampleParams.mModelFile)))
     {
         printf("ERR: Can't open model file: %s\n", gSampleParams.mModelFile.c_str());
