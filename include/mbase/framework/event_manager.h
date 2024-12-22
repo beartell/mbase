@@ -51,12 +51,12 @@ public:
 	/* ===== STATE-MODIFIER METHODS END ===== */
 
 	/* ===== OBSERVATION METHODS BEGIN ===== */
-	MBASE_INLINE I32 get_manager_id() const noexcept;
+	MBASE_INLINE SIZE_T get_manager_id() const noexcept;
 	MBASE_INLINE const event_map& get_event_map() const noexcept;
 	/* ===== OBSERVATION METHODS END ===== */
 
 private:
-	I32 mManagerId = 0;
+	SIZE_T mManagerId = 0;
 	event_map mEventMap;
 };
 
@@ -93,7 +93,7 @@ MBASE_INLINE event_manager::flags event_manager::dispatch_event(const mbase::str
 			{
 				suppliedHandler->on_unregister();
 				suppliedHandler->mEventName.clear();
-				suppliedHandler->mManagerId = -1;
+				suppliedHandler->mManagerId = 0;
 				suppliedHandler->mStatus = event_handler::flags::EVENT_UNREGISTERED;
 				It = eventList.erase(suppliedHandler->mSelfIter);
 			}
@@ -174,7 +174,7 @@ MBASE_INLINE event_manager::flags event_manager::remove_listener(event_handler& 
 
 	in_handler.on_unregister();
 	in_handler.mEventName.clear();
-	in_handler.mManagerId = -1;
+	in_handler.mManagerId = 0;
 	in_handler.mStatus = event_handler::flags::EVENT_UNREGISTERED;
 
 	return flags::EVENT_MNG_SUCCESS;
@@ -192,7 +192,7 @@ MBASE_INLINE event_manager::flags event_manager::remove_all_listeners(const mbas
 			event_handler* evh = *It;
 			evh->on_unregister();
 			evh->mEventName.clear();
-			evh->mManagerId = -1;
+			evh->mManagerId = 0;
 			evh->mStatus = event_handler::flags::EVENT_UNREGISTERED;
 		}
 		eventList.clear();
@@ -202,7 +202,7 @@ MBASE_INLINE event_manager::flags event_manager::remove_all_listeners(const mbas
 	return flags::EVENT_MNG_ERR_NOT_FOUND;
 }
 
-MBASE_INLINE I32 event_manager::get_manager_id() const noexcept
+MBASE_INLINE SIZE_T event_manager::get_manager_id() const noexcept
 {
 	return mManagerId;
 }

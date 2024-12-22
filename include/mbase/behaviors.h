@@ -62,10 +62,12 @@ class MBASE_API non_movable {
 public:
 	/* ===== BUILDER METHODS BEGIN ===== */
 	non_movable() = default;
+	non_movable(const non_movable&) = default;
 	non_movable(non_movable&&) = delete;
 	/* ===== BUILDER METHODS END ===== */
 
 	/* ===== OPERATOR BUILDER METHODS BEGIN ===== */
+	non_movable& operator=(const non_movable&) = default;
 	non_movable& operator=(non_movable&&) = delete;
 	/* ===== OPERATOR BUILDER METHODS END ===== */
 };

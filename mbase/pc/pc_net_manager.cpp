@@ -515,7 +515,7 @@ GENERIC PcNetTcpServer::update_t()
 
 		if(netPeer->signal_write())
 		{
-			I32 sResult = send(netPeer->mPeerSocket, netPeer->mNetPacket.mWriteBuffer.c_str(), netPeer->mNetPacket.mWriteBuffer.size(), 0);
+			I32 sResult = send(netPeer->mPeerSocket, netPeer->mNetPacket.mWriteBuffer.c_str(), static_cast<I32>(netPeer->mNetPacket.mWriteBuffer.size()), 0);
 			if(sResult == MBASE_SOCKET_ERROR)
 			{
 				#ifdef MBASE_PLATFORM_WINDOWS 
@@ -680,7 +680,7 @@ PcNetManager::flags PcNetManager::create_server(const mbase::string& in_addr, I3
 		return flags::NET_MNG_ERR_UNKNOWN;
 	}
 
-	iResult = bind(serverSocket, result->ai_addr, result->ai_addrlen);
+	iResult = bind(serverSocket, result->ai_addr, static_cast<I32>(result->ai_addrlen));
 	if (iResult == MBASE_SOCKET_ERROR) 
 	{
 		// TODO: ERROR CHECKING WILL BE IMPLEMENTED

@@ -33,7 +33,8 @@ add_library(mb_pc SHARED
     ${MBASE_PC_LIB_PATH}/pc_net_manager.cpp
 )
 
-target_compile_definitions(mb_pc PRIVATE MBASE_BUILD=1 MBASE_INTERNAL_API=1)
+target_compile_definitions(mb_pc PRIVATE ${MBASE_COMMON_COMPILE_DEFINITIONS})
+target_compile_options(mb_pc PUBLIC -W4)
 target_include_directories(mb_pc PUBLIC ${MBASE_PC_INCLUDE_DEPENDS})
 
 set_property(TARGET mb_pc PROPERTY POSITION_INDEPENDENT_CODE ON)

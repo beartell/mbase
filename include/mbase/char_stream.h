@@ -69,7 +69,7 @@ public:
 	MBASE_INLINE char_stream(const char_stream& in_rhs) noexcept;
 	MBASE_INLINE MBASE_STD_EXPLICIT char_stream(IBYTEBUFFER in_src) noexcept;
 	MBASE_INLINE MBASE_STD_EXPLICIT char_stream(IBYTEBUFFER in_src, size_type in_length) noexcept;
-	MBASE_INLINE ~char_stream() noexcept;
+	MBASE_INLINE virtual ~char_stream() noexcept;
 	/* ===== BUILDER METHODS END ===== */
 
 	/* ===== OPERATOR BUILDER METHODS BEGIN ===== */
@@ -375,7 +375,7 @@ MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR CBYTEBUFFER char_stream::dat
 
 MBASE_INLINE GENERIC char_stream::advance_safe()
 {
-	if(mStreamCursor >= mBufferLength)
+	if(mStreamCursor == mBufferLength - 1)
 	{
 		throw stream_cursor_out_of_bounds();
 	}
@@ -402,10 +402,9 @@ MBASE_INLINE GENERIC char_stream::reverse_safe()
 
 MBASE_INLINE GENERIC char_stream::reverse_safe(size_type in_length)
 {
-	I32 cursorLoc = mStreamCursor;
-	cursorLoc -= in_length;
-	if (cursorLoc < 0)
+	if (in_length > mStreamCursor)
 	{
+		mStreamCursor = 0;
 		throw stream_cursor_out_of_bounds();
 	}
 	mStreamCursor -= in_length;

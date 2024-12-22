@@ -55,7 +55,7 @@ enum class FS_ERROR : I32{
 	FS_UNKNOWN_ERROR = MBASE_FS_FLAGS_MAX
 };
 
-MBASE_INLINE FS_ERROR err_convert(I16 in_err) noexcept;
+MBASE_INLINE FS_ERROR err_convert(I32 in_err) noexcept;
 MBASE_INLINE FS_ERROR create_directory(const mbase::string& in_path) noexcept;
 MBASE_INLINE FS_ERROR create_directory(const mbase::wstring& in_path) noexcept;
 MBASE_INLINE FS_ERROR copy_file(const mbase::string& in_path, const mbase::string& in_copypath) noexcept;
@@ -160,7 +160,7 @@ MBASE_INLINE GENERIC get_directory(const mbase::string& in_path, ContainerType& 
 
 /* IMPLEMENTATIONS */
 
-MBASE_INLINE FS_ERROR err_convert(I16 in_err) noexcept
+MBASE_INLINE FS_ERROR err_convert(I32 in_err) noexcept
 {
 #ifdef MBASE_PLATFORM_WINDOWS
 	switch (in_err)

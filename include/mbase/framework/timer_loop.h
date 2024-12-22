@@ -38,7 +38,7 @@ public:
 	/* ===== BUILDER METHODS END ===== */
 
 	/* ===== OBSERVATION METHODS BEGIN ===== */
-	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE U32 get_active_timer_count() const noexcept;
+	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE SIZE_T get_active_timer_count() const noexcept;
 	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE U32 get_delta_seconds() const noexcept;
 	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE mbase::tpool& get_thread_pool() noexcept;
 	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE mbase::list<timer_base*>& get_timer_list() noexcept;
@@ -64,7 +64,7 @@ protected:
 	U32 mTimerLimit;
 	U32 mTimerIdCounter;
 	U64 mPrevTime;
-	U32 mTimerLoopId;
+	SIZE_T mTimerLoopId;
 	bool mIsRunning;
 	timer_container mRegisteredTimers;
 	mbase::tpool mThreadPool;
@@ -167,7 +167,7 @@ MBASE_INLINE timer_loop::flags timer_loop::unregister_timer(timer_base& in_timer
 	MBASE_NULL_CHECK_RETURN_VAL(in_timer.mSelfIter.get(), flags::TIMER_ERR_INVALID_DATA); // SERIOUS PROBLEM IF THIS OCCURS
 	timer_base* tb = *in_timer.mSelfIter;
 
-	tb->mLoopId = -1;
+	tb->mLoopId = 0;
 	tb->mSuppliedData = nullptr;
 	tb->mStatus = mbase::timer_base::flags::TIMER_STATUS_UNREGISTERED;
 	tb->on_unregister();
@@ -176,14 +176,14 @@ MBASE_INLINE timer_loop::flags timer_loop::unregister_timer(timer_base& in_timer
 	return flags::TIMER_SUCCESS;
 }
 
-MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE U32 timer_loop::get_active_timer_count() const noexcept
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE SIZE_T timer_loop::get_active_timer_count() const noexcept
 {
 	return mRegisteredTimers.size();
 }
 
 MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE U32 timer_loop::get_delta_seconds() const noexcept
 {
-	return mDeltaTime;
+	return static_cast<U32>(mDeltaTime);
 }
 
 MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE mbase::tpool& timer_loop::get_thread_pool() noexcept
@@ -249,7 +249,7 @@ MBASE_INLINE GENERIC timer_loop::run_timers() noexcept
 
 			if (tmpTimerBase->get_timer_type() == mbase::timer_base::flags::TIMER_TYPE_TIMEOUT)
 			{
-				tmpTimerBase->mLoopId = -1;
+				tmpTimerBase->mLoopId = 0;
 				tmpTimerBase->on_unregister();
 				It = mRegisteredTimers.erase(tmpTimerBase->mSelfIter);
 			}
@@ -262,7 +262,7 @@ MBASE_INLINE GENERIC timer_loop::run_timers() noexcept
 				{
 					if (ti->mTickCount >= ti->mTickLimit)
 					{
-						ti->mLoopId = -1;
+						ti->mLoopId = 0;
 						ti->mStatus = mbase::timer_base::flags::TIMER_STATUS_UNREGISTERED;
 						ti->on_unregister();
 						It = mRegisteredTimers.erase(ti->mSelfIter);
@@ -386,7 +386,7 @@ MBASE_INLINE GENERIC timer_loop::clear_timers() noexcept
 	for (timer_container::iterator It = mRegisteredTimers.begin(); It != mRegisteredTimers.end(); ++It)
 	{
 		timer_base* ti = *It;
-		ti->mLoopId = -1;
+		ti->mLoopId = 0;
 		ti->mStatus = mbase::timer_base::flags::TIMER_STATUS_ABANDONED;
 		ti->on_unregister();
 		It = mRegisteredTimers.erase(ti->mSelfIter);

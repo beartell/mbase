@@ -27,7 +27,7 @@ public:
 	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE mbase::string get_event_name() const noexcept;
 	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE flags get_event_type() const noexcept;
 	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE flags get_event_status() const noexcept;
-	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE I32 get_manager_id() const noexcept;
+	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE SIZE_T get_manager_id() const noexcept;
 	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE bool is_registered() const noexcept;
 	/* ===== OBSERVATION METHODS END ===== */
 
@@ -42,10 +42,10 @@ private:
 	mbase::string mEventName;
 	flags mEventType;
 	flags mStatus;
-	I32 mManagerId;
+	SIZE_T mManagerId;
 };
 
-MBASE_INLINE event_handler::event_handler() : handler_base(), mSelfIter(nullptr), mEventName(""), mEventType(flags::EVENT_ON), mStatus(flags::EVENT_UNREGISTERED), mManagerId(-1)
+MBASE_INLINE event_handler::event_handler() : handler_base(), mSelfIter(nullptr), mEventName(""), mEventType(flags::EVENT_ON), mStatus(flags::EVENT_UNREGISTERED), mManagerId(0)
 {
 }
 
@@ -64,7 +64,7 @@ MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE event_handler::flags event_handler::get_
 	return mStatus;
 }
 
-MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE I32 event_handler::get_manager_id() const noexcept
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE SIZE_T event_handler::get_manager_id() const noexcept
 {
 	return mManagerId;
 }

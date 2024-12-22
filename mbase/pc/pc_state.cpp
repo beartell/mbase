@@ -62,7 +62,7 @@ PcStateFileHeader PcStateFileHeader::deserialize(IBYTEBUFFER in_src, size_type i
 
 		return fileHeader;
 	}
-	catch (const std::exception& out_except)
+	catch ([[maybe_unused]] const std::exception& out_except)
 	{
 		// if the buffer is out of bounds
 		return PcStateFileHeader();
@@ -192,7 +192,7 @@ PcSerializedStateStruct PcSerializedStateStruct::deserialize(IBYTEBUFFER in_src,
 		return outStruct;
 	}
 
-	catch (const std::exception& out_except)
+	catch ([[maybe_unused]] const std::exception& out_except)
 	{
 		if (stateValue)
 		{
@@ -320,7 +320,7 @@ PcState::flags PcState::initialize(const mbase::string& in_object_name, const mb
 				{
 					dcs.advance_safe(fileHeaderSize);
 				}
-				catch (const std::exception& out_except)
+				catch ([[maybe_unused]] const std::exception& out_except)
 				{
 
 				}
@@ -337,7 +337,7 @@ PcState::flags PcState::initialize(const mbase::string& in_object_name, const mb
 					{
 						dcs.advance_safe(stateStructSize);
 					}
-					catch (const std::exception& out_except)
+					catch ([[maybe_unused]] const std::exception& out_except)
 					{
 
 					}

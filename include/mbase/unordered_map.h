@@ -288,13 +288,19 @@ MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR typename unordered_map<Key, 
 		return iterator(this, 0, end(0));
 	}
 
-	for (I32 i = mBucketCount - 1; i > -1; i--)
+	for (size_type i = mBucketCount - 1;;)
 	{
 		local_iterator lastItem = begin(i);
 		if (lastItem != end(i))
 		{
 			return iterator(this, i, end(i));
 		}
+
+		if(i == 0)
+		{
+			break;
+		}
+		i--;
 	}
 	return iterator(this, 0, end(0));
 }

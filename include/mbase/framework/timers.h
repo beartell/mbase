@@ -29,7 +29,7 @@ public:
 	/* ===== BUILDER METHODS END ===== */
 
 	/* ===== OBSERVATION METHODS BEGIN ===== */
-	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE U32 get_loop_id() const noexcept;
+	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE SIZE_T get_loop_id() const noexcept;
 	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE I32 get_target_time() const noexcept;
 	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE I32 get_current_time() const noexcept;
 	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE I32 get_remaining_time() const noexcept;
@@ -53,7 +53,7 @@ protected:
 	flags mTimerType;
 	flags mPolicy;
 	flags mStatus;
-	U32 mLoopId;
+	SIZE_T mLoopId;
 	F64 mCurrentTime;
 	F64 mTargetTime;
 private:
@@ -92,24 +92,24 @@ MBASE_INLINE timer_base::timer_base(user_data in_data) noexcept : handler_base()
 	mSuppliedData = in_data;
 }
 
-MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE U32 timer_base::get_loop_id() const noexcept 
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE SIZE_T timer_base::get_loop_id() const noexcept 
 {
 	return mLoopId;
 }
 
 MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE I32 timer_base::get_target_time() const noexcept 
 {
-	return mTargetTime;
+	return static_cast<I32>(mTargetTime);
 }
 
 MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE I32 timer_base::get_current_time() const noexcept 
 {
-	return mCurrentTime;
+	return static_cast<I32>(mCurrentTime);
 }
 
 MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE I32 timer_base::get_remaining_time() const noexcept 
 {
-	return mTargetTime - mCurrentTime;
+	return static_cast<I32>(mTargetTime - mCurrentTime);
 }
 
 MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE timer_base::flags timer_base::get_timer_type() const noexcept 

@@ -40,9 +40,7 @@ add_library(mb_json SHARED
     ${MBASE_JSON_LIB_PATH}/json.cpp
 )
 
-
-
-target_compile_definitions(mb_json PRIVATE MBASE_BUILD=1 MBASE_INTERNAL_API=1)
+target_compile_definitions(mb_json PRIVATE ${MBASE_COMMON_COMPILE_DEFINITIONS})
 target_include_directories(mb_json PUBLIC ${MBASE_JSON_INCLUDE_DEPENDS})
 target_link_libraries(mb_json PRIVATE double-conversion)
 

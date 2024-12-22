@@ -78,16 +78,16 @@ public:
         return strtod(in_str, &ptr);
     }
 
-    MBASE_ND(MBASE_RESULT_IGNORE) static MBASE_INLINE bool type_is_alnum(const value_type& in_char) noexcept { return isalnum(in_char); }
-    MBASE_ND(MBASE_RESULT_IGNORE) static MBASE_INLINE bool type_is_alpha(const value_type& in_char) noexcept { return isalpha(in_char); }
-    MBASE_ND(MBASE_RESULT_IGNORE) static MBASE_INLINE bool type_is_lower(const value_type& in_char) noexcept { return islower(in_char); }
-    MBASE_ND(MBASE_RESULT_IGNORE) static MBASE_INLINE bool type_is_upper(const value_type& in_char) noexcept { return isupper(in_char); }
-    MBASE_ND(MBASE_RESULT_IGNORE) static MBASE_INLINE bool type_is_blank(const value_type& in_char) noexcept { return isblank(in_char); }
-    MBASE_ND(MBASE_RESULT_IGNORE) static MBASE_INLINE bool type_is_control(const value_type& in_char) noexcept { return iscntrl(in_char); }
-    MBASE_ND(MBASE_RESULT_IGNORE) static MBASE_INLINE bool type_is_space(const value_type& in_char) noexcept { return isspace(in_char); }
+    MBASE_ND(MBASE_RESULT_IGNORE) static MBASE_INLINE bool type_is_alnum(const value_type& in_char) noexcept { return isalnum(in_char) != 0; }
+    MBASE_ND(MBASE_RESULT_IGNORE) static MBASE_INLINE bool type_is_alpha(const value_type& in_char) noexcept { return isalpha(in_char) != 0; }
+    MBASE_ND(MBASE_RESULT_IGNORE) static MBASE_INLINE bool type_is_lower(const value_type& in_char) noexcept { return islower(in_char) != 0; }
+    MBASE_ND(MBASE_RESULT_IGNORE) static MBASE_INLINE bool type_is_upper(const value_type& in_char) noexcept { return isupper(in_char) != 0; }
+    MBASE_ND(MBASE_RESULT_IGNORE) static MBASE_INLINE bool type_is_blank(const value_type& in_char) noexcept { return isblank(in_char) != 0; }
+    MBASE_ND(MBASE_RESULT_IGNORE) static MBASE_INLINE bool type_is_control(const value_type& in_char) noexcept { return iscntrl(in_char) != 0; }
+    MBASE_ND(MBASE_RESULT_IGNORE) static MBASE_INLINE bool type_is_space(const value_type& in_char) noexcept { return isspace(in_char) != 0; }
     MBASE_ND(MBASE_RESULT_IGNORE) static MBASE_INLINE bool type_is_punctuation(const value_type& in_char) noexcept { return ispunct(in_char); }
-    MBASE_ND(MBASE_RESULT_IGNORE) static MBASE_INLINE bool type_is_print(const value_type& in_char) noexcept { return isprint(in_char); }
-    MBASE_ND(MBASE_RESULT_IGNORE) static MBASE_INLINE bool type_is_digit(const value_type& in_char) noexcept { return isdigit(in_char); }
+    MBASE_ND(MBASE_RESULT_IGNORE) static MBASE_INLINE bool type_is_print(const value_type& in_char) noexcept { return isprint(in_char) != 0; }
+    MBASE_ND(MBASE_RESULT_IGNORE) static MBASE_INLINE bool type_is_digit(const value_type& in_char) noexcept { return isdigit(in_char) != 0; }
     MBASE_ND(MBASE_RESULT_IGNORE) static MBASE_INLINE pointer string_token(pointer in_data, const_pointer in_delim) { return strtok(in_data, in_delim); }
 };
 
@@ -160,16 +160,16 @@ public:
         return wcstod(in_str, &ptr);
     }
 
-    MBASE_ND(MBASE_RESULT_IGNORE) static MBASE_INLINE bool type_is_alnum(const value_type& in_char) noexcept { return iswalnum(in_char); }
-    MBASE_ND(MBASE_RESULT_IGNORE) static MBASE_INLINE bool type_is_alpha(const value_type& in_char) noexcept { return iswalnum(in_char); }
-    MBASE_ND(MBASE_RESULT_IGNORE) static MBASE_INLINE bool type_is_lower(const value_type& in_char) noexcept { return iswlower(in_char); }
-    MBASE_ND(MBASE_RESULT_IGNORE) static MBASE_INLINE bool type_is_upper(const value_type& in_char) noexcept { return iswupper(in_char); }
-    MBASE_ND(MBASE_RESULT_IGNORE) static MBASE_INLINE bool type_is_blank(const value_type& in_char) noexcept { return iswblank(in_char); }
-    MBASE_ND(MBASE_RESULT_IGNORE) static MBASE_INLINE bool type_is_control(const value_type& in_char) noexcept { return iswcntrl(in_char); }
-    MBASE_ND(MBASE_RESULT_IGNORE) static MBASE_INLINE bool type_is_space(const value_type& in_char) noexcept { return iswspace(in_char); }
-    MBASE_ND(MBASE_RESULT_IGNORE) static MBASE_INLINE bool type_is_punctuation(const value_type& in_char) noexcept { return iswpunct(in_char); }
-    MBASE_ND(MBASE_RESULT_IGNORE) static MBASE_INLINE bool type_is_print(const value_type& in_char) noexcept { return iswprint(in_char); }
-    MBASE_ND(MBASE_RESULT_IGNORE) static MBASE_INLINE bool type_is_digit(const value_type& in_char) noexcept { return iswdigit(in_char); }
+    MBASE_ND(MBASE_RESULT_IGNORE) static MBASE_INLINE bool type_is_alnum(const value_type& in_char) noexcept { return iswalnum(in_char) != 0; }
+    MBASE_ND(MBASE_RESULT_IGNORE) static MBASE_INLINE bool type_is_alpha(const value_type& in_char) noexcept { return iswalnum(in_char) != 0; }
+    MBASE_ND(MBASE_RESULT_IGNORE) static MBASE_INLINE bool type_is_lower(const value_type& in_char) noexcept { return iswlower(in_char) != 0; }
+    MBASE_ND(MBASE_RESULT_IGNORE) static MBASE_INLINE bool type_is_upper(const value_type& in_char) noexcept { return iswupper(in_char) != 0; }
+    MBASE_ND(MBASE_RESULT_IGNORE) static MBASE_INLINE bool type_is_blank(const value_type& in_char) noexcept { return iswblank(in_char) != 0; }
+    MBASE_ND(MBASE_RESULT_IGNORE) static MBASE_INLINE bool type_is_control(const value_type& in_char) noexcept { return iswcntrl(in_char) != 0; }
+    MBASE_ND(MBASE_RESULT_IGNORE) static MBASE_INLINE bool type_is_space(const value_type& in_char) noexcept { return iswspace(in_char) != 0; }
+    MBASE_ND(MBASE_RESULT_IGNORE) static MBASE_INLINE bool type_is_punctuation(const value_type& in_char) noexcept { return iswpunct(in_char) != 0; }
+    MBASE_ND(MBASE_RESULT_IGNORE) static MBASE_INLINE bool type_is_print(const value_type& in_char) noexcept { return iswprint(in_char) != 0; }
+    MBASE_ND(MBASE_RESULT_IGNORE) static MBASE_INLINE bool type_is_digit(const value_type& in_char) noexcept { return iswdigit(in_char) != 0; }
     MBASE_ND(MBASE_RESULT_IGNORE) static MBASE_INLINE pointer string_token(pointer in_data, const_pointer in_delim) 
     { 
         pointer ptr;

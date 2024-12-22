@@ -463,12 +463,12 @@ public:
 
     /* ===== OPERATOR NON-MEMBER FUNCTIONS BEGIN ===== */
     MBASE_INLINE_EXPR friend character_sequence operator+(const character_sequence& in_lhs, const character_sequence& in_rhs) noexcept {
-        I32 totalSize = in_lhs.mSize + in_rhs.mSize;
-        I32 totalCapacity = in_lhs.mCapacity;
+        size_type totalSize = in_lhs.mSize + in_rhs.mSize;
+        size_type totalCapacity = in_lhs.mCapacity;
 
         while (totalSize >= totalCapacity)
         {
-            totalCapacity *= 2;
+            totalCapacity *= 2; 
         }
         allocator<SeqType> alc;
         pointer new_data = alc.allocate(totalCapacity, true);
@@ -536,7 +536,7 @@ public:
     }
     /* ===== OPERATOR NON-MEMBER FUNCTIONS END ===== */
 
-    static MBASE_INLINE_EXPR const SIZE_T npos = -1;
+    static MBASE_INLINE_EXPR const SIZE_T npos = SIZE_MAX;
 
 private:
 
@@ -2463,23 +2463,24 @@ using string_view = string; // STRING VIEW WILL BE IMPLEMENTED LATER
 MBASE_INLINE mbase::string to_utf8(const mbase::wstring& in_str)
 {
     const wchar_t* src = in_str.c_str();
-    I32 src_length = in_str.size();
+    SIZE_T src_length = in_str.size();
     if (!src_length)
     {
         return mbase::string();
     }
 #ifdef MBASE_PLATFORM_WINDOWS
-    I32 length = WideCharToMultiByte(CP_UTF8, 0, src, src_length, 0, 0, NULL, NULL);
+
+    I32 length = WideCharToMultiByte(CP_UTF8, 0, src, static_cast<I32>(src_length), 0, 0, NULL, NULL);
     IBYTEBUFFER output_buffer = (IBYTEBUFFER)malloc((length + 1) * sizeof(IBYTE));
     if(!output_buffer)
     {
         return mbase::string();
     }
     
-    WideCharToMultiByte(CP_UTF8, 0, src, src_length, output_buffer, length, NULL, NULL);
+    WideCharToMultiByte(CP_UTF8, 0, src, static_cast<I32>(src_length), output_buffer, static_cast<I32>(length), NULL, NULL);
     output_buffer[length] = '\0';
-
-    mbase::string outStr(output_buffer, length);
+    
+    mbase::string outStr(output_buffer, static_cast<SIZE_T>(length));
     free(output_buffer);
 
     return outStr;
@@ -2529,14 +2530,14 @@ MBASE_INLINE mbase::string to_utf8(const mbase::wstring& in_str)
 MBASE_INLINE mbase::wstring from_utf8(const mbase::string& in_str)
 {
     CBYTEBUFFER src = in_str.c_str();
-    I32 src_length = in_str.size();
+    SIZE_T src_length = in_str.size();
     if (!src_length)
     {
         return mbase::wstring();
     }
     
 #ifdef MBASE_PLATFORM_WINDOWS
-    I32 length = MultiByteToWideChar(CP_UTF8, 0, src, src_length, 0, 0);
+    I32 length = MultiByteToWideChar(CP_UTF8, 0, src, static_cast<I32>(src_length), 0, 0);
     wchar_t* output_buffer = (wchar_t*)malloc((length + 1) * sizeof(wchar_t));
     if(!output_buffer)
     {
@@ -2544,11 +2545,11 @@ MBASE_INLINE mbase::wstring from_utf8(const mbase::string& in_str)
     }
 
     if (output_buffer) {
-        MultiByteToWideChar(CP_UTF8, 0, src, src_length, output_buffer, length);
+        MultiByteToWideChar(CP_UTF8, 0, src, static_cast<I32>(src_length), output_buffer, length);
         output_buffer[length] = L'\0';
     }
 
-    mbase::wstring outStr(output_buffer, length);
+    mbase::wstring outStr(output_buffer, static_cast<SIZE_T>(length));
 
     free(output_buffer);
 
@@ -2602,7 +2603,7 @@ MBASE_INLINE mbase::string get_line()
         {
             continue;
         }
-        builtString.push_back(tmpChar);
+        builtString.push_back(static_cast<IBYTE>(tmpChar));
     }
     return builtString;
 }
@@ -2612,7 +2613,7 @@ MBASE_INLINE mbase::wstring get_wline()
     mbase::wstring builtString;
     for(wint_t tmpChar; (tmpChar = getwchar()) != '\n';)
     {
-        builtString.push_back(tmpChar);
+        builtString.push_back(static_cast<wchar_t>(tmpChar));
     }
     return builtString;
 }
@@ -2623,10 +2624,10 @@ struct std::hash<mbase::string> {
     std::size_t operator()(const mbase::string& in_rhs) const noexcept
     {
         mbase::string::const_pointer myBuffer = in_rhs.c_str();
-        mbase::I32 myVal = 0;
+        std::size_t myVal = 0;
         while(*myBuffer != '\0')
         {
-            mbase::I32 tmp;
+            mbase::U32 tmp;
             myVal = (myVal << 4) + (*myBuffer);
             if((tmp = (myVal & 0xf0000000)))
             {
@@ -2644,10 +2645,10 @@ struct std::hash<mbase::wstring> {
     std::size_t operator()(const mbase::wstring& in_rhs) const noexcept
     {
         mbase::wstring::const_pointer myBuffer = in_rhs.c_str();
-        mbase::I32 myVal = 0;
+        std::size_t myVal = 0;
         while (*myBuffer != L'\0')
         {
-            mbase::I32 tmp;
+            mbase::U32 tmp;
             myVal = (myVal << 4) + (*myBuffer);
             if ((tmp = (myVal & 0xf0000000)))
             {

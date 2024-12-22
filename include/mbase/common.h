@@ -10,6 +10,7 @@
 
 #ifdef _WIN32
 	#define MBASE_PLATFORM_WINDOWS
+	#pragma warning(disable : 4251) // Since we have a MBASE_API macro, all necessary symbols are exported
 #endif
 
 #ifdef __unix__
@@ -27,7 +28,6 @@
 	#define MBASE_PLATFORM_NEWLINE "\r\n"
 	#ifndef UNICODE
 	#define UNICODE
-
 	#endif // !UNICODE
 #endif // MBASE_PLATFORM_WINDOWS
 
@@ -41,15 +41,7 @@
 	#error Missing C++ compiler
 #endif // !__cplusplus
 
-#ifdef __cpp_pack_indexing
-	#define MBASE_CPP_VERSION 26
-#elif __cpp_multidimensional_subscript
-	#define MBASE_CPP_VERSION 23
-#elif __cpp_concepts
-	#define MBASE_CPP_VERSION 20
-#elif __cpp_fold_expressions
-	#define MBASE_CPP_VERSION 17
-#else
+#if MBASE_CPP_VERSION < 17
 	#error Invalid C++ version. MBASE require at least C++17.
 #endif // !__cpp_pack_indexing
 

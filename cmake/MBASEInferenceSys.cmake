@@ -80,7 +80,7 @@ add_library(mb_inference SHARED
     ${MBASE_INFERENCE_LIB_PATH}inf_t2t_proc_diagnostics.cpp
 )
 
-target_compile_definitions(mb_inference PRIVATE MBASE_BUILD=1 MBASE_INTERNAL_API=1 llama)
+target_compile_definitions(mb_inference PRIVATE ${MBASE_COMMON_COMPILE_DEFINITIONS} llama)
 target_include_directories(mb_inference PUBLIC ${MBASE_INFERENCE_INCLUDE_DEPENDS} llama)
 target_link_libraries(mb_inference PRIVATE ${MBASE_INFERENCE_LIB_DEPENDS} llama)
 

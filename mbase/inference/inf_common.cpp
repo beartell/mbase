@@ -14,7 +14,7 @@ GENERIC inf_common_batch_add(
     // No need for assertion because if this function is called, inputs are guaranteed to be well aligned and valid
     in_batch.token[in_batch.n_tokens] = in_id;
     in_batch.pos[in_batch.n_tokens] = in_pos;
-    in_batch.n_seq_id[in_batch.n_tokens] = in_seq_ids.size();
+    in_batch.n_seq_id[in_batch.n_tokens] = static_cast<I32>(in_seq_ids.size());
     for(SIZE_T i = 0; i < in_seq_ids.size(); ++i)
     {
         in_batch.seq_id[in_batch.n_tokens][i] = in_seq_ids[i];

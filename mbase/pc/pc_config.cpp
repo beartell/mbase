@@ -109,7 +109,7 @@ bool PcConfig::load_config_file(const mbase::wstring& in_file, config_descriptio
 				if(configValue.front() == ' ')
 				{
 					I32 beginIndex = 0;
-					I32 endIndex = configValue.size();
+					SIZE_T endIndex = configValue.size();
 					for(mbase::string::iterator It = configValue.begin(); It != configValue.end(); ++It)
 					{
 						if (*It != ' ') 
@@ -166,7 +166,7 @@ PcConfig::flags PcConfig::update() noexcept
 		{
 			totalConfigString += It->mConfigKey + "=" + It->mConfigValue + MBASE_PLATFORM_NEWLINE;
 		}
-		U32 serializedSize = totalConfigString.get_serialized_size();
+		SIZE_T serializedSize = totalConfigString.get_serialized_size();
 		mbase::deep_char_stream dcs(serializedSize);
 		totalConfigString.serialize(dcs);
 		

@@ -111,8 +111,8 @@ public:
 	/* ===== OBSERVATION METHODS END ===== */
 
 	/* ===== STATE-MODIFIER METHODS BEGIN ===== */
-	virtual size_type write_data(const IBYTEBUFFER in_src) = 0;
-	virtual size_type write_data(const IBYTEBUFFER in_src, size_type in_length) = 0;
+	virtual size_type write_data(CBYTEBUFFER in_src) = 0;
+	virtual size_type write_data(CBYTEBUFFER in_src, size_type in_length) = 0;
 	virtual size_type write_data(const mbase::string& in_src) = 0;
 	virtual size_type write_data(char_stream& in_src) = 0;
 	virtual size_type write_data(char_stream& in_src, size_type in_length) = 0;
@@ -133,7 +133,9 @@ public:
 		if(mRawContext.raw_handle)
 		{
 			#ifdef MBASE_PLATFORM_WINDOWS
-			SetFilePointer(mRawContext.raw_handle, in_distance, nullptr, (DWORD)in_method);
+			LARGE_INTEGER lint;
+			lint.QuadPart = static_cast<LONGLONG>(in_distance);
+			SetFilePointer(mRawContext.raw_handle, lint.LowPart, &lint.HighPart, (DWORD)in_method);
 			#endif
 			#ifdef MBASE_PLATFORM_UNIX
 			lseek64(mRawContext.raw_handle, in_distance, (I32)in_method);

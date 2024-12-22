@@ -89,8 +89,8 @@ public:
 	MBASE_INLINE os_file_handle open_file(const mbase::wstring& in_filename, access_mode in_accmode = access_mode::RW_ACCESS, disposition in_disp = disposition::OVERWRITE) noexcept;
 	MBASE_INLINE GENERIC close_file() noexcept;
 	MBASE_INLINE GENERIC clear_file() noexcept;
-	MBASE_INLINE size_type write_data(const IBYTEBUFFER in_src) override;
-	MBASE_INLINE size_type write_data(const IBYTEBUFFER in_src, size_type in_length) override;
+	MBASE_INLINE size_type write_data(CBYTEBUFFER in_src) override;
+	MBASE_INLINE size_type write_data(CBYTEBUFFER in_src, size_type in_length) override;
 	MBASE_INLINE size_type write_data(const mbase::string& in_src) override;
 	MBASE_INLINE size_type write_data(char_stream& in_src) override;
 	MBASE_INLINE size_type write_data(char_stream& in_src, size_type in_length) override;
@@ -195,7 +195,6 @@ MBASE_INLINE GENERIC io_file::close_file() noexcept
 	if (mRawContext.raw_handle)
 	{
 #ifdef MBASE_PLATFORM_WINDOWS
-
 		CloseHandle(mRawContext.raw_handle);
 #endif
 #ifdef MBASE_PLATFORM_UNIX
@@ -225,168 +224,78 @@ MBASE_INLINE GENERIC io_file::clear_file() noexcept
 	#endif
 }
 
-MBASE_INLINE typename io_file::size_type io_file::write_data(const IBYTEBUFFER in_src)
+MBASE_INLINE typename io_file::size_type io_file::write_data(CBYTEBUFFER in_src, size_type in_length)
 {
 	if(!is_file_open())
 	{
 		return 0;		
 	}
-
-	SIZE_T dataLength = type_sequence<IBYTE>::length_bytes(in_src);
+	size_type totalBytesWritten = 0;
 #ifdef MBASE_PLATFORM_WINDOWS
 	DWORD dataWritten = 0;
-	size_type writeResult = WriteFile(mRawContext.raw_handle, in_src, dataLength + 1, &dataWritten, nullptr);
-
-	if(!writeResult)
+	DWORD maxChunkSize = 128 * (1024);
+	while(totalBytesWritten < in_length)
 	{
-		_set_last_error(GetLastError());
-		close_file();
-	}
-	return dataWritten;
-#endif
-#ifdef MBASE_PLATFORM_UNIX
-	ssize_t writeResult = write(mRawContext.raw_handle, in_src, dataLength + 1);
-	if(writeResult == -1)
-	{
-		_set_last_error(errno);
-		close_file();
-		return 0;
-	}
-
-	return writeResult;
-#endif
-}
-
-MBASE_INLINE typename io_file::size_type io_file::write_data(const IBYTEBUFFER in_src, size_type in_length)
-{
-	if(!is_file_open())
-	{
-		return 0;		
-	}
-
-#ifdef MBASE_PLATFORM_WINDOWS
-	DWORD dataWritten = 0;
-	size_type writeResult = WriteFile(mRawContext.raw_handle, in_src, in_length, &dataWritten, nullptr);
-
-	if (!writeResult)
-	{
-		_set_last_error(GetLastError());
-		close_file();
+		size_type remainingBytes = in_length - totalBytesWritten;
+		DWORD bytesToWriteEach = (remainingBytes < maxChunkSize) ? static_cast<DWORD>(remainingBytes) : maxChunkSize;
+		BOOL writeResult = WriteFile(mRawContext.raw_handle, in_src + totalBytesWritten, bytesToWriteEach, &dataWritten, nullptr);
+		if (!writeResult)
+		{
+			_set_last_error(GetLastError());
+			close_file();
+			break;
+		}
+		else
+		{
+			totalBytesWritten += dataWritten;
+		}
 	}
 	
-	return dataWritten;
 #endif
 #ifdef MBASE_PLATFORM_UNIX
-	ssize_t writeResult = write(mRawContext.raw_handle, in_src, in_length);
-	if(writeResult == -1)
+	size_type maxChunkSize = 128 * (1024);
+	while(totalBytesWritten < in_length)
 	{
-		_set_last_error(errno);
-		close_file();
-		return 0;
+		size_type remainingBytes = in_length - totalBytesWritten;
+		size_type bytesToWriteEach = (remainingBytes < maxChunkSize) ? remainingBytes : maxChunkSize;
+		ssize_t writeResult = write(mRawContext.raw_handle, in_src + totalBytesWritten, bytesToWriteEach);
+		if(writeResult == -1)
+		{
+			_set_last_error(errno);
+			close_file();
+			break;
+		}
+		else
+		{
+			totalBytesWritten += writeResult;
+		}
 	}
-
-	return writeResult;
 #endif
+	return totalBytesWritten;
+}
+
+MBASE_INLINE typename io_file::size_type io_file::write_data(CBYTEBUFFER in_src)
+{
+	return this->write_data(in_src, type_sequence<IBYTE>::length_bytes(in_src));
 }
 
 typename io_file::size_type io_file::write_data(const mbase::string& in_src)
 {
-	if(!is_file_open())
-	{
-		return 0;		
-	}
-
-#ifdef MBASE_PLATFORM_WINDOWS
-	DWORD dataWritten = 0;
-	size_type writeResult = WriteFile(mRawContext.raw_handle, in_src.c_str(), in_src.size(), &dataWritten, nullptr);
-
-	if (!writeResult)
-	{
-		_set_last_error(GetLastError());
-		close_file();
-	}
-
-	return dataWritten;
-#endif
-#ifdef MBASE_PLATFORM_UNIX
-	ssize_t writeResult = write(mRawContext.raw_handle, in_src.c_str(), in_src.size());
-	if(writeResult == -1)
-	{
-		_set_last_error(errno);
-		close_file();
-		return 0;
-	}
-
-	return writeResult;
-#endif
+	return this->write_data(in_src.c_str(), in_src.size());
 }
 
 MBASE_INLINE typename io_file::size_type io_file::write_data(char_stream& in_src)
 {
-	if(!is_file_open())
-	{
-		return 0;		
-	}
-
 	PTRDIFF cursorPos = in_src.get_pos();
 	SIZE_T bytesToWrite = in_src.buffer_length() - cursorPos;
 	IBYTEBUFFER tmpBuffer = in_src.get_bufferc();
-#ifdef MBASE_PLATFORM_WINDOWS
-	DWORD dataWritten = 0;
-	size_type writeResult = WriteFile(mRawContext.raw_handle, tmpBuffer, bytesToWrite, &dataWritten, nullptr);
 
-	if (!writeResult)
-	{
-		_set_last_error(GetLastError());
-		close_file();
-	}
-
-	return dataWritten;
-#endif
-#ifdef MBASE_PLATFORM_UNIX
-	ssize_t writeResult = write(mRawContext.raw_handle, tmpBuffer, bytesToWrite);
-	if(writeResult == -1)
-	{
-		_set_last_error(errno);
-		close_file();
-		return 0;
-	}
-
-	return writeResult;
-#endif
+	return this->write_data(tmpBuffer, bytesToWrite);
 }
 
 MBASE_INLINE typename io_file::size_type io_file::write_data(char_stream& in_src, size_type in_length)
 {
-	if(!is_file_open())
-	{
-		return 0;		
-	}
-	IBYTEBUFFER tmpBuffer = in_src.get_bufferc();
-#ifdef MBASE_PLATFORM_WINDOWS
-	DWORD dataWritten = 0;
-	size_type writeResult = WriteFile(mRawContext.raw_handle, tmpBuffer, in_length, &dataWritten, nullptr);
-	
-	if (!writeResult)
-	{
-		_set_last_error(GetLastError());
-		close_file();
-	}
-
-	in_src.advance(dataWritten);
-	return dataWritten;
-#endif
-#ifdef MBASE_PLATFORM_UNIX
-	ssize_t writeResult = write(mRawContext.raw_handle, tmpBuffer, in_length);
-	if(writeResult == -1)
-	{
-		_set_last_error(errno);
-		close_file();
-		return 0;
-	}
-
-	return writeResult;
-#endif
+	return this->write_data(in_src.get_bufferc(), in_length);
 }
 
 MBASE_INLINE typename io_file::size_type io_file::read_data(IBYTEBUFFER in_src, size_type in_length)
@@ -395,90 +304,60 @@ MBASE_INLINE typename io_file::size_type io_file::read_data(IBYTEBUFFER in_src, 
 	{
 		return 0;		
 	}
-
+	size_type totalBytesRead = 0;
 #ifdef MBASE_PLATFORM_WINDOWS
 	DWORD dataRead = 0;
-	size_type readResult = ReadFile(mRawContext.raw_handle, in_src, in_length, &dataRead, nullptr);
-	if (!readResult)
-	{
-		_set_last_error(GetLastError());
-		close_file();
+	DWORD maxChunkSize = 128 * (1024);
+	while(totalBytesRead < in_length)
+	{	
+		size_type remainingBytes = in_length - totalBytesRead;
+		DWORD bytesToReadEach = (remainingBytes < maxChunkSize) ? static_cast<DWORD>(remainingBytes) : maxChunkSize;
+		BOOL readResult = ReadFile(mRawContext.raw_handle, in_src + totalBytesRead, bytesToReadEach, &dataRead, nullptr);
+		if (!readResult)
+		{
+			_set_last_error(GetLastError());
+			close_file();
+			break;
+		}
+		else
+		{
+			totalBytesRead += dataRead;
+		}
 	}
-	return dataRead;
+	
 #endif
 #ifdef MBASE_PLATFORM_UNIX
-	ssize_t readResult = read(mRawContext.raw_handle, in_src, in_length);
-	if(readResult == -1)
+	size_type maxChunkSize = 128 * (1024);
+	while(totalBytesRead < in_length)
 	{
-		_set_last_error(errno);
-		close_file();
-		return 0;
-	}
-	return readResult;
+		size_type remainingBytes = in_length - totalBytesRead;
+		size_type bytesToReadEach = (remainingBytes < maxChunkSize) ? remainingBytes : maxChunkSize;
+		ssize_t readResult = read(mRawContext.raw_handle, in_src + totalBytesRead, in_length);
+		if(readResult == -1)
+		{
+			_set_last_error(errno);
+			close_file();
+			break;
+		}
+		else
+		{
+			totalBytesRead += readResult;
+		}
+	}	
 #endif
+	return totalBytesRead;
 }
 
 MBASE_INLINE typename io_file::size_type io_file::read_data(char_stream& in_src)
 {
-	if(!is_file_open())
-	{
-		return 0;		
-	}
-
 	PTRDIFF cursorPos = in_src.get_pos();
-	IBYTEBUFFER tmpBuffer = in_src.get_bufferc();
 	SIZE_T bytesToRead = in_src.buffer_length() - cursorPos;
-#ifdef MBASE_PLATFORM_WINDOWS
-	DWORD dataRead = 0;
-	size_type readResult = ReadFile(mRawContext.raw_handle, tmpBuffer, bytesToRead, &dataRead, nullptr);
-	if (!readResult)
-	{
-		_set_last_error(GetLastError());
-		close_file();
-	}
-	return dataRead;
-#endif
-#ifdef MBASE_PLATFORM_UNIX
-	ssize_t readResult = read(mRawContext.raw_handle, tmpBuffer, bytesToRead);
-	if(readResult == -1)
-	{
-		_set_last_error(errno);
-		close_file();
-		return 0;
-	}
-	return readResult;
-#endif
+	return this->read_data(in_src.get_bufferc(), bytesToRead);
 }
 
 MBASE_INLINE typename io_file::size_type io_file::read_data(char_stream& in_src, size_type in_length)
 {
-	if(!is_file_open())
-	{
-		return 0;		
-	}
-
-	IBYTEBUFFER tmpBuffer = in_src.get_bufferc();
-#ifdef MBASE_PLATFORM_WINDOWS
-	DWORD dataRead = 0;
-	size_type readResult = ReadFile(mRawContext.raw_handle, tmpBuffer, in_length, &dataRead, nullptr);
-	if (!readResult)
-	{
-		_set_last_error(GetLastError());
-		close_file();
-	}
-	in_src.advance(dataRead);
-	return dataRead;
-#endif
-#ifdef MBASE_PLATFORM_UNIX
-	ssize_t readResult = read(mRawContext.raw_handle, tmpBuffer, in_length);
-	if(readResult == -1)
-	{
-		_set_last_error(errno);
-		close_file();
-		return 0;
-	}
-	return readResult;
-#endif
+	return this->read_data(in_src.get_bufferc(), in_length);
 }
 
 MBASE_INLINE mbase::string read_file_as_string(mbase::io_file& in_iof)

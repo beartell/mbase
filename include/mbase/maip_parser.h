@@ -340,7 +340,7 @@ struct kval_converter<F64> {
 			}
 			return 0.0f;
 		}
-		catch (const std::exception& out_except)
+		catch ([[maybe_unused]] const std::exception& out_except)
 		{
 			return 0.0f;
 		}
