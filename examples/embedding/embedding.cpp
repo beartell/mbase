@@ -33,6 +33,8 @@ mbase::string gModelName;
 I32 gEmbeddingIndex = 0;
 I32 gTotalPromptTokenLength = 0; // For openai_embeddings.json
 
+GENERIC print_usage();
+
 GENERIC print_usage()
 {
     printf("========================================\n");
@@ -112,7 +114,7 @@ public:
         mbase::vector<F32> generatedEmbeddings;
         inf_common_embd_normalize(out_embeddings, out_embeddings, out_processor->get_embedding_length());
         I32 printLength = 8;
-        for(I32 i = 0; i < out_processor->get_embedding_length(); i++)
+        for(U32 i = 0; i < out_processor->get_embedding_length(); i++)
         {
             generatedEmbeddings.push_back(out_embeddings[i]);
             if(printLength)

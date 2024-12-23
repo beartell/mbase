@@ -138,6 +138,10 @@ public:
     MBASE_INLINE bst_iterator(const bst_iterator& in_rhs) noexcept;
     /* ===== BUILDER METHODS END ===== */
 
+    /* ===== OPERATOR BUILDER METHODS BEGIN ===== */
+	MBASE_INLINE bst_iterator& operator=(const bst_iterator& in_rhs) noexcept;
+	/* ===== OPERATOR BUILDER METHODS END ===== */
+
     /* ===== OBSERVATION METHODS BEGIN ===== */
     MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE pointer get() noexcept;
     MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE const_pointer get() const noexcept;
@@ -149,9 +153,9 @@ public:
 
     /* ===== OPERATOR STATE-MODIFIER METHODS BEGIN ===== */
     MBASE_INLINE bst_iterator& operator++() noexcept;
-    MBASE_INLINE bst_iterator& operator++(I32) noexcept;
+    MBASE_INLINE bst_iterator operator++(I32) noexcept;
     MBASE_INLINE bst_iterator& operator--() noexcept;
-    MBASE_INLINE bst_iterator& operator--(I32) noexcept;
+    MBASE_INLINE bst_iterator operator--(I32) noexcept;
     /* ===== OPERATOR STATE-MODIFIER METHODS END ===== */
 
     /* ===== OPERATOR NON-MODIFIER METHODS BEGIN ===== */
@@ -180,6 +184,10 @@ public:
     MBASE_INLINE const_bst_iterator(const bst_iterator<T, DataT>& in_rhs) noexcept;
     /* ===== BUILDER METHODS END ===== */
 
+    /* ===== OPERATOR BUILDER METHODS BEGIN ===== */
+	MBASE_INLINE const_bst_iterator& operator=(const const_bst_iterator& in_rhs) noexcept;
+	/* ===== OPERATOR BUILDER METHODS END ===== */
+
     /* ===== OBSERVATION METHODS BEGIN ===== */
     MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE const_pointer get() const noexcept;
     MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE const DataT& operator*() const noexcept;
@@ -188,9 +196,9 @@ public:
 
     /* ===== OPERATOR STATE-MODIFIER METHODS BEGIN ===== */
     MBASE_INLINE const_bst_iterator& operator++() noexcept;
-    MBASE_INLINE const_bst_iterator& operator++(I32) noexcept;
+    MBASE_INLINE const_bst_iterator operator++(I32) noexcept;
     MBASE_INLINE const_bst_iterator& operator--() noexcept;
-    MBASE_INLINE const_bst_iterator& operator--(I32) noexcept;
+    MBASE_INLINE const_bst_iterator operator--(I32) noexcept;
     /* ===== OPERATOR STATE-MODIFIER METHODS END ===== */
 
     /* ===== OPERATOR NON-MODIFIER METHODS BEGIN ===== */
@@ -217,6 +225,10 @@ public:
     MBASE_INLINE reverse_bst_iterator(const reverse_bst_iterator& in_rhs) noexcept;
     /* ===== BUILDER METHODS END ===== */
 
+    /* ===== OPERATOR BUILDER METHODS BEGIN ===== */
+	MBASE_INLINE reverse_bst_iterator& operator=(const reverse_bst_iterator& in_rhs) noexcept;
+	/* ===== OPERATOR BUILDER METHODS END ===== */
+
     /* ===== OBSERVATION METHODS BEGIN ===== */
     MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE pointer get() noexcept;
     MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE const_pointer get() const noexcept;
@@ -228,9 +240,9 @@ public:
 
     /* ===== OPERATOR STATE-MODIFIER METHODS BEGIN ===== */
     MBASE_INLINE reverse_bst_iterator& operator++() noexcept;
-    MBASE_INLINE reverse_bst_iterator& operator++(I32) noexcept;
+    MBASE_INLINE reverse_bst_iterator operator++(I32) noexcept;
     MBASE_INLINE reverse_bst_iterator& operator--() noexcept;
-    MBASE_INLINE reverse_bst_iterator& operator--(I32) noexcept;
+    MBASE_INLINE reverse_bst_iterator operator--(I32) noexcept;
     /* ===== OPERATOR STATE-MODIFIER METHODS END ===== */
 
     /* ===== OPERATOR NON-MODIFIER METHODS BEGIN ===== */
@@ -257,6 +269,10 @@ public:
     MBASE_INLINE const_reverse_bst_iterator(const const_reverse_bst_iterator& in_rhs) noexcept;
     MBASE_INLINE const_reverse_bst_iterator(const reverse_bst_iterator<T, DataT>& in_rhs) noexcept;
     /* ===== BUILDER METHODS END ===== */
+
+    /* ===== OPERATOR BUILDER METHODS BEGIN ===== */
+	MBASE_INLINE const_reverse_bst_iterator& operator=(const const_reverse_bst_iterator& in_rhs) noexcept;
+	/* ===== OPERATOR BUILDER METHODS END ===== */
 
     /* ===== OBSERVATION METHODS BEGIN ===== */
     MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE const_pointer get() const noexcept;
@@ -301,6 +317,13 @@ template<typename T, typename DataT>
 MBASE_INLINE bst_iterator<T, DataT>::bst_iterator(const bst_iterator& in_rhs) noexcept
 {
     _ptr = in_rhs._ptr;
+}
+
+template<typename T, typename DataT>
+MBASE_INLINE bst_iterator<T, DataT>& bst_iterator<T, DataT>::operator=(const bst_iterator& in_rhs) noexcept
+{
+    _ptr = in_rhs._ptr;
+    return *this;
 }
 
 template<typename T, typename DataT>
@@ -385,7 +408,7 @@ MBASE_INLINE bst_iterator<T, DataT>& bst_iterator<T, DataT>::operator++() noexce
 }
 
 template<typename T, typename DataT>
-MBASE_INLINE bst_iterator<T, DataT>& bst_iterator<T, DataT>::operator++(I32) noexcept 
+MBASE_INLINE bst_iterator<T, DataT> bst_iterator<T, DataT>::operator++(I32) noexcept 
 {
     bst_iterator bi(*this);
     ++(*this);
@@ -439,7 +462,7 @@ MBASE_INLINE bst_iterator<T, DataT>& bst_iterator<T, DataT>::operator--() noexce
 }
 
 template<typename T, typename DataT>
-MBASE_INLINE bst_iterator<T, DataT>& bst_iterator<T, DataT>::operator--(I32) noexcept
+MBASE_INLINE bst_iterator<T, DataT> bst_iterator<T, DataT>::operator--(I32) noexcept
 {
     bst_iterator bi(*this);
     --(*this);
@@ -482,6 +505,12 @@ MBASE_INLINE const_bst_iterator<T, DataT>::const_bst_iterator(const bst_iterator
     _ptr = in_rhs.get();
 }
 
+template<typename T, typename DataT>
+MBASE_INLINE const_bst_iterator<T, DataT>& const_bst_iterator<T, DataT>::operator=(const const_bst_iterator& in_rhs) noexcept
+{
+    _ptr = in_rhs._ptr;
+    return *this;
+}
 
 template<typename T, typename DataT>
 MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE typename const_bst_iterator<T, DataT>::const_pointer const_bst_iterator<T, DataT>::get() const noexcept
@@ -547,7 +576,7 @@ MBASE_INLINE const_bst_iterator<T, DataT>& const_bst_iterator<T, DataT>::operato
 }
 
 template<typename T, typename DataT>
-MBASE_INLINE const_bst_iterator<T, DataT>& const_bst_iterator<T, DataT>::operator++(I32) noexcept
+MBASE_INLINE const_bst_iterator<T, DataT> const_bst_iterator<T, DataT>::operator++(I32) noexcept
 {
     const_bst_iterator bi(*this);
     ++(*this);
@@ -601,7 +630,7 @@ MBASE_INLINE const_bst_iterator<T, DataT>& const_bst_iterator<T, DataT>::operato
 }
 
 template<typename T, typename DataT>
-MBASE_INLINE const_bst_iterator<T, DataT>& const_bst_iterator<T, DataT>::operator--(I32) noexcept
+MBASE_INLINE const_bst_iterator<T, DataT> const_bst_iterator<T, DataT>::operator--(I32) noexcept
 {
     const_bst_iterator bi(*this);
     --(*this);
@@ -637,6 +666,15 @@ MBASE_INLINE reverse_bst_iterator<T, DataT>::reverse_bst_iterator(const reverse_
 {
     _ptr = in_rhs._ptr;
 }
+
+/* ===== OPERATOR BUILDER METHODS BEGIN ===== */
+template<typename T, typename DataT>
+MBASE_INLINE reverse_bst_iterator<T, DataT>& reverse_bst_iterator<T, DataT>::operator=(const reverse_bst_iterator& in_rhs) noexcept
+{
+    _ptr = in_rhs._ptr;
+    return *this;
+}
+/* ===== OPERATOR BUILDER METHODS END ===== */
 
 template<typename T, typename DataT>
 MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE typename reverse_bst_iterator<T, DataT>::pointer reverse_bst_iterator<T, DataT>::get() noexcept
@@ -719,7 +757,7 @@ MBASE_INLINE reverse_bst_iterator<T, DataT>& reverse_bst_iterator<T, DataT>::ope
 }
 
 template<typename T, typename DataT>
-MBASE_INLINE reverse_bst_iterator<T, DataT>& reverse_bst_iterator<T, DataT>::operator++(I32) noexcept
+MBASE_INLINE reverse_bst_iterator<T, DataT> reverse_bst_iterator<T, DataT>::operator++(I32) noexcept
 {
     reverse_bst_iterator bi(*this);
     ++(*this);
@@ -771,7 +809,7 @@ MBASE_INLINE reverse_bst_iterator<T, DataT>& reverse_bst_iterator<T, DataT>::ope
 }
 
 template<typename T, typename DataT>
-MBASE_INLINE reverse_bst_iterator<T, DataT>& reverse_bst_iterator<T, DataT>::operator--(I32) noexcept
+MBASE_INLINE reverse_bst_iterator<T, DataT> reverse_bst_iterator<T, DataT>::operator--(I32) noexcept
 {
     reverse_bst_iterator bi(*this);
     --(*this);
@@ -814,6 +852,12 @@ MBASE_INLINE const_reverse_bst_iterator<T, DataT>::const_reverse_bst_iterator(co
     _ptr = in_rhs.get();
 }
 
+template<typename T, typename DataT>
+MBASE_INLINE const_reverse_bst_iterator<T, DataT>& const_reverse_bst_iterator<T, DataT>::operator=(const const_reverse_bst_iterator& in_rhs) noexcept
+{
+    _ptr = in_rhs.get();
+    return *this;
+}
 
 template<typename T, typename DataT>
 MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE typename const_reverse_bst_iterator<T, DataT>::const_pointer const_reverse_bst_iterator<T, DataT>::get() const noexcept

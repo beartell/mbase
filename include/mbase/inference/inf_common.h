@@ -3,6 +3,7 @@
 
 #include <mbase/common.h>
 #include <mbase/vector.h>
+#include <mbase/unordered_map.h>
 #include <mbase/framework/object_watcher.h>
 
 // If llama.cpp is defined macro should be placed here
@@ -31,6 +32,14 @@ enum class inf_model_category {
     EMBEDDING,
     UNDEFINED
 };
+
+struct inf_lora_adapter {
+	mbase::string mAdapterName;
+	mbase::string mLoraPath;
+	llama_lora_adapter* mAdapterHandle = NULL;
+};
+
+using lora_adapter_map = mbase::unordered_map<mbase::string, inf_lora_adapter>;
 
 // The rest is common functionality inspired from llama.cpp common library for examples
 // The set of functions will be populated as new needs are found

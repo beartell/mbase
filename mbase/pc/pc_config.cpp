@@ -108,7 +108,7 @@ bool PcConfig::load_config_file(const mbase::wstring& in_file, config_descriptio
 				mbase::string configValue = configKval[1];
 				if(configValue.front() == ' ')
 				{
-					I32 beginIndex = 0;
+					SIZE_T beginIndex = 0;
 					SIZE_T endIndex = configValue.size();
 					for(mbase::string::iterator It = configValue.begin(); It != configValue.end(); ++It)
 					{

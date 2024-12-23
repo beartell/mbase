@@ -247,6 +247,10 @@ MBASE_INLINE typename io_file::size_type io_file::write_data(CBYTEBUFFER in_src,
 		}
 		else
 		{
+			if(!dataWritten)
+			{
+				break;
+			}
 			totalBytesWritten += dataWritten;
 		}
 	}
@@ -267,6 +271,10 @@ MBASE_INLINE typename io_file::size_type io_file::write_data(CBYTEBUFFER in_src,
 		}
 		else
 		{
+			if(!writeResult)
+			{
+				break;
+			}
 			totalBytesWritten += writeResult;
 		}
 	}
@@ -321,6 +329,10 @@ MBASE_INLINE typename io_file::size_type io_file::read_data(IBYTEBUFFER in_src, 
 		}
 		else
 		{
+			if(!dataRead)
+			{
+				break;
+			}
 			totalBytesRead += dataRead;
 		}
 	}
@@ -332,7 +344,8 @@ MBASE_INLINE typename io_file::size_type io_file::read_data(IBYTEBUFFER in_src, 
 	{
 		size_type remainingBytes = in_length - totalBytesRead;
 		size_type bytesToReadEach = (remainingBytes < maxChunkSize) ? remainingBytes : maxChunkSize;
-		ssize_t readResult = read(mRawContext.raw_handle, in_src + totalBytesRead, in_length);
+		ssize_t readResult = read(mRawContext.raw_handle, in_src + totalBytesRead, bytesToReadEach);
+
 		if(readResult == -1)
 		{
 			_set_last_error(errno);
@@ -341,6 +354,10 @@ MBASE_INLINE typename io_file::size_type io_file::read_data(IBYTEBUFFER in_src, 
 		}
 		else
 		{
+			if(!readResult)
+			{
+				break;
+			}
 			totalBytesRead += readResult;
 		}
 	}	

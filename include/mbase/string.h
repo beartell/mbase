@@ -5,7 +5,6 @@
 #include <mbase/char_stream.h>
 #include <mbase/type_sequence.h> // mbase::type_sequence
 #include <stdexcept>
-#include <ctype.h>
 
 #ifdef MBASE_PLATFORM_WINDOWS
 
@@ -19,7 +18,7 @@
 
 #include <uuid/uuid.h> // For uuid generation
 #include <iconv.h> // For utf conversions
-#include <errno.h>
+#include <cerrno>
 
 #endif // MBASE_PLATFORM_UNIX
 
@@ -576,7 +575,7 @@ template<typename SeqType, typename SeqBase, typename Allocator>
 MBASE_INLINE_EXPR character_sequence<SeqType, SeqBase, Allocator>::character_sequence(size_type in_size, value_type in_ch, const Allocator& in_alloc) : mRawData(nullptr), mSize(0), mExternalAllocator(in_alloc) 
 {
     _build_string(this->_calculate_capacity(in_size));
-    for(I32 i = 0; i < in_size; i++)
+    for(size_type i = 0; i < in_size; i++)
     {
         push_back(in_ch);
     }
@@ -595,7 +594,7 @@ MBASE_INLINE_EXPR character_sequence<SeqType, SeqBase, Allocator>::character_seq
     }
     else {
         _build_string(in_rhs.mCapacity);
-        for(itr_pos; itr_pos != itr_end; itr_pos++)
+        for(; itr_pos != itr_end; itr_pos++)
         {
             push_back(*itr_pos);
         }
@@ -735,7 +734,7 @@ MBASE_INLINE_EXPR character_sequence<SeqType, SeqBase, Allocator>::character_seq
 {
     _build_string(this->_calculate_capacity(in_chars.size()));
     const value_type* vt = in_chars.begin();
-    for(vt; vt != in_chars.end(); vt++)
+    for(; vt != in_chars.end(); vt++)
     {
         push_back(*vt);
     }
@@ -1608,7 +1607,7 @@ MBASE_INLINE_EXPR character_sequence<SeqType, SeqBase, Allocator>& character_seq
 template<typename SeqType, typename SeqBase, typename Allocator>
 MBASE_INLINE_EXPR character_sequence<SeqType, SeqBase, Allocator>& character_sequence<SeqType, SeqBase, Allocator>::append(size_type in_count, value_type in_char) 
 {
-    for(I32 i = 0; i < in_count; i++)
+    for(size_type i = 0; i < in_count; i++)
     {
         push_back(in_char);
     }
@@ -1633,7 +1632,7 @@ MBASE_INLINE_EXPR character_sequence<SeqType, SeqBase, Allocator>& character_seq
     }
     else 
     {
-        for(I32 i = 0; i < in_count; i++)
+        for(size_type i = 0; i < in_count; i++)
         {
             push_back(*iPos);
             iPos++;
@@ -1674,7 +1673,7 @@ template<typename SeqType, typename SeqBase, typename Allocator>
 MBASE_INLINE_EXPR character_sequence<SeqType, SeqBase, Allocator>& character_sequence<SeqType, SeqBase, Allocator>::append(std::initializer_list<value_type> in_chars)
 {
     const value_type* vt = in_chars.begin();
-    for(vt; vt != in_chars.end(); vt++)
+    for(; vt != in_chars.end(); vt++)
     {
         push_back(*vt);
     }
@@ -1700,7 +1699,7 @@ MBASE_INLINE_EXPR character_sequence<SeqType, SeqBase, Allocator>& character_seq
             newString.push_back(in_ch);
         }
 
-        for(inIt; inIt != cend(); inIt++)
+        for(; inIt != cend(); inIt++)
         {
             newString.push_back(*inIt);
         }
@@ -1793,7 +1792,7 @@ MBASE_INLINE_EXPR character_sequence<SeqType, SeqBase, Allocator>& character_seq
     {
         character_sequence newString(cbegin(), inIt);
         newString += newStr;
-        for(inIt; inIt != cend(); inIt++)
+        for(; inIt != cend(); inIt++)
         {
             newString.push_back(*inIt);
         }
@@ -1816,7 +1815,7 @@ MBASE_INLINE_EXPR typename character_sequence<SeqType, SeqBase, Allocator>::iter
         const_iterator inIt = in_pos;
         character_sequence newString(cbegin(), inIt);
         newString.push_back(in_char);
-        for(inIt; inIt != cend(); inIt++)
+        for(; inIt != cend(); inIt++)
         {
             newString.push_back(*inIt);
         }
@@ -1831,7 +1830,7 @@ MBASE_INLINE_EXPR typename character_sequence<SeqType, SeqBase, Allocator>::iter
     // do not know what to return
     if (in_pos >= cend())
     {
-        for (difference_type i = 0; i < in_count; i++)
+        for (size_type i = 0; i < in_count; i++)
         {
             push_back(in_char);
         }
@@ -1841,7 +1840,7 @@ MBASE_INLINE_EXPR typename character_sequence<SeqType, SeqBase, Allocator>::iter
         const_iterator inIt = in_pos;
         character_sequence newString(cbegin(), inIt);
         
-        for(difference_type i = 0; i < in_count; i++)
+        for(size_type i = 0; i < in_count; i++)
         {
             newString.push_back(in_char);
         }
@@ -2089,7 +2088,7 @@ MBASE_INLINE_EXPR character_sequence<SeqType, SeqBase, Allocator>& character_seq
 
     if(inPos == cend())
     {
-        for(difference_type i = 0; i < in_count; i++)
+        for(size_type i = 0; i < in_count; i++)
         {
             pop_back();
         }
@@ -2101,12 +2100,12 @@ MBASE_INLINE_EXPR character_sequence<SeqType, SeqBase, Allocator>& character_seq
     {
         character_sequence cs(cbegin(), inPos);
 
-        for(difference_type i = 0; i < in_count; i++)
+        for(size_type i = 0; i < in_count; i++)
         {
             inPos++;
         }
 
-        for(inPos; inPos != cend(); inPos++)
+        for(; inPos != cend(); inPos++)
         {
             cs.push_back(*inPos);
         }
@@ -2127,7 +2126,7 @@ MBASE_INLINE_EXPR typename character_sequence<SeqType, SeqBase, Allocator>::iter
     {
         character_sequence cs(cbegin(), in_pos);
         in_pos++;
-        for(in_pos; in_pos != cend(); in_pos++)
+        for(; in_pos != cend(); in_pos++)
         {
             cs.push_back(*in_pos);
         }
@@ -2150,7 +2149,7 @@ MBASE_INLINE_EXPR typename character_sequence<SeqType, SeqBase, Allocator>::iter
     {
         character_sequence cs(cbegin(), in_from);
         in_from++;
-        for(in_from; in_from != cend(); in_from++)
+        for(; in_from != cend(); in_from++)
         {
             if(in_from < in_to)
             {
@@ -2292,7 +2291,10 @@ MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE character_sequence<SeqType, SeqBase, 
     #endif
 
     #ifdef MBASE_PLATFORM_UNIX
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wformat-nonliteral"
     size_type stringLength = snprintf(NULL, 0, in_format, std::forward<Params>(in_params)...);
+    #pragma GCC diagnostic pop
     #endif
     
     character_sequence newSequence;
@@ -2303,9 +2305,10 @@ MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE character_sequence<SeqType, SeqBase, 
 
     pointer mString = newSequence.mExternalAllocator.allocate(stringLength + 1, true);
     newSequence.fill(mString, 0, stringLength + 1);
-    
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wformat-nonliteral"
     sprintf(mString, in_format, std::forward<Params>(in_params)...);
-
+    #pragma GCC diagnostic pop
     newSequence = character_sequence(mString);
     newSequence.mExternalAllocator.deallocate(mString);
 
@@ -2503,9 +2506,9 @@ MBASE_INLINE mbase::string to_utf8(const mbase::wstring& in_str)
         iconv_close(cd);
         return mbase::string();
     }
-
+    wchar_t* tmpCCast = const_cast<wchar_t*>(src); // const casting to prevent compiler warnings
     IBYTEBUFFER out_ptr = output_buffer;
-    IBYTEBUFFER in_ptr = (IBYTEBUFFER)src;
+    IBYTEBUFFER in_ptr = (IBYTEBUFFER)tmpCCast;
     size_t out_bytes_left = out_size - 1;
     size_t in_bytes_left = src_length;
 
@@ -2572,7 +2575,7 @@ MBASE_INLINE mbase::wstring from_utf8(const mbase::string& in_str)
     }
 
     char* out_ptr = output_buffer;
-    char* in_ptr = (char*)src;
+    char* in_ptr = const_cast<char*>(src);
     size_t out_bytes_left = out_size - sizeof(wchar_t);
     size_t in_bytes_left = src_length;
 

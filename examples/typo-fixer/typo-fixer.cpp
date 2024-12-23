@@ -28,6 +28,9 @@ mbase::vector<InfDeviceDescription> deviceDescription;
 program_parameters gSampleParams;
 bool gIsProgramRunning = true;
 
+GENERIC catching_interrupt_signal(I32 out_sig_id);
+GENERIC print_usage();
+
 GENERIC catching_interrupt_signal(I32 out_sig_id)
 {
     printf("Program interrupted\n");
@@ -336,6 +339,8 @@ int main(int argc, char** argv)
             break;
         case InfDeviceDescription::device_type::UNKNOWN:
             typeString = "UNKNOWN";
+            break;
+        default:
             break;
         }
         printf("\t%s ## Type: %s\n", tmpDescription.get_device_description().c_str(), typeString.c_str());

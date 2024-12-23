@@ -4,6 +4,7 @@
 #include <mbase/inference/inf_gguf_metadata_configurator.h>
 #include <mbase/inference/inf_chat_templates.h>
 #include <mbase/inference/inf_device_desc.h>
+#include <mbase/filesystem.h>
 #include <iostream>
 
 MBASE_BEGIN
@@ -59,6 +60,21 @@ InfModelTextToText::~InfModelTextToText()
 	}
 }
 
+bool InfModelTextToText::signal_lora_adding() const
+{
+	return mLoraInitializeSignal.get_signal();
+}
+
+bool InfModelTextToText::signal_state_lora_adding() const
+{
+	return mLoraInitializeSignal.get_signal_state();
+}
+
+bool InfModelTextToText::signal_state_lora_failed() const
+{
+	return mLoraFailSignal.get_signal_state();
+}
+
 bool InfModelTextToText::is_available(const U32& in_context_size) const
 {
 	if (this->signal_state_initializing())
@@ -85,9 +101,28 @@ bool InfModelTextToText::is_embedding_model() const
 	return mIsEmbeddingModel;
 }
 
+bool InfModelTextToText::has_lora_adapter(const mbase::string& in_name, inf_lora_adapter& out_adapter)
+{
+	lora_adapter_map::iterator adapterIt = mLoraMap.find(in_name);
+	if(adapterIt == mLoraMap.end())
+	{
+		return false;
+	}
+
+	out_adapter = adapterIt->second;
+	return true;
+}
+
 llama_model* InfModelTextToText::get_raw_model()
 {
 	return mModel;
+}
+
+InfModelTextToText::flags InfModelTextToText::get_adapter_map(lora_adapter_map& out_map)
+{
+	MBASE_INF_T2T_MODEL_RETURN_UNINITIALIZED;
+	out_map = mLoraMap;
+	return flags::INF_MODEL_SUCCESS;
 }
 
 InfModelTextToText::flags InfModelTextToText::get_special_tokens(mbase::vector<inf_text_token>& out_tokens)
@@ -298,12 +333,23 @@ InfModelTextToText::flags InfModelTextToText::initialize_model_ex(const mbase::w
 		return flags::INF_MODEL_INFO_INITIALIZING_MODEL;
 	}
 
+	if(signal_state_initializing())
+	{
+		return flags::INF_MODEL_INFO_UPDATE_REQUIRED;
+	}
+
 	I32 inputLayers = in_gpu_layers;
 
 	if(inputLayers == -1)
 	{
 		inputLayers = 0;
 	}
+
+	if(!mbase::is_file_valid(in_path))
+	{
+		return flags::INF_MODEL_ERR_MISSING_MODEL;
+	}
+
 	// TODO: Check if the given total context size is too small
 
 	mSuppliedParams = llama_model_default_params();
@@ -333,12 +379,7 @@ InfModelTextToText::flags InfModelTextToText::initialize_model_ex(const mbase::w
 		if(gpuCount)
 		{
 			mSuppliedParams.n_gpu_layers = in_gpu_layers;
-			mSuppliedParams.split_mode = LLAMA_SPLIT_MODE_NONE;
-			if(gpuCount > 1)
-			{
-				// If there are more than one gpus, enable row split mode
-				mSuppliedParams.split_mode = LLAMA_SPLIT_MODE_ROW;
-			}
+			mSuppliedParams.split_mode = LLAMA_SPLIT_MODE_ROW;
 		}
 	}
 
@@ -346,7 +387,7 @@ InfModelTextToText::flags InfModelTextToText::initialize_model_ex(const mbase::w
 	mModelPath = in_path;
 	mRegisteredProcessors.clear(); // Since the registered processors is not on the destruction list, make sure it is fresh
 
-	mInitializeSignal.set_signal_with_state();
+	mInitializeSignal.set_signal();
 	start_processor();
 	return flags::INF_MODEL_INFO_INITIALIZING_MODEL;
 }
@@ -370,7 +411,7 @@ InfModelTextToText::flags InfModelTextToText::initialize_model_ex_sync(const mba
 		return flags::INF_MODEL_ERR_CANT_LOAD_MODEL;
 	}
 
-	return flags::INF_MODEL_INFO_INITIALIZING_MODEL;
+	return flags::INF_MODEL_INFO_UPDATE_REQUIRED;
 }
 
 InfModelTextToText::flags InfModelTextToText::initialize_model_sync(const mbase::wstring& in_path, const U32& in_total_context_size, const I32& in_gpu_layers)
@@ -388,6 +429,11 @@ InfModelTextToText::flags InfModelTextToText::destroy()
 	if(signal_destroying())
 	{
 		return flags::INF_MODEL_INFO_DESTROYING_MODEL;
+	}
+
+	if(signal_state_destroying())
+	{
+		return flags::INF_MODEL_INFO_UPDATE_REQUIRED;
 	}
 
 	for (context_processor_list::iterator It = mRegisteredProcessors.begin(); It != mRegisteredProcessors.end();)
@@ -421,6 +467,70 @@ InfModelTextToText::flags InfModelTextToText::destroy_sync()
 		mbase::sleep(2);
 	}
 
+	return flags::INF_MODEL_INFO_UPDATE_REQUIRED;
+}
+
+InfModelTextToText::flags InfModelTextToText::add_lora_adapter(const mbase::wstring& in_path, const mbase::string& in_byname)
+{
+	MBASE_INF_T2T_MODEL_RETURN_UNINITIALIZED;
+
+	if(signal_lora_adding())
+	{
+		if(mLoraCandidate.mAdapterName == in_byname)
+		{
+			return flags::INF_MODEL_INFO_ADDING_LORA;
+		}
+		else
+		{
+			return flags::INF_MODEL_INFO_ADDING_LORA;
+		}
+		
+	}
+
+	if(signal_state_lora_adding())
+	{
+		return flags::INF_MODEL_INFO_UPDATE_REQUIRED;
+	}
+
+	if(!mbase::is_file_valid(in_path))
+	{
+		// CANT OPEN FILE
+		return flags::INF_MODEL_ERR_MISSING_MODEL;
+	}	
+
+	mbase::string adapterPathUtf8 = mbase::to_utf8(in_path);
+	mbase::string loraCustomName = in_byname;
+
+	if(!loraCustomName.size())
+	{
+		// If no name is given, name of lora will be the same with file's name
+		loraCustomName = adapterPathUtf8;
+	}
+
+	if(mLoraMap.find(loraCustomName) != mLoraMap.end())
+	{
+		return flags::INF_MODEL_ERR_LORA_EXISTS;
+	}
+
+	mLoraCandidate.mAdapterName = loraCustomName;
+	mLoraCandidate.mAdapterHandle = NULL;
+	mLoraCandidate.mLoraPath = adapterPathUtf8;
+
+	mLoraInitializeSignal.set_signal();
+	start_processor();
+
+	return flags::INF_MODEL_INFO_ADDING_LORA;
+}
+
+InfModelTextToText::flags InfModelTextToText::remove_lora_adapter(inf_lora_adapter in_adapter)
+{
+	MBASE_INF_T2T_MODEL_RETURN_UNINITIALIZED;
+	return flags::INF_MODEL_SUCCESS;
+}
+
+InfModelTextToText::flags InfModelTextToText::remove_lora_adapter(const mbase::string& in_name)
+{
+	MBASE_INF_T2T_MODEL_RETURN_UNINITIALIZED;
 	return flags::INF_MODEL_SUCCESS;
 }
 
@@ -806,10 +916,18 @@ GENERIC InfModelTextToText::_destroy_model()
 		}
 	}
 
+	for(lora_adapter_map::iterator It = mLoraMap.begin(); It != mLoraMap.end(); ++It)
+	{
+		llama_lora_adapter_free(It->second.mAdapterHandle);
+		It = mLoraMap.erase(It);
+	}
+
 	llama_free_model(mModel);
 	mModel = NULL;
-	
+	mLoraCandidate.mAdapterHandle = NULL;
+
 	mModelName.clear();
+	mLoraCandidate.mLoraPath.clear();
 	mModelArchitecture.clear();
 	mUsrStart.clear();
 	mSystemStart.clear();
@@ -822,7 +940,27 @@ GENERIC InfModelTextToText::_destroy_model()
 	mOccupiedContext = 0;
 
 	/* RESETTING ALL SIGNALS ON LOGIC LOOP */
+
 	mDestroySignal.set_signal_finished();
+}
+
+GENERIC InfModelTextToText::_initialize_lora()
+{
+	llama_lora_adapter* adapterOut = llama_lora_adapter_init(mModel, mLoraCandidate.mLoraPath.c_str());
+	if(adapterOut)
+	{
+		mLoraCandidate.mAdapterHandle = adapterOut;
+		mLoraMap.insert(mbase::pair(mLoraCandidate.mAdapterName, mLoraCandidate));
+	}
+	else
+	{
+		// set lora init fail signal
+		mLoraFailSignal.set_signal_finished();
+		mLoraInitializeSignal.reset_signal();
+		return;
+	}
+
+	mLoraInitializeSignal.set_signal_finished();
 }
 
 GENERIC InfModelTextToText::_get_special_tokens(mbase::vector<inf_text_token>& out_tokens)
@@ -853,6 +991,14 @@ GENERIC InfModelTextToText::_get_special_tokens(mbase::vector<mbase::string>& ou
 	}
 }
 
+GENERIC InfModelTextToText::on_lora_added(inf_lora_adapter out_adapter)
+{
+}
+
+GENERIC InfModelTextToText::on_lora_add_fail()
+{
+}
+
 GENERIC InfModelTextToText::update()
 {
 	// load and unload control
@@ -864,8 +1010,10 @@ GENERIC InfModelTextToText::update()
 	if(signal_state_destroying())
 	{
 		// Means destruction finished
-		stop_processor();
+		// Reset all signals
 		reset_base_signals();
+		mLoraInitializeSignal.reset_signal_with_state();
+		mLoraFailSignal.reset_signal_with_state();
 
 		mbase::lock_guard tmpListMutex(mProcessorListMutex);
 		for(context_processor_list::iterator It = mRegisteredProcessors.begin(); It != mRegisteredProcessors.end(); ++It)
@@ -887,7 +1035,6 @@ GENERIC InfModelTextToText::update()
 	if(signal_state_initializing())
 	{
 		// Means init finished
-		stop_processor();
 		reset_base_signals();
 
 		if(is_initialize_failed())
@@ -900,6 +1047,18 @@ GENERIC InfModelTextToText::update()
 			on_initialize();
 		}
 		return;
+	}
+
+	if(signal_state_lora_failed())
+	{
+		mLoraFailSignal.reset_signal_state();
+		on_lora_add_fail();
+	}
+
+	if(signal_state_lora_adding())
+	{
+		mLoraInitializeSignal.reset_signal_state();
+		on_lora_added(mLoraCandidate);
 	}
 
 	mbase::lock_guard tmpListMutex(mProcessorListMutex);
@@ -920,21 +1079,23 @@ GENERIC InfModelTextToText::update()
 
 GENERIC InfModelTextToText::update_t()
 {
-	while(is_processor_running())
+	if(is_initialized())
 	{
-		if(is_initialized())
+		if(signal_destroying())
 		{
-			if(signal_destroying())
-			{
-				_destroy_model();
-			}
+			_destroy_model();
 		}
-		else
+
+		if(signal_lora_adding())
 		{
-			if(signal_initializing())
-			{
-				_initialize_model();
-			}
+			_initialize_lora();
+		}
+	}
+	else
+	{
+		if(signal_initializing())
+		{
+			_initialize_model();
 		}
 	}
 }

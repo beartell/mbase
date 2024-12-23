@@ -27,7 +27,7 @@
 using namespace mbase;
 
 #define MBASE_OPENAI_SERVER_VERSION "v1.2.0"
-
+GENERIC print_usage();
 GENERIC print_usage()
 {
     printf("========================================\n");

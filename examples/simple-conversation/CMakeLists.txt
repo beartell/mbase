@@ -1,4 +1,6 @@
 add_executable(mbase_simple_conversation simple-conversation.cpp)
 
+target_compile_definitions(mbase_simple_conversation PRIVATE ${MBASE_COMMON_COMPILE_DEFINITIONS})
+target_compile_options(mbase_simple_conversation PRIVATE ${MBASE_COMMON_COMPILE_OPTIONS})
 target_include_directories(mbase_simple_conversation PUBLIC mb_pc mb_inference)
 target_link_libraries(mbase_simple_conversation PRIVATE ${MBASE_STD_LIBS} mb_pc mb_inference llama)

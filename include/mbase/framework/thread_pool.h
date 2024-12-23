@@ -1,6 +1,8 @@
 #ifndef MBASE_THREAD_POOL_H
 #define MBASE_THREAD_POOL_H
 
+/* IMPLEMENTATION IS INCOMPLETE */
+
 #include <mbase/common.h>
 #include <mbase/stack.h>
 #include <mbase/synchronization.h>

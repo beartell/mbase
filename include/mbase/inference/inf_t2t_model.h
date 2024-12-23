@@ -17,10 +17,13 @@ public:
 		INF_MODEL_ERR_CANT_LOAD_MODEL,
 		INF_MODEL_ERR_MISSING_MODEL,
 		INF_MODEL_ERR_NO_SENTENCE,
+		INF_MODEL_ERR_UPDATE_LOOP_OCCUPIED,
 		INF_MODEL_INFO_REGISTERING_PROCESSOR,
 		INF_MODEL_INFO_INITIALIZING_MODEL,
+		INF_MODEL_INFO_ADDING_LORA,
 		INF_MODEL_INFO_DESTROYING_MODEL,
 		INF_MODEL_INFO_PROCESSOR_IS_BEING_DESTROYED,
+		INF_MODEL_INFO_UPDATE_REQUIRED,
 		INF_MODEL_ERR_PROC_UNMATCH, // Called if the registered processor match with the model
 		INF_MODEL_ERR_PROCESSOR_ALREADY_REGISTERED,
 		INF_MODEL_ERR_INVALID_INPUT,
@@ -31,15 +34,21 @@ public:
 		INF_MODEL_ERR_UNABLE_REGISTER_PROCESSOR,
 		INF_MODEL_ERR_NOT_INITIALIZED,
 		INF_MODEL_ERR_TOKENIZATION_FAILED,
+		INF_MODEL_ERR_LORA_EXISTS,
 		INF_MODEL_ERR_GENERIC
 	};
 
 	InfModelTextToText();
 	~InfModelTextToText();
 
+	bool signal_lora_adding() const;
+	bool signal_state_lora_adding() const;
+	bool signal_state_lora_failed() const;
 	bool is_available(const U32& in_context_size) const;
 	bool is_embedding_model() const;
+	bool has_lora_adapter(const mbase::string& in_name, inf_lora_adapter& out_adapter);
 	llama_model* get_raw_model();
+	flags get_adapter_map(lora_adapter_map& out_map);
 	flags get_special_tokens(mbase::vector<inf_text_token>& out_tokens);
 	flags get_special_tokens(mbase::vector<mbase::string>& out_tokens);
 	flags get_model_name(mbase::string& out_name);
@@ -76,6 +85,9 @@ public:
 	flags initialize_model_sync(const mbase::wstring& in_path, const U32& in_total_context_size, const I32& in_gpu_layers = -1);
 	flags destroy();
 	flags destroy_sync();
+	flags add_lora_adapter(const mbase::wstring& in_path, const mbase::string& in_byname = "");
+	flags remove_lora_adapter(inf_lora_adapter in_adapter);
+	flags remove_lora_adapter(const mbase::string& in_name);
 	flags register_context_process(
 		InfProcessorTextToText* in_processor, 
 		const U32& in_context_length,
@@ -91,6 +103,8 @@ public:
 		U32 in_thread_count
 	);
 	flags tokenize_input(CBYTEBUFFER in_data, size_type in_size, inf_text_token_vector& out_tokens);
+	virtual GENERIC on_lora_added(inf_lora_adapter out_adapter);
+	virtual GENERIC on_lora_add_fail();
 
 	GENERIC update() override;
 	GENERIC update_t() override;
@@ -98,10 +112,13 @@ public:
 private:
 	GENERIC _initialize_model();
 	GENERIC _destroy_model();
+	GENERIC _initialize_lora();
 	GENERIC _get_special_tokens(mbase::vector<inf_text_token>& out_tokens);
 	GENERIC _get_special_tokens(mbase::vector<mbase::string>& out_tokens);
 
 	llama_model* mModel;
+	inf_lora_adapter mLoraCandidate;
+	lora_adapter_map mLoraMap;
 	mbase::string mQuantizationString;
 	mbase::string mModelName;
 	mbase::string mModelArchitecture;
@@ -124,6 +141,8 @@ private:
 	U32 mTotalContextSize;
 	F32 mQuantizationCoefficient;
 	bool mIsEmbeddingModel; // Not supported if (llama_model_has_encoder(model) && llama_model_has_decoder(model) is true)
+	processor_signal mLoraInitializeSignal;
+	processor_signal mLoraFailSignal;
 };
 
 MBASE_END

@@ -16,6 +16,14 @@ set(MBASE_GLOBAL_CONFIG_IN_DIRECTORY ${CMAKE_SOURCE_DIR}/cmake_config_in)
 set(MBASE_CURRENT_DIR ${CMAKE_CURRENT_BINARY_DIR})
 set(MBASE_COMMON_COMPILE_DEFINITIONS MBASE_BUILD MBASE_INTERNAL_API MBASE_CPP_VERSION=${CMAKE_CXX_STANDARD} _CRT_SECURE_NO_WARNINGS)
 
+if (WIN32)
+    set(MBASE_COMMON_COMPILE_OPTIONS -W4) # Enable W4 Compiler warning
+endif (WIN32)
+
+if(UNIX)
+    set(MBASE_COMMON_COMPILE_OPTIONS -pedantic -Wall -Wextra -Wcast-align -Wctor-dtor-privacy -Wdisabled-optimization -Wformat=2 -Winit-self -Wlogical-op -Wmissing-declarations -Wnoexcept -Woverloaded-virtual -Wredundant-decls -Wshadow -Wsign-promo -Wstrict-null-sentinel -Wstrict-overflow=5 -Wswitch-default -Wundef -Werror -Wno-unused)
+endif(UNIX)
+
 list(APPEND MBASE_STABILITY_CATEGORIES
     alpha    
     beta

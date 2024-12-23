@@ -387,7 +387,7 @@ GENERIC PcNetTcpServer::accept()
 
 		#ifdef MBASE_PLATFORM_UNIX
 		I32 socketError = errno;
-		if(socketError == EWOULDBLOCK || socketError == EAGAIN)
+		if(socketError == EWOULDBLOCK)
 		{
 			
 		}
@@ -644,24 +644,17 @@ PcNetManager::flags PcNetManager::create_server(const mbase::string& in_addr, I3
 	I32 serverSocket = MBASE_INVALID_SOCKET;
 	#endif
 
+	#pragma GCC diagnostic push
+	#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
+
 	struct addrinfo* result = NULL;
-	struct addrinfo hints = {
-		.ai_flags = 0,
-		.ai_family = AF_INET,
-		.ai_socktype = SOCK_STREAM,
-		.ai_protocol = IPPROTO_TCP,
-		.ai_addrlen = 0,
-		#ifdef MBASE_PLATFORM_UNIX
-		.ai_addr = NULL,
-		.ai_canonname = NULL,
-		#endif // MBASE_PLATFORM_UNIX
-		#ifdef MBASE_PLATFORM_WINDOWS
-		.ai_canonname = NULL,
-		.ai_addr = NULL,
-		#endif // MBASE_PLATFORM_WINDOWS
-		
-		.ai_next = NULL
-	};
+	struct addrinfo hints = {0};
+
+	#pragma GCC diagnostic pop
+
+	hints.ai_family = AF_INET;
+	hints.ai_socktype = SOCK_STREAM;
+	hints.ai_protocol = IPPROTO_TCP;
 
 	mbase::string portString = mbase::string::from_format("%d", in_port);
 

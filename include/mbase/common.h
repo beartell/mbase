@@ -1,16 +1,16 @@
 #ifndef MBASE_STD_COMMON_H
 #define MBASE_STD_COMMON_H
 
-#include <stdint.h>
-#include <stdlib.h>
+#include <cstdint>
+#include <cstdlib>
+#include <climits>
 #include <limits>
-#include <inttypes.h>
-#include <ctype.h>
+#include <cinttypes>
+#include <cctype>
 #include <cwctype>
 
 #ifdef _WIN32
 	#define MBASE_PLATFORM_WINDOWS
-	#pragma warning(disable : 4251) // Since we have a MBASE_API macro, all necessary symbols are exported
 #endif
 
 #ifdef __unix__
@@ -73,6 +73,7 @@
 	#if defined(_MSC_VER)
 		#ifdef MBASE_BUILD
 			#define MBASE_STD_API __declspec(dllexport)
+			#pragma warning(disable : 4251) // Since we have a MBASE_API macro, all necessary symbols are exported
 			#define MBASE_API MBASE_STD_API
 		#else
 			#define MBASE_STD_API __declspec(dllimport)

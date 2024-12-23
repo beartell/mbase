@@ -37,6 +37,9 @@ program_parameters gSampleParams;
 bool gIsProgramRunning = true;
 I32 gFinishedProcessors = 0;
 
+GENERIC catching_interrupt_signal(I32 out_sig_id);
+GENERIC print_usage();
+
 GENERIC catching_interrupt_signal(I32 out_sig_id)
 {
     printf("Program interrupted\n");
@@ -376,6 +379,8 @@ int main(int argc, char** argv)
         case InfDeviceDescription::device_type::UNKNOWN:
             typeString = "UNKNOWN";
             break;
+        default:
+            break;
         }
         printf("\t%s ## Type: %s\n", tmpDescription.get_device_description().c_str(), typeString.c_str());
     }
@@ -385,8 +390,8 @@ int main(int argc, char** argv)
         tmpProc->execute_input(tokVec);
     }
 
-    U64 frameCounter = 0;
-    U64 totalFps = 0;
+    I32 frameCounter = 0;
+    I32 totalFps = 0;
     U64 diagnosticFps = 0;
     U64 nonResetFrameCounter = 0;
     I32 sleepInterval = roundedSeconds;
@@ -398,7 +403,7 @@ int main(int argc, char** argv)
         benchModel.update();
         std::chrono::high_resolution_clock::time_point endTime = std::chrono::high_resolution_clock::now();
         
-        U64 deltaTime = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - beginTime).count();
+        I32 deltaTime = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - beginTime).count();
         if(deltaTime < sleepInterval)
         {
             beginTime = std::chrono::high_resolution_clock::now();
@@ -411,7 +416,7 @@ int main(int argc, char** argv)
         if(frameCounter == gSampleParams.mFps)
         {
             diagnosticFps += totalFps / frameCounter;
-            printf("\rAverage FPS per %d frames: %lu", gSampleParams.mFps, totalFps / frameCounter);
+            printf("\rAverage FPS per %d frames: %d", gSampleParams.mFps, totalFps / frameCounter);
             fflush(stdout);
             frameCounter = 0;
             totalFps = 0;
@@ -481,6 +486,8 @@ int main(int argc, char** argv)
                 break;
             case InfDeviceDescription::device_type::UNKNOWN:
                 typeString = "UNKNOWN";
+                break;
+            default:
                 break;
             }
             computeDevices[i]["device_name"] = tmpDescription.get_device_description();

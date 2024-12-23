@@ -118,7 +118,6 @@ private:
 
 	GENERIC _clear_handler();
 
-	friend class PcIoManager;
 	bool mIsRegistered;
 	bool mIsProcessing;
 	mbase::char_stream* mProcessorStream;

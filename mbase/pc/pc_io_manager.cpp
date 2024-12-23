@@ -4,21 +4,21 @@
 
 // MBASE_BEGIN
 
-// #define MBASE_IO_HANDLER_USUAL_CHECK() \
-// if(!this->is_registered())\
-// {\
-// 	return flags::IO_HANDLER_ERR_UNREGISTERED_HANDLER;\
-// }\
-// if(is_sync)\
-// {\
-// 	while(this->is_processing()){}\
-// }\
-// else\
-// {\
-// 	if (this->is_processing())\
-// 	{\
-// 		return flags::IO_HANDLER_ERR_IOMNG_PROCESSING_STREAM;\
-// 	}\
+// #define MBASE_IO_HANDLER_USUAL_CHECK() 
+// if(!this->is_registered())
+// {
+// 	return flags::IO_HANDLER_ERR_UNREGISTERED_HANDLER;
+// }
+// if(is_sync)
+// {
+// 	while(this->is_processing()){}
+// }
+// else
+// {
+// 	if (this->is_processing())
+// 	{
+// 		return flags::IO_HANDLER_ERR_IOMNG_PROCESSING_STREAM;
+// 	}
 // }
 
 // PcIoManager::~PcIoManager() 

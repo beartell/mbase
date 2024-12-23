@@ -108,7 +108,7 @@ ggml_backend_dev_t InfDeviceDescription::get_internal_dev_handle()
 mbase::vector<InfDeviceDescription> inf_query_devices()
 {
     mbase::vector<InfDeviceDescription> deviceDescriptions;
-    for(I32 i = 0; i < ggml_backend_dev_count(); ++i)
+    for(SIZE_T i = 0; i < ggml_backend_dev_count(); ++i)
     {
         ggml_backend_dev_t tmpDevice = ggml_backend_dev_get(i);
         deviceDescriptions.push_back(InfDeviceDescription(tmpDevice, i));
@@ -119,7 +119,7 @@ mbase::vector<InfDeviceDescription> inf_query_devices()
 mbase::vector<InfDeviceDescription> inf_query_gpu_devices()
 {
     mbase::vector<InfDeviceDescription> deviceDescriptions;
-    for(I32 i = 0; i < ggml_backend_dev_count(); ++i)
+    for(SIZE_T i = 0; i < ggml_backend_dev_count(); ++i)
     {
         ggml_backend_dev_t tmpDevice = ggml_backend_dev_get(i);
         switch (ggml_backend_dev_type(tmpDevice))

@@ -388,7 +388,7 @@ MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE typename unordered_map<Key, Value, Ha
 	
 	size_type totalSerializedSize = 0;
 
-	for(I32 i = 0; i < mBucketCount; ++i)
+	for(size_type i = 0; i < mBucketCount; ++i)
 	{
 		if(mBucket[i].size())
 		{

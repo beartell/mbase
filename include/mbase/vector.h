@@ -565,7 +565,7 @@ MBASE_INLINE_EXPR GENERIC vector<T, Allocator>::assign(std::initializer_list<val
 {
 	clear();
 	const value_type* currentObj = in_list.begin();
-	for(currentObj; currentObj != in_list.end(); currentObj++)
+	for(; currentObj != in_list.end(); currentObj++)
 	{
 		push_back(*currentObj);
 	}
@@ -746,12 +746,12 @@ MBASE_INLINE_EXPR typename vector<T, Allocator>::iterator vector<T, Allocator>::
 	mbase::vector<T, Allocator> newVector;
 	iterator itBegin = begin();
 
-	for(itBegin; itBegin != in_begin; itBegin++)
+	for(; itBegin != in_begin; itBegin++)
 	{
 		newVector.push_back(std::move(*itBegin));
 	}
-	itBegin = in_end;
-	for(itBegin; itBegin != end(); itBegin++)
+	
+	for(itBegin = in_end; itBegin != end(); itBegin++)
 	{
 		newVector.push_back(std::move(*itBegin));
 	}
@@ -818,7 +818,7 @@ MBASE_INLINE_EXPR typename vector<T, Allocator>::iterator vector<T, Allocator>::
 	if (in_pos == cend())
 	{
 		I32 awayFromEnd = 0;
-		for (difference_type i = 0; i < in_count; i++)
+		for (size_type i = 0; i < in_count; i++)
 		{
 			push_back(in_val);
 			++awayFromEnd;
@@ -841,7 +841,7 @@ MBASE_INLINE_EXPR typename vector<T, Allocator>::iterator vector<T, Allocator>::
 				if (mPos == It)
 				{
 					foundIndex = iterIndex;
-					for(I32 i = 0; i < in_count; i++)
+					for(size_type i = 0; i < in_count; i++)
 					{
 						vc.push_back(in_val);
 					}

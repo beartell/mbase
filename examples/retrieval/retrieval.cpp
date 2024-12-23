@@ -40,6 +40,8 @@ program_parameters gSampleParams;
 mbase::string gModelName;
 bool gQueryEmbedded = false;
 
+GENERIC print_usage();
+
 GENERIC print_usage()
 {
     printf("========================================\n");
@@ -117,7 +119,7 @@ public:
         inf_common_embd_normalize(out_embeddings, out_embeddings, embeddingLength);
         if(!gQueryEmbedded)
         {
-            for(I32 i = 0; i < embeddingLength; ++i)
+            for(U32 i = 0; i < embeddingLength; ++i)
             {
                 gQueryEmbeddingVector.push_back(out_embeddings[i]);
             }
@@ -127,7 +129,6 @@ public:
         {
             mCurrentFd.mSimilarityValue = inf_common_cosine_similarity(gQueryEmbeddingVector.data(), out_embeddings, embeddingLength);
             gPromptFileData.insert(mCurrentFd);
-            //printf("Cosine similarity: %f\n", inf_common_cosine_similarity(gQueryEmbeddingVector.data(), out_embeddings, embeddingLength));
         }
     }
 

@@ -538,7 +538,7 @@ template<typename StringType>
 MBASE_INLINE StringType string_converter<const bool, StringType>::to_string()
 {
     IBYTE emptyString[2] = {0};
-    sprintf(emptyString, "%hhd", *value);
+    sprintf(emptyString, "%" PRId8, *value);
     return StringType(emptyString);
 }
 
@@ -546,7 +546,7 @@ template<typename StringType>
 MBASE_INLINE StringType string_converter<const I8, StringType>::to_string()
 {
     IBYTE emptyString[4] = {0};
-    sprintf(emptyString, "%hhd", *value);
+    sprintf(emptyString, "%" PRId8, *value);
     return StringType(emptyString);
 }
 
@@ -554,7 +554,7 @@ template<typename StringType>
 MBASE_INLINE StringType string_converter<const I16, StringType>::to_string()
 {
     IBYTE emptyString[6] = {0};
-    sprintf(emptyString, "%hd", *value);
+    sprintf(emptyString, "%" PRId16, *value);
     return StringType(emptyString);
 }
 
@@ -562,7 +562,7 @@ template<typename StringType>
 MBASE_INLINE StringType string_converter<const I32, StringType>::to_string()
 {
     IBYTE emptyString[12] = {0};
-    sprintf(emptyString, "%d", *value);
+    sprintf(emptyString, "%" PRId32, *value);
     return StringType(emptyString);
 }
 
@@ -570,7 +570,7 @@ template<typename StringType>
 MBASE_INLINE StringType string_converter<const I64, StringType>::to_string()
 {
     IBYTE emptyString[24] = {0};
-    sprintf(emptyString, "%lld", *value);
+    sprintf(emptyString, "%" PRId64, *value);
     return StringType(emptyString);
 }
 
@@ -578,7 +578,7 @@ template<typename StringType>
 MBASE_INLINE StringType string_converter<const U8, StringType>::to_string()
 {
     IBYTE emptyString[4] = {0};
-    sprintf(emptyString, "%hhu", *value);
+    sprintf(emptyString, "%" PRIu8, *value);
     return StringType(emptyString);
 }
 
@@ -586,7 +586,7 @@ template<typename StringType>
 MBASE_INLINE StringType string_converter<const U16, StringType>::to_string()
 {
     IBYTE emptyString[6] = {0};
-    sprintf(emptyString, "%hu", *value);
+    sprintf(emptyString, "%" PRIu16, *value);
     return StringType(emptyString);
 }
 
@@ -594,7 +594,7 @@ template<typename StringType>
 MBASE_INLINE StringType string_converter<const U32, StringType>::to_string()
 {
     IBYTE emptyString[12] = {0};
-    sprintf(emptyString, "%u", *value);
+    sprintf(emptyString, "%" PRIu32, *value);
     return StringType(emptyString);
 }
 
@@ -602,7 +602,7 @@ template<typename StringType>
 MBASE_INLINE StringType string_converter<const U64, StringType>::to_string()
 {
     IBYTE emptyString[24] = {0};
-    sprintf(emptyString, "%lu", *value);
+    sprintf(emptyString, "%" PRIu64, *value);
     return StringType(emptyString);
 }
 

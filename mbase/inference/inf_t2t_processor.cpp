@@ -107,17 +107,17 @@ bool InfProcessorTextToText::signal_decode_process() const
 	return mDecodeSignal.get_signal();
 }
 
-U32 InfProcessorTextToText::get_batch_size()
+const U32& InfProcessorTextToText::get_batch_size()
 {
 	return mBatchSize;
 }
 
-U32 InfProcessorTextToText::get_max_token_length()
+const U32& InfProcessorTextToText::get_max_token_length()
 {
 	return mContextLength;
 }
 
-U32 InfProcessorTextToText::get_context_cursor_position()
+const U32& InfProcessorTextToText::get_context_cursor_position()
 {
 	return mContextCursor;
 }

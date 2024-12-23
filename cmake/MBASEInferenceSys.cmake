@@ -21,8 +21,6 @@ if(NOT llama_LIBRARY)
     message(FATAL "ERROR: llama.cpp backend is selected but library not found!")
 endif()
 
-message("CMAKE ROOT: ${CMAKE_ROOT_DIR}")
-
 list(APPEND MBASE_INFERENCE_INCLUDE_DEPENDS
     ${MBASE_STD_INCLUDES}
     ${MBASE_CORE_INCLUDE_DEPENDS}
@@ -63,7 +61,6 @@ add_library(mb_inference SHARED
     ${MBASE_INFERENCE_LIB_PATH}inf_device_desc.cpp
     ${MBASE_INFERENCE_LIB_PATH}inf_common.cpp
     ${MBASE_INFERENCE_LIB_PATH}inf_embedder.cpp
-    #${MBASE_INFERENCE_LIB_PATH}inf_embedder_client.cpp
     ${MBASE_INFERENCE_LIB_PATH}inf_gguf_meta_configurator.cpp
     ${MBASE_INFERENCE_LIB_PATH}inf_maip_callbacks.cpp
     ${MBASE_INFERENCE_LIB_PATH}inf_maip_model_description.cpp
@@ -83,6 +80,7 @@ add_library(mb_inference SHARED
 target_compile_definitions(mb_inference PRIVATE ${MBASE_COMMON_COMPILE_DEFINITIONS} llama)
 target_include_directories(mb_inference PUBLIC ${MBASE_INFERENCE_INCLUDE_DEPENDS} llama)
 target_link_libraries(mb_inference PRIVATE ${MBASE_INFERENCE_LIB_DEPENDS} llama)
+target_compile_options(mb_inference PRIVATE ${MBASE_COMMON_COMPILE_OPTIONS})
 
 set_property(TARGET mb_inference PROPERTY POSITION_INDEPENDENT_CODE ON)
 

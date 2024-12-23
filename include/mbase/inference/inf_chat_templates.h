@@ -124,6 +124,15 @@ GENERIC tokenizer_align_instruct_template(const mbase::string& in_template,
 	mbase::string& out_user_start,
 	mbase::string& out_system_end,
 	mbase::string& out_assistant_end,
+	mbase::string& out_user_end
+);
+
+GENERIC tokenizer_align_instruct_template(const mbase::string& in_template,
+	mbase::string& out_system_start,
+	mbase::string& out_assistant_start,
+	mbase::string& out_user_start,
+	mbase::string& out_system_end,
+	mbase::string& out_assistant_end,
 	mbase::string& out_user_end) {
 	// Fuck DRY
 	// Joke, fix here later

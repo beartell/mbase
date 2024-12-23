@@ -41,9 +41,9 @@ public:
 	#ifdef MBASE_INTERNAL_API
 		inf_text_token_candidates& get_token_candidates();
 	#endif // MBASE_INTERNAL_API
-	U32 get_batch_size();
-	U32 get_max_token_length();
-	U32 get_context_cursor_position();
+	const U32& get_batch_size();
+	const U32& get_max_token_length();
+	const U32& get_context_cursor_position();
 	bool has_sampler(InfSamplerDescription::SAMPLER in_sampler_type, InfSamplerDescription& out_sampler);
 	GENERIC get_available_samplers(inf_sampling_set& out_samplers);
 	flags get_processor_status() const;
@@ -90,7 +90,7 @@ public:
 	virtual GENERIC on_initialize() = 0;
 	virtual GENERIC on_destroy() = 0;
 
-private:	
+private:
 	GENERIC _decode_input();
 	GENERIC _decode_next();
 	GENERIC _initialize_context();
@@ -104,6 +104,7 @@ private:
 	inf_text_token_vector mTokenizedInput;
 	inf_text_token_vector mGeneratedTokenVector;
 	inf_sampling_set mSamplerDescriptions;
+	lora_adapter_map mLoraMap;
 	U32 mContextCursor; // -----> if it exceeds the context size, stop generating
 	U32 mBatchSize;
 	U32 mThreadCount;

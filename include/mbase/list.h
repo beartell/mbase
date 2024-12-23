@@ -470,7 +470,7 @@ MBASE_INLINE GENERIC list<T, Allocator>::assign(std::initializer_list<value_type
 	}
 
 	auto iListIter = in_vals.begin();
-	for(iListIter; iListIter != in_vals.end(); iListIter++)
+	for(; iListIter != in_vals.end(); iListIter++)
 	{
 		push_back(*iListIter);
 	}
@@ -788,7 +788,7 @@ template<typename T, typename Allocator>
 MBASE_INLINE_EXPR typename list<T, Allocator>::iterator list<T, Allocator>::erase(iterator in_begin, iterator in_end) 
 {
 	iterator removedNode(mLastNode);
-	for(in_begin; in_begin != in_end; in_begin++) {
+	for(; in_begin != in_end; in_begin++) {
 		in_begin = erase(in_begin);
 		removedNode = in_begin;
 	}
@@ -809,8 +809,7 @@ MBASE_INLINE_EXPR typename list<T, Allocator>::iterator list<T, Allocator>::eras
 template<typename T, typename Allocator>
 MBASE_INLINE_EXPR GENERIC list<T, Allocator>::splice(const_iterator in_pos, list& in_rhs) 
 {
-	iterator in_begin = in_rhs.begin();
-	for(in_begin; in_begin != in_rhs.end();)
+	for(iterator in_begin = in_rhs.begin(); in_begin != in_rhs.end();)
 	{
 		node_type* nt = in_begin._get_node();
 		in_begin++;
@@ -859,7 +858,7 @@ MBASE_INLINE_EXPR GENERIC list<T, Allocator>::splice(const_iterator in_pos, list
 template<typename T, typename Allocator>
 MBASE_INLINE_EXPR GENERIC list<T, Allocator>::splice(const_iterator in_pos, list&& in_rhs, const_iterator in_begin, const_iterator in_end) 
 {
-	for(in_begin; in_begin != in_end; in_begin++)
+	for(; in_begin != in_end; in_begin++)
 	{
 		insert(in_pos, *in_begin);
 	}
@@ -870,8 +869,7 @@ MBASE_INLINE_EXPR GENERIC list<T, Allocator>::splice(const_iterator in_pos, list
 template<typename T, typename Allocator>
 MBASE_INLINE GENERIC list<T, Allocator>::remove(const_reference in_value) 
 {
-	const_iterator in_begin = cbegin();
-	for(in_begin; in_begin != cend(); in_begin++)
+	for(const_iterator in_begin = cbegin(); in_begin != cend(); in_begin++)
 	{
 		if (*in_begin == in_value)
 		{

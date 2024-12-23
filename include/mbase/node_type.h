@@ -144,7 +144,7 @@ struct avl_node {
 
     avl_node(const_reference in_object) noexcept : parent(nullptr), left(nullptr), right(nullptr), height(0), data(in_object){}
     avl_node(move_reference in_object) noexcept : parent(nullptr), left(nullptr), right(nullptr), height(0), data(std::move(in_object)) {}
-
+    ~avl_node() noexcept {}
     static I32 get_height(avl_node* in_node) { return (in_node == nullptr) ? -1 : in_node->height; }
 
     template<typename ExternalIterator>
