@@ -10,22 +10,26 @@ MBASE_BEGIN
 
 class MBASE_API InfMaipModelDescription {
 public:
+    /* ===== BUILDER METHODS BEGIN ===== */
+    InfMaipModelDescription() noexcept;
+    ~InfMaipModelDescription() noexcept;
+    /* ===== BUILDER METHODS END ===== */
 
-    InfMaipModelDescription();
-    ~InfMaipModelDescription();
+    /* ===== OBSERVATION METHODS BEGIN ===== */
+    MBASE_ND(MBASE_OBS_IGNORE) const mbase::string& get_original_name() const noexcept;
+    MBASE_ND(MBASE_OBS_IGNORE) const mbase::string& get_custom_name() const noexcept;
+    MBASE_ND(MBASE_OBS_IGNORE) const mbase::string& get_description() const noexcept;
+    MBASE_ND(MBASE_OBS_IGNORE) const mbase::string& get_system_prompt() const noexcept;
+    MBASE_ND(MBASE_OBS_IGNORE) const mbase::string& get_model_file() const noexcept;
+    MBASE_ND(MBASE_OBS_IGNORE) const mbase::vector<mbase::string>& get_tags() const noexcept;
+    MBASE_ND(MBASE_OBS_IGNORE) const bool& get_embedding() const noexcept;
+    MBASE_ND(MBASE_OBS_IGNORE) const bool& get_forced_system_prompt() const noexcept;
+    MBASE_ND(MBASE_OBS_IGNORE) inf_model_category get_category_value() const noexcept;
+    MBASE_ND(MBASE_OBS_IGNORE) mbase::string get_category_string() const noexcept;
+    MBASE_ND(MBASE_OBS_IGNORE) const U32& get_maximum_context_length() const noexcept;
+    /* ===== OBSERVATION METHODS END ===== */
 
-    const mbase::string& get_original_name();
-    const mbase::string& get_custom_name();
-    const mbase::string& get_description();
-    const mbase::string& get_system_prompt();
-    const mbase::string& get_model_file();
-    const mbase::vector<mbase::string>& get_tags();
-    const bool& get_embedding();
-    const bool& get_forced_system_prompt();
-    inf_model_category get_category_value();
-    mbase::string get_category_string();
-    const U32& get_maximum_context_length();
-
+    /* ===== STATE-MODIFIER METHODS BEGIN ===== */
     GENERIC set_original_name(const mbase::string& in_name);
     GENERIC set_custom_name(const mbase::string& in_name);
     GENERIC set_description(const mbase::string& in_description);
@@ -36,9 +40,9 @@ public:
     GENERIC set_force_system_prompt(const bool& in_value);
     GENERIC set_category(const inf_model_category& in_category);
     GENERIC set_maximum_context_length(const U32& in_maximum_context);
-
     GENERIC load_from_state_file(const mbase::string& in_object_name, const mbase::wstring& in_state_path);
     GENERIC update_state_file(const mbase::wstring& in_state_path);
+    /* ===== STATE-MODIFIER METHODS END ===== */
 
 private:
     mbase::string mModelOriginalName; // (MUST)

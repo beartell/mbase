@@ -7,15 +7,11 @@
 
 MBASE_BEGIN
 
-// IteratorType is mbase::object_watcher
-
 template<typename IteratorType, typename TargetObject>
 struct object_watcher {
     IteratorType mItSelf;
     mutable TargetObject* mSubject = NULL;
 };
-
-// mbase::vector<object_watcher
 
 template<typename TargetObject>
 struct list_object_watcher {
@@ -28,8 +24,6 @@ struct vector_object_watcher {
     typename mbase::list<vector_object_watcher<TargetObject>>::iterator mItSelf;
     mutable TargetObject* mSubject = NULL;
 };
-
-
 
 MBASE_END
 

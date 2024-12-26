@@ -13,7 +13,7 @@ enum class context_role {
 	NONE
 };
 
-struct MBASE_API context_line {
+struct context_line {
 	context_role mRole = context_role::NONE;
 	mbase::string mMessage = "";
 	U32 mMessageIndex;

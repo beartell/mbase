@@ -2,26 +2,26 @@
 
 MBASE_BEGIN
 
-InfDeviceDescription::InfDeviceDescription() :
+InfDeviceDescription::InfDeviceDescription() noexcept :
     mBackendDevice(NULL),
     mDeviceIndex(-1)
 {
 
 }
 
-InfDeviceDescription::InfDeviceDescription(ggml_backend_dev_t in_device, const I32& in_index) :
+InfDeviceDescription::InfDeviceDescription(ggml_backend_dev_t in_device, const I32& in_index) noexcept :
     mBackendDevice(in_device),
     mDeviceIndex(in_index)
 {
 }
 
-InfDeviceDescription::InfDeviceDescription(const InfDeviceDescription& in_description):
+InfDeviceDescription::InfDeviceDescription(const InfDeviceDescription& in_description) noexcept:
     mBackendDevice(in_description.mBackendDevice),
     mDeviceIndex(in_description.mDeviceIndex)
 {
 }
 
-InfDeviceDescription::~InfDeviceDescription()
+InfDeviceDescription::~InfDeviceDescription() noexcept
 {
 }
 
@@ -33,7 +33,7 @@ InfDeviceDescription& InfDeviceDescription::operator=(const InfDeviceDescription
     return *this;
 }
 
-mbase::string InfDeviceDescription::get_device_name()
+MBASE_ND(MBASE_OBS_IGNORE) mbase::string InfDeviceDescription::get_device_name() const
 {
     if(mBackendDevice)
     {
@@ -42,7 +42,7 @@ mbase::string InfDeviceDescription::get_device_name()
     return mbase::string();
 }
 
-mbase::string InfDeviceDescription::get_device_description()
+MBASE_ND(MBASE_OBS_IGNORE) mbase::string InfDeviceDescription::get_device_description() const
 {
     if(mBackendDevice)
     {
@@ -51,7 +51,7 @@ mbase::string InfDeviceDescription::get_device_description()
     return mbase::string();
 }
 
-typename InfDeviceDescription::size_type InfDeviceDescription::get_total_memory()
+MBASE_ND(MBASE_OBS_IGNORE) typename InfDeviceDescription::size_type InfDeviceDescription::get_total_memory() const
 {
     if(mBackendDevice)
     {
@@ -63,7 +63,7 @@ typename InfDeviceDescription::size_type InfDeviceDescription::get_total_memory(
     return 0;
 }
 
-typename InfDeviceDescription::size_type InfDeviceDescription::get_free_memory()
+MBASE_ND(MBASE_OBS_IGNORE) typename InfDeviceDescription::size_type InfDeviceDescription::get_free_memory() const
 {
     if(mBackendDevice)
     {
@@ -75,12 +75,12 @@ typename InfDeviceDescription::size_type InfDeviceDescription::get_free_memory()
     return 0;
 }
 
-I32 InfDeviceDescription::get_device_index()
+MBASE_ND(MBASE_OBS_IGNORE) I32 InfDeviceDescription::get_device_index() const
 {
     return mDeviceIndex;
 }
 
-InfDeviceDescription::device_type InfDeviceDescription::get_device_type()
+MBASE_ND(MBASE_OBS_IGNORE) InfDeviceDescription::device_type InfDeviceDescription::get_device_type() const
 {
     if(mBackendDevice)
     {
@@ -100,7 +100,7 @@ InfDeviceDescription::device_type InfDeviceDescription::get_device_type()
     return device_type::UNKNOWN;
 }
 
-ggml_backend_dev_t InfDeviceDescription::get_internal_dev_handle()
+MBASE_ND(MBASE_OBS_IGNORE) ggml_backend_dev_t InfDeviceDescription::get_internal_dev_handle()
 {
     return mBackendDevice;
 }

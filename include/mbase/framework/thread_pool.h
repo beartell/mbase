@@ -38,17 +38,22 @@ public:
 		handler_base* tHandler;
 		mbase::thread<decltype(_pool_routine), thread_pool_routine_args*> selfThread;
 	};
-
+	/* ===== BUILDER METHODS BEGIN ===== */
 	MBASE_INLINE tpool() noexcept;
 	MBASE_INLINE MBASE_EXPLICIT tpool(U32 in_thread_count) noexcept;
 	MBASE_INLINE ~tpool() noexcept;
+	/* ===== BUILDER METHODS END ===== */
 
+	/* ===== OBSERVATION METHODS BEGIN ===== */
 	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE U32 get_thread_count() const noexcept;
 	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE thread_pool_routine_args* get_routine_info(I32 in_index) noexcept;
 	MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE const thread_pool_routine_args* get_routine_info(I32 in_index) const noexcept;
+	/* ===== OBSERVATION METHODS END ===== */
 
+	/* ===== STATE-MODIFIER METHODS BEGIN ===== */
 	MBASE_INLINE GENERIC execute_job(handler_base& in_handler);
 	MBASE_INLINE GENERIC _update_index(I32 in_index) noexcept;
+	/* ===== STATE-MODIFIER METHODS END ===== */
 
 private:
 	bool mIsRunning;

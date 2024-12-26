@@ -12,48 +12,24 @@ MBASE_BEGIN
 
 class MBASE_API processor_signal {
 public:
-	processor_signal() : mSignalState(false), mSignal(false) {}
+	/* ===== BUILDER METHODS BEGIN ===== */
+	MBASE_INLINE processor_signal() noexcept;
+	/* ===== BUILDER METHODS END ===== */
 
-	bool get_signal_state() const { return mSignalState; }
-	bool get_signal() const { return mSignal; }
+	/* ===== OBSERVATION METHODS BEGIN ===== */
+	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE bool get_signal_state() const noexcept;
+	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE bool get_signal() const noexcept;
+	/* ===== OBSERVATION METHODS END ===== */
 
-	GENERIC set_signal_finished() 
-	{
-		mSignalState = true;
-		mSignal = false;
-	}
-
-	GENERIC set_signal()
-	{
-		mSignal = true;
-	}
-
-	GENERIC set_signal_state()
-	{
-		mSignalState = true;
-	}
-
-	GENERIC set_signal_with_state()
-	{
-		mSignalState = true;
-		mSignal = true;
-	}
-
-	GENERIC reset_signal()
-	{
-		mSignal = false;
-	}
-
-	GENERIC reset_signal_state()
-	{
-		mSignalState = false;
-	}
-
-	GENERIC reset_signal_with_state()
-	{
-		mSignalState = false;
-		mSignal = false;
-	}
+	/* ===== STATE-MODIFIER METHODS BEGIN ===== */
+	MBASE_INLINE GENERIC set_signal_finished() noexcept;
+	MBASE_INLINE GENERIC set_signal() noexcept;
+	MBASE_INLINE GENERIC set_signal_state() noexcept;
+	MBASE_INLINE GENERIC set_signal_with_state() noexcept;
+	MBASE_INLINE GENERIC reset_signal() noexcept;
+	MBASE_INLINE GENERIC reset_signal_state() noexcept;
+	MBASE_INLINE GENERIC reset_signal_with_state() noexcept;
+	/* ===== STATE-MODIFIER METHODS END ===== */
 
 private:
 	volatile bool mSignalState;
@@ -69,7 +45,7 @@ public:
 		mIsProcessorRunning = false;
 	}
 
-	bool is_processor_running() { return mIsProcessorRunning; }
+	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) bool is_processor_running() { return mIsProcessorRunning; }
 
 	static GENERIC _update_t_static(logical_processor* in_self) 
 	{
@@ -107,6 +83,58 @@ protected:
 	mbase::mutex mLogicSynchronizer;
 	bool mIsProcessorRunning;
 };
+
+MBASE_INLINE processor_signal::processor_signal() noexcept : mSignalState(false), mSignal(false) 
+{
+}
+
+MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE bool processor_signal::get_signal_state() const noexcept 
+{ 
+	return mSignalState; 
+}
+
+MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE bool processor_signal::get_signal() const noexcept 
+{ 
+	return mSignal; 
+}
+
+MBASE_INLINE GENERIC processor_signal::set_signal_finished() noexcept
+{
+	mSignalState = true;
+	mSignal = false;
+}
+
+MBASE_INLINE GENERIC processor_signal::set_signal() noexcept
+{
+	mSignal = true;
+}
+
+MBASE_INLINE GENERIC processor_signal::set_signal_state() noexcept
+{
+	mSignalState = true;
+}
+
+MBASE_INLINE GENERIC processor_signal::set_signal_with_state() noexcept
+{
+	mSignalState = true;
+	mSignal = true;
+}
+
+MBASE_INLINE GENERIC processor_signal::reset_signal() noexcept
+{
+	mSignal = false;
+}
+
+MBASE_INLINE GENERIC processor_signal::reset_signal_state() noexcept
+{
+	mSignalState = false;
+}
+
+MBASE_INLINE GENERIC processor_signal::reset_signal_with_state() noexcept
+{
+	mSignalState = false;
+	mSignal = false;
+}
 
 MBASE_END
 

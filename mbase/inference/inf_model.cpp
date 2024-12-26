@@ -20,7 +20,7 @@ if(this->signal_state_destroying())\
 	return flags::INF_MODEL_INFO_DESTROYING_MODEL;\
 }
 
-InfModelBase::InfModelBase() :
+InfModelBase::InfModelBase() noexcept:
 	mModelCategory(inf_model_category::UNDEFINED),
 	mIsInitialized(false),
 	mInitFailCode(init_fail_code::UNDEFINED),
@@ -28,7 +28,7 @@ InfModelBase::InfModelBase() :
 {
 }
 
-InfModelBase::~InfModelBase()
+InfModelBase::~InfModelBase() noexcept
 {
 
 }
@@ -83,7 +83,7 @@ typename InfModelBase::const_reverse_iterator InfModelBase::crend() const noexce
 	return mRegisteredProcessors.crend();
 }
 
-typename InfModelBase::context_processor_list& InfModelBase::get_registered_processors()
+const typename InfModelBase::context_processor_list& InfModelBase::get_registered_processors() const
 {
 	return mRegisteredProcessors;
 }

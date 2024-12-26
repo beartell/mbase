@@ -17,9 +17,14 @@ class MBASE_API InfClientBase {
 public:
 	using size_type = SIZE_T;
 
+	/* ===== BUILDER METHODS BEGIN ===== */
 	virtual ~InfClientBase();
+	/* ===== BUILDER METHODS END ===== */
+	
+	/* ===== INTERFACE METHODS BEGIN ===== */
 	virtual GENERIC on_register(InfProcessorBase* out_processor) = 0;
 	virtual GENERIC on_unregister(InfProcessorBase* out_processor) = 0;
+	/* ===== INTERFACE METHODS END ===== */
 };
 
 MBASE_END

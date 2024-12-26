@@ -37,33 +37,42 @@ public:
 		UNDEFINED
 	};
 
-	InfModelBase();
-	virtual ~InfModelBase();
+	/* ===== BUILDER METHODS BEGIN ===== */
+	InfModelBase() noexcept;
+	virtual ~InfModelBase() noexcept;
+	/* ===== BUILDER METHODS END ===== */
 
-	iterator begin() noexcept;
-	iterator end() noexcept;
-	const_iterator begin() const noexcept;
-	const_iterator end() const noexcept;
-	const_iterator cbegin() const noexcept;
-	const_iterator cend() const noexcept;
-	reverse_iterator rbegin() noexcept;
-	reverse_iterator rend() noexcept;
-	const_reverse_iterator crbegin() const noexcept;
-	const_reverse_iterator crend() const noexcept;
+	/* ===== ITERATOR METHODS BEGIN ===== */
+	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) iterator begin() noexcept;
+	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) iterator end() noexcept;
+	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) const_iterator begin() const noexcept;
+	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) const_iterator end() const noexcept;
+	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) const_iterator cbegin() const noexcept;
+	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) const_iterator cend() const noexcept;
+	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) reverse_iterator rbegin() noexcept;
+	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) reverse_iterator rend() noexcept;
+	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) const_reverse_iterator crbegin() const noexcept;
+	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) const_reverse_iterator crend() const noexcept;
+	/* ===== ITERATOR METHODS END ===== */
 
-	context_processor_list& get_registered_processors();
-	inf_model_category get_model_category() const;
-	bool is_initialize_failed() const;
-	bool is_initialized() const;
-	bool signal_state_initializing() const;
-	bool signal_state_destroying() const;
-	bool signal_initializing() const;
-	bool signal_destroying() const;
+	/* ===== OBSERVATION METHODS BEGIN ===== */
+	MBASE_ND(MBASE_OBS_IGNORE) const context_processor_list& get_registered_processors() const;
+	MBASE_ND(MBASE_OBS_IGNORE) inf_model_category get_model_category() const;
+	MBASE_ND(MBASE_OBS_IGNORE) bool is_initialize_failed() const;
+	MBASE_ND(MBASE_OBS_IGNORE) bool is_initialized() const;
+	MBASE_ND(MBASE_OBS_IGNORE) bool signal_state_initializing() const;
+	MBASE_ND(MBASE_OBS_IGNORE) bool signal_state_destroying() const;
+	MBASE_ND(MBASE_OBS_IGNORE) bool signal_initializing() const;
+	MBASE_ND(MBASE_OBS_IGNORE) bool signal_destroying() const;
 	GENERIC reset_base_signals();
+	/* ===== OBSERVATION METHODS END ===== */
 
+	/* ===== INTERFACE METHODS BEGIN =====*/
 	virtual GENERIC on_initialize_fail(init_fail_code out_fail_code) = 0;
 	virtual GENERIC on_initialize() = 0;
 	virtual GENERIC on_destroy() = 0;
+	/* ===== INTERFACE METHODS END =====*/
+
 protected:
 	inf_model_category mModelCategory;
 	volatile bool mIsInitialized;
@@ -95,7 +104,6 @@ protected:
 // class MBASE_API InfModelEmbedding : public InfModelBase{ // Implement soon
 //	...
 // }
-
 
 MBASE_END
 

@@ -3,7 +3,7 @@
 
 MBASE_BEGIN
 
-InfProcessorBase::InfProcessorBase() :
+InfProcessorBase::InfProcessorBase() noexcept :
 	mAssignedClient(NULL),
 	mTargetModel_md_model(NULL),
 	mIsRunning(false),
@@ -15,47 +15,47 @@ InfProcessorBase::InfProcessorBase() :
 {
 }
 
-InfProcessorBase::~InfProcessorBase()
+InfProcessorBase::~InfProcessorBase() noexcept
 {
 
 }
 
-bool InfProcessorBase::is_registered() const
+bool InfProcessorBase::is_registered() const noexcept
 {
 	return mIsRegistered;
 }
 
-bool InfProcessorBase::is_running()
+bool InfProcessorBase::is_running() const noexcept
 {
 	return mIsRunning;
 }
 
-bool InfProcessorBase::signal_state_initializing() const
+bool InfProcessorBase::signal_state_initializing() const noexcept
 {
 	return mInitializeSignal.get_signal_state();
 }
 
-bool InfProcessorBase::signal_state_destroying() const
+bool InfProcessorBase::signal_state_destroying() const noexcept
 {
 	return mDestroySignal.get_signal_state();
 }
 
-bool InfProcessorBase::signal_initializing() const
+bool InfProcessorBase::signal_initializing() const noexcept
 {
 	return mInitializeSignal.get_signal();
 }
 
-bool InfProcessorBase::signal_destroying() const
+bool InfProcessorBase::signal_destroying() const noexcept
 {
 	return mDestroySignal.get_signal();
 }
 
-bool InfProcessorBase::has_client() const
+bool InfProcessorBase::has_client() const noexcept
 {
 	return mAssignedClient != NULL;
 }
 
-U32 InfProcessorBase::get_context_size()
+U32 InfProcessorBase::get_context_size() const noexcept
 {
 	return mContextLength;
 }
@@ -85,12 +85,12 @@ processor_signal& InfProcessorBase::get_destroy_signal()
 	return mDestroySignal;
 }
 
-const mbase::string& InfProcessorBase::get_context_identifier()
+const mbase::string& InfProcessorBase::get_context_identifier() const
 {
 	return mContextIdentifier;
 }
 
-inf_model_category InfProcessorBase::get_model_category()
+inf_model_category InfProcessorBase::get_model_category() const
 {
 	return mModelCategory;
 }

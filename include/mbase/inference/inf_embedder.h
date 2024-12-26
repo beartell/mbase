@@ -18,21 +18,29 @@ public:
         INVALID_MODEL_TYPE
     };
 
-    InfEmbedderProcessor();
-    ~InfEmbedderProcessor();
+    /* ===== BUILDER METHODS BEGIN ===== */
+    InfEmbedderProcessor() noexcept;
+    ~InfEmbedderProcessor() noexcept;
+    /* ===== BUILDER METHODS END ===== */
 
-    last_fail_code get_last_fail_code() const;
-    bool is_init_failed() const;
-    bool is_available() const;
-    bool signal_state_embedding_process() const;
-    bool signal_embedding_process() const;
-    const U32& get_embedding_length();
-    const U32& get_max_token_length();
-
+    /* ===== OBSERVATION METHODS BEGIN ===== */
+    MBASE_ND(MBASE_OBS_IGNORE) last_fail_code get_last_fail_code() const;
+    MBASE_ND(MBASE_OBS_IGNORE) bool is_init_failed() const;
+    MBASE_ND(MBASE_OBS_IGNORE) bool is_available() const;
+    MBASE_ND(MBASE_OBS_IGNORE) bool signal_state_embedding_process() const;
+    MBASE_ND(MBASE_OBS_IGNORE) bool signal_embedding_process() const;
+    MBASE_ND(MBASE_OBS_IGNORE) const U32& get_embedding_length() const;
+    MBASE_ND(MBASE_OBS_IGNORE) const U32& get_max_token_length() const;
     flags get_processor_status() const;
+    /* ===== OBSERVATION METHODS END ===== */
+
+    /* ===== NON-MODIFIER METHODS BEGIN ===== */
     flags tokenize_input(CBYTEBUFFER in_data, size_type in_size, inf_text_token_vector& out_tokens);
     flags tokenize_input(const mbase::string& in_string, inf_text_token_vector& out_tokens);
     flags tokenize_input(const mbase::wstring& in_string, inf_text_token_vector& out_tokens);
+    /* ===== NON-MODIFIER METHODS END ===== */
+
+    /* ===== STATE-MODIFIER METHODS BEGIN ===== */
     flags execute_input(const mbase::vector<inf_text_token_vector>& in_tokens, bool in_abandon = false);
     flags next();
     flags set_inference_client(InfClientBase* in_client);
@@ -52,12 +60,15 @@ public:
     flags destroy_sync() override;
     GENERIC update() override;
     GENERIC update_t() override;
+    /* ===== STATE-MODIFIER METHODS END ===== */
 
+    /* ===== INTERFACE METHODS BEGIN ===== */
     virtual GENERIC on_initializing();
 	virtual GENERIC on_initialize_fail(last_fail_code out_code);
 	virtual GENERIC on_destroying();
 	virtual GENERIC on_initialize() = 0;
 	virtual GENERIC on_destroy() = 0;
+    /* ===== INTERFACE METHODS END ===== */
 
 private:
     GENERIC _initialize_context();

@@ -8,7 +8,7 @@
 
 MBASE_BEGIN
 
-struct MBASE_API InfSamplingRepetition {
+struct InfSamplingRepetition {
     U32 mPenaltyN;
     F32 mRepeatPenalty;
     F32 mPenaltyFrequency;
@@ -17,24 +17,24 @@ struct MBASE_API InfSamplingRepetition {
     bool mPenaltyEos;
 };
 
-struct MBASE_API InfSamplingXTC {
+struct InfSamplingXTC {
 	F32 mProbability;
 	F32 mThreshold;
 };
 
-struct MBASE_API InfSamplingDRY {
+struct InfSamplingDRY {
 	F32 mDryMultiplier;
 	F32 mDryBase;
 	I32 mDryAllowedLength;
 	I32 mDryPenaltyLastN;
 };
 
-struct MBASE_API InfSamplingMirostatV2 {
+struct InfSamplingMirostatV2 {
 	F32 mTau;
 	F32 mEta;
 };
 
-struct MBASE_API InfSamplerDescription {
+struct InfSamplerDescription {
 	enum class SAMPLER : U32 {
         REPETITION,
         DRY,

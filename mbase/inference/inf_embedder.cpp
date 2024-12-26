@@ -20,7 +20,7 @@ if(!this->is_registered())\
 	return flags::INF_PROC_ERR_UNREGISTERED_PROCESSOR;\
 }
 
-InfEmbedderProcessor::InfEmbedderProcessor():
+InfEmbedderProcessor::InfEmbedderProcessor() noexcept:
     mOperationProcedure(NULL),
     mModelContext(NULL),
     mEmbeddingLength(0),
@@ -34,7 +34,7 @@ InfEmbedderProcessor::InfEmbedderProcessor():
     mModelCategory = inf_model_category::EMBEDDING;
 }
 
-InfEmbedderProcessor::~InfEmbedderProcessor()
+InfEmbedderProcessor::~InfEmbedderProcessor() noexcept
 {
     if(mModelContext)
 	{
@@ -80,12 +80,12 @@ bool InfEmbedderProcessor::signal_embedding_process() const
     return mEmbeddingSignal.get_signal();
 }
 
-const U32& InfEmbedderProcessor::get_embedding_length()
+const U32& InfEmbedderProcessor::get_embedding_length() const
 {
     return mEmbeddingLength;
 }
 
-const U32& InfEmbedderProcessor::get_max_token_length()
+const U32& InfEmbedderProcessor::get_max_token_length() const
 {
     return mContextLength;
 }

@@ -116,9 +116,7 @@ struct InfTemplateGemma2 {
 	mbase::string userEnd = "<end_of_turn>\n";
 };
 
-MBASE_EXTERN_C_BEGIN
-
-GENERIC tokenizer_align_instruct_template(const mbase::string& in_template,
+MBASE_INLINE GENERIC tokenizer_align_instruct_template(const mbase::string& in_template,
 	mbase::string& out_system_start,
 	mbase::string& out_assistant_start,
 	mbase::string& out_user_start,
@@ -127,7 +125,7 @@ GENERIC tokenizer_align_instruct_template(const mbase::string& in_template,
 	mbase::string& out_user_end
 );
 
-GENERIC tokenizer_align_instruct_template(const mbase::string& in_template,
+MBASE_INLINE GENERIC tokenizer_align_instruct_template(const mbase::string& in_template,
 	mbase::string& out_system_start,
 	mbase::string& out_assistant_start,
 	mbase::string& out_user_start,
@@ -258,8 +256,6 @@ GENERIC tokenizer_align_instruct_template(const mbase::string& in_template,
 		out_user_end = chatTemplate.userEnd;
 	}
 }
-
-MBASE_EXTERN_C_END
 
 MBASE_END
 

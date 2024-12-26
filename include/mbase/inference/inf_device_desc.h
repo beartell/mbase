@@ -18,20 +18,26 @@ public:
 
     using size_type = SIZE_T;
 
-    InfDeviceDescription();
-    InfDeviceDescription(ggml_backend_dev_t in_device, const I32& in_index);
-    InfDeviceDescription(const InfDeviceDescription& in_description);
-    ~InfDeviceDescription();
+    /* ===== BUILDER METHODS BEGIN ===== */
+    InfDeviceDescription() noexcept;
+    InfDeviceDescription(ggml_backend_dev_t in_device, const I32& in_index) noexcept;
+    InfDeviceDescription(const InfDeviceDescription& in_description) noexcept;
+    ~InfDeviceDescription() noexcept;
+    /* ===== BUILDER METHODS END ===== */
 
+    /* ===== OPERATOR BUILDER METHODS BEGIN ===== */
     InfDeviceDescription& operator=(const InfDeviceDescription& in_rhs);
+    /* ===== OPERATOR BUILDER METHODS END ===== */
 
-    mbase::string get_device_name();
-    mbase::string get_device_description();
-    size_type get_total_memory();
-    size_type get_free_memory();
-    I32 get_device_index();
-    device_type get_device_type();
-    ggml_backend_dev_t get_internal_dev_handle();
+    /* ===== OBSERVATION METHODS BEGIN ===== */
+    MBASE_ND(MBASE_OBS_IGNORE) mbase::string get_device_name() const;
+    MBASE_ND(MBASE_OBS_IGNORE) mbase::string get_device_description() const;
+    MBASE_ND(MBASE_OBS_IGNORE) size_type get_total_memory() const;
+    MBASE_ND(MBASE_OBS_IGNORE) size_type get_free_memory() const;
+    MBASE_ND(MBASE_OBS_IGNORE) I32 get_device_index() const;
+    MBASE_ND(MBASE_OBS_IGNORE) device_type get_device_type() const;
+    MBASE_ND(MBASE_OBS_IGNORE) ggml_backend_dev_t get_internal_dev_handle();
+    /* ===== OBSERVATION METHODS END ===== */
 private:
     ggml_backend_dev_t mBackendDevice;
     I32 mDeviceIndex;

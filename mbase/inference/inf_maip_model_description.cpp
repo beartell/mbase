@@ -4,7 +4,7 @@
 
 MBASE_BEGIN
 
-InfMaipModelDescription::InfMaipModelDescription() :
+InfMaipModelDescription::InfMaipModelDescription() noexcept :
     mModelOriginalName(""),
     mModelCustomName(""),
     mDescription(""),
@@ -18,56 +18,56 @@ InfMaipModelDescription::InfMaipModelDescription() :
 {
 }
 
-InfMaipModelDescription::~InfMaipModelDescription()
+InfMaipModelDescription::~InfMaipModelDescription() noexcept
 {
 }
 
-const mbase::string& InfMaipModelDescription::get_original_name()
+const mbase::string& InfMaipModelDescription::get_original_name() const noexcept 
 {
     return mModelOriginalName;
 }
 
-const mbase::string& InfMaipModelDescription::get_custom_name()
+const mbase::string& InfMaipModelDescription::get_custom_name() const noexcept
 {  
     return mModelCustomName;
 }
 
-const mbase::string& InfMaipModelDescription::get_description()
+const mbase::string& InfMaipModelDescription::get_description() const noexcept
 {
     return mDescription;
 }
 
-const mbase::string& InfMaipModelDescription::get_system_prompt()
+const mbase::string& InfMaipModelDescription::get_system_prompt() const noexcept
 {
     return mSystemPrompt;
 }
 
-const mbase::string& InfMaipModelDescription::get_model_file()
+const mbase::string& InfMaipModelDescription::get_model_file() const noexcept
 {
     return mModelFile;
 }
 
-const mbase::vector<mbase::string>& InfMaipModelDescription::get_tags()
+const mbase::vector<mbase::string>& InfMaipModelDescription::get_tags() const noexcept
 {
     return mTags;
 }
 
-const bool& InfMaipModelDescription::get_embedding()
+const bool& InfMaipModelDescription::get_embedding() const noexcept
 {
     return mIsEmbeddingModel;
 }
 
-const bool& InfMaipModelDescription::get_forced_system_prompt()
+const bool& InfMaipModelDescription::get_forced_system_prompt() const noexcept
 {
     return mForceSystemPrompt;
 }
 
-inf_model_category InfMaipModelDescription::get_category_value()
+inf_model_category InfMaipModelDescription::get_category_value() const noexcept
 {
     return mCategory;
 }
 
-mbase::string InfMaipModelDescription::get_category_string()
+mbase::string InfMaipModelDescription::get_category_string() const noexcept
 {
     if(mCategory == inf_model_category::TEXT_TO_TEXT)
     {
@@ -80,7 +80,7 @@ mbase::string InfMaipModelDescription::get_category_string()
     return mbase::string();
 }
 
-const U32& InfMaipModelDescription::get_maximum_context_length()
+const U32& InfMaipModelDescription::get_maximum_context_length() const noexcept
 {
     return mMaximumAllowedContext;
 }

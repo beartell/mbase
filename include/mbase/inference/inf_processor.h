@@ -94,26 +94,31 @@ public:
 		FAILED_ABANDONED
 	};
 
-	InfProcessorBase();
-	virtual ~InfProcessorBase();
+	/* ===== BUILDER METHODS BEGIN ===== */
+	InfProcessorBase() noexcept;
+	virtual ~InfProcessorBase() noexcept;
+	/* ===== BUILDER METHODS END ===== */
 
-	bool is_registered() const;
-	bool is_running();
-	bool signal_state_initializing() const;
-	bool signal_state_destroying() const;
-	bool signal_initializing() const;
-	bool signal_destroying() const;
-	bool has_client() const;
+	/* ===== OBSERVATION METHODS BEGIN ===== */
+	MBASE_ND(MBASE_OBS_IGNORE) bool is_registered() const noexcept;
+	MBASE_ND(MBASE_OBS_IGNORE) bool is_running() const noexcept;
+	MBASE_ND(MBASE_OBS_IGNORE) bool signal_state_initializing() const noexcept;
+	MBASE_ND(MBASE_OBS_IGNORE) bool signal_state_destroying() const noexcept;
+	MBASE_ND(MBASE_OBS_IGNORE) bool signal_initializing() const noexcept;
+	MBASE_ND(MBASE_OBS_IGNORE) bool signal_destroying() const noexcept;
+	MBASE_ND(MBASE_OBS_IGNORE) bool has_client() const noexcept;
 
-	U32 get_context_size();
-	InfModelBase* get_processed_model();
-	InfClientBase* get_assigned_client();
-	U32 get_inactivity_threshold();
-	processor_signal& get_initialize_signal();
-	processor_signal& get_destroy_signal();
-	const mbase::string& get_context_identifier();
-	inf_model_category get_model_category();
+	MBASE_ND(MBASE_OBS_IGNORE) U32 get_context_size() const noexcept;
+	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) InfModelBase* get_processed_model();
+	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) InfClientBase* get_assigned_client();
+	MBASE_ND(MBASE_OBS_IGNORE) U32 get_inactivity_threshold();
+	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) processor_signal& get_initialize_signal();
+	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) processor_signal& get_destroy_signal();
+	MBASE_ND(MBASE_OBS_IGNORE) const mbase::string& get_context_identifier() const;
+	MBASE_ND(MBASE_OBS_IGNORE) inf_model_category get_model_category() const;
+	/* ===== OBSERVATION METHODS END ===== */
 
+	/* ===== STATE-MODIFIER METHODS BEGIN ===== */
 	GENERIC acquire_object_watcher(mbase::inf_processor_watcher<InfProcessorBase>* in_watcher);
 	GENERIC release_object_watcher();
 	GENERIC halt();
@@ -124,6 +129,7 @@ public:
 	GENERIC release_inference_client_stacked();
 	virtual flags destroy();
 	virtual flags destroy_sync();
+	/* ===== STATE-MODIFIER METHODS END ===== */
 
 protected:
 	InfClientBase* mAssignedClient;
@@ -138,11 +144,6 @@ protected:
 	mbase::string mContextIdentifier;
 	mbase::inf_processor_watcher<InfProcessorBase>* mTargetWatcher;
 }; // TODO: speech-to-text(whisper.cpp), text-to-text(llama.cpp), text-to-speech<EXPERIMENTAL>(bark.cpp), embedder
-
-// class MBASE_API InfTextToTextEmbedder : public InfProcessorBase {
-//public:
-//private:
-// };
 
 MBASE_END
 
