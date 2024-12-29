@@ -40,7 +40,7 @@ I32 gFinishedProcessors = 0;
 GENERIC catching_interrupt_signal(I32 out_sig_id);
 GENERIC print_usage();
 
-GENERIC catching_interrupt_signal(I32 out_sig_id)
+GENERIC catching_interrupt_signal([[maybe_unused]] I32 out_sig_id)
 {
     printf("Program interrupted\n");
     gIsProgramRunning = false;
@@ -86,7 +86,7 @@ GENERIC print_usage()
 
 class BenchmarkModel : public InfModelTextToText {
 public:
-    GENERIC on_initialize_fail(init_fail_code out_fail_code) override{}
+    GENERIC on_initialize_fail([[maybe_unused]] init_fail_code out_fail_code) override{}
     GENERIC on_initialize() override{}
     GENERIC on_destroy() override{}
 private:
@@ -96,7 +96,7 @@ class BenchmarkProcessor : public InfProcessorTextToText {
 public:
     BenchmarkProcessor() : mNPredict(gSampleParams.mPredictCount) {}
     GENERIC on_initialize() override{}
-    GENERIC on_initialize_fail(last_fail_code out_code) override
+    GENERIC on_initialize_fail([[maybe_unused]] last_fail_code out_code) override
     {
         fflush(stdout);
         printf("ERR: Context initialization failed.\n");
@@ -112,15 +112,15 @@ private:
 
 class BenchmarkClient : public InfClientTextToText {
 public:
-    GENERIC on_register(InfProcessorBase* out_processor) override
+    GENERIC on_register([[maybe_unused]] InfProcessorBase* out_processor) override
     {
     }
 
-    GENERIC on_unregister(InfProcessorBase* out_processor) override
+    GENERIC on_unregister([[maybe_unused]] InfProcessorBase* out_processor) override
     {
     }
     
-    GENERIC on_batch_processed(InfProcessorTextToText* out_processor, const U32& out_proc_batch_length) override
+    GENERIC on_batch_processed(InfProcessorTextToText* out_processor, [[maybe_unused]] const U32& out_proc_batch_length) override
     {
         BenchmarkProcessor* hostProcessor = static_cast<BenchmarkProcessor*>(out_processor);
         mbase::decode_behavior_description dbd;
@@ -129,7 +129,7 @@ public:
         hostProcessor->next(dbd);
     }
 
-    GENERIC on_write(InfProcessorTextToText* out_processor, const inf_text_token_vector& out_token, bool out_is_finish) override
+    GENERIC on_write(InfProcessorTextToText* out_processor,[[maybe_unused]] const inf_text_token_vector& out_token, bool out_is_finish) override
     {
         BenchmarkProcessor* hostProcessor = static_cast<BenchmarkProcessor*>(out_processor);
         if(out_is_finish)
@@ -157,7 +157,7 @@ public:
         hostProcessor->next(dbd);
     }
 
-    GENERIC on_finish(InfProcessorTextToText* out_processor, size_type out_total_token_size, InfProcessorTextToText::finish_state out_finish_state) override
+    GENERIC on_finish(InfProcessorTextToText* out_processor, [[maybe_unused]] size_type out_total_token_size, [[maybe_unused]] InfProcessorTextToText::finish_state out_finish_state) override
     {
         out_processor->release_inference_client_stacked();
         gFinishedProcessors++;
@@ -438,7 +438,7 @@ int main(int argc, char** argv)
     for(BenchmarkProcessor* tmpProc : processorsList)
     {
         InfProcT2TDiagnostics& t2tDiag = tmpProc->get_diagnostics();
-        printf("|%ld\t\t| %.2f |\t %.2f \t|\n", t2tDiag.loadTimeInMilliseconds, t2tDiag.ppTokensPerSecond, t2tDiag.evalTokensPerSecond);
+        printf("|%lld\t\t| %.2f |\t %.2f \t|\n", t2tDiag.loadTimeInMilliseconds, t2tDiag.ppTokensPerSecond, t2tDiag.evalTokensPerSecond);
         tmpProc->release_inference_client_stacked();
     }
 

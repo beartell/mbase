@@ -55,8 +55,8 @@ enum class FS_ERROR : I32{
 	FS_UNKNOWN_ERROR = MBASE_FS_FLAGS_MAX
 };
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
+MBASE_GCC_WARN_PUSH();
+MBASE_GCC_WARN_IGNORE("-Wmissing-field-initializers");
 
 MBASE_INLINE FS_ERROR err_convert(I32 in_err) noexcept;
 MBASE_INLINE FS_ERROR create_directory(const mbase::string& in_path) noexcept;
@@ -175,7 +175,7 @@ MBASE_INLINE FS_ERROR err_convert(I32 in_err) noexcept
 	case ERROR_ACCESS_DENIED:
 		return FS_ERROR::FS_ACCESS_DENIED;
 	default:
-		return FS_ERROR::FS_UNKNOWN_ERROR;
+		return FS_ERROR::FS_SUCCESS;
 	}
 #endif
 #ifdef MBASE_PLATFORM_UNIX
@@ -193,7 +193,6 @@ MBASE_INLINE FS_ERROR err_convert(I32 in_err) noexcept
 		return FS_ERROR::FS_UNKNOWN_ERROR;
 	}
 #endif
-	return FS_ERROR::FS_SUCCESS;
 }
 
 MBASE_INLINE FS_ERROR create_directory(const mbase::string& in_path) noexcept 
@@ -297,7 +296,7 @@ MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE mbase::wstring get_temp_file(const mb
 #endif
 }
 
-#pragma GCC diagnostic pop
+MBASE_GCC_WARN_POP();
 
 MBASE_STD_END
 

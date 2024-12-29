@@ -31,7 +31,7 @@ bool gIsProgramRunning = true;
 GENERIC catching_interrupt_signal(I32 out_sig_id);
 GENERIC print_usage();
 
-GENERIC catching_interrupt_signal(I32 out_sig_id)
+GENERIC catching_interrupt_signal([[maybe_unused]] I32 out_sig_id)
 {
     printf("Program interrupted\n");
     gIsProgramRunning = false;
@@ -62,7 +62,7 @@ GENERIC print_usage()
 
 class FixerModel : public InfModelTextToText {
 public:
-    GENERIC on_initialize_fail(init_fail_code out_fail_code) override{}
+    GENERIC on_initialize_fail([[maybe_unused]] init_fail_code out_fail_code) override{}
     GENERIC on_initialize() override{}
     GENERIC on_destroy() override{}
 private:
@@ -71,7 +71,7 @@ private:
 class FixerProcessor : public InfProcessorTextToText {
 public:
     GENERIC on_initialize() override{}
-    GENERIC on_initialize_fail(last_fail_code out_code) override
+    GENERIC on_initialize_fail([[maybe_unused]] last_fail_code out_code) override
     {
         fflush(stdout);
         printf("ERR: Context initialization failed.\n");
@@ -114,9 +114,9 @@ public:
         hostProcessor->execute_input(mInputTokens);
     }
 
-    GENERIC on_unregister(InfProcessorBase* out_processor) override{}
+    GENERIC on_unregister([[maybe_unused]] InfProcessorBase* out_processor) override{}
     
-    GENERIC on_batch_processed(InfProcessorTextToText* out_processor, const U32& out_proc_batch_length) override
+    GENERIC on_batch_processed(InfProcessorTextToText* out_processor, [[maybe_unused]] const U32& out_proc_batch_length) override
     {
         FixerProcessor* hostProcessor = static_cast<FixerProcessor*>(out_processor);
         
@@ -147,7 +147,7 @@ public:
         hostProcessor->next(dbd);
     }
 
-    GENERIC on_finish(InfProcessorTextToText* out_processor, size_type out_total_token_size, InfProcessorTextToText::finish_state out_finish_state) override
+    GENERIC on_finish([[maybe_unused]] InfProcessorTextToText* out_processor, [[maybe_unused]] size_type out_total_token_size, [[maybe_unused]] InfProcessorTextToText::finish_state out_finish_state) override
     {
         printf("Fixed text is written to file: %s\n", gSampleParams.mOutputFile.c_str());
         mbase::io_file iof;

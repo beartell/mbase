@@ -340,7 +340,7 @@ MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE_EXPR typename unordered_map<Key, 
 		return const_iterator(const_cast<unordered_map*>(this), 0, cend(0));
 	}
 
-	for (I32 i = mBucketCount - 1; i >= 0; i--)
+	for (I32 i = static_cast<I32>(mBucketCount - 1); i >= 0; i--)
 	{
 		const_local_iterator lastItem = cbegin(i);
 		if (lastItem != cend(i))

@@ -230,7 +230,7 @@ public:
 	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE I16 get_version_minor() const noexcept;
 	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE const maip_request_identification& get_identification() const noexcept;
 	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE kval_container_const_reference get_kvals() const noexcept;
-	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE U32 get_content_length() const;
+	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE I64 get_content_length() const;
 	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE const char_stream& get_data() const noexcept;
 	template<typename T>
 	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE T get_kval(const mbase::string& in_key) const;
@@ -284,7 +284,7 @@ struct kval_converter {
 			}
 			return 0;
 		}
-		catch (const std::exception& out_except)
+		catch ([[maybe_unused]] const std::exception& out_except)
 		{
 			return 0;
 		}
@@ -311,7 +311,7 @@ struct kval_converter<T, typename std::enable_if<std::is_same<T, mbase::vector<t
 			}
 			return tempVector;
 		}
-		catch (const std::exception& out_except)
+		catch ([[maybe_unused]] const std::exception& out_except)
 		{
 			return T();
 		}
@@ -361,7 +361,7 @@ struct kval_converter<F32> {
 				{
 					if (tempKval.mValues.front().mValType == mbase::maip_value_type::MAIP_VALTYPE_FLOAT)
 					{
-						return tempKval.mValues.front().mFloatValue;
+						return static_cast<F32>(tempKval.mValues.front().mFloatValue);
 					}
 				}
 
@@ -369,7 +369,7 @@ struct kval_converter<F32> {
 			}
 			return 0.0f;
 		}
-		catch (const std::exception& out_except)
+		catch ([[maybe_unused]] const std::exception& out_except)
 		{
 			return 0.0f;
 		}
@@ -398,7 +398,7 @@ struct kval_converter<mbase::string> {
 			}
 			return "";
 		}
-		catch (const std::exception& out_except)
+		catch ([[maybe_unused]] const std::exception& out_except)
 		{
 			return "";
 		}
@@ -425,7 +425,7 @@ struct kval_converter<mbase::vector<F32>> {
 			}
 			return tempVector;
 		}
-		catch (const std::exception& out_except)
+		catch ([[maybe_unused]] const std::exception& out_except)
 		{
 			return mbase::vector<F32>();
 		}
@@ -452,7 +452,7 @@ struct kval_converter<mbase::vector<F64>> {
 			}
 			return tempVector;
 		}
-		catch (const std::exception& out_except)
+		catch ([[maybe_unused]] const std::exception& out_except)
 		{
 			return mbase::vector<F64>();
 		}
@@ -479,7 +479,7 @@ struct kval_converter<mbase::vector<mbase::string>> {
 			}
 			return tempVector;
 		}
-		catch (const std::exception& out_except)
+		catch ([[maybe_unused]] const std::exception& out_except)
 		{
 			return mbase::vector<mbase::string>();
 		}
@@ -685,7 +685,7 @@ MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE typename maip_peer_request::kval_
 	return mDescriptionKvals;
 }
 
-MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE U32 maip_peer_request::get_content_length() const
+MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE I64 maip_peer_request::get_content_length() const
 {
 	mbase::string myString = "LENGTH";
 	try
@@ -696,7 +696,7 @@ MBASE_ND(MBASE_IGNORE_NONTRIVIAL) MBASE_INLINE U32 maip_peer_request::get_conten
 			return mDescriptionKvals.at(myString).front().mValues[0].mIntValue;
 		}
 	}
-	catch (const std::exception& out_except)
+	catch ([[maybe_unused]] const std::exception& out_except)
 	{
 		return 0;
 	}
@@ -810,7 +810,7 @@ MBASE_INLINE maip_generic_errors maip_peer_request::parse_data(mbase::char_strea
 			mDataStream.advance_safe();
 		}
 	}
-	catch (const std::exception& out_except)
+	catch ([[maybe_unused]] const std::exception& out_except)
 	{
 		in_stream.reverse_safe(processedBytes);
 		return maip_generic_errors::DATA_LENGTH_INCONSISTENCY;
@@ -903,10 +903,10 @@ MBASE_INLINE maip_generic_errors maip_peer_request::_parse_version(mbase::char_s
 		++processedBytes;
 		in_stream.advance_safe();
 
-		mMaipVersion.mVersionMajor = atoi(versionMajor);
-		mMaipVersion.mVersionMinor = atoi(versionMinor);
+		mMaipVersion.mVersionMajor = static_cast<I16>(atoi(versionMajor));
+		mMaipVersion.mVersionMinor = static_cast<I16>(atoi(versionMinor));
 	}
-	catch (const std::exception& out_except)
+	catch ([[maybe_unused]] const std::exception& out_except)
 	{
 		// MEANS, BUFFER IS OUT OF BOUNDS
 		in_stream.reverse_safe(processedBytes);
@@ -991,7 +991,7 @@ MBASE_INLINE maip_generic_errors maip_peer_request::_parse_req_identification_li
 		mRequestIdentification.mOpType = std::move(opType);
 		mRequestIdentification.mOpString = std::move(opString);
 	}
-	catch (const std::exception& out_except)
+	catch ([[maybe_unused]] const std::exception& out_except)
 	{
 		// MEANS, BUFFER IS OUT OF BOUNDS
 		in_stream.reverse_safe(processedBytes);
@@ -1036,7 +1036,7 @@ MBASE_INLINE maip_generic_errors maip_peer_request::_parse_resp_identification_l
 		++processedBytes;
 		in_stream.advance_safe();
 	}
-	catch (const std::exception& out_except)
+	catch ([[maybe_unused]] const std::exception& out_except)
 	{
 		in_stream.reverse_safe(processedBytes);
 		return maip_generic_errors::PACKET_TOO_SHORT;
@@ -1170,7 +1170,7 @@ MBASE_INLINE maip_generic_errors maip_peer_request::_parse_message_description(m
 		}
 	}
 
-	catch (const std::exception& out_except)
+	catch ([[maybe_unused]] const std::exception& out_except)
 	{
 		// MEANS, BUFFER IS OUT OF BOUNDS
 		in_stream.reverse_safe(processedBytes);
@@ -1181,7 +1181,7 @@ MBASE_INLINE maip_generic_errors maip_peer_request::_parse_message_description(m
 
 MBASE_INLINE maip_generic_errors maip_peer_request::_parse_end(mbase::char_stream& in_stream)
 {
-	I32 bfLength = in_stream.buffer_length() - in_stream.get_pos();
+	SIZE_T bfLength = in_stream.buffer_length() - in_stream.get_pos();
 	if (bfLength < 4)
 	{
 		return maip_generic_errors::PACKET_INCOMPLETE;

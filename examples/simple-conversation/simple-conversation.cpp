@@ -56,7 +56,7 @@ bool gIsProgramRunning = true;
 GENERIC catching_interrupt_signal(I32 out_sig_id);
 GENERIC print_usage();
 
-GENERIC catching_interrupt_signal(I32 out_sig_id)
+GENERIC catching_interrupt_signal([[maybe_unused]] I32 out_sig_id)
 {
     printf("Program interrupted\n");
     gIsProgramRunning = false;
@@ -96,7 +96,7 @@ GENERIC print_usage()
 
 class ConversationModel : public InfModelTextToText {
 public:
-    GENERIC on_initialize_fail(init_fail_code out_fail_code) override{}
+    GENERIC on_initialize_fail([[maybe_unused]] init_fail_code out_fail_code) override{}
     GENERIC on_initialize() override{}
     GENERIC on_destroy() override{}
 private:
@@ -105,7 +105,7 @@ private:
 class ConversationProcessor : public InfProcessorTextToText {
 public:
     GENERIC on_initialize() override{}
-    GENERIC on_initialize_fail(last_fail_code out_code) override
+    GENERIC on_initialize_fail([[maybe_unused]] last_fail_code out_code) override
     {
         fflush(stdout);
         printf("ERR: Context initialization failed.\n");
@@ -173,9 +173,9 @@ public:
         start_conversation(hostProcessor);
     }
 
-    GENERIC on_unregister(InfProcessorBase* out_processor) override{}
+    GENERIC on_unregister([[maybe_unused]] InfProcessorBase* out_processor) override{}
     
-    GENERIC on_batch_processed(InfProcessorTextToText* out_processor, const U32& out_proc_batch_length) override
+    GENERIC on_batch_processed(InfProcessorTextToText* out_processor, [[maybe_unused]] const U32& out_proc_batch_length) override
     {
         ConversationProcessor* hostProcessor = static_cast<ConversationProcessor*>(out_processor);
         mbase::decode_behavior_description dbd;
@@ -184,7 +184,7 @@ public:
         hostProcessor->next(dbd);
     }
 
-    GENERIC on_write(InfProcessorTextToText* out_processor, const inf_text_token_vector& out_token, bool out_is_finish) override
+    GENERIC on_write(InfProcessorTextToText* out_processor, [[maybe_unused]] const inf_text_token_vector& out_token, bool out_is_finish) override
     {
         ConversationProcessor* hostProcessor = static_cast<ConversationProcessor*>(out_processor);
         mbase::vector <mbase::inf_token_description> tokenDesc;
@@ -208,7 +208,7 @@ public:
         hostProcessor->next(dbd);
     }
 
-    GENERIC on_finish(InfProcessorTextToText* out_processor, size_type out_total_token_size, InfProcessorTextToText::finish_state out_finish_state) override
+    GENERIC on_finish(InfProcessorTextToText* out_processor, [[maybe_unused]] size_type out_total_token_size, [[maybe_unused]] InfProcessorTextToText::finish_state out_finish_state) override
     {
         printf("\n\n");
         ConversationProcessor* hostProcessor = static_cast<ConversationProcessor*>(out_processor);

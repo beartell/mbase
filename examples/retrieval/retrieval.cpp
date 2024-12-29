@@ -67,7 +67,7 @@ GENERIC print_usage()
 
 class EmbedderModel : public InfModelTextToText {
 public:
-    GENERIC on_initialize_fail(init_fail_code out_fail_code) override
+    GENERIC on_initialize_fail([[maybe_unused]] init_fail_code out_fail_code) override
     {
         printf("ERR: Failed loading model.\n");
         exit(1);
@@ -103,17 +103,17 @@ public:
         }
     }
 
-	GENERIC on_unregister(InfProcessorBase* out_processor) override
+	GENERIC on_unregister([[maybe_unused]] InfProcessorBase* out_processor) override
     {
     }
 
-    GENERIC on_batch_processed(InfEmbedderProcessor* out_processor, const U32& out_proc_batch_length) override
+    GENERIC on_batch_processed(InfEmbedderProcessor* out_processor, [[maybe_unused]] const U32& out_proc_batch_length) override
     {
         InfEmbedderProcessor* hostProc = static_cast<InfEmbedderProcessor*>(out_processor);
         hostProc->next();
     }
 
-    GENERIC on_write(InfEmbedderProcessor* out_processor, PTRF32 out_embeddings, const U32& out_cursor, bool out_is_finished) override
+    GENERIC on_write(InfEmbedderProcessor* out_processor, PTRF32 out_embeddings, [[maybe_unused]] const U32& out_cursor, [[maybe_unused]] bool out_is_finished) override
     {
         const U32& embeddingLength = out_processor->get_embedding_length();
         inf_common_embd_normalize(out_embeddings, out_embeddings, embeddingLength);
@@ -132,7 +132,7 @@ public:
         }
     }
 
-    GENERIC on_finish(InfEmbedderProcessor* out_processor, const size_type& out_total_processed_embeddings) override
+    GENERIC on_finish(InfEmbedderProcessor* out_processor, [[maybe_unused]] const size_type& out_total_processed_embeddings) override
     {
         InfEmbedderProcessor* hostProc = static_cast<InfEmbedderProcessor*>(out_processor);
 

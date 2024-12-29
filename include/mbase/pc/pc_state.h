@@ -104,7 +104,7 @@ public:
 			mKvMap[in_key] = std::move(stateStruct);
 			mIsModified = true;
 		}
-		catch (const std::exception& out_except)
+		catch ([[maybe_unused]] const std::exception& out_except)
 		{
 			return flags::STATE_ERR_UNABLE_TO_SERIALIZE_DATA;
 		}

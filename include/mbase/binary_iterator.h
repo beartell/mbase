@@ -307,7 +307,7 @@ MBASE_INLINE bst_iterator<T, DataT>::bst_iterator(pointer in_ptr) noexcept : _pt
 }
 
 template<typename T, typename DataT>
-MBASE_INLINE bst_iterator<T, DataT>::bst_iterator(pointer in_ptr, bool in_noTraverse) noexcept : _ptr(in_ptr) 
+MBASE_INLINE bst_iterator<T, DataT>::bst_iterator(pointer in_ptr, [[maybe_unused]] bool in_noTraverse) noexcept : _ptr(in_ptr) 
 {
 
 }

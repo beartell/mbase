@@ -725,7 +725,8 @@ InfModelTextToText::flags InfModelTextToText::tokenize_input(CBYTEBUFFER in_data
 	llama_model* rawModel = get_raw_model();
 	try
 	{
-		I32 tokenCount = llama_tokenize(rawModel, in_data, in_size, tokenizedInput.data(), in_size * 4, false, true);
+		
+		I32 tokenCount = llama_tokenize(rawModel, in_data, static_cast<I32>(in_size), tokenizedInput.data(), static_cast<I32>(tokenizedInput.capacity()), false, true);
 		if(tokenCount == -1)
 		{
 			return flags::INF_MODEL_ERR_TOKENIZATION_FAILED;
@@ -733,7 +734,7 @@ InfModelTextToText::flags InfModelTextToText::tokenize_input(CBYTEBUFFER in_data
 
 		tokenizedInput.resize_on_preset(tokenCount);
 	}
-	catch(const std::exception& e)
+	catch([[maybe_unused]] const std::exception& e)
 	{
 		return flags::INF_MODEL_ERR_TOKENIZATION_FAILED;
 	}

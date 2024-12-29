@@ -4,12 +4,12 @@ MBASE_BEGIN
 
 InfDeviceDescription::InfDeviceDescription() noexcept :
     mBackendDevice(NULL),
-    mDeviceIndex(-1)
+    mDeviceIndex(0)
 {
 
 }
 
-InfDeviceDescription::InfDeviceDescription(ggml_backend_dev_t in_device, const I32& in_index) noexcept :
+InfDeviceDescription::InfDeviceDescription(ggml_backend_dev_t in_device, const size_type& in_index) noexcept :
     mBackendDevice(in_device),
     mDeviceIndex(in_index)
 {
@@ -75,7 +75,7 @@ MBASE_ND(MBASE_OBS_IGNORE) typename InfDeviceDescription::size_type InfDeviceDes
     return 0;
 }
 
-MBASE_ND(MBASE_OBS_IGNORE) I32 InfDeviceDescription::get_device_index() const
+MBASE_ND(MBASE_OBS_IGNORE) typename InfDeviceDescription::size_type InfDeviceDescription::get_device_index() const
 {
     return mDeviceIndex;
 }

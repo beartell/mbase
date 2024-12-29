@@ -44,7 +44,7 @@ InfClientTextToText::flags InfClientTextToText::get_message(const U32& in_msg_id
 	{
 		out_message = mChatHistory.at(in_msg_id);
 	}
-	catch (const std::exception& out_except)
+	catch ([[maybe_unused]] const std::exception& out_except)
 	{
 		return flags::INF_CLIENT_ERR_MSG_ID_MISMATCH;
 	}
@@ -60,7 +60,7 @@ InfClientTextToText::flags InfClientTextToText::get_message_array(PTRU32 in_msg_
 		{
 			outMsgs.push_back(mChatHistory.at(*(in_msg_ids + i)));
 		}
-		catch (const std::exception& out_except)
+		catch ([[maybe_unused]] const std::exception& out_except)
 		{
 			return flags::INF_CLIENT_ERR_MSG_ID_MISMATCH;
 		}

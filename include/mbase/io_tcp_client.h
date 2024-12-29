@@ -60,8 +60,8 @@ public:
 	/* ===== STATE-MODIFIER METHODS BEGIN ===== */
 	I32 connect_target(const mbase::string& in_name, const mbase::string& in_port) noexcept;
 	I32 disconnect() noexcept;
-	size_type write_data(IBYTEBUFFER in_src) override;
-	size_type write_data(IBYTEBUFFER in_src, size_type in_length) override;
+	size_type write_data(CBYTEBUFFER in_src) override;
+	size_type write_data(CBYTEBUFFER in_src, size_type in_length) override;
 	size_type write_data(const mbase::string& in_src) override;
 	size_type write_data(char_stream& in_src) override;
 	size_type write_data(char_stream& in_src, size_type in_length) override { return 0; }
@@ -177,7 +177,7 @@ I32 io_tcp_client::disconnect() noexcept
 	return dcResult;
 }
 
-typename io_tcp_client::size_type io_tcp_client::write_data(IBYTEBUFFER in_src)
+typename io_tcp_client::size_type io_tcp_client::write_data(CBYTEBUFFER in_src)
 {
 	DWORD dataWritten = 0;
 	SIZE_T dataLength = type_sequence<IBYTE>::length_bytes(in_src);
@@ -193,7 +193,7 @@ typename io_tcp_client::size_type io_tcp_client::write_data(IBYTEBUFFER in_src)
 	return dataWritten;
 }
 
-typename io_tcp_client::size_type io_tcp_client::write_data(IBYTEBUFFER in_src, size_type in_length)
+typename io_tcp_client::size_type io_tcp_client::write_data(CBYTEBUFFER in_src, size_type in_length)
 {
 	DWORD dataWritten = 0;
 	dataWritten = send(mRawHandle, in_src, in_length, 0);

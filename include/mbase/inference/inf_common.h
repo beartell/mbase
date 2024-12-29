@@ -44,7 +44,7 @@ using lora_adapter_map = mbase::unordered_map<mbase::string, inf_lora_adapter>;
 // The rest is common functionality inspired from llama.cpp common library for examples
 // The set of functions will be populated as new needs are found
 
-GENERIC inf_common_batch_add(
+MBASE_API GENERIC inf_common_batch_add(
     llama_batch& in_batch,
     inf_text_token in_id,
     I32 in_pos,
@@ -52,13 +52,13 @@ GENERIC inf_common_batch_add(
     bool in_logits
 );
 
-GENERIC inf_common_embd_normalize(
+MBASE_API GENERIC inf_common_embd_normalize(
     const PTRF32 in_inp, 
     PTRF32 out_normalized, 
     const SIZE_T& in_n
 );
 
-F32 inf_common_cosine_similarity(
+MBASE_API F32 inf_common_cosine_similarity(
     const PTRF32 in_data1,
     const PTRF32 in_data2,
     const I32& in_length

@@ -20,7 +20,7 @@ public:
 
     /* ===== BUILDER METHODS BEGIN ===== */
     InfDeviceDescription() noexcept;
-    InfDeviceDescription(ggml_backend_dev_t in_device, const I32& in_index) noexcept;
+    InfDeviceDescription(ggml_backend_dev_t in_device, const size_type& in_index) noexcept;
     InfDeviceDescription(const InfDeviceDescription& in_description) noexcept;
     ~InfDeviceDescription() noexcept;
     /* ===== BUILDER METHODS END ===== */
@@ -34,13 +34,13 @@ public:
     MBASE_ND(MBASE_OBS_IGNORE) mbase::string get_device_description() const;
     MBASE_ND(MBASE_OBS_IGNORE) size_type get_total_memory() const;
     MBASE_ND(MBASE_OBS_IGNORE) size_type get_free_memory() const;
-    MBASE_ND(MBASE_OBS_IGNORE) I32 get_device_index() const;
+    MBASE_ND(MBASE_OBS_IGNORE) size_type get_device_index() const;
     MBASE_ND(MBASE_OBS_IGNORE) device_type get_device_type() const;
     MBASE_ND(MBASE_OBS_IGNORE) ggml_backend_dev_t get_internal_dev_handle();
     /* ===== OBSERVATION METHODS END ===== */
 private:
     ggml_backend_dev_t mBackendDevice;
-    I32 mDeviceIndex;
+    size_type mDeviceIndex;
 };
 
 MBASE_API mbase::vector<InfDeviceDescription> inf_query_devices();

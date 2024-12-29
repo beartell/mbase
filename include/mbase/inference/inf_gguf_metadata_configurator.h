@@ -190,7 +190,7 @@ struct MBASE_API gguf_value_writer<mbase::vector<mbase::string>> {
 		{
 			cFormatStrArray.push_back(It->c_str());
 		}
-		gguf_set_arr_str(in_context, in_key.c_str(), cFormatStrArray.data(), cFormatStrArray.size());
+		gguf_set_arr_str(in_context, in_key.c_str(), cFormatStrArray.data(), static_cast<I32>(cFormatStrArray.size()));
 	}
 };
 
@@ -198,7 +198,7 @@ template<>
 struct MBASE_API gguf_value_writer<mbase::vector<I32>> {
 	static GENERIC write(gguf_context* in_context, const mbase::string& in_key, const mbase::vector<I32>& in_value)
 	{
-		gguf_set_arr_data(in_context, in_key.c_str(), GGUF_TYPE_INT32, in_value.data(), in_value.size());
+		gguf_set_arr_data(in_context, in_key.c_str(), GGUF_TYPE_INT32, in_value.data(), static_cast<I32>(in_value.size()));
 	}
 };
 

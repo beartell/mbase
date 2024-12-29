@@ -644,14 +644,13 @@ PcNetManager::flags PcNetManager::create_server(const mbase::string& in_addr, I3
 	I32 serverSocket = MBASE_INVALID_SOCKET;
 	#endif
 
-	#pragma GCC diagnostic push
-	#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
+	MBASE_GCC_WARN_PUSH();
+	MBASE_GCC_WARN_IGNORE("-Wmissing-field-initializers");
 
 	struct addrinfo* result = NULL;
 	struct addrinfo hints = {0};
 
-	#pragma GCC diagnostic pop
-
+	MBASE_GCC_WARN_POP();
 	hints.ai_family = AF_INET;
 	hints.ai_socktype = SOCK_STREAM;
 	hints.ai_protocol = IPPROTO_TCP;

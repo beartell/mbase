@@ -223,7 +223,7 @@ InfProcessorTextToText::flags InfProcessorTextToText::tokenize_input(CBYTEBUFFER
 	InfModelTextToText* t2tModel = static_cast<InfModelTextToText*>(this->mTargetModel_md_model);
 	try
 	{
-		I32 tokenCount = llama_tokenize(t2tModel->get_raw_model(), in_data, in_size, tokenizedInput.data(), in_size * 4, false, true);
+		I32 tokenCount = llama_tokenize(t2tModel->get_raw_model(), in_data, static_cast<I32>(in_size), tokenizedInput.data(), static_cast<I32>(tokenizedInput.capacity()), false, true);
 		if(tokenCount == -1)
 		{
 			return flags::INF_PROC_ERR_UNABLE_TO_TOKENIZE_INPUT;
@@ -231,7 +231,7 @@ InfProcessorTextToText::flags InfProcessorTextToText::tokenize_input(CBYTEBUFFER
 
 		tokenizedInput.resize_on_preset(tokenCount);
 	}
-	catch(const std::exception& e)
+	catch([[maybe_unused]] const std::exception& e)
 	{
 		return flags::INF_PROC_ERR_UNABLE_TO_TOKENIZE_INPUT;
 	}
@@ -579,7 +579,7 @@ GENERIC InfProcessorTextToText::_decode_input()
 	for(size_type i = 0; i < mTokenizedInput.size() - 1; i++)
 	{
 		++tmpBatchCursor;
-		inf_common_batch_add(tempBatch, mTokenizedInput[i], i, {0}, false);
+		inf_common_batch_add(tempBatch, mTokenizedInput[i], static_cast<I32>(i), {0}, false);
 		if(tmpBatchCursor == mBatchSize)
 		{
 			beginTime = std::chrono::high_resolution_clock::now();
@@ -591,7 +591,7 @@ GENERIC InfProcessorTextToText::_decode_input()
 		}
 	}
 
-	inf_common_batch_add(tempBatch, mTokenizedInput.back(), mTokenizedInput.size() - 1, {0}, true);
+	inf_common_batch_add(tempBatch, mTokenizedInput.back(), static_cast<I32>(mTokenizedInput.size() - 1), {0}, true);
 	beginTime = std::chrono::high_resolution_clock::now();
 	llama_decode(mModelContext, tempBatch);
 	mContextCursor = llama_get_kv_cache_token_count(mModelContext);

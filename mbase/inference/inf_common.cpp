@@ -31,7 +31,7 @@ GENERIC inf_common_embd_normalize(
     const SIZE_T& in_n
 )
 {
-    F64 tmpSum = 0.0;
+    F32 tmpSum = 0.0;
     for(SIZE_T i = 0; i < in_n; i++)
     {
         tmpSum += in_inp[i] * in_inp[i];
@@ -39,7 +39,7 @@ GENERIC inf_common_embd_normalize(
     tmpSum = std::sqrt(tmpSum);
 
     const F32 tmpNorm = tmpSum > 0.0 ? 1.0 / tmpSum : 0.0f;
-
+ 
     for(SIZE_T i = 0; i < in_n; i++)
     {
         out_normalized[i] = in_inp[i] * tmpNorm;
@@ -52,9 +52,9 @@ F32 inf_common_cosine_similarity(
     const I32& in_length
 )
 {
-    F64 sum  = 0.0;
-    F64 sum1 = 0.0;
-    F64 sum2 = 0.0;
+    F32 sum  = 0.0;
+    F32 sum1 = 0.0;
+    F32 sum2 = 0.0;
 
     for (I32 i = 0; i < in_length; i++) {
         sum  += in_data1[i] * in_data2[i];

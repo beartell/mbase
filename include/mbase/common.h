@@ -33,6 +33,14 @@
 
 #ifdef MBASE_PLATFORM_UNIX
 	#define MBASE_PLATFORM_NEWLINE "\n"
+	#define MBASE_GCC_WARN_PUSH() _Pragma("GCC diagnostic push")
+	#define MBASE_GCC_WARN_IGNORE(warning_string) _Pragma("GCC diagnostic ignored " warning_string)
+	#define MBASE_GCC_WARN_POP() _Pragma("GCC diagnostic pop")
+#else
+	#define MBASE_GCC_WARN_PUSH()
+	#define MBASE_GCC_WARN_IGNORE(warning_string)
+	#define MBASE_GCC_WARN_POP()
+	#pragma warning (disable : 4244)  
 #endif // MBASE_PLATFORM_UNIX
 
 /* LANGUAGE VERSION CONTROL */
