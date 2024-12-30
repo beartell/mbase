@@ -73,4 +73,9 @@ F32 inf_common_cosine_similarity(
     return sum / (std::sqrt(sum1) * std::sqrt(sum2));
 }
 
+mbase::string inf_get_sys_name_total()
+{
+    return mbase::string(MBASE_INFERENCE_SYS_STRING " " MBASE_INFERENCE_SYS_VERSION);
+}
+
 MBASE_END

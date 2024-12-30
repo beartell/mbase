@@ -28,7 +28,7 @@ list(APPEND MBASE_PC_INCLUDE_STABLE_FILES
     pc_termination_handler.h
 )
 
-add_library(mb_pc SHARED
+add_library(mb_pc
     ${MBASE_PC_LIB_PATH}/pc_config.cpp
     ${MBASE_PC_LIB_PATH}/pc_state.cpp
     ${MBASE_PC_LIB_PATH}/pc_io_manager.cpp

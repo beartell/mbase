@@ -9,9 +9,9 @@
 // If llama.cpp is defined macro should be placed here
 #include <llama.h>
 
-#define MBASE_INFERENCE_SYS_STRING "MBASE Inference"
-#define MBASE_INFERENCE_LIB_NAME "inference"
-#define MBASE_INFERENCE_SYS_VERSION "1.0.0alpha"
+#cmakedefine MBASE_INFERENCE_SYS_STRING "@MBASE_INFERENCE_SYS_STRING@"
+#cmakedefine MBASE_INFERENCE_LIB_NAME "@MBASE_INFERENCE_LIB_NAME@"
+#cmakedefine MBASE_INFERENCE_SYS_VERSION "@MBASE_INFERENCE_SYS_VERSION@"
 
 MBASE_BEGIN
 

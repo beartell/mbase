@@ -9,6 +9,8 @@ cmake_minimum_required(VERSION 3.15...3.31)
 
 project("mbase.libs" VERSION 1.0.0 LANGUAGES CXX)
 
+option(BUILD_SHARED_LIBS "MBASE Shared library build default." ON)
+
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/")
 set(CMAKE_CXX_STANDARD 20)
 
