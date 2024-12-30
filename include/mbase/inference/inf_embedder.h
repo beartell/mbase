@@ -43,7 +43,7 @@ public:
     /* ===== STATE-MODIFIER METHODS BEGIN ===== */
     flags execute_input(const mbase::vector<inf_text_token_vector>& in_tokens, bool in_abandon = false);
     flags next();
-    flags set_inference_client(InfClientBase* in_client);
+    flags set_inference_client(InfClientBase* in_client) override;
     flags initialize(
         InfModelTextToText* in_model,
         const mbase::string& in_context_id,

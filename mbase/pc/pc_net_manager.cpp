@@ -11,6 +11,13 @@
 
 MBASE_BEGIN
 
+#ifdef MBASE_PLATFORM_UNIX
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
+
+#endif
+
 #ifdef MBASE_PLATFORM_WINDOWS
 #define MBASE_INVALID_SOCKET INVALID_SOCKET
 #define MBASE_SOCKET_ERROR SOCKET_ERROR
@@ -644,13 +651,9 @@ PcNetManager::flags PcNetManager::create_server(const mbase::string& in_addr, I3
 	I32 serverSocket = MBASE_INVALID_SOCKET;
 	#endif
 
-	MBASE_GCC_WARN_PUSH();
-	MBASE_GCC_WARN_IGNORE("-Wmissing-field-initializers");
-
 	struct addrinfo* result = NULL;
 	struct addrinfo hints = {0};
 
-	MBASE_GCC_WARN_POP();
 	hints.ai_family = AF_INET;
 	hints.ai_socktype = SOCK_STREAM;
 	hints.ai_protocol = IPPROTO_TCP;
@@ -757,5 +760,9 @@ GENERIC PcNetManager::update_t()
 		mServerReleaseLock.release();
 	}
 }
+
+#ifdef MBASE_PLATFORM_UNIX
+#pragma GCC diagnostic pop
+#endif
 
 MBASE_END

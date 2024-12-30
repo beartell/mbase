@@ -988,11 +988,11 @@ GENERIC InfModelTextToText::_initialize_lora()
 	mLoraInitializeSignal.set_signal_finished();
 }
 
-GENERIC InfModelTextToText::on_lora_added(inf_lora_adapter out_adapter)
+GENERIC InfModelTextToText::on_lora_added([[maybe_unused]] inf_lora_adapter out_adapter)
 {
 }
 
-GENERIC InfModelTextToText::on_lora_remove(inf_lora_adapter out_adapter)
+GENERIC InfModelTextToText::on_lora_remove([[maybe_unused]] inf_lora_adapter out_adapter)
 {
 }
 

@@ -48,6 +48,13 @@ static const U32 gStringDefaultCapacity = 8;
 
 /* --- OBJECT BEHAVIOURS --- */
 
+#ifdef MBASE_PLATFORM_UNIX
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wformat-nonliteral"
+
+#endif
+
 template<typename SeqType, typename SeqBase = type_sequence<SeqType>, typename Allocator = mbase::allocator<SeqType>>
 class character_sequence : public SeqBase {
 public:
@@ -675,7 +682,7 @@ MBASE_INLINE_EXPR character_sequence<SeqType, SeqBase, Allocator>::character_seq
 
 template<typename SeqType, typename SeqBase, typename Allocator>
 template<typename InputIt, typename>
-MBASE_INLINE_EXPR character_sequence<SeqType, SeqBase, Allocator>::character_sequence(InputIt in_begin, InputIt in_end, const Allocator& in_alloc) : mRawData(nullptr), mSize(0), mCapacity(gStringDefaultCapacity), mExternalAllocator(Allocator())
+MBASE_INLINE_EXPR character_sequence<SeqType, SeqBase, Allocator>::character_sequence(InputIt in_begin, InputIt in_end, const Allocator& in_alloc) : mRawData(nullptr), mSize(0), mCapacity(gStringDefaultCapacity), mExternalAllocator(in_alloc)
 {
     _build_string(mCapacity);
     for (in_begin; in_begin != in_end; in_begin++)
@@ -2291,10 +2298,7 @@ MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE character_sequence<SeqType, SeqBase, 
     #endif
 
     #ifdef MBASE_PLATFORM_UNIX
-    MBASE_GCC_WARN_PUSH();
-    MBASE_GCC_WARN_IGNORE("-Wformat-nonliteral");
     size_type stringLength = snprintf(NULL, 0, in_format, std::forward<Params>(in_params)...);
-    MBASE_GCC_WARN_POP();
     #endif
     
     character_sequence newSequence;
@@ -2305,10 +2309,7 @@ MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE character_sequence<SeqType, SeqBase, 
 
     pointer mString = newSequence.mExternalAllocator.allocate(stringLength + 1, true);
     newSequence.fill(mString, 0, stringLength + 1);
-    MBASE_GCC_WARN_PUSH();
-    MBASE_GCC_WARN_IGNORE("-Wformat-nonliteral");
     sprintf(mString, in_format, std::forward<Params>(in_params)...);
-    MBASE_GCC_WARN_POP();
     newSequence = character_sequence(mString);
     newSequence.mExternalAllocator.deallocate(mString);
 
@@ -2589,9 +2590,10 @@ MBASE_INLINE mbase::wstring from_utf8(const mbase::string& in_str)
     }
 
     size_t length = (out_size - out_bytes_left - sizeof(wchar_t)) / sizeof(wchar_t);
-    ((wchar_t*)output_buffer)[length] = L'\0';
+    wchar_t* tmpOutBuffer = reinterpret_cast<wchar_t*>(output_buffer);
+    tmpOutBuffer[length] = L'\0';
 
-    mbase::wstring outStr((wchar_t*)output_buffer, length);
+    mbase::wstring outStr(tmpOutBuffer, length);
     free(output_buffer);
     return outStr;
 #endif
@@ -2664,5 +2666,8 @@ struct std::hash<mbase::wstring> {
     }
 };
 
+#ifdef MBASE_PLATFORM_UNIX
+#pragma GCC diagnostic pop
+#endif
 
 #endif // MBASE_STRING_H

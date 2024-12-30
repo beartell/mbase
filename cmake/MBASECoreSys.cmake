@@ -10,6 +10,11 @@ mbase_build_version(1 0 0 ${MBASE_VERSION_ALPHA} MBASE_PC_VERSION)
 mbase_build_include_install_path(${MBASE_PC_LIB_NAME} MBASE_PC_INCLUDE_INSTALL_PATH)
 mbase_build_lib_path(${MBASE_PC_LIB_NAME} MBASE_PC_LIB_PATH)
 
+message("${MBASE_PC_SYS_STRING} library version: ${MBASE_PC_VERSION}")
+message("${MBASE_PC_SYS_STRING} install source path: ${MBASE_PC_INCLUDE_INSTALL_PATH}")
+message("${MBASE_PC_SYS_STRING} lib source path: ${MBASE_PC_LIB_PATH}")
+
+
 list(APPEND MBASE_PC_INCLUDE_DEPENDS ${MBASE_STD_INCLUDES})
 
 list(APPEND MBASE_PC_INCLUDE_STABLE_FILES

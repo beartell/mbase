@@ -57,24 +57,24 @@ list(APPEND MBASE_INFERENCE_INCLUDE_STABLE_FILES
 )
 
 add_library(mb_inference SHARED 
-    ${MBASE_INFERENCE_LIB_PATH}inf_client.cpp
-    ${MBASE_INFERENCE_LIB_PATH}inf_device_desc.cpp
-    ${MBASE_INFERENCE_LIB_PATH}inf_common.cpp
-    ${MBASE_INFERENCE_LIB_PATH}inf_embedder.cpp
-    ${MBASE_INFERENCE_LIB_PATH}inf_gguf_meta_configurator.cpp
-    ${MBASE_INFERENCE_LIB_PATH}inf_maip_callbacks.cpp
-    ${MBASE_INFERENCE_LIB_PATH}inf_maip_model_description.cpp
-    ${MBASE_INFERENCE_LIB_PATH}inf_maip_peer_base.cpp
-    ${MBASE_INFERENCE_LIB_PATH}inf_maip_peer_t2t.cpp
-    ${MBASE_INFERENCE_LIB_PATH}inf_maip_server.cpp 
-    ${MBASE_INFERENCE_LIB_PATH}inf_maip_user.cpp
-    ${MBASE_INFERENCE_LIB_PATH}inf_model.cpp
-    ${MBASE_INFERENCE_LIB_PATH}inf_processor.cpp
-    ${MBASE_INFERENCE_LIB_PATH}inf_program.cpp
-    ${MBASE_INFERENCE_LIB_PATH}inf_t2t_client.cpp
-    ${MBASE_INFERENCE_LIB_PATH}inf_t2t_model.cpp
-    ${MBASE_INFERENCE_LIB_PATH}inf_t2t_processor.cpp
-    ${MBASE_INFERENCE_LIB_PATH}inf_t2t_proc_diagnostics.cpp
+    ${MBASE_INFERENCE_LIB_PATH}/inf_client.cpp
+    ${MBASE_INFERENCE_LIB_PATH}/inf_device_desc.cpp
+    ${MBASE_INFERENCE_LIB_PATH}/inf_common.cpp
+    ${MBASE_INFERENCE_LIB_PATH}/inf_embedder.cpp
+    ${MBASE_INFERENCE_LIB_PATH}/inf_gguf_meta_configurator.cpp
+    ${MBASE_INFERENCE_LIB_PATH}/inf_maip_callbacks.cpp
+    ${MBASE_INFERENCE_LIB_PATH}/inf_maip_model_description.cpp
+    ${MBASE_INFERENCE_LIB_PATH}/inf_maip_peer_base.cpp
+    ${MBASE_INFERENCE_LIB_PATH}/inf_maip_peer_t2t.cpp
+    ${MBASE_INFERENCE_LIB_PATH}/inf_maip_server.cpp 
+    ${MBASE_INFERENCE_LIB_PATH}/inf_maip_user.cpp
+    ${MBASE_INFERENCE_LIB_PATH}/inf_model.cpp
+    ${MBASE_INFERENCE_LIB_PATH}/inf_processor.cpp
+    ${MBASE_INFERENCE_LIB_PATH}/inf_program.cpp
+    ${MBASE_INFERENCE_LIB_PATH}/inf_t2t_client.cpp
+    ${MBASE_INFERENCE_LIB_PATH}/inf_t2t_model.cpp
+    ${MBASE_INFERENCE_LIB_PATH}/inf_t2t_processor.cpp
+    ${MBASE_INFERENCE_LIB_PATH}/inf_t2t_proc_diagnostics.cpp
 )
 
 target_compile_definitions(mb_inference PRIVATE ${MBASE_COMMON_COMPILE_DEFINITIONS} llama)

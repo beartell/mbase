@@ -66,7 +66,6 @@ list(APPEND MBASE_STD_INCLUDE_STABLE_FILES
     node_type.h
     platform.h
     queue.h
-    rng.h
     sequence_iterator.h
     set.h
     smart_conversion.h

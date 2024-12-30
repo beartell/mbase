@@ -20,7 +20,7 @@
 #ifdef __APPLE__
 	#define MBASE_PLATFORM_APPLE
 #endif // __APPLE__
- 
+  
 #ifdef MBASE_PLATFORM_WINDOWS
 	#ifndef WIN32_LEAN_AND_MEAN
 	#define WIN32_LEAN_AND_MEAN
@@ -33,13 +33,7 @@
 
 #ifdef MBASE_PLATFORM_UNIX
 	#define MBASE_PLATFORM_NEWLINE "\n"
-	#define MBASE_GCC_WARN_PUSH() _Pragma("GCC diagnostic push")
-	#define MBASE_GCC_WARN_IGNORE(warning_string) _Pragma("GCC diagnostic ignored " warning_string)
-	#define MBASE_GCC_WARN_POP() _Pragma("GCC diagnostic pop")
 #else
-	#define MBASE_GCC_WARN_PUSH()
-	#define MBASE_GCC_WARN_IGNORE(warning_string)
-	#define MBASE_GCC_WARN_POP()
 	#pragma warning (disable : 4244)  
 #endif // MBASE_PLATFORM_UNIX
 
@@ -48,6 +42,41 @@
 #ifndef __cplusplus
 	#error Missing C++ compiler
 #endif // !__cplusplus
+
+#define MBASE_SHARED 1
+
+#ifdef MBASE_SHARED
+	#if defined(_MSC_VER)
+		#ifdef MBASE_BUILD
+			#define MBASE_STD_API __declspec(dllexport)
+			#pragma warning(disable : 4251) // Since we have a MBASE_API macro, all necessary symbols are exported
+			#define MBASE_API MBASE_STD_API
+		#else
+			#define MBASE_STD_API __declspec(dllimport)
+			#define MBASE_API MBASE_STD_API
+		#endif // MBASE_BUILD
+	#else
+		#define MBASE_STD_API __attribute__ ((visibility ("default")))
+		#define MBASE_API MBASE_STD_API
+	#endif // _WIN32
+#else
+	#define MBASE_STD_API
+	#define MBASE_API
+#endif // MBASE_SHARED
+
+#ifndef MBASE_BUILD
+	#if __cplusplus < 201703L
+		#error Invalid C++ version. MBASE require at least C++17.
+	#endif
+#endif
+
+#if __cplusplus == 201703L
+	#define MBASE_CPP_VERSION 17
+#elif __cplusplus == 202002L
+	#define MBASE_CPP_VERSION 20
+#elif __cplusplus == 202302L
+	#define MBASE_CPP_VERSION 23
+#endif
 
 #if MBASE_CPP_VERSION < 17
 	#error Invalid C++ version. MBASE require at least C++17.
@@ -73,28 +102,6 @@
 	#define MBASE_INLINE_EXPR inline
 #endif
 #endif
-
-#define MBASE_STD_LIB_COMPATIBLE
-#define MBASE_SHARED
-
-#ifdef MBASE_SHARED
-	#if defined(_MSC_VER)
-		#ifdef MBASE_BUILD
-			#define MBASE_STD_API __declspec(dllexport)
-			#pragma warning(disable : 4251) // Since we have a MBASE_API macro, all necessary symbols are exported
-			#define MBASE_API MBASE_STD_API
-		#else
-			#define MBASE_STD_API __declspec(dllimport)
-			#define MBASE_API MBASE_STD_API
-		#endif // MBASE_BUILD
-	#else
-		#define MBASE_STD_API __attribute__ ((visibility ("default")))
-		#define MBASE_API MBASE_STD_API
-	#endif // _WIN32
-#else
-	#define MBASE_STD_API
-	#define MBASE_API
-#endif // MBASE_SHARED
 
 // MAKE SURE TO IMPL THE CYGWIN AND GNUC
 

@@ -17,7 +17,6 @@ list(APPEND MBASE_FRAMEWORK_INCLUDE_STABLE_FILES
     handler_base.h
     logical_processing.h
     object_watcher.h
-    sys_helper.h
     thread_pool.h
     timer_loop.h
     timers.h

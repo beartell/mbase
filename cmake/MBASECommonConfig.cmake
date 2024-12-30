@@ -3,25 +3,36 @@ include_guard(GLOBAL)
 include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)
 
-message("System install directory: ${CMAKE_INSTALL_PREFIX}")
-message("User executables dir: ${CMAKE_INSTALL_FULL_BINDIR}")
-message("System executables dir: ${CMAKE_INSTALL_FULL_SBINDIR}")
-message("Program executables dir: ${CMAKE_INSTALL_FULL_LIBEXECDIR}")
-message("Read only data dir: ${CMAKE_INSTALL_FULL_SYSCONFDIR}")
-message("Modifiable arch independent data dir: ${CMAKE_INSTALL_SHAREDSTATEDIR}")
-
 set(MBASE_GLOBAL_INCLUDE ${CMAKE_SOURCE_DIR}/include)
 set(MBASE_GLOBAL_SOURCE_DIRECTORY ${CMAKE_SOURCE_DIR}/mbase)
 set(MBASE_GLOBAL_CONFIG_IN_DIRECTORY ${CMAKE_SOURCE_DIR}/cmake_config_in)
 set(MBASE_CURRENT_DIR ${CMAKE_CURRENT_BINARY_DIR})
-set(MBASE_COMMON_COMPILE_DEFINITIONS MBASE_BUILD MBASE_INTERNAL_API MBASE_CPP_VERSION=${CMAKE_CXX_STANDARD} _CRT_SECURE_NO_WARNINGS)
+set(MBASE_COMMON_COMPILE_DEFINITIONS MBASE_BUILD MBASE_INTERNAL_API _CRT_SECURE_NO_WARNINGS)
 
 if (WIN32)
     set(MBASE_COMMON_COMPILE_OPTIONS -W4) # Enable W4 Compiler warning
 endif (WIN32)
 
 if(UNIX)
-    set(MBASE_COMMON_COMPILE_OPTIONS -pedantic -Wall -Wextra -Wcast-align -Wctor-dtor-privacy -Wdisabled-optimization -Wformat=2 -Winit-self -Wlogical-op -Wmissing-declarations -Wnoexcept -Woverloaded-virtual -Wredundant-decls -Wshadow -Wsign-promo -Wstrict-null-sentinel -Wstrict-overflow=5 -Wswitch-default -Wundef -Werror -Wno-unused)
+    set(MBASE_COMMON_COMPILE_OPTIONS 
+    -pedantic 
+    -Wall 
+    -Wextra 
+    -Wcast-align 
+    -Wctor-dtor-privacy 
+    -Wdisabled-optimization 
+    -Wformat=2 
+    -Winit-self 
+    -Wmissing-declarations
+    -Woverloaded-virtual 
+    -Wredundant-decls 
+    -Wshadow 
+    -Wsign-promo 
+    -Wstrict-overflow=5 
+    -Wswitch-default 
+    -Wundef 
+    -Wno-unused
+)
 endif(UNIX)
 
 list(APPEND MBASE_STABILITY_CATEGORIES
@@ -53,7 +64,7 @@ function(mbase_build_lib_path in_lib_name out_lib_path)
     list(APPEND MBASE_CREATED_LIBRARY_LIST ${in_lib_name})
     set(MBASE_TMP_CREATED_LIBRARY_LIST ${MBASE_CREATED_LIBRARY_LIST})
     set(MBASE_CREATED_LIBRARY_LIST ${MBASE_TMP_CREATED_LIBRARY_LIST} PARENT_SCOPE)
-    set(${out_lib_path} ${MBASE_GLOBAL_SOURCE_DIRECTORY}/${in_lib_name}/ PARENT_SCOPE)
+    set(${out_lib_path} ${MBASE_GLOBAL_SOURCE_DIRECTORY}/${in_lib_name} PARENT_SCOPE)
 endfunction()
 
 function(mbase_install_libraries)

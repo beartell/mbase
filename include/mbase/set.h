@@ -45,7 +45,7 @@ public:
 	MBASE_INLINE set(set&& in_rhs, const Allocator& in_alloc);
 	MBASE_INLINE set(std::initializer_list<value_type> in_list, const Compare& in_comp = Compare(), const Allocator& in_alloc = Allocator());
 	template<typename InputIt, typename = std::enable_if_t<std::is_constructible_v<Key, typename std::iterator_traits<InputIt>::value_type>>>
-	set(InputIt in_begin, InputIt in_end, const Allocator& in_alloc = Allocator()) : mRootNode(nullptr), mSize(0) {
+	set(InputIt in_begin, InputIt in_end, [[maybe_unused]] const Allocator& in_alloc = Allocator()) : mRootNode(nullptr), mSize(0) {
 		for (in_begin; in_begin != in_end; in_begin++)
 		{
 			insert(*in_begin);
@@ -153,7 +153,7 @@ MBASE_INLINE set<Key, Compare, Allocator>::set() : mRootNode(nullptr), mSize(0)
 }
 
 template<typename Key, typename Compare, typename Allocator>
-MBASE_INLINE set<Key, Compare, Allocator>::set(const Compare& in_comp, const Allocator& in_alloc) : mRootNode(nullptr), mSize(0)
+MBASE_INLINE set<Key, Compare, Allocator>::set([[maybe_unused]] const Compare& in_comp, [[maybe_unused]] const Allocator& in_alloc) : mRootNode(nullptr), mSize(0)
 {
 }
 
@@ -167,7 +167,7 @@ MBASE_INLINE set<Key, Compare, Allocator>::set(const set& in_rhs) : mRootNode(nu
 }
 
 template<typename Key, typename Compare, typename Allocator>
-MBASE_INLINE set<Key, Compare, Allocator>::set(const set& in_rhs, const Allocator& in_alloc) : mRootNode(nullptr), mSize(0) {
+MBASE_INLINE set<Key, Compare, Allocator>::set(const set& in_rhs, [[maybe_unused]] const Allocator& in_alloc) : mRootNode(nullptr), mSize(0) {
 	const_iterator itBegin = in_rhs.begin();
 	for (; itBegin != in_rhs.end(); itBegin++)
 	{
@@ -182,7 +182,7 @@ MBASE_INLINE set<Key, Compare, Allocator>::set(set&& in_rhs) : mRootNode(in_rhs.
 }
 
 template<typename Key, typename Compare, typename Allocator>
-MBASE_INLINE set<Key, Compare, Allocator>::set(set&& in_rhs, const Allocator& in_alloc) {
+MBASE_INLINE set<Key, Compare, Allocator>::set(set&& in_rhs, [[maybe_unused]] const Allocator& in_alloc) {
 	mRootNode = in_rhs.mRootNode;
 	mSize = in_rhs.mSize;
 
@@ -191,7 +191,7 @@ MBASE_INLINE set<Key, Compare, Allocator>::set(set&& in_rhs, const Allocator& in
 }
 
 template<typename Key, typename Compare, typename Allocator>
-MBASE_INLINE set<Key, Compare, Allocator>::set(std::initializer_list<value_type> in_list, const Compare& in_comp, const Allocator& in_alloc) : mRootNode(nullptr), mSize(0) {
+MBASE_INLINE set<Key, Compare, Allocator>::set(std::initializer_list<value_type> in_list, [[maybe_unused]] const Compare& in_comp, [[maybe_unused]] const Allocator& in_alloc) : mRootNode(nullptr), mSize(0) {
 	insert(in_list.begin(), in_list.end());
 }
 
@@ -480,14 +480,14 @@ MBASE_INLINE std::pair<typename set<Key, Compare, Allocator>::iterator, bool> se
 }
 
 template<typename Key, typename Compare, typename Allocator>
-MBASE_INLINE typename set<Key, Compare, Allocator>::iterator set<Key, Compare, Allocator>::insert(const_iterator in_pos, const value_type& in_value) {
+MBASE_INLINE typename set<Key, Compare, Allocator>::iterator set<Key, Compare, Allocator>::insert([[maybe_unused]] const_iterator in_pos, const value_type& in_value) {
 	// SELF-NOTE: IMPLEMENTATION IS INCOMPLETE, MAKE SURE TO COME BACK HERE
 	// IT DOES NORMAL INSERTION AT THIS POINT
 	return insert(in_value).first;
 }
 
 template<typename Key, typename Compare, typename Allocator>
-MBASE_INLINE typename set<Key, Compare, Allocator>::iterator set<Key, Compare, Allocator>::insert(const_iterator in_pos, value_type&& in_value) {
+MBASE_INLINE typename set<Key, Compare, Allocator>::iterator set<Key, Compare, Allocator>::insert([[maybe_unused]] const_iterator in_pos, value_type&& in_value) {
 	// SELF-NOTE: IMPLEMENTATION IS INCOMPLETE, MAKE SURE TO COME BACK HERE
 	// IT DOES NORMAL INSERTION AT THIS POINT
 	return insert(std::move(in_value)).first;

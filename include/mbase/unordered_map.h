@@ -126,7 +126,7 @@ public:
 	/* ===== NON-MODIFIER METHODS END ===== */
 
 	/* ===== NON-MEMBER FUNCTIONS BEGIN ===== */
-	MBASE_INLINE_EXPR static mbase::unordered_map<Key, Value, Hash, KeyEqual, Allocator> deserialize(IBYTEBUFFER in_src, SIZE_T in_length, SIZE_T& bytes_processed)
+	MBASE_INLINE static mbase::unordered_map<Key, Value, Hash, KeyEqual, Allocator> deserialize(IBYTEBUFFER in_src, SIZE_T in_length, SIZE_T& bytes_processed)
 	{
 		mbase::unordered_map<Key, Value, Hash, KeyEqual, Allocator> newMap;
 		if (in_length < sizeof(size_type) * 2)
@@ -166,24 +166,24 @@ MBASE_INLINE_EXPR unordered_map<Key, Value, Hash, KeyEqual, Allocator>::unordere
 }
 
 template<typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator>
-MBASE_INLINE_EXPR unordered_map<Key, Value, Hash, KeyEqual, Allocator>::unordered_map(size_type in_bucket_count, const Hash& in_hash, const key_equal& in_equal, const Allocator& in_alloc) noexcept : mBucketCount(in_bucket_count), mHash(in_hash), mKeyEqual(in_equal), mBucket(mBucketCount, bucket_node_type()), mSize(0)
+MBASE_INLINE_EXPR unordered_map<Key, Value, Hash, KeyEqual, Allocator>::unordered_map(size_type in_bucket_count, const Hash& in_hash, const key_equal& in_equal, [[maybe_unused]] const Allocator& in_alloc) noexcept : mBucketCount(in_bucket_count), mHash(in_hash), mKeyEqual(in_equal), mBucket(mBucketCount, bucket_node_type()), mSize(0)
 {
 }
 
 template<typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator>
-MBASE_INLINE_EXPR unordered_map<Key, Value, Hash, KeyEqual, Allocator>::unordered_map(size_type in_bucket_count, const Allocator& in_alloc) noexcept : mBucketCount(in_bucket_count), mHash(), mKeyEqual(), mBucket(mBucketCount), mSize(0)
-{
-
-}
-
-template<typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator>
-MBASE_INLINE_EXPR unordered_map<Key, Value, Hash, KeyEqual, Allocator>::unordered_map(size_type in_bucket_count, const Hash& in_hash, const Allocator& in_alloc) noexcept : mBucketCount(in_bucket_count), mHash(in_hash), mKeyEqual(), mBucket(mBucketCount), mSize(0)
+MBASE_INLINE_EXPR unordered_map<Key, Value, Hash, KeyEqual, Allocator>::unordered_map(size_type in_bucket_count, [[maybe_unused]] const Allocator& in_alloc) noexcept : mBucketCount(in_bucket_count), mHash(), mKeyEqual(), mBucket(mBucketCount), mSize(0)
 {
 
 }
 
 template<typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator>
-unordered_map<Key, Value, Hash, KeyEqual, Allocator>::unordered_map(const Allocator& in_alloc) noexcept : mBucketCount(gUmapDefaultBucketCount), mHash(), mKeyEqual(), mBucket(mBucketCount), mSize(0)
+MBASE_INLINE_EXPR unordered_map<Key, Value, Hash, KeyEqual, Allocator>::unordered_map(size_type in_bucket_count, const Hash& in_hash, [[maybe_unused]] const Allocator& in_alloc) noexcept : mBucketCount(in_bucket_count), mHash(in_hash), mKeyEqual(), mBucket(mBucketCount), mSize(0)
+{
+
+}
+
+template<typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator>
+unordered_map<Key, Value, Hash, KeyEqual, Allocator>::unordered_map([[maybe_unused]] const Allocator& in_alloc) noexcept : mBucketCount(gUmapDefaultBucketCount), mHash(), mKeyEqual(), mBucket(mBucketCount), mSize(0)
 {
 
 }
@@ -194,7 +194,7 @@ MBASE_INLINE_EXPR unordered_map<Key, Value, Hash, KeyEqual, Allocator>::unordere
 }
 
 template<typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator>
-MBASE_INLINE_EXPR unordered_map<Key, Value, Hash, KeyEqual, Allocator>::unordered_map(const unordered_map& in_rhs, const Allocator& in_alloc) noexcept : mBucketCount(in_rhs.mBucketCount), mHash(in_rhs.mHash), mKeyEqual(in_rhs.mKeyEqual), mBucket(in_rhs.mBucket), mSize(0)
+MBASE_INLINE_EXPR unordered_map<Key, Value, Hash, KeyEqual, Allocator>::unordered_map(const unordered_map& in_rhs, [[maybe_unused]] const Allocator& in_alloc) noexcept : mBucketCount(in_rhs.mBucketCount), mHash(in_rhs.mHash), mKeyEqual(in_rhs.mKeyEqual), mBucket(in_rhs.mBucket), mSize(0)
 {
 }
 
@@ -205,33 +205,48 @@ MBASE_INLINE_EXPR unordered_map<Key, Value, Hash, KeyEqual, Allocator>::unordere
 }
 
 template<typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator>
-MBASE_INLINE_EXPR unordered_map<Key, Value, Hash, KeyEqual, Allocator>::unordered_map(unordered_map&& in_rhs, const Allocator& in_alloc) noexcept : mBucketCount(in_rhs.mBucketCount), mHash(in_rhs.mHash), mKeyEqual(in_rhs.mKeyEqual), mBucket(std::move(in_rhs.mBucket)), mSize(0)
+MBASE_INLINE_EXPR unordered_map<Key, Value, Hash, KeyEqual, Allocator>::unordered_map(unordered_map&& in_rhs, [[maybe_unused]] const Allocator& in_alloc) noexcept : mBucketCount(in_rhs.mBucketCount), mHash(in_rhs.mHash), mKeyEqual(in_rhs.mKeyEqual), mBucket(std::move(in_rhs.mBucket)), mSize(0)
 {
 
 }
 
 template<typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator>
-MBASE_INLINE_EXPR unordered_map<Key, Value, Hash, KeyEqual, Allocator>::unordered_map(std::initializer_list<value_type> in_pairs, size_type in_bucket_count, const Hash& in_hash, const key_equal& in_equal, const Allocator& in_alloc) noexcept : mBucketCount(in_bucket_count), mHash(in_hash), mKeyEqual(in_equal), mSize(0)
+MBASE_INLINE_EXPR unordered_map<Key, Value, Hash, KeyEqual, Allocator>::unordered_map(std::initializer_list<value_type> in_pairs, size_type in_bucket_count, const Hash& in_hash, const key_equal& in_equal, [[maybe_unused]] const Allocator& in_alloc) noexcept : mBucketCount(in_bucket_count), mHash(in_hash), mKeyEqual(in_equal), mSize(0)
 {
-
+	const value_type* currentObj = in_pairs.begin();
+	while (currentObj != in_pairs.end())
+	{
+		insert(*currentObj);
+		currentObj++;
+	}
 }
 
 template<typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator>
-MBASE_INLINE_EXPR unordered_map<Key, Value, Hash, KeyEqual, Allocator>::unordered_map(std::initializer_list<value_type> in_pairs, size_type in_bucket_count, const Allocator& in_alloc) noexcept : mBucketCount(in_bucket_count), mBucket(mBucketCount), mSize(0)
+MBASE_INLINE_EXPR unordered_map<Key, Value, Hash, KeyEqual, Allocator>::unordered_map(std::initializer_list<value_type> in_pairs, size_type in_bucket_count, [[maybe_unused]] const Allocator& in_alloc) noexcept : mBucketCount(in_bucket_count), mBucket(mBucketCount), mSize(0)
 {
-
+	const value_type* currentObj = in_pairs.begin();
+	while (currentObj != in_pairs.end())
+	{
+		insert(*currentObj);
+		currentObj++;
+	}
 }
 
 template<typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator>
-MBASE_INLINE_EXPR unordered_map<Key, Value, Hash, KeyEqual, Allocator>::unordered_map(std::initializer_list<value_type> in_pairs, size_type in_bucket_count, const Hash& in_hash, const Allocator& in_alloc) noexcept : mBucketCount(in_bucket_count), mHash(in_hash), mKeyEqual(), mBucket(mBucketCount), mSize(0)
+MBASE_INLINE_EXPR unordered_map<Key, Value, Hash, KeyEqual, Allocator>::unordered_map(std::initializer_list<value_type> in_pairs, size_type in_bucket_count, const Hash& in_hash, [[maybe_unused]] const Allocator& in_alloc) noexcept : mBucketCount(in_bucket_count), mHash(in_hash), mKeyEqual(), mBucket(mBucketCount), mSize(0)
 {
-
+	const value_type* currentObj = in_pairs.begin();
+	while (currentObj != in_pairs.end())
+	{
+		insert(*currentObj);
+		currentObj++;
+	}
 }
 
 template<typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator>
 MBASE_INLINE unordered_map<Key, Value, Hash, KeyEqual, Allocator>::~unordered_map()
 {
-	//clear();
+	clear();
 }
 
 template<typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator>
@@ -263,6 +278,13 @@ MBASE_INLINE_EXPR unordered_map<Key, Value, Hash, KeyEqual, Allocator>& unordere
 template<typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator>
 MBASE_INLINE_EXPR unordered_map<Key, Value, Hash, KeyEqual, Allocator>& unordered_map<Key, Value, Hash, KeyEqual, Allocator>::operator=(std::initializer_list<value_type> in_pairs) noexcept
 {
+	clear();
+	const value_type* currentObj = in_pairs.begin();
+	while (currentObj != in_pairs.end())
+	{
+		insert(*currentObj);
+		currentObj++;
+	}
 	return *this;
 }
 
@@ -652,13 +674,13 @@ MBASE_INLINE_EXPR mbase::pair<typename unordered_map<Key, Value, Hash, KeyEqual,
 }
 
 template<typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator>
-MBASE_INLINE_EXPR typename unordered_map<Key, Value, Hash, KeyEqual, Allocator>::iterator unordered_map<Key, Value, Hash, KeyEqual, Allocator>::insert(const_iterator in_hint, const value_type& in_value) 
+MBASE_INLINE_EXPR typename unordered_map<Key, Value, Hash, KeyEqual, Allocator>::iterator unordered_map<Key, Value, Hash, KeyEqual, Allocator>::insert([[maybe_unused]] const_iterator in_hint, const value_type& in_value) 
 {
 	return insert(in_value);
 }
 
 template<typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator>
-MBASE_INLINE_EXPR typename unordered_map<Key, Value, Hash, KeyEqual, Allocator>::iterator unordered_map<Key, Value, Hash, KeyEqual, Allocator>::insert(const_iterator in_hint, value_type&& in_value) 
+MBASE_INLINE_EXPR typename unordered_map<Key, Value, Hash, KeyEqual, Allocator>::iterator unordered_map<Key, Value, Hash, KeyEqual, Allocator>::insert([[maybe_unused]] const_iterator in_hint, value_type&& in_value) 
 {
 	return insert(std::move(in_value));
 }

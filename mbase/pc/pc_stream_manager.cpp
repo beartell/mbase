@@ -35,11 +35,11 @@ bool PcStreamManager::initialize(U32 in_stream_count, U32 in_stream_size)
 		mStreamSize = gDefaultStreamSize;
 	}
 
-	mStreams = std::move(mbase::vector<deep_char_stream>(in_stream_count));
+	mStreams = mbase::vector<deep_char_stream>(in_stream_count);
 
 	for (U32 i = 0; i < mStreamCount; i++)
 	{
-		mStreams.emplace_back(std::move(deep_char_stream(mStreamSize)));
+		mStreams.emplace_back(deep_char_stream(mStreamSize));
 	}
 
 	for (U32 i = mStreamCount - 1; i > 0; i--)

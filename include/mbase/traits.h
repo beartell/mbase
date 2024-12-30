@@ -747,6 +747,8 @@ MBASE_INLINE pair<T1, T2> pair<T1, T2>::deserialize(IBYTEBUFFER in_src, SIZE_T i
     second_type st(std::move(mbase::deserialize<second_type>(cs.get_bufferc(), blockLength, tmpBytesProcessed)));
     bytesProcessed += tmpBytesProcessed;
 
+    bytes_processed = bytesProcessed;
+
     return { std::move(ft), std::move(st) };
 }
 

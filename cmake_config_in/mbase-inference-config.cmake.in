@@ -30,11 +30,10 @@ if(MBASE_INFERENCE_FOUND)
     list(APPEND MBASE_INFERENCE_LIBRARIES ${MBASE_PC_LIBRARIES})
     list(APPEND MBASE_INFERENCE_INCLUDE_DIRS ${LLAMA_INCLUDE_DIR})
 
-    add_library(mbase.inference INTERFACE)
-    target_link_libraries(mbase.inference INTERFACE ${MBASE_INFERENCE_LIBRARIES} llama)
-    target_include_directories(mbase.inference INTERFACE ${MBASE_INFERENCE_INCLUDE_DIRS} llama)
-    target_compile_definitions(mbase.inference INTERFACE llama)
+    add_library(mbase-inference INTERFACE)
+    target_link_libraries(mbase-inference INTERFACE ${MBASE_INFERENCE_LIBRARIES} llama)
+    target_include_directories(mbase-inference INTERFACE ${MBASE_INFERENCE_INCLUDE_DIRS} llama)
+    target_compile_definitions(mbase-inference INTERFACE llama)
 
-    set_property(TARGET mbase.inference POSITION_INDEPENDENT_CODE ON)
-
+    set_property(TARGET mbase-inference PROPERTY POSITION_INDEPENDENT_CODE ON)
 endif()

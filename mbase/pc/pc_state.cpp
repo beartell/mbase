@@ -452,7 +452,7 @@ GENERIC PcState::update()
 				size_type serializedStructSize = It->second.get_serialized_size();
 				if (serializedStructSize)
 				{
-					dcs = std::move(deep_char_stream(serializedStructSize));
+					dcs = deep_char_stream(serializedStructSize);
 					It->second.serialize(dcs);
 					iof.write_data(dcs.get_buffer(), dcs.buffer_length());
 				}

@@ -438,7 +438,7 @@ int main(int argc, char** argv)
     for(BenchmarkProcessor* tmpProc : processorsList)
     {
         InfProcT2TDiagnostics& t2tDiag = tmpProc->get_diagnostics();
-        printf("|%lld\t\t| %.2f |\t %.2f \t|\n", t2tDiag.loadTimeInMilliseconds, t2tDiag.ppTokensPerSecond, t2tDiag.evalTokensPerSecond);
+        printf("|%" PRId64 "\t\t| %.2f |\t %.2f \t|\n", t2tDiag.loadTimeInMilliseconds, t2tDiag.ppTokensPerSecond, t2tDiag.evalTokensPerSecond);
         tmpProc->release_inference_client_stacked();
     }
 

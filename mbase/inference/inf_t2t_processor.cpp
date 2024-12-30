@@ -180,7 +180,7 @@ InfProcessorTextToText::flags InfProcessorTextToText::token_to_description(const
 		// GO BACK HERE LATER
 	}
 
-	out_description.mTokenString = std::move(mbase::string(tokenString, tokenLength));
+	out_description.mTokenString = mbase::string(tokenString, tokenLength);
 	
 	if(t2tModel->is_token_control(in_token) == InfModelTextToText::flags::INF_MODEL_SUCCESS)
 	{
@@ -202,10 +202,10 @@ InfProcessorTextToText::flags InfProcessorTextToText::tokens_to_description_vect
 		I32 tokenLength = llama_token_to_piece(t2tModel->get_raw_model(), cvTokenRef, tokenString, 64, false, true);
 		if(t2tModel->is_token_control(cvTokenRef) == InfModelTextToText::flags::INF_MODEL_SUCCESS)
 		{
-			out_descriptions.push_back({std::move(mbase::string(tokenString, tokenLength)), true});
+			out_descriptions.push_back({mbase::string(tokenString, tokenLength), true});
 			continue;
 		}
-		out_descriptions.push_back({std::move(mbase::string(tokenString, tokenLength)), false});
+		out_descriptions.push_back({mbase::string(tokenString, tokenLength), false});
 	}
 
 	return flags::INF_PROC_SUCCESS;

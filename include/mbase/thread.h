@@ -271,7 +271,7 @@ MBASE_INLINE thread_error thread<Func, Args...>::resume() noexcept {
 }
 
 template<typename Func, typename ...Args>
-MBASE_INLINE thread_error thread<Func, Args...>::exit(I32 in_exit_code) noexcept {
+MBASE_INLINE thread_error thread<Func, Args...>::exit([[maybe_unused]] I32 in_exit_code) noexcept {
 	if (mThreadHandle)
 	{
 #ifdef MBASE_PLATFORM_WINDOWS

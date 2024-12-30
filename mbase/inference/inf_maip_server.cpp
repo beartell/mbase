@@ -229,7 +229,7 @@ GENERIC InfMaipDefaultServer::on_execution_request(const maip_peer_request& out_
 	mbase::string sessionToken = out_request.get_kval<mbase::string>("STOK");
 	U64 contextId = out_request.get_kval<U64>("CTXID");
 	mbase::maip_packet_builder maipPacketBuilder;
-	mbase::InfProgram::maip_err_code maipErr;
+	mbase::InfProgram::maip_err_code maipErr = mbase::InfProgram::maip_err_code::EXEC_SUCCESS;
 
 	// All operations must have a session token associated with it
 

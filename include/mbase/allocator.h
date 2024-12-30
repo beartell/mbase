@@ -50,7 +50,7 @@ public:
 		return static_cast<pointer>(::operator new(sizeof(value_type) * in_amount));
 	}
 
-	MBASE_ND(MBASE_ALLOCATE_WARNING) static MBASE_INLINE_EXPR T* allocate(size_type in_amount, bool in_zero_memory) noexcept 
+	MBASE_ND(MBASE_ALLOCATE_WARNING) static MBASE_INLINE_EXPR T* allocate(size_type in_amount, [[maybe_unused]] bool in_zero_memory) noexcept 
 	{
 		if (in_amount <= 0)
 		{

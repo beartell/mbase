@@ -55,8 +55,12 @@ enum class FS_ERROR : I32{
 	FS_UNKNOWN_ERROR = MBASE_FS_FLAGS_MAX
 };
 
-MBASE_GCC_WARN_PUSH();
-MBASE_GCC_WARN_IGNORE("-Wmissing-field-initializers");
+#ifdef MBASE_PLATFORM_UNIX
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
+
+#endif
 
 MBASE_INLINE FS_ERROR err_convert(I32 in_err) noexcept;
 MBASE_INLINE FS_ERROR create_directory(const mbase::string& in_path) noexcept;
@@ -101,7 +105,7 @@ MBASE_INLINE GENERIC get_directory(const mbase::wstring& in_path, ContainerType&
 			{
 				continue;
 			}
-			ffi.fileName = std::move(mbase::from_utf8(fileName));
+			ffi.fileName = mbase::from_utf8(fileName);
 
 			if(!stat(dir->d_name, &st))
 			{
@@ -148,7 +152,7 @@ MBASE_INLINE GENERIC get_directory(const mbase::string& in_path, ContainerType& 
 			{
 				continue;
 			}
-			ffi.fileName = std::move(mbase::from_utf8(fileName));
+			ffi.fileName = mbase::from_utf8(fileName);
 
 			if (!stat(dir->d_name, &st))
 			{
@@ -296,7 +300,10 @@ MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE mbase::wstring get_temp_file(const mb
 #endif
 }
 
-MBASE_GCC_WARN_POP();
+#ifdef MBASE_PLATFORM_UNIX
+#pragma GCC diagnostic pop
+#endif
+
 
 MBASE_STD_END
 
