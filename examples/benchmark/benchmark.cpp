@@ -120,7 +120,7 @@ public:
     {
     }
     
-    GENERIC on_batch_processed(InfProcessorTextToText* out_processor, [[maybe_unused]] const U32& out_proc_batch_length) override
+    GENERIC on_batch_processed(InfProcessorTextToText* out_processor, [[maybe_unused]] const U32& out_proc_batch_length, [[maybe_unused]] const bool& out_is_kv_locked) override
     {
         BenchmarkProcessor* hostProcessor = static_cast<BenchmarkProcessor*>(out_processor);
         mbase::decode_behavior_description dbd;

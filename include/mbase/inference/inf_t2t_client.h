@@ -44,7 +44,7 @@ public:
 	/* ===== STATE-MODIFIER METHODS END ===== */
 
 	/* ===== INTERFACE METHODS BEGIN ===== */
-	virtual GENERIC on_batch_processed(InfProcessorTextToText* out_processor, const U32& out_proc_batch_length) = 0;
+	virtual GENERIC on_batch_processed(InfProcessorTextToText* out_processor, const U32& out_proc_batch_length, const bool& out_is_kv_locked) = 0;
 	virtual GENERIC on_write(InfProcessorTextToText* out_processor, const inf_text_token_vector& out_token, bool out_is_finish) = 0;
 	virtual GENERIC on_finish(InfProcessorTextToText* out_processor, size_type out_total_token_size, InfProcessorTextToText::finish_state out_finish_state) = 0;
 	/* ===== INTERFACE METHODS END ===== */

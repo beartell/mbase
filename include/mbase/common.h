@@ -64,17 +64,11 @@
 	#define MBASE_API
 #endif // MBASE_SHARED
 
-#ifndef MBASE_BUILD
-	#if __cplusplus < 201703L
-		#error Invalid C++ version. MBASE require at least C++17.
-	#endif
-#endif
-
-#if __cplusplus == 201703L
+#if ((defined(_MSVC_LANG) && _MSVC_LANG >= 201703L) || __cplusplus >= 201703L)
 	#define MBASE_CPP_VERSION 17
-#elif __cplusplus == 202002L
+#elif ((defined(_MSVC_LANG) && _MSVC_LANG >= 202002L) || __cplusplus >= 202002L)
 	#define MBASE_CPP_VERSION 20
-#elif __cplusplus == 202302L
+#elif ((defined(_MSVC_LANG) && _MSVC_LANG >= 202302L) || __cplusplus >= 202302L)
 	#define MBASE_CPP_VERSION 23
 #endif
 

@@ -135,7 +135,7 @@ public:
     }
     GENERIC on_register(InfProcessorBase* out_processor) override{}
     GENERIC on_unregister(InfProcessorBase* out_processor) override{}
-    GENERIC on_batch_processed(InfProcessorTextToText* out_processor, const U32& out_proc_batch_length) override
+    GENERIC on_batch_processed(InfProcessorTextToText* out_processor, const U32& out_proc_batch_length, [[maybe_unused]] const bool& out_is_kv_locked) override
     {
 
     }

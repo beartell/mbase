@@ -160,7 +160,12 @@ public:
         this->get_message_array(messageArray.data(), messageArray.size(), contextLines);
 
         mbase::inf_text_token_vector tokenVector;
-        in_processor->tokenize_input(contextLines.data(), contextLines.size(), tokenVector);
+        context_line ctxLine;
+        ctxLine.mRole = mbase::context_role::USER;
+        ctxLine.mMessage = userPrompt;
+        //in_processor->set_manual_caching(true);
+        //in_processor->tokenize_input(contextLines.data(), contextLines.size(), tokenVector);
+        in_processor->tokenize_input(&ctxLine, 1, tokenVector);
         if(in_processor->execute_input(tokenVector) == ConversationProcessor::flags::INF_PROC_ERR_INPUT_EXCEED_TOKEN_LIMIT)
         {   
         }
@@ -169,19 +174,38 @@ public:
     GENERIC on_register(InfProcessorBase* out_processor) override
     {
         ConversationProcessor* hostProcessor = static_cast<ConversationProcessor*>(out_processor);
+        hostProcessor->set_manual_caching(true, ConversationProcessor::cache_mode::KV_LOCK_MODE);
         printf("System >> %s\n", mSystemPromptString.c_str());
-        start_conversation(hostProcessor);
+        //start_conversation(hostProcessor);
+        mbase::context_line ctxLine;
+        ctxLine.mRole = mbase::context_role::SYSTEM;
+        ctxLine.mMessage = mSystemPromptString;
+
+        inf_text_token_vector tokenVector;
+
+        hostProcessor->tokenize_input(&ctxLine, 1, tokenVector);
+        hostProcessor->execute_input(tokenVector, true);
     }
 
     GENERIC on_unregister([[maybe_unused]] InfProcessorBase* out_processor) override{}
     
-    GENERIC on_batch_processed(InfProcessorTextToText* out_processor, [[maybe_unused]] const U32& out_proc_batch_length) override
+    GENERIC on_batch_processed(InfProcessorTextToText* out_processor, [[maybe_unused]] const U32& out_proc_batch_length, [[maybe_unused]] const bool& out_is_kv_locked) override
     {
         ConversationProcessor* hostProcessor = static_cast<ConversationProcessor*>(out_processor);
-        mbase::decode_behavior_description dbd;
-        dbd.mTokenAtMost = 1;
-        dbd.mHaltOnWrite = false;
-        hostProcessor->next(dbd);
+        if(out_is_kv_locked)
+        {
+            system("cls");
+            hostProcessor->set_manual_caching(true, ConversationProcessor::cache_mode::AUTO_LOGIT_STORE_MODE);
+            start_conversation(hostProcessor);
+        }
+
+        else
+        {
+            mbase::decode_behavior_description dbd;
+            dbd.mTokenAtMost = 1;
+            dbd.mHaltOnWrite = false;
+            hostProcessor->next(dbd);
+        }
     }
 
     GENERIC on_write(InfProcessorTextToText* out_processor, [[maybe_unused]] const inf_text_token_vector& out_token, bool out_is_finish) override
@@ -225,6 +249,11 @@ private:
 
 int main(int argc, char** argv)
 {
+    if (std::setlocale(LC_ALL, "en_US.UTF-8") == nullptr) 
+    {
+        return 1;
+    }
+
     if(argc < 2)
     {
         printf("ERR: Model file is not supplied\n");

@@ -76,7 +76,7 @@ GENERIC InfMaipPeerTextToText::on_unregister(InfProcessorBase* out_processor)
     delete out_processor;
 }
 
-GENERIC InfMaipPeerTextToText::on_batch_processed([[maybe_unused]] InfProcessorTextToText* out_processor, [[maybe_unused]] const U32& out_proc_batch_length)
+GENERIC InfMaipPeerTextToText::on_batch_processed([[maybe_unused]] InfProcessorTextToText* out_processor, [[maybe_unused]] const U32& out_proc_batch_length, [[maybe_unused]] const bool& out_is_kv_locked)
 {
 
 }

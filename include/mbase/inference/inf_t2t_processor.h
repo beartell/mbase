@@ -27,17 +27,27 @@ public:
 		INVALID_MODEL_TYPE
 	};
 
+	enum class cache_mode {
+		AUTO_LOGIT_STORE_MODE,
+		KV_LOCK_MODE
+	};
+
 	InfProcessorTextToText();
 	~InfProcessorTextToText();
 
 	InfProcT2TDiagnostics& get_diagnostics();
 	last_fail_code get_last_fail_code() const;
+	cache_mode get_manual_cache_mode() const;
+	bool is_update_required() const;
 	bool is_init_failed() const;
 	bool is_available() const;
+	bool is_manual_caching() const;
 	bool signal_state_input_process() const;
 	bool signal_state_decode_process() const;
+	bool signal_state_kv_locked_process() const;
 	bool signal_input_process() const;
 	bool signal_decode_process() const;
+	bool signal_kv_locked_process() const;
 	#ifdef MBASE_INTERNAL_API
 		inf_text_token_candidates& get_token_candidates();
 	#endif // MBASE_INTERNAL_API
@@ -51,9 +61,9 @@ public:
 	flags tokens_to_description_vector(const mbase::vector<inf_text_token>& in_tokens, mbase::vector<inf_token_description>& out_descriptions);
 	flags tokenize_input(CBYTEBUFFER in_data, size_type in_size, inf_text_token_vector& out_tokens);
 	flags tokenize_input(context_line* in_lines, size_type in_count, inf_text_token_vector& out_tokens, bool in_append_assistant_token = true);
-	flags execute_input(const inf_text_token_vector& in_tokens, bool in_abandon = false);
-	flags execute_input(inf_text_token* in_tokens, size_type in_size, bool in_abandon = false);
-	flags execute_input_sync(const inf_text_token_vector& in_tokens, bool in_abandon = false);
+	flags execute_input(const inf_text_token_vector& in_tokens, bool in_kv_locked = false);
+	flags execute_input(inf_text_token* in_tokens, size_type in_size, bool in_kv_locked = false);
+	flags execute_input_sync(const inf_text_token_vector& in_tokens, bool in_kv_locked = false);
 	flags next(const decode_behavior_description& in_description);
 	flags next_sync(const decode_behavior_description& in_description);
 	flags set_inference_client(InfClientBase* in_client) override;
@@ -81,6 +91,8 @@ public:
 	flags destroy_sync() override;
 	GENERIC clear_token_candidates();
 	GENERIC clear_samplers();
+	GENERIC clear_kv_cache();
+	GENERIC set_manual_caching(bool in_manual_cache, cache_mode in_cache_mode = cache_mode::AUTO_LOGIT_STORE_MODE);
 	GENERIC update() override;
 	GENERIC update_t() override;
 
@@ -91,6 +103,8 @@ public:
 	virtual GENERIC on_destroy() = 0;
 
 private:
+	GENERIC _decode_cached_logits();
+	GENERIC _decode_kv_locked_input();
 	GENERIC _decode_input();
 	GENERIC _decode_next();
 	GENERIC _initialize_context();
@@ -103,6 +117,7 @@ private:
 	inf_text_token_candidates mPresetCandidates;
 	inf_text_token_vector mTokenizedInput;
 	inf_text_token_vector mGeneratedTokenVector;
+	inf_text_token_vector mLogitTokenVector;
 	inf_sampling_set mSamplerDescriptions;
 	lora_adapter_map mLoraMap;
 	U32 mContextCursor; // -----> if it exceeds the context size, stop generating
@@ -110,13 +125,17 @@ private:
 	U32 mThreadCount;
 	U32 mBatchProcessThreadCount;
 	U32 mProcessedBatchLength;
+	U32 mLogitStartIndex;
 	processor_signal mInputSignal;
 	processor_signal mDecodeSignal;
+	processor_signal mInputKvLockedSignal;
 	finish_state mFinishState;
 	last_fail_code mLastFailCode;	
 	bool mFlashAttention;
 	bool mIsInitializeFailed;
+	bool mIsManualCaching;
 	decode_behavior_description mDecodeBehavior;
+	cache_mode mCacheMode;
 };
 
 MBASE_END

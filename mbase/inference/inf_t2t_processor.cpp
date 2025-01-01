@@ -38,10 +38,13 @@ InfProcessorTextToText::InfProcessorTextToText():
 	mThreadCount(0),
 	mBatchProcessThreadCount(0),
 	mProcessedBatchLength(0),
+	mLogitStartIndex(0),
 	mFinishState(finish_state::FINISHED),
 	mLastFailCode(last_fail_code::MODEL_NOT_INITIALIZED),
 	mFlashAttention(false),
-	mIsInitializeFailed(false)
+	mIsInitializeFailed(false),
+	mIsManualCaching(false),
+	mCacheMode(cache_mode::AUTO_LOGIT_STORE_MODE)
 {
 	mModelCategory = inf_model_category::TEXT_TO_TEXT;
 }
@@ -72,6 +75,20 @@ InfProcessorTextToText::last_fail_code InfProcessorTextToText::get_last_fail_cod
 	return mLastFailCode;
 }
 
+InfProcessorTextToText::cache_mode InfProcessorTextToText::get_manual_cache_mode() const
+{
+	return mCacheMode;
+}
+
+bool InfProcessorTextToText::is_update_required() const
+{
+	if(signal_state_initializing() || signal_state_destroying() || signal_state_input_process() || signal_state_decode_process() || signal_state_kv_locked_process())
+	{
+		return true;
+	}
+	return false;
+}
+
 bool InfProcessorTextToText::is_init_failed() const
 {
 	return mIsInitializeFailed;
@@ -79,12 +96,17 @@ bool InfProcessorTextToText::is_init_failed() const
 
 bool InfProcessorTextToText::is_available() const
 {
-	if (signal_input_process() || signal_decode_process() || signal_state_decode_process())
+	if (signal_initializing() || signal_destroying() || signal_input_process() || signal_decode_process() || signal_kv_locked_process())
 	{
 		return false;
 	}
 
 	return true;
+}
+
+bool InfProcessorTextToText::is_manual_caching() const
+{
+	return mIsManualCaching;
 }
 
 bool InfProcessorTextToText::signal_state_input_process() const
@@ -97,6 +119,11 @@ bool InfProcessorTextToText::signal_state_decode_process() const
 	return mDecodeSignal.get_signal_state();
 }
 
+bool InfProcessorTextToText::signal_state_kv_locked_process() const
+{
+	return mInputKvLockedSignal.get_signal_state();
+}
+
 bool InfProcessorTextToText::signal_input_process() const
 {
 	return mInputSignal.get_signal();
@@ -105,6 +132,11 @@ bool InfProcessorTextToText::signal_input_process() const
 bool InfProcessorTextToText::signal_decode_process() const
 {
 	return mDecodeSignal.get_signal();
+}
+
+bool InfProcessorTextToText::signal_kv_locked_process() const
+{
+	return mInputKvLockedSignal.get_signal();
 }
 
 const U32& InfProcessorTextToText::get_batch_size()
@@ -163,7 +195,12 @@ InfProcessorTextToText::flags InfProcessorTextToText::get_processor_status() con
 		return flags::INF_PROC_INFO_DECODING;
 	}
 
-	return flags::INF_PROC_INFO_NEED_UPDATE;
+	if(is_update_required())
+	{
+		return flags::INF_PROC_INFO_NEED_UPDATE;
+	}
+
+	return flags::INF_PROC_SUCCESS;
 }
 
 InfProcessorTextToText::flags InfProcessorTextToText::token_to_description(const inf_text_token& in_token, inf_token_description& out_description)
@@ -295,7 +332,7 @@ InfProcessorTextToText::flags InfProcessorTextToText::tokenize_input(context_lin
 	return tokenize_input(totalMessage.data(), totalMessage.size(), out_tokens);
 }
 
-InfProcessorTextToText::flags InfProcessorTextToText::execute_input(const inf_text_token_vector& in_tokens, bool in_abandon)
+InfProcessorTextToText::flags InfProcessorTextToText::execute_input(const inf_text_token_vector& in_tokens, bool in_kv_locked)
 {
 	MBASE_INF_T2T_PROC_RETURN_UNREGISTERED;
 
@@ -314,29 +351,36 @@ InfProcessorTextToText::flags InfProcessorTextToText::execute_input(const inf_te
 		return flags::INF_PROC_INFO_HALTED;
 	}
 
-	if(!in_abandon)
+	if(!is_available())
 	{
-		if(!is_available())
+		return flags::INF_PROC_ERR_ALREADY_PROCESSING;
+	}
+
+	stop_processor(); // Stop the processor if it is not stopped already
+	mTokenizedInput = in_tokens;
+	if(in_kv_locked)
+	{
+		if(is_manual_caching() && get_manual_cache_mode() == cache_mode::KV_LOCK_MODE)
 		{
-			return flags::INF_PROC_ERR_ALREADY_PROCESSING;
+			mInputKvLockedSignal.set_signal();
+		}
+
+		else
+		{
+			return flags::INF_PROC_ERR_OPERATION_NOT_SUPPORTED;
 		}
 	}
 
 	else
 	{
-		mInputSignal.reset_signal_with_state();
-		mDecodeSignal.reset_signal_with_state();
-		stop_processor();
+		mInputSignal.set_signal();
 	}
-	stop_processor(); // Stop the processor if it is not stopped already
-	mTokenizedInput = in_tokens;
-	mInputSignal.set_signal();
 	start_processor();
 
 	return flags::INF_PROC_SUCCESS;
 }
 
-InfProcessorTextToText::flags InfProcessorTextToText::execute_input(inf_text_token* in_tokens, size_type in_size, bool in_abandon)
+InfProcessorTextToText::flags InfProcessorTextToText::execute_input(inf_text_token* in_tokens, size_type in_size, bool in_kv_locked)
 {
 	inf_text_token_vector tokenVector;
 	for(size_type i = 0; i < in_size; i++)
@@ -344,13 +388,13 @@ InfProcessorTextToText::flags InfProcessorTextToText::execute_input(inf_text_tok
 		tokenVector.push_back(in_tokens[i]);
 	}
 
-	return execute_input(tokenVector, in_abandon);
+	return execute_input(tokenVector, in_kv_locked);
 }
 
-InfProcessorTextToText::flags InfProcessorTextToText::execute_input_sync(const inf_text_token_vector& in_tokens, bool in_abandon)
+InfProcessorTextToText::flags InfProcessorTextToText::execute_input_sync(const inf_text_token_vector& in_tokens, bool in_kv_locked)
 {
 	MBASE_INF_T2T_PROC_RETURN_UNREGISTERED;
-	flags outResult = execute_input(in_tokens, in_abandon);
+	flags outResult = execute_input(in_tokens, in_kv_locked);
 	if(outResult == flags::INF_PROC_SUCCESS || outResult == flags::INF_PROC_ERR_ALREADY_PROCESSING)
 	{
 		while(signal_input_process())
@@ -551,9 +595,22 @@ GENERIC InfProcessorTextToText::clear_samplers()
 	}
 }
 
+GENERIC InfProcessorTextToText::clear_kv_cache()
+{
+	mLogitStartIndex = 0;
+	mLogitTokenVector.clear();
+	llama_kv_cache_clear(mModelContext);
+}
+
+GENERIC InfProcessorTextToText::set_manual_caching(bool in_manual_cache, cache_mode in_cache_mode)
+{
+	mIsManualCaching = in_manual_cache;
+	mCacheMode = in_cache_mode;
+}
+
 GENERIC InfProcessorTextToText::on_initializing()
 {
-
+	
 }
 
 GENERIC InfProcessorTextToText::on_initialize_fail([[maybe_unused]] last_fail_code out_code)
@@ -566,9 +623,76 @@ GENERIC InfProcessorTextToText::on_destroying()
 
 }
 
+GENERIC InfProcessorTextToText::_decode_cached_logits()
+{
+	if(!mLogitStartIndex)
+	{
+		return;
+	}
+
+	llama_kv_cache_seq_rm(mModelContext, 0, mLogitStartIndex, mContextCursor - 1);
+	llama_batch tempBatch = llama_batch_init(mBatchSize, 0, 1);
+	U32 tmpBatchCursor = 0;
+	for(size_type i = 0; i < mLogitTokenVector.size(); i++)
+	{
+		++tmpBatchCursor;
+		inf_common_batch_add(tempBatch, mLogitTokenVector[i], mLogitStartIndex, {0}, false);
+		if(tmpBatchCursor == mBatchSize)
+		{
+			llama_decode(mModelContext, tempBatch);
+			tempBatch.n_tokens = 0;
+			tmpBatchCursor = 0;
+		}
+		++mLogitStartIndex;
+	}
+
+	if(tmpBatchCursor)
+	{
+		llama_decode(mModelContext, tempBatch);
+	}
+
+	llama_batch_free(tempBatch);
+
+	mLogitTokenVector.clear();
+}
+
+GENERIC InfProcessorTextToText::_decode_kv_locked_input()
+{
+	_decode_cached_logits();
+	I32 totalPosition = mLogitStartIndex;
+	U32 tmpBatchCursor = 0;
+	llama_batch tempBatch = llama_batch_init(mBatchSize, 0, 1);
+	for(size_type i = 0; i < mTokenizedInput.size(); i++)
+	{
+		++tmpBatchCursor;
+		inf_common_batch_add(tempBatch, mTokenizedInput[i], totalPosition, {0}, false);
+		if(tmpBatchCursor == mBatchSize)
+		{
+			llama_decode(mModelContext, tempBatch);
+			tempBatch.n_tokens = 0;
+			tmpBatchCursor = 0;
+		}
+		++totalPosition;
+	}
+
+	if(tmpBatchCursor)
+	{
+		llama_decode(mModelContext, tempBatch);
+	}
+	mLogitStartIndex = llama_get_kv_cache_token_count(mModelContext);
+	mProcessedBatchLength = mLogitStartIndex;
+	llama_batch_free(tempBatch);
+	mInputKvLockedSignal.set_signal_finished();
+}
+
 GENERIC InfProcessorTextToText::_decode_input()
 {
-	llama_kv_cache_clear(mModelContext);
+	I32 totalPosition = mLogitStartIndex;
+	if(!is_manual_caching())
+	{
+		clear_kv_cache();
+		totalPosition = 0;
+	}
 	llama_sampler_reset(mSamplerChain);
 	std::chrono::high_resolution_clock::time_point beginTime;
 	std::chrono::high_resolution_clock::time_point endTime;
@@ -579,7 +703,7 @@ GENERIC InfProcessorTextToText::_decode_input()
 	for(size_type i = 0; i < mTokenizedInput.size() - 1; i++)
 	{
 		++tmpBatchCursor;
-		inf_common_batch_add(tempBatch, mTokenizedInput[i], static_cast<I32>(i), {0}, false);
+		inf_common_batch_add(tempBatch, mTokenizedInput[i], totalPosition, {0}, false);
 		if(tmpBatchCursor == mBatchSize)
 		{
 			beginTime = std::chrono::high_resolution_clock::now();
@@ -589,13 +713,21 @@ GENERIC InfProcessorTextToText::_decode_input()
 			tempBatch.n_tokens = 0;
 			tmpBatchCursor = 0;
 		}
+		++totalPosition;
 	}
 
-	inf_common_batch_add(tempBatch, mTokenizedInput.back(), static_cast<I32>(mTokenizedInput.size() - 1), {0}, true);
+	inf_common_batch_add(tempBatch, mTokenizedInput.back(), totalPosition, {0}, true);
 	beginTime = std::chrono::high_resolution_clock::now();
 	llama_decode(mModelContext, tempBatch);
 	mContextCursor = llama_get_kv_cache_token_count(mModelContext);
 	mProcessedBatchLength = mContextCursor;
+	mLogitTokenVector.clear();
+	mLogitStartIndex = mContextCursor - 1;
+	if(is_manual_caching())
+	{
+		mLogitTokenVector.push_back(mTokenizedInput.back());
+	}
+
 	endTime = std::chrono::high_resolution_clock::now();
 	msPassed += std::chrono::duration_cast<std::chrono::milliseconds>(endTime - beginTime).count();
 	
@@ -615,31 +747,45 @@ GENERIC InfProcessorTextToText::_decode_next()
 	for(U32 i = 0; i < mDecodeBehavior.mTokenAtMost; i++)
 	{
 		std::chrono::high_resolution_clock::time_point beginTime = std::chrono::high_resolution_clock::now();
-		I32 modelVocab = 0;
 		InfModelTextToText* t2tModel = static_cast<InfModelTextToText*>(this->mTargetModel_md_model);
-		t2tModel->get_vocab_count(modelVocab);
 		
 		inf_text_token tmpGeneratedToken = llama_sampler_sample(mSamplerChain, mModelContext, -1);
 		
 		//llama_sampler_accept(mSamplerChain, tmpGeneratedToken);
 		mGeneratedTokenVector.push_back(tmpGeneratedToken);
+		if(is_manual_caching())
+		{
+			if(get_manual_cache_mode() == cache_mode::AUTO_LOGIT_STORE_MODE)
+			{
+				mLogitTokenVector.push_back(tmpGeneratedToken);
+			}
+		}
+		
 		clear_token_candidates();
 		if (llama_token_is_eog(t2tModel->get_raw_model(), tmpGeneratedToken))
 		{
 			// means end of generation
 			llama_sampler_reset(mSamplerChain);
-			llama_kv_cache_clear(mModelContext);
+			if(is_manual_caching())
+			{
+				if(get_manual_cache_mode() == cache_mode::AUTO_LOGIT_STORE_MODE)
+				{
+					_decode_cached_logits();
+				}
+			}
+			//llama_kv_cache_clear(mModelContext);
 			mFinishState = finish_state::FINISHED;
 			break;
 		}
-
+		
 		else
 		{
 			if (mContextCursor == mContextLength)
 			{
 				// means token limit is reached
+				
 				llama_sampler_reset(mSamplerChain);
-				llama_kv_cache_clear(mModelContext);
+				//llama_kv_cache_clear(mModelContext);
 				mFinishState = finish_state::TOKEN_LIMIT_REACHED;
 				break;
 			}
@@ -647,7 +793,7 @@ GENERIC InfProcessorTextToText::_decode_next()
 			else
 			{
 				tempBatch.n_tokens = 0;
-				inf_common_batch_add(tempBatch, tmpGeneratedToken, ++mContextCursor, {0}, true);
+				inf_common_batch_add(tempBatch, tmpGeneratedToken, mContextCursor++, {0}, true);
 				llama_decode(mModelContext, tempBatch); // Handle error here
 				totalGeneratedTokens++;
 				std::chrono::high_resolution_clock::time_point endTime = std::chrono::high_resolution_clock::now();
@@ -704,14 +850,6 @@ GENERIC InfProcessorTextToText::_initialize_context()
 	mDiagnostics.loadTimeInMilliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - beginTime).count();
 
 	mContextCursor = 0;
-		
-	I32 modelVocabCount = 0;
-	inf_text_token eotToken = 0;
-	inf_text_token nlToken = 0;
-	
-	t2tModel->get_vocab_count(modelVocabCount);
-	t2tModel->get_eot_token(eotToken);
-	t2tModel->get_lf_token(nlToken);
 	I32 seedValue = 1048204757;
 
 	mSamplerChain = llama_sampler_chain_init(llama_sampler_chain_default_params());
@@ -824,8 +962,10 @@ GENERIC InfProcessorTextToText::_destroy_context()
 	mFlashAttention = false;
 	mIsRunning = false;
 	mIsInitializeFailed = false;
+	mIsManualCaching = false;
 	mFinishState = finish_state::FINISHED;
 	mAssignedClient = NULL;
+	mCacheMode = cache_mode::AUTO_LOGIT_STORE_MODE;
 	mLastFailCode = last_fail_code::MODEL_NOT_INITIALIZED;
 
 	clear_samplers();
@@ -841,12 +981,14 @@ GENERIC InfProcessorTextToText::update()
 	{
 		return;
 	}
+
 	if(signal_state_destroying())
 	{
 		// Reset all signals on destruction
 		reset_base_signals();
 		mDecodeSignal.reset_signal_with_state();
 		mInputSignal.reset_signal_with_state();
+		mInputKvLockedSignal.reset_signal_with_state();
 		this->release_object_watcher();
 		on_destroy();
 	}
@@ -873,7 +1015,17 @@ GENERIC InfProcessorTextToText::update()
 		InfClientTextToText* t2tClient = static_cast<InfClientTextToText*>(get_assigned_client());
 		if(t2tClient)
 		{
-			t2tClient->on_batch_processed(this, mProcessedBatchLength);
+			t2tClient->on_batch_processed(this, mProcessedBatchLength, false);
+		}
+	}
+
+	if(signal_state_kv_locked_process())
+	{
+		mInputKvLockedSignal.reset_signal_state();
+		InfClientTextToText* t2tClient = static_cast<InfClientTextToText*>(get_assigned_client());
+		if(t2tClient)
+		{
+			t2tClient->on_batch_processed(this, mProcessedBatchLength, true);
 		}
 	}
 
@@ -918,6 +1070,11 @@ GENERIC InfProcessorTextToText::update_t()
 
 		if (is_running())
 		{
+			if(signal_kv_locked_process())
+			{
+				_decode_kv_locked_input();
+			}
+
 			if (signal_input_process())
 			{
 				_decode_input();
