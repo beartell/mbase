@@ -126,6 +126,7 @@ private:
 	U32 mBatchProcessThreadCount;
 	U32 mProcessedBatchLength;
 	U32 mLogitStartIndex;
+	U32 mPromptStartIndex;
 	processor_signal mInputSignal;
 	processor_signal mDecodeSignal;
 	processor_signal mInputKvLockedSignal;

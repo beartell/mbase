@@ -120,51 +120,18 @@ class ConversationClient : public InfClientTextToText {
 public:
     ConversationClient(const mbase::string& in_system_prompt)
     {
-        // Setting up system prompt on constructor
-        if(in_system_prompt.size())
-        {
-            mSystemPromptString = in_system_prompt;
-            this->add_message(in_system_prompt, mbase::context_role::SYSTEM, mSystemPromptId);
-        }
-    }
-
-    GENERIC add_assistant_message(const mbase::string& in_message)
-    {
-        U32 outMessageId = 0;
-        this->add_message(in_message, mbase::context_role::ASSISTANT, outMessageId);
-        mChatHistory.push_back(outMessageId);
-    }
-
-    GENERIC add_user_message(const mbase::string& in_message)
-    {
-        U32 outMessageId = 0;
-        this->add_message(in_message, mbase::context_role::USER, outMessageId);
-        mChatHistory.push_back(outMessageId);
+        mSystemPromptString = in_system_prompt;
     }
 
     GENERIC start_conversation(ConversationProcessor* in_processor)
     {
         printf("User >> ");
         mbase::string userPrompt = mbase::get_line();
-        if(userPrompt.size())
-        {
-            add_user_message(userPrompt);
-        }
-        mbase::vector<U32> messageArray(mChatHistory.begin(), mChatHistory.end());
-        mbase::vector<context_line> contextLines;
-        if(mSystemPromptId)
-        {
-            messageArray.insert(messageArray.begin(), mSystemPromptId);
-        }
-
-        this->get_message_array(messageArray.data(), messageArray.size(), contextLines);
 
         mbase::inf_text_token_vector tokenVector;
         context_line ctxLine;
         ctxLine.mRole = mbase::context_role::USER;
         ctxLine.mMessage = userPrompt;
-        //in_processor->set_manual_caching(true);
-        //in_processor->tokenize_input(contextLines.data(), contextLines.size(), tokenVector);
         in_processor->tokenize_input(&ctxLine, 1, tokenVector);
         if(in_processor->execute_input(tokenVector) == ConversationProcessor::flags::INF_PROC_ERR_INPUT_EXCEED_TOKEN_LIMIT)
         {   
@@ -175,14 +142,13 @@ public:
     {
         ConversationProcessor* hostProcessor = static_cast<ConversationProcessor*>(out_processor);
         hostProcessor->set_manual_caching(true, ConversationProcessor::cache_mode::KV_LOCK_MODE);
+        system("cls");
         printf("System >> %s\n", mSystemPromptString.c_str());
-        //start_conversation(hostProcessor);
         mbase::context_line ctxLine;
         ctxLine.mRole = mbase::context_role::SYSTEM;
         ctxLine.mMessage = mSystemPromptString;
 
         inf_text_token_vector tokenVector;
-
         hostProcessor->tokenize_input(&ctxLine, 1, tokenVector);
         hostProcessor->execute_input(tokenVector, true);
     }
@@ -194,7 +160,6 @@ public:
         ConversationProcessor* hostProcessor = static_cast<ConversationProcessor*>(out_processor);
         if(out_is_kv_locked)
         {
-            system("cls");
             hostProcessor->set_manual_caching(true, ConversationProcessor::cache_mode::AUTO_LOGIT_STORE_MODE);
             start_conversation(hostProcessor);
         }
@@ -225,7 +190,6 @@ public:
                     return;
                 }
             }
-            mGeneratedOutput += n.mTokenString;
             fflush(stdout);
             printf("%s", n.mTokenString.c_str());
         }
@@ -236,15 +200,10 @@ public:
     {
         printf("\n\n");
         ConversationProcessor* hostProcessor = static_cast<ConversationProcessor*>(out_processor);
-        add_assistant_message(mGeneratedOutput);
-        mGeneratedOutput.clear();
         start_conversation(hostProcessor);
     }
 private:
     mbase::string mSystemPromptString;
-    mbase::string mGeneratedOutput;
-    U32 mSystemPromptId = 0;
-    mbase::vector<U32> mChatHistory;
 };
 
 int main(int argc, char** argv)

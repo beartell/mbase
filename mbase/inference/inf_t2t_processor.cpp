@@ -39,6 +39,7 @@ InfProcessorTextToText::InfProcessorTextToText():
 	mBatchProcessThreadCount(0),
 	mProcessedBatchLength(0),
 	mLogitStartIndex(0),
+	mPromptStartIndex(0),
 	mFinishState(finish_state::FINISHED),
 	mLastFailCode(last_fail_code::MODEL_NOT_INITIALIZED),
 	mFlashAttention(false),
@@ -629,8 +630,22 @@ GENERIC InfProcessorTextToText::_decode_cached_logits()
 	{
 		return;
 	}
+	//printf("PROMPT START INDEX: %d\n", mPromptStartIndex);
+	//printf("KV CACHE SIZE: %d\n", llama_get_kv_cache_token_count(mModelContext));
 
-	llama_kv_cache_seq_rm(mModelContext, 0, mLogitStartIndex, mContextCursor - 1);
+	if(get_manual_cache_mode() == cache_mode::KV_LOCK_MODE)
+	{
+		llama_kv_cache_seq_rm(mModelContext, 0, mPromptStartIndex, -1);
+		return;
+	}
+	else
+	{
+		llama_kv_cache_seq_rm(mModelContext, 0, mLogitStartIndex - 1, -1);
+	}
+	
+	//printf("KV CACHE SIZE AFTER CLEANING: %d\n", llama_get_kv_cache_token_count(mModelContext));
+	llama_kv_cache_update(mModelContext);
+	
 	llama_batch tempBatch = llama_batch_init(mBatchSize, 0, 1);
 	U32 tmpBatchCursor = 0;
 	for(size_type i = 0; i < mLogitTokenVector.size(); i++)
@@ -659,11 +674,13 @@ GENERIC InfProcessorTextToText::_decode_cached_logits()
 GENERIC InfProcessorTextToText::_decode_kv_locked_input()
 {
 	_decode_cached_logits();
-	I32 totalPosition = mLogitStartIndex;
+	I32 totalPosition = llama_get_kv_cache_token_count(mModelContext);
 	U32 tmpBatchCursor = 0;
+	mProcessedBatchLength = 0;
 	llama_batch tempBatch = llama_batch_init(mBatchSize, 0, 1);
 	for(size_type i = 0; i < mTokenizedInput.size(); i++)
 	{
+		++mProcessedBatchLength;
 		++tmpBatchCursor;
 		inf_common_batch_add(tempBatch, mTokenizedInput[i], totalPosition, {0}, false);
 		if(tmpBatchCursor == mBatchSize)
@@ -679,15 +696,16 @@ GENERIC InfProcessorTextToText::_decode_kv_locked_input()
 	{
 		llama_decode(mModelContext, tempBatch);
 	}
-	mLogitStartIndex = llama_get_kv_cache_token_count(mModelContext);
-	mProcessedBatchLength = mLogitStartIndex;
+	
+	mPromptStartIndex = llama_get_kv_cache_token_count(mModelContext);
 	llama_batch_free(tempBatch);
 	mInputKvLockedSignal.set_signal_finished();
 }
 
 GENERIC InfProcessorTextToText::_decode_input()
 {
-	I32 totalPosition = mLogitStartIndex;
+	//printf("TOKEN COUNT: %d\n", llama_get_kv_cache_token_count(mModelContext));
+	I32 totalPosition = llama_get_kv_cache_token_count(mModelContext);
 	if(!is_manual_caching())
 	{
 		clear_kv_cache();
@@ -768,10 +786,7 @@ GENERIC InfProcessorTextToText::_decode_next()
 			llama_sampler_reset(mSamplerChain);
 			if(is_manual_caching())
 			{
-				if(get_manual_cache_mode() == cache_mode::AUTO_LOGIT_STORE_MODE)
-				{
-					_decode_cached_logits();
-				}
+				_decode_cached_logits();
 			}
 			//llama_kv_cache_clear(mModelContext);
 			mFinishState = finish_state::FINISHED;
@@ -850,7 +865,8 @@ GENERIC InfProcessorTextToText::_initialize_context()
 	mDiagnostics.loadTimeInMilliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - beginTime).count();
 
 	mContextCursor = 0;
-	I32 seedValue = 1048204757;
+	srand(time(NULL));
+	I32 seedValue = rand();
 
 	mSamplerChain = llama_sampler_chain_init(llama_sampler_chain_default_params());
 
