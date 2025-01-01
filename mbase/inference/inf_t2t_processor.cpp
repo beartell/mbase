@@ -584,10 +584,7 @@ GENERIC InfProcessorTextToText::clear_token_candidates()
 }
 
 GENERIC InfProcessorTextToText::clear_samplers()
-{
-	// TODO: Do not allow clearing when processing tokens
-	// TODO: Delete the return when the sampler interface is properly working
-	
+{	
 	if(mSamplerChain)
 	{
 		llama_sampler_free(mSamplerChain);
@@ -630,8 +627,6 @@ GENERIC InfProcessorTextToText::_decode_cached_logits()
 	{
 		return;
 	}
-	//printf("PROMPT START INDEX: %d\n", mPromptStartIndex);
-	//printf("KV CACHE SIZE: %d\n", llama_get_kv_cache_token_count(mModelContext));
 
 	if(get_manual_cache_mode() == cache_mode::KV_LOCK_MODE)
 	{
@@ -643,7 +638,6 @@ GENERIC InfProcessorTextToText::_decode_cached_logits()
 		llama_kv_cache_seq_rm(mModelContext, 0, mLogitStartIndex - 1, -1);
 	}
 	
-	//printf("KV CACHE SIZE AFTER CLEANING: %d\n", llama_get_kv_cache_token_count(mModelContext));
 	llama_kv_cache_update(mModelContext);
 	
 	llama_batch tempBatch = llama_batch_init(mBatchSize, 0, 1);
@@ -668,6 +662,7 @@ GENERIC InfProcessorTextToText::_decode_cached_logits()
 
 	llama_batch_free(tempBatch);
 
+	mLogitStartIndex = 0;
 	mLogitTokenVector.clear();
 }
 
@@ -704,7 +699,6 @@ GENERIC InfProcessorTextToText::_decode_kv_locked_input()
 
 GENERIC InfProcessorTextToText::_decode_input()
 {
-	//printf("TOKEN COUNT: %d\n", llama_get_kv_cache_token_count(mModelContext));
 	I32 totalPosition = llama_get_kv_cache_token_count(mModelContext);
 	if(!is_manual_caching())
 	{
