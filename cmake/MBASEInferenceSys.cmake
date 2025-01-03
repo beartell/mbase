@@ -61,6 +61,7 @@ list(APPEND MBASE_INFERENCE_INCLUDE_STABLE_FILES
     inf_sampling_set.h
     inf_t2t_client.h
     inf_t2t_model.h
+    inf_t2t_proc_diagnostics.h
     inf_t2t_processor.h
 )
 

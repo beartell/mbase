@@ -965,10 +965,13 @@ GENERIC InfProcessorTextToText::_destroy_context()
 	mTokenizedInput.clear();
 	mSamplerDescriptions.clear();
 	mGeneratedTokenVector.clear();
+	mLogitTokenVector.clear();
 	mContextCursor = 0;
 	mBatchSize = 0;
 	mThreadCount = 0;
 	mProcessedBatchLength = 0;
+	mLogitStartIndex = 0;
+	mPromptStartIndex = 0;
 	mFlashAttention = false;
 	mIsRunning = false;
 	mIsInitializeFailed = false;
