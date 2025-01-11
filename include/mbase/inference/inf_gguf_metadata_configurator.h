@@ -6,6 +6,7 @@
 #include <mbase/vector.h>
 #include <mbase/behaviors.h>
 #include <ggml.h>
+#include <gguf.h>
 #include <unordered_map>
 
 MBASE_BEGIN

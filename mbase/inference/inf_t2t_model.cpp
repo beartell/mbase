@@ -56,7 +56,7 @@ InfModelTextToText::~InfModelTextToText()
 			}
 		}
 		
-		llama_free_model(mModel);
+		llama_model_free(mModel);
 	}
 }
 
@@ -883,7 +883,7 @@ GENERIC InfModelTextToText::_initialize_model()
 	mSuppliedParams.use_mmap = false;
 	mSuppliedParams.use_mlock = true;
 	
-	mModel = llama_load_model_from_file(mbase::to_utf8(mModelPath).c_str(), mSuppliedParams);
+	mModel = llama_model_load_from_file(mbase::to_utf8(mModelPath).c_str(), mSuppliedParams);
 	if (!mModel)
 	{
 		mInitFailCode = init_fail_code::LLAMA_SYSTEM_ERROR;
@@ -947,7 +947,7 @@ GENERIC InfModelTextToText::_destroy_model()
 		It = mLoraMap.erase(It);
 	}
 
-	llama_free_model(mModel);
+	llama_model_free(mModel);
 	mModel = NULL;
 	mLoraCandidate.mAdapterHandle = NULL;
 

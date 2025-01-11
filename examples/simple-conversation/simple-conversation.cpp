@@ -28,7 +28,7 @@ struct program_parameters {
         mTpSampler.mTopP = 1.0f;
         mMpSampler.mMinP = 0.2f;
         mPenalty.mRepetition.mPenaltyN = 64;
-        mPenalty.mRepetition.mRepeatPenalty = 1.0f;
+        mPenalty.mRepetition.mRepeatPenalty = 1.2f;
         mPenalty.mRepetition.mPenaltyLinefeed = true;
         mPenalty.mRepetition.mPenaltyEos = false;
         mTmp.mTemp = 0.1f;
@@ -89,7 +89,7 @@ GENERIC print_usage()
     printf("-tp, --top-p <float>              Token probability at most (default=1.0, min=0.1, max=1.0).\n");
     printf("-mp, --min-p <float>              Token probability at least (default=0.3), min=0.1, max=1.0.\n");
     printf("-pn, --penatly-n <int>            Apply repetition penalty on last 'n' tokens (default=64).\n");
-    printf("-pr, --penalty-repeat <float>     Discourages repeating exact tokens based on their past presence (default=1.0, min=1.0, max=2.0).\n");
+    printf("-pr, --penalty-repeat <float>     Discourages repeating exact tokens based on their past presence (default=1.2, min=1.0, max=2.0).\n");
     printf("-temp, --temperature <float>      Higher values increase the randomness (default=0.1, min=0.1, max=1.4).\n");
     printf("-gr, --greedy                     Ignore all sampling techniques, pick the most probable token. (default=false).\n\n");
 }
