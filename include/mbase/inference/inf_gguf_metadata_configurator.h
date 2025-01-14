@@ -5,6 +5,7 @@
 #include <mbase/string.h>
 #include <mbase/vector.h>
 #include <mbase/behaviors.h>
+#include <mbase/unordered_map.h>
 #include <ggml.h>
 #include <gguf.h>
 #include <unordered_map>
@@ -16,73 +17,172 @@ struct MBASE_API gguf_value_reader {};
 
 template<>
 struct MBASE_API gguf_value_reader<I8> {
-	static I8 read(gguf_context* in_context, I32 in_key_id) { return gguf_get_val_i8(in_context, in_key_id); }
+	static I8 read(gguf_context* in_context, I32 in_key_id) { 
+		if(gguf_get_kv_type(in_context, in_key_id) != gguf_type::GGUF_TYPE_INT8)
+		{
+			return 0;
+		}
+
+		return gguf_get_val_i8(in_context, in_key_id); 
+	}
 };
 
 template<>
 struct MBASE_API gguf_value_reader<I16> {
-	static I16 read(gguf_context* in_context, I32 in_key_id) { return gguf_get_val_i16(in_context, in_key_id); }
+	static I16 read(gguf_context* in_context, I32 in_key_id) 
+	{ 
+		if(gguf_get_kv_type(in_context, in_key_id) != gguf_type::GGUF_TYPE_INT16)
+		{
+			return 0;
+		}
+
+		return gguf_get_val_i16(in_context, in_key_id); 
+	}
 };
 
 template<>
 struct MBASE_API gguf_value_reader<I32> {
-	static I32 read(gguf_context* in_context, I32 in_key_id) { return gguf_get_val_i32(in_context, in_key_id); }
+	static I32 read(gguf_context* in_context, I32 in_key_id) { 
+		if(gguf_get_kv_type(in_context, in_key_id) != gguf_type::GGUF_TYPE_INT32)
+		{
+			return 0;
+		}
+
+		return gguf_get_val_i32(in_context, in_key_id); 
+	}
 };
 
 template<>
 struct MBASE_API gguf_value_reader<I64> {
-	static I64 read(gguf_context* in_context, I32 in_key_id) { return gguf_get_val_i64(in_context, in_key_id); }
+	static I64 read(gguf_context* in_context, I32 in_key_id) 
+	{ 
+		if(gguf_get_kv_type(in_context, in_key_id) != gguf_type::GGUF_TYPE_INT64)
+		{
+			return 0;
+		}
+
+		return gguf_get_val_i64(in_context, in_key_id); 
+	}
 };
 
 template<>
 struct MBASE_API gguf_value_reader<U8> {
-	static U8 read(gguf_context* in_context, I32 in_key_id) { return gguf_get_val_u8(in_context, in_key_id); }
+	static U8 read(gguf_context* in_context, I32 in_key_id) { 
+		if(gguf_get_kv_type(in_context, in_key_id) != gguf_type::GGUF_TYPE_UINT8)
+		{
+			return 0;
+		}
+
+		return gguf_get_val_u8(in_context, in_key_id); 
+	}
 };
 
 template<>
 struct MBASE_API gguf_value_reader<U16> {
-	static U16 read(gguf_context* in_context, I32 in_key_id) { return gguf_get_val_u16(in_context, in_key_id); }
+	static U16 read(gguf_context* in_context, I32 in_key_id) 
+	{ 
+		if(gguf_get_kv_type(in_context, in_key_id) != gguf_type::GGUF_TYPE_UINT16)
+		{
+			return 0;
+		}
+
+		return gguf_get_val_u16(in_context, in_key_id); 
+	}
 };
 
 template<>
 struct MBASE_API gguf_value_reader<U32> {
-	static U32 read(gguf_context* in_context, I32 in_key_id) { return gguf_get_val_u32(in_context, in_key_id); }
+	static U32 read(gguf_context* in_context, I32 in_key_id) { 
+		if(gguf_get_kv_type(in_context, in_key_id) != gguf_type::GGUF_TYPE_UINT32)
+		{
+			return 0;
+		}
+
+		return gguf_get_val_u32(in_context, in_key_id); 
+	}
 };
 
 template<>
 struct MBASE_API gguf_value_reader<U64> {
-	static U64 read(gguf_context* in_context, I32 in_key_id) { return gguf_get_val_u64(in_context, in_key_id); }
+	static U64 read(gguf_context* in_context, I32 in_key_id) { 
+		if(gguf_get_kv_type(in_context, in_key_id) != gguf_type::GGUF_TYPE_UINT64)
+		{
+			return 0;
+		}
+
+		return gguf_get_val_u64(in_context, in_key_id); 
+	}
 };
 
 template<>
 struct MBASE_API gguf_value_reader<F32> {
-	static F32 read(gguf_context* in_context, I32 in_key_id) { return gguf_get_val_f32(in_context, in_key_id); }
+	static F32 read(gguf_context* in_context, I32 in_key_id) { 
+		if(gguf_get_kv_type(in_context, in_key_id) != gguf_type::GGUF_TYPE_FLOAT32)
+		{
+			return 0;
+		}
+
+		return gguf_get_val_f32(in_context, in_key_id); 
+	}
 };
 
 template<>
 struct MBASE_API gguf_value_reader<F64> {
-	static F64 read(gguf_context* in_context, I32 in_key_id) { return gguf_get_val_f64(in_context, in_key_id); }
+	static F64 read(gguf_context* in_context, I32 in_key_id) { 
+		if(gguf_get_kv_type(in_context, in_key_id) != gguf_type::GGUF_TYPE_FLOAT64)
+		{
+			return 0;
+		}
+
+		return gguf_get_val_f64(in_context, in_key_id); 
+	}
 };
 
 template<>
 struct MBASE_API gguf_value_reader<bool> {
-	static bool read(gguf_context* in_context, I32 in_key_id) { return gguf_get_val_bool(in_context, in_key_id); }
+	static bool read(gguf_context* in_context, I32 in_key_id) {
+		if(gguf_get_kv_type(in_context, in_key_id) != gguf_type::GGUF_TYPE_BOOL)
+		{
+			return 0;
+		}
+
+		return gguf_get_val_bool(in_context, in_key_id); 
+	}
 };
 
 template<>
 struct MBASE_API gguf_value_reader<mbase::string> {
-	static mbase::string read(gguf_context* in_context, I32 in_key_id) { return gguf_get_val_str(in_context, in_key_id); }
+	static mbase::string read(gguf_context* in_context, I32 in_key_id) { 
+		if(gguf_get_kv_type(in_context, in_key_id) != gguf_type::GGUF_TYPE_STRING)
+		{
+			return mbase::string();
+		}
+
+		return gguf_get_val_str(in_context, in_key_id); 
+	}
 };
 
 template<>
 struct MBASE_API gguf_value_reader<const char*> {
-	static const char* read(gguf_context* in_context, I32 in_key_id) { return gguf_get_val_str(in_context, in_key_id); }
+	static const char* read(gguf_context* in_context, I32 in_key_id) { 
+		if(gguf_get_kv_type(in_context, in_key_id) != gguf_type::GGUF_TYPE_STRING)
+		{
+			return NULL;
+		}
+
+		return gguf_get_val_str(in_context, in_key_id); 
+	}
 };
 
 template<>
 struct MBASE_API gguf_value_reader<mbase::vector<mbase::string>> {
 	static mbase::vector<mbase::string> read(gguf_context* in_context, I32 in_key_id)
 	{
+		if(gguf_get_kv_type(in_context, in_key_id) != gguf_type::GGUF_TYPE_ARRAY)
+		{
+			return mbase::vector<mbase::string>();
+		}
+
 		I32 arrLength = gguf_get_arr_n(in_context, in_key_id);
 		mbase::vector<mbase::string> stringArray;
 		stringArray.reserve(arrLength);
@@ -100,6 +200,11 @@ template<>
 struct MBASE_API gguf_value_reader<mbase::vector<I32>> {
 	static mbase::vector<I32> read(gguf_context* in_context, I32 in_key_id)
 	{
+		if(gguf_get_kv_type(in_context, in_key_id) != gguf_type::GGUF_TYPE_ARRAY)
+		{
+			return mbase::vector<I32>();
+		}
+
 		I32 arrLength = gguf_get_arr_n(in_context, in_key_id);
 		mbase::vector<I32> numberArray;
 		numberArray.reserve(arrLength);
@@ -205,7 +310,7 @@ struct MBASE_API gguf_value_writer<mbase::vector<I32>> {
 
 class MBASE_API GgufMetaConfigurator : public mbase::non_copymovable {
 public:
-	using kv_map = std::unordered_map<mbase::string, I32>;
+	using kv_map = mbase::unordered_map<mbase::string, I32>;
 	using size_type = SIZE_T;
 
 	enum class param_application_error : U8 {
@@ -237,8 +342,10 @@ public:
 	}
 
 	bool is_open();
+	bool has_kv_key(const mbase::string& in_key);
 	size_type get_metadata_count();
 	kv_map& get_kv_map();
+	gguf_type get_kv_key_type(const mbase::string& in_key);
 
 	template<typename T>
 	GENERIC set_key(const mbase::string& in_key, const T& in_value)
@@ -250,7 +357,6 @@ public:
 		}
 	}
 	GENERIC remove_key(const mbase::string& in_key);
-	param_application_error apply_mbase_parameter(const mbase::string& in_system_prompt);
 	GENERIC clear_context();
 
 private:

@@ -590,11 +590,10 @@ MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE_EXPR Value& unordered_map<Key, Value,
 template<typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator>
 MBASE_INLINE_EXPR GENERIC unordered_map<Key, Value, Hash, KeyEqual, Allocator>::clear() noexcept
 {
-	for(size_type i = 0; i < mSize; i++)
+	for(iterator It = begin(); It != end();)
 	{
-		mBucket[i].clear();
+		It = erase(It);
 	}
-	mSize = 0;
 }
 
 template<typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator>
@@ -722,8 +721,35 @@ typename unordered_map<Key, Value, Hash, KeyEqual, Allocator>::iterator unordere
 	local_iterator duplicateKey = _is_key_duplicate(bucketNode, in_key);
 	if (duplicateKey != bucketNode.end())
 	{
+		// Either the empty bucket returns
+		// Bucket index is incorrect?
+		// 
 		--mSize;
-		return iterator(this, bucketIndex, bucketNode.erase(duplicateKey));
+		if(bucketNode.size() == 1)
+		{
+			bucketNode.erase(duplicateKey);
+			if(bucketIndex == mBucketCount - 1)
+			{
+				// means we are removing the last element of the last bucket
+				// or more human terms, this is the last element in our map
+				return end();
+			}
+			else
+			{
+				for(bucketIndex; bucketIndex < mBucketCount; ++bucketIndex)
+				{
+					if(mBucket[bucketIndex].size())
+					{
+						return iterator(this, bucketIndex, begin(bucketIndex));
+					}
+				}
+				return end();
+			}
+		}
+		else
+		{
+			return iterator(this, bucketIndex, bucketNode.erase(duplicateKey));
+		}
 	}
 	return end();
 }
