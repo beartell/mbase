@@ -23,6 +23,8 @@ if(NOT llama_LIBRARY)
     message(FATAL "ERROR: llama.cpp backend is selected but library not found!")
 endif()
 
+message("${LLAMA_INCLUDE_DIR}")
+
 list(APPEND MBASE_INFERENCE_INCLUDE_DEPENDS
     ${MBASE_STD_INCLUDES}
     ${MBASE_CORE_INCLUDE_DEPENDS}

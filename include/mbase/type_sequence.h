@@ -4,6 +4,7 @@
 #include <mbase/common.h>
 #include <mbase/sequence_iterator.h> // mbase::sequence_iterator, mbase::const_sequence_iterator, mbase::reverse_iterator, mbase::const_reverse_sequence_iterator
 #include <mbase/allocator.h> // mbase::allocator
+#include <wchar.h>
 
 MBASE_STD_BEGIN
 

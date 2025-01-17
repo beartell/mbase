@@ -15,7 +15,7 @@ class InfProcessorBase;
 
 class MBASE_API InfClientBase {
 public:
-	using size_type = SIZE_T;
+	using size_type = U64;
 
 	/* ===== BUILDER METHODS BEGIN ===== */
 	virtual ~InfClientBase();

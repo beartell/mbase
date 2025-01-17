@@ -19,6 +19,7 @@
 #include <uuid/uuid.h> // For uuid generation
 #include <iconv.h> // For utf conversions
 #include <cerrno>
+#include <algorithm> // for lexicographical compares
 
 #endif // MBASE_PLATFORM_UNIX
 
@@ -2309,7 +2310,7 @@ MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE character_sequence<SeqType, SeqBase, 
 
     pointer mString = newSequence.mExternalAllocator.allocate(stringLength + 1, true);
     newSequence.fill(mString, 0, stringLength + 1);
-    sprintf(mString, in_format, std::forward<Params>(in_params)...);
+    snprintf(mString, stringLength + 1, in_format, std::forward<Params>(in_params)...);
     newSequence = character_sequence(mString);
     newSequence.mExternalAllocator.deallocate(mString);
 

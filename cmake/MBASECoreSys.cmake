@@ -14,8 +14,8 @@ message("${MBASE_PC_SYS_STRING} library version: ${MBASE_PC_VERSION}")
 message("${MBASE_PC_SYS_STRING} install source path: ${MBASE_PC_INCLUDE_INSTALL_PATH}")
 message("${MBASE_PC_SYS_STRING} lib source path: ${MBASE_PC_LIB_PATH}")
 
-
 list(APPEND MBASE_PC_INCLUDE_DEPENDS ${MBASE_STD_INCLUDES})
+list(APPEND MBASE_PC_LIB_DEPENDS ${MBASE_STD_LIBS})
 
 list(APPEND MBASE_PC_INCLUDE_STABLE_FILES
     pc_config.h
@@ -41,6 +41,7 @@ add_library(mb_pc
 target_compile_definitions(mb_pc PRIVATE ${MBASE_COMMON_COMPILE_DEFINITIONS})
 target_compile_options(mb_pc PRIVATE ${MBASE_COMMON_COMPILE_OPTIONS})
 target_include_directories(mb_pc PUBLIC ${MBASE_PC_INCLUDE_DEPENDS})
+target_link_libraries(mb_pc PRIVATE ${MBASE_PC_LIB_DEPENDS})
 
 set_property(TARGET mb_pc PROPERTY POSITION_INDEPENDENT_CODE ON)
 

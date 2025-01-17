@@ -14,33 +14,16 @@ message("${MBASE_STD_SYS_STRING} install source path: ${MBASE_STD_INCLUDE_INSTAL
 
 list(APPEND MBASE_STD_INCLUDES ${MBASE_GLOBAL_INCLUDE})
 
-cmake_host_system_information(RESULT logical_core_count QUERY NUMBER_OF_LOGICAL_CORES)
-cmake_host_system_information(RESULT physical_core_count QUERY NUMBER_OF_PHYSICAL_CORES)
-cmake_host_system_information(RESULT host_name QUERY HOSTNAME)
-cmake_host_system_information(RESULT fq_host_name QUERY FQDN)
-cmake_host_system_information(RESULT total_vir_mem QUERY TOTAL_VIRTUAL_MEMORY)
-cmake_host_system_information(RESULT avail_vir_mem QUERY AVAILABLE_VIRTUAL_MEMORY)
-cmake_host_system_information(RESULT total_phy_mem QUERY TOTAL_PHYSICAL_MEMORY)
-cmake_host_system_information(RESULT available_phy_mem QUERY AVAILABLE_PHYSICAL_MEMORY)
-
-message("Logical core count: ${logical_core_count}")
-message("Physical core count: ${physical_core_count}")
-message("Hostname: ${host_name}")
-message("FQDN: ${fq_host_name}")
-message("Total virtual memory: ${total_vir_mem}")
-message("Available virtual memory: ${avail_vir_mem}")
-message("Total physical memory: ${total_phy_mem}")
-message("Available physical memory: ${available_phy_mem}")
-
-if(UNIX)
-
-find_package(UUID REQUIRED)
-list(APPEND MBASE_STD_INCLUDES ${UUID_INCLUDE_DIRS})
-list(APPEND MBASE_STD_LIBS ${UUID_LIBRARIES})
-
-file(READ ${CMAKE_SOURCE_DIR}/cmake/FindUUID.cmake MBASE_EMBEDDED_FIND_UUID_CMAKE)
-
-endif(UNIX)
+if(APPLE)
+    find_package(ICONV)
+    list(APPEND MBASE_STD_INCLUDES ${Iconv_INCLUDE_DIRS})
+    list(APPEND MBASE_STD_LIBS ${Iconv_LIBRARIES})
+elseif(UNIX)
+    find_package(UUID REQUIRED)
+    list(APPEND MBASE_STD_INCLUDES ${UUID_INCLUDE_DIRS})
+    list(APPEND MBASE_STD_LIBS ${UUID_LIBRARIES})
+    file(READ ${CMAKE_SOURCE_DIR}/cmake/FindUUID.cmake MBASE_EMBEDDED_FIND_UUID_CMAKE)
+endif()
 
 list(APPEND MBASE_STD_INCLUDE_STABLE_FILES
     algorithm.h

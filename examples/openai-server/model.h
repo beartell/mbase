@@ -24,7 +24,7 @@ public:
         ERR_INVALID_CONTEXT_LENGTH,
         ERR_INVALID_BATCH_LENGTH,
     };
-    time_t get_creation_date_in_epoch();
+    U64 get_creation_date_in_epoch();
     init_proc_err initialize_t2t_processors(
         const U32& in_processor_count,
         const U32& in_thread_count,
@@ -44,7 +44,7 @@ private:
     mbase::mutex mProcDistributionSync;
     mbase::vector<OpenaiTextToTextProcessor*> mAvailableT2tProcessors; // will leak memory but its okay.
     U32 mAccessLimit;
-    time_t mCreationDate;
+    U64 mCreationDate;
 };
 
 MBASE_END

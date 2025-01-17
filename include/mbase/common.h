@@ -19,6 +19,7 @@
 
 #ifdef __APPLE__
 	#define MBASE_PLATFORM_APPLE
+	#define MBASE_PLATFORM_UNIX
 #endif // __APPLE__
   
 #ifdef MBASE_PLATFORM_WINDOWS

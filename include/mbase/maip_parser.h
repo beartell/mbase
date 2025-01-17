@@ -595,7 +595,7 @@ MBASE_INLINE typename maip_packet_builder::size_type maip_packet_builder::genera
 
 MBASE_INLINE typename maip_packet_builder::size_type maip_packet_builder::generate_payload(mbase::string& out_payload, mbase::char_stream& in_stream)
 {
-	size_type streamLength = in_stream.buffer_length() - in_stream.get_pos();
+	U64 streamLength = in_stream.buffer_length() - in_stream.get_pos();
 	if (streamLength <= 0)
 	{
 		return generate_payload(out_payload); // returns byte size

@@ -133,6 +133,12 @@ private:
 		{
 			return thread_error::THREAD_NO_AVAILABLE;
 		}
+#endif
+#ifdef MBASE_PLATFORM_APPLE
+		ino_t tmpThreadId = 0;
+		pthread_threadid_np(mThreadHandle, &tmpThreadId);
+		mThreadId = static_cast<I32>(tmpThreadId);
+#elif MBASE_PLATFORM_UNIX
 		mThreadId = mThreadHandle;
 #endif
 		return thread_error::THREAD_SUCCESS;
@@ -147,7 +153,7 @@ template<typename Func, typename ...Args>
 MBASE_INLINE thread<Func, Args...>::thread(Func&& in_fptr, Args && ...in_args) noexcept {
 	mThreadParams.fPtr = std::forward<Func>(in_fptr);
 	mThreadParams.fParams = std::make_tuple(std::forward<Args>(in_args)...);
-
+	
 	mThreadHandle = 0;
 	mThreadId = 0;
 	mIsHalted = false;
@@ -175,12 +181,7 @@ template<typename Func, typename ...Args>
 MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE I32 thread<Func, Args...>::get_id() const noexcept {
 	if (!mThreadId)
 	{
-#ifdef MBASE_PLATFORM_WINDOWS
-		return GetCurrentThreadId();
-#endif
-#ifdef MBASE_PLATFORM_UNIX
-		return pthread_self();
-#endif
+		return get_current_thread_id();
 	}
 
 	return mThreadId;
@@ -191,7 +192,12 @@ MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE I32 thread<Func, Args...>::get_current_t
 #ifdef MBASE_PLATFORM_WINDOWS
 	return GetCurrentThreadId();
 #endif
-#ifdef MBASE_PLATFORM_UNIX
+#ifdef MBASE_PLATFORM_APPLE
+	raw_handle threadHandle = pthread_self();
+	ino_t tmpTid = 0;
+	pthread_threadid_np(threadHandle, &tmpTid);
+	return tmpTid;
+#elif MBASE_PLATFORM_UNIX
 	return pthread_self();
 #endif
 }

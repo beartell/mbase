@@ -40,7 +40,7 @@ enum class inf_model_category {
 struct inf_lora_adapter {
 	mbase::string mAdapterName;
 	mbase::string mLoraPath;
-	llama_lora_adapter* mAdapterHandle = NULL;
+	llama_adapter_lora* mAdapterHandle = NULL;
 };
 
 using lora_adapter_map = mbase::unordered_map<mbase::string, inf_lora_adapter>;

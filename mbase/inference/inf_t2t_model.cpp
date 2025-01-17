@@ -128,9 +128,10 @@ InfModelTextToText::flags InfModelTextToText::get_adapter_map(lora_adapter_map& 
 InfModelTextToText::flags InfModelTextToText::get_special_tokens(mbase::vector<inf_text_token>& out_tokens) const
 {
 	MBASE_INF_T2T_MODEL_RETURN_UNINITIALIZED;
-	for (I32 i = 0; i < llama_n_vocab(mModel); i++)
+	const llama_vocab* tmpVocab = llama_model_get_vocab(mModel);
+	for (I32 i = 0; i < llama_vocab_n_tokens(tmpVocab); i++)
 	{
-		llama_token_attr lta = llama_token_get_attr(mModel, i);
+		llama_token_attr lta = llama_vocab_get_attr(tmpVocab, i);
 		if (lta != LLAMA_TOKEN_ATTR_NORMAL)
 		{
 			out_tokens.push_back(i);
@@ -144,10 +145,11 @@ InfModelTextToText::flags InfModelTextToText::get_special_tokens(mbase::vector<m
 	MBASE_INF_T2T_MODEL_RETURN_UNINITIALIZED;
 	mbase::vector<inf_text_token> specialTokens;
 	get_special_tokens(specialTokens);
+	const llama_vocab* tmpVocab = llama_model_get_vocab(mModel);
 	for (auto& n : specialTokens)
 	{
 		IBYTE myChars[128] = { 0 };
-		I32 tokenLength = llama_token_to_piece(mModel, n, myChars, 128, 1, true);
+		I32 tokenLength = llama_token_to_piece(tmpVocab, n, myChars, 128, 1, true);
 		if(!tokenLength || tokenLength < 0)
 		{
 			continue;
@@ -237,21 +239,24 @@ InfModelTextToText::flags InfModelTextToText::get_usr_end(mbase::string& out_end
 InfModelTextToText::flags InfModelTextToText::get_eot_token(inf_text_token& out_token) const
 {
 	MBASE_INF_T2T_MODEL_RETURN_UNINITIALIZED;
-	out_token = llama_token_eot(mModel);
+	const llama_vocab* tmpVocab = llama_model_get_vocab(mModel);
+	out_token = llama_vocab_eot(tmpVocab);
 	return flags::INF_MODEL_SUCCESS;
 }
 
 InfModelTextToText::flags InfModelTextToText::get_lf_token(inf_text_token& out_token) const
 {
 	MBASE_INF_T2T_MODEL_RETURN_UNINITIALIZED;
-	out_token = llama_token_nl(mModel);
+	const llama_vocab* tmpVocab = llama_model_get_vocab(mModel);
+	out_token = llama_vocab_nl(tmpVocab);
 	return flags::INF_MODEL_SUCCESS;
 }
 
 InfModelTextToText::flags InfModelTextToText::get_vocab_count(I32& out_count) const
 {
 	MBASE_INF_T2T_MODEL_RETURN_UNINITIALIZED;
-	out_count = llama_n_vocab(mModel);
+	const llama_vocab* tmpVocab = llama_model_get_vocab(mModel);
+	out_count = llama_vocab_n_tokens(tmpVocab);
 	return flags::INF_MODEL_SUCCESS;;
 }
 
@@ -265,28 +270,28 @@ InfModelTextToText::flags InfModelTextToText::get_size(size_type& out_size) cons
 InfModelTextToText::flags InfModelTextToText::get_embedding_length(U32& out_length) const
 {
 	MBASE_INF_T2T_MODEL_RETURN_UNINITIALIZED;
-	out_length = llama_n_embd(mModel);
+	out_length = llama_model_n_embd(mModel);
 	return flags::INF_MODEL_SUCCESS;
 }
 
 InfModelTextToText::flags InfModelTextToText::get_head_count(U32& out_head_count) const
 {
 	MBASE_INF_T2T_MODEL_RETURN_UNINITIALIZED;
-	out_head_count = llama_n_head(mModel);
+	out_head_count = llama_model_n_head(mModel);
 	return flags::INF_MODEL_SUCCESS;
 }
 
 InfModelTextToText::flags InfModelTextToText::get_layer_count(U32& out_layer_count) const
 {
 	MBASE_INF_T2T_MODEL_RETURN_UNINITIALIZED;
-	out_layer_count = llama_n_layer(mModel);
+	out_layer_count = llama_model_n_layer(mModel);
 	return flags::INF_MODEL_SUCCESS;
 }
 
 InfModelTextToText::flags InfModelTextToText::get_max_embedding_context(U32& out_context) const
 {
 	MBASE_INF_T2T_MODEL_RETURN_UNINITIALIZED;
-	out_context = llama_n_ctx_train(mModel);
+	out_context = llama_model_n_ctx_train(mModel);
 	return flags::INF_MODEL_SUCCESS;
 }
 
@@ -296,7 +301,8 @@ bool InfModelTextToText::is_token_eof_generation(inf_text_token in_token) const
 	{
 		return false;
 	}
-	return llama_token_is_eog(mModel, in_token);
+	const llama_vocab* tmpVocab = llama_model_get_vocab(mModel);
+	return llama_vocab_is_eog(tmpVocab, in_token);
 }
 
 InfModelTextToText::flags InfModelTextToText::is_token_special(const mbase::string& in_string) const
@@ -317,7 +323,8 @@ InfModelTextToText::flags InfModelTextToText::is_token_special(const mbase::stri
 InfModelTextToText::flags InfModelTextToText::is_token_control(inf_text_token in_token) const
 {
 	MBASE_INF_T2T_MODEL_RETURN_UNINITIALIZED;
-	if (llama_token_get_attr(mModel, in_token) & LLAMA_TOKEN_ATTR_CONTROL)
+	const llama_vocab* tmpVocab = llama_model_get_vocab(mModel);
+	if (llama_vocab_get_attr(tmpVocab, in_token) & LLAMA_TOKEN_ATTR_CONTROL)
 	{
 		return flags::INF_MODEL_SUCCESS;
 	}
@@ -548,8 +555,7 @@ InfModelTextToText::flags InfModelTextToText::remove_lora_adapter(const mbase::s
 	{
 		return flags::INF_MODEL_ERR_GENERIC;
 	}
-
-	llama_lora_adapter_free(It->second.mAdapterHandle);
+	llama_adapter_lora_free(It->second.mAdapterHandle);
 	return flags::INF_MODEL_SUCCESS;
 }
 
@@ -725,8 +731,8 @@ InfModelTextToText::flags InfModelTextToText::tokenize_input(CBYTEBUFFER in_data
 	llama_model* rawModel = get_raw_model();
 	try
 	{
-		
-		I32 tokenCount = llama_tokenize(rawModel, in_data, static_cast<I32>(in_size), tokenizedInput.data(), static_cast<I32>(tokenizedInput.capacity()), false, true);
+		const llama_vocab* tmpVocab = llama_model_get_vocab(mModel);
+		I32 tokenCount = llama_tokenize(tmpVocab, in_data, static_cast<I32>(in_size), tokenizedInput.data(), static_cast<I32>(tokenizedInput.capacity()), false, true);
 		if(tokenCount == -1)
 		{
 			return flags::INF_MODEL_ERR_TOKENIZATION_FAILED;
@@ -909,7 +915,7 @@ GENERIC InfModelTextToText::_initialize_model()
 	lcp.n_batch = 32;
 	lcp.n_ubatch = 32;
 
-	dummyContext = llama_new_context_with_model(mModel, lcp);
+	dummyContext = llama_init_from_model(mModel, lcp);
 
 	enum llama_pooling_type lpt = llama_pooling_type(dummyContext);
 
@@ -943,7 +949,7 @@ GENERIC InfModelTextToText::_destroy_model()
 
 	for(lora_adapter_map::iterator It = mLoraMap.begin(); It != mLoraMap.end(); ++It)
 	{
-		llama_lora_adapter_free(It->second.mAdapterHandle);
+		llama_adapter_lora_free(It->second.mAdapterHandle);
 		It = mLoraMap.erase(It);
 	}
 
@@ -971,7 +977,7 @@ GENERIC InfModelTextToText::_destroy_model()
 
 GENERIC InfModelTextToText::_initialize_lora()
 {
-	llama_lora_adapter* adapterOut = llama_lora_adapter_init(mModel, mLoraCandidate.mLoraPath.c_str());
+	llama_adapter_lora* adapterOut = llama_adapter_lora_init(mModel, mLoraCandidate.mLoraPath.c_str());
 	if(adapterOut)
 	{
 		mLoraCandidate.mAdapterHandle = adapterOut;

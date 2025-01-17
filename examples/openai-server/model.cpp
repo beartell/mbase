@@ -5,10 +5,10 @@ MBASE_BEGIN
 
 OpenaiModel::OpenaiModel()
 {
-    mCreationDate = time(NULL);
+    mCreationDate = static_cast<U64>(time(NULL));
 }
 
-time_t OpenaiModel::get_creation_date_in_epoch()
+U64 OpenaiModel::get_creation_date_in_epoch()
 {
     return mCreationDate;
 }

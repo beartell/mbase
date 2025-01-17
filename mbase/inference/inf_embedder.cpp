@@ -121,7 +121,8 @@ InfEmbedderProcessor::flags InfEmbedderProcessor::tokenize_input(CBYTEBUFFER in_
 
     inf_text_token_vector tokenizedInput(in_size * 4);
     InfModelTextToText* t2tModel = static_cast<InfModelTextToText*>(this->mTargetModel_md_model);
-	I32 tokenCount = llama_tokenize(t2tModel->get_raw_model(), in_data, static_cast<I32>(in_size), tokenizedInput.data(), static_cast<I32>(tokenizedInput.capacity()), false, true);
+    const llama_vocab* tmpVocab = llama_model_get_vocab(t2tModel->get_raw_model());
+	I32 tokenCount = llama_tokenize(tmpVocab, in_data, static_cast<I32>(in_size), tokenizedInput.data(), static_cast<I32>(tokenizedInput.capacity()), false, true);
 
     if(tokenCount == -1)
     {
@@ -373,7 +374,7 @@ GENERIC InfEmbedderProcessor::_initialize_context()
 	}
 
     llama_model* rawModel = t2tModel->get_raw_model();
-    mModelContext = llama_new_context_with_model(rawModel, ctxParams);
+    mModelContext = llama_init_from_model(rawModel, ctxParams);
     if(!mModelContext)
     {
         mLastFailCode = last_fail_code::NOT_ENOUGH_MEMORY;

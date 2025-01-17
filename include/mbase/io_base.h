@@ -102,7 +102,9 @@ public:
 			return 0; // TODO: IMPLEMENT USING WIN32
 			#endif
 
-			#ifdef MBASE_PLATFORM_UNIX
+			#ifdef MBASE_PLATFORM_APPLE
+			return lseek(mRawContext.raw_handle, 0, (I32)move_method::MV_CURRENT);
+			#elif MBASE_PLATFORM_UNIX
 			return lseek64(mRawContext.raw_handle, 0, (I32)move_method::MV_CURRENT);
 			#endif
 		}
@@ -137,7 +139,9 @@ public:
 			lint.QuadPart = static_cast<LONGLONG>(in_distance);
 			SetFilePointer(mRawContext.raw_handle, lint.LowPart, &lint.HighPart, (DWORD)in_method);
 			#endif
-			#ifdef MBASE_PLATFORM_UNIX
+			#ifdef MBASE_PLATFORM_APPLE
+			lseek(mRawContext.raw_handle, in_distance, (I32)in_method);
+			#elif MBASE_PLATFORM_UNIX
 			lseek64(mRawContext.raw_handle, in_distance, (I32)in_method);
 			#endif
 		}

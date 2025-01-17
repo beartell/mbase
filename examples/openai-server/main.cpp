@@ -391,6 +391,11 @@ void apply_json_desc(const mbase::string& in_json_string)
 int main(int argc, char** argv)
 {
     mbase::vector<mbase::InfDeviceDescription> deviceDesc = mbase::inf_query_devices();
+    std::cout << "Random uuid: " << mbase::string::generate_uuid() << std::endl;
+    for(auto&n : deviceDesc)
+    {
+        std::cout << n.get_device_description() << "--" << n.get_device_name() << std::endl;
+    }
 
     if(argc < 2)
     {

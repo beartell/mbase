@@ -13,13 +13,19 @@ set(MBASE_STD_NAME_DESCRIPTIVE "MBASE @MBASE_STD_LIB_NAME_EXCEPTION@ library @MB
 add_library(mbase-std INTERFACE)
 set(MBASE_STD_FOUND TRUE)
 
-if(UNIX)
+if(APPLE)
+    find_package(ICONV)
+    list(APPEND MBASE_STD_INCLUDE_DIRS ${Iconv_INCLUDE_DIRS})
+    list(APPEND MBASE_STD_LIBRARIES ${Iconv_LIBRARIES})
+elseif(UNIX)
     if(NOT UUID_FOUND)
-        message(FATAL "Standard library has a dependency on uuid library. On ubuntu, you can install it using 'sudo apt-get install uuid-dev'.")    
+        message(FATAL "Standard library has a dependency on uuid library. On ubuntu, you can install it using 'sudo apt-get install uuid-dev'.")
     endif()
     list(APPEND MBASE_STD_INCLUDE_DIRS ${UUID_INCLUDE_DIRS})
     list(APPEND MBASE_STD_LIBRARIES ${UUID_LIBRARIES})
+endif()
+
+if(MBASE_STD_LIBRARIES)
     target_link_libraries(mbase-std INTERFACE ${MBASE_STD_LIBRARIES})
     target_include_directories(mbase-std INTERFACE ${MBASE_STD_INCLUDE_DIRS})
-    
-endif(UNIX)
+endif()

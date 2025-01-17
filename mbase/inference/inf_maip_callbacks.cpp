@@ -150,7 +150,7 @@ bool create_new_user_cb(InfProgram& in_program, [[maybe_unused]] std::shared_ptr
     mbase::string systemPromptString;
     if(systemPrompt.buffer_length())
     {
-        systemPromptString = std::move(mbase::string(systemPrompt.data(), systemPrompt.buffer_length()));
+        systemPromptString = mbase::string(systemPrompt.data(), systemPrompt.buffer_length());
     }
 
     mbase::string outAccessToken;
@@ -254,7 +254,7 @@ bool modify_user_system_prompt_cb(InfProgram& in_program, [[maybe_unused]] std::
 
     if(dataStream.buffer_length())
     {
-        systemPromptString = std::move(mbase::string(dataStream.data(), dataStream.buffer_length()));
+        systemPromptString = mbase::string(dataStream.data(), dataStream.buffer_length());
     }
 
     InfProgram::maip_err_code errCode = in_program.inf_modify_user_system_prompt(in_session_id, username, systemPromptString);
@@ -344,7 +344,7 @@ bool create_model_description_cb(InfProgram& in_program, [[maybe_unused]] std::s
 
     if(systemPromptStream.buffer_length())
     {
-        systemPromptString = std::move(mbase::string(systemPromptStream.data(), systemPromptStream.buffer_length()));
+        systemPromptString = mbase::string(systemPromptStream.data(), systemPromptStream.buffer_length());
     }
 
     InfProgram::maip_err_code errCode = in_program.inf_create_model_description(
@@ -422,7 +422,7 @@ bool modify_model_system_prompt_cb(InfProgram& in_program, [[maybe_unused]] std:
 
     if(systemPromptStream.buffer_length())
     {
-        systemPrompt = std::move(mbase::string(systemPromptStream.data(), systemPromptStream.buffer_length()));
+        systemPrompt = mbase::string(systemPromptStream.data(), systemPromptStream.buffer_length());
     }
 
     InfProgram::maip_err_code errCode = in_program.inf_modify_model_system_prompt(

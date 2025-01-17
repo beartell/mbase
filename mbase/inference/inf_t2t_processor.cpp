@@ -210,7 +210,8 @@ InfProcessorTextToText::flags InfProcessorTextToText::token_to_description(const
 	InfModelTextToText* t2tModel = static_cast<InfModelTextToText*>(this->mTargetModel_md_model);
 
 	IBYTE tokenString[64] = {0};
-	I32 tokenLength = llama_token_to_piece(t2tModel->get_raw_model(), in_token, tokenString, 64, false, true);
+	const llama_vocab* tmpVocab = llama_model_get_vocab(t2tModel->get_raw_model());
+	I32 tokenLength = llama_token_to_piece(tmpVocab, in_token, tokenString, 64, false, true);
 
 	if(!tokenLength)
 	{
@@ -237,7 +238,8 @@ InfProcessorTextToText::flags InfProcessorTextToText::tokens_to_description_vect
 	{
 		const inf_text_token& cvTokenRef = *cIt;
 		IBYTE tokenString[64] = {0};
-		I32 tokenLength = llama_token_to_piece(t2tModel->get_raw_model(), cvTokenRef, tokenString, 64, false, true);
+		const llama_vocab* tmpVocab = llama_model_get_vocab(t2tModel->get_raw_model());
+		I32 tokenLength = llama_token_to_piece(tmpVocab, cvTokenRef, tokenString, 64, false, true);
 		if(t2tModel->is_token_control(cvTokenRef) == InfModelTextToText::flags::INF_MODEL_SUCCESS)
 		{
 			out_descriptions.push_back({mbase::string(tokenString, tokenLength), true});
@@ -261,7 +263,8 @@ InfProcessorTextToText::flags InfProcessorTextToText::tokenize_input(CBYTEBUFFER
 	InfModelTextToText* t2tModel = static_cast<InfModelTextToText*>(this->mTargetModel_md_model);
 	try
 	{
-		I32 tokenCount = llama_tokenize(t2tModel->get_raw_model(), in_data, static_cast<I32>(in_size), tokenizedInput.data(), static_cast<I32>(tokenizedInput.capacity()), false, true);
+		const llama_vocab* tmpVocab = llama_model_get_vocab(t2tModel->get_raw_model());
+		I32 tokenCount = llama_tokenize(tmpVocab, in_data, static_cast<I32>(in_size), tokenizedInput.data(), static_cast<I32>(tokenizedInput.capacity()), false, true);
 		if(tokenCount == -1)
 		{
 			return flags::INF_PROC_ERR_UNABLE_TO_TOKENIZE_INPUT;
@@ -767,11 +770,12 @@ GENERIC InfProcessorTextToText::_decode_next()
 	I64 totalMilliseconds = 1;
 	I64 totalGeneratedTokens = 0;
 	llama_batch tempBatch = llama_batch_init(mDecodeBehavior.mTokenAtMost, 0, 1);
+	
 	for(U32 i = 0; i < mDecodeBehavior.mTokenAtMost; i++)
 	{
 		std::chrono::high_resolution_clock::time_point beginTime = std::chrono::high_resolution_clock::now();
 		InfModelTextToText* t2tModel = static_cast<InfModelTextToText*>(this->mTargetModel_md_model);
-		
+		const llama_vocab* tmpVocab = llama_model_get_vocab(t2tModel->get_raw_model());
 		inf_text_token tmpGeneratedToken = llama_sampler_sample(mSamplerChain, mModelContext, -1);
 		
 		//llama_sampler_accept(mSamplerChain, tmpGeneratedToken);
@@ -785,7 +789,7 @@ GENERIC InfProcessorTextToText::_decode_next()
 		}
 		
 		clear_token_candidates();
-		if (llama_token_is_eog(t2tModel->get_raw_model(), tmpGeneratedToken))
+		if (llama_vocab_is_eog(tmpVocab, tmpGeneratedToken))
 		{
 			// means end of generation
 			llama_sampler_reset(mSamplerChain);
@@ -857,8 +861,8 @@ GENERIC InfProcessorTextToText::_initialize_context()
 	}
 
 	std::chrono::high_resolution_clock::time_point beginTime = std::chrono::high_resolution_clock::now();
-
-	mModelContext = llama_new_context_with_model(t2tModel->get_raw_model(), ctxParams);
+	
+	mModelContext = llama_init_from_model(t2tModel->get_raw_model(), ctxParams);
 	if (!mModelContext)
 	{
 		clear_samplers();

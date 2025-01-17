@@ -398,25 +398,26 @@ int main(int argc, char** argv)
 
     for(InfDeviceDescription& tmpDescription : deviceDescription)
     {
-        mbase::string typeString;
-        switch (tmpDescription.get_device_type())
-        {
-        case InfDeviceDescription::device_type::CPU:
-            typeString = "CPU";
-            break;
-        case InfDeviceDescription::device_type::GPU:
-            typeString = "GPU";
-            break;
-        case InfDeviceDescription::device_type::CUSTOM:
-            typeString = "CUSTOM";
-            break;
-        case InfDeviceDescription::device_type::UNKNOWN:
-            typeString = "UNKNOWN";
-            break;
-        default:
-            break;
-        }
-        printf("\t%s ## Type: %s\n", tmpDescription.get_device_description().c_str(), typeString.c_str());
+        // mbase::string typeString;
+        // switch (tmpDescription.get_device_type())
+        // {
+        // case InfDeviceDescription::device_type::CPU:
+        //     typeString = "CPU";
+        //     break;
+        // case InfDeviceDescription::device_type::GPU:
+        //     typeString = "GPU";
+        //     break;
+        // case InfDeviceDescription::device_type::CUSTOM:
+        //     typeString = "CUSTOM";
+        //     break;
+        // case InfDeviceDescription::device_type::UNKNOWN:
+        //     typeString = "UNKNOWN";
+        //     break;
+        // default:
+        //     break;
+        // }
+        //printf("\t%s ## Type: %s\n", tmpDescription.get_device_description().c_str(), typeString.c_str());
+        printf("\t%s ## Type: %s\n", tmpDescription.get_device_description().c_str(), tmpDescription.get_device_name().c_str());
     }
 
     printf("- Samplers in order: \n");

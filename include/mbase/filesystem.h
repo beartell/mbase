@@ -279,7 +279,14 @@ MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE mbase::wstring get_current_path() noe
 	GetCurrentDirectoryW(MAX_PATH + 1, pathString);
 	return mbase::wstring(pathString);
 #endif
-#ifdef MBASE_PLATFORM_UNIX
+#ifdef MBASE_PLATFORM_APPLE
+	IBYTE pathString[PATH_MAX] = {0};
+	if(getcwd(pathString, PATH_MAX))
+	{
+		return mbase::wstring(mbase::from_utf8(pathString));
+	}
+	return mbase::wstring();
+#elif MBASE_PLATFORM_UNIX
 	return mbase::wstring(mbase::from_utf8(get_current_dir_name()));
 #endif
 }
