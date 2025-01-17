@@ -1,0 +1,29 @@
+--help                          Print usage.
+-v, --version                   Shows program version.
+--api-key <str>                 Api key.
+-h, --hostname <str>            Hostname to listen to (default=127.0.0.1).
+-p, --port <int>                Port to assign to (default=8080).
+-jsdesc <str>                   Path to json program description
+
+
+-al, --access-limit <int>       Amount of clients that can access concurrently (default=-1).
+-m, --model-path <str>          Model file to be hosted. To host multiple models, pass this argument multiple times.
+-t, --thread-count <int>        Amount of threads to use for output processing (default=16).
+-bt, --batch-thread-count <int> Amount of threads to use for initial batch processing (default=8).
+-c, --context-length <int>      Total context length (default=8192).
+-b, --batch-length <int>        Batch length (default=4096).
+-gl, --gpu-layers <int>         GPU layers to offload to (default=999).
+
+
+====== Model json params ======
+
+model_path <str>
+host_as_name <str>
+processor_count <str>
+thread_count <int>
+batch_thread_count <int>
+context_length <int>
+batch_length <int>
+gpu_layers <int>
+sys_prompt_path <str> // path to file containing the system prompt
+

@@ -342,9 +342,20 @@ InfProcessorTextToText::flags InfProcessorTextToText::execute_input(const inf_te
 		return flags::INF_PROC_ERR_INPUT_IS_EMPTY;
 	}
 
-	if(in_tokens.size() > mContextLength)
+	if(is_manual_caching())
 	{
-		return flags::INF_PROC_ERR_INPUT_EXCEED_TOKEN_LIMIT;
+		if(in_tokens.size() + llama_get_kv_cache_token_count(mModelContext) > mContextLength)
+		{
+			return flags::INF_PROC_ERR_INPUT_EXCEED_TOKEN_LIMIT;
+		}
+	}
+
+	else
+	{
+		if(in_tokens.size() > mContextLength)
+		{
+			return flags::INF_PROC_ERR_INPUT_EXCEED_TOKEN_LIMIT;
+		}
 	}
 
 	if (!is_running())
@@ -792,8 +803,11 @@ GENERIC InfProcessorTextToText::_decode_next()
 			if (mContextCursor == mContextLength)
 			{
 				// means token limit is reached
-				
 				llama_sampler_reset(mSamplerChain);
+				if(is_manual_caching())
+				{
+					_decode_cached_logits();
+				}
 				//llama_kv_cache_clear(mModelContext);
 				mFinishState = finish_state::TOKEN_LIMIT_REACHED;
 				break;
