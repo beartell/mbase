@@ -1,0 +1,20 @@
+###
+
+For this example, we are assuming the given library name:
+
+Library name: foo
+
+--- Header-Only ---
+
+include_guard(GLOBAL)
+
+include(MBASECommonConfig) # Including common cmake configuration variables
+include(MBASEStdSys) # Including standard library
+# Or more if necessary
+
+set(MBASE_FOO_SYS_STRING "MBASE Foo")
+set(MBASE_FOO_LIB_NAME "foo")
+
+### TODO, WRITE THE REST
+
+###

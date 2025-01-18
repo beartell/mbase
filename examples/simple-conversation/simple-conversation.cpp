@@ -142,7 +142,6 @@ public:
     {
         ConversationProcessor* hostProcessor = static_cast<ConversationProcessor*>(out_processor);
         hostProcessor->set_manual_caching(true, ConversationProcessor::cache_mode::KV_LOCK_MODE);
-        system("cls");
         printf("System >> %s\n", mSystemPromptString.c_str());
         mbase::context_line ctxLine;
         ctxLine.mRole = mbase::context_role::SYSTEM;
@@ -167,6 +166,7 @@ public:
         else
         {
             mbase::decode_behavior_description dbd;
+            dbd.mHaltDelay = 1;
             dbd.mTokenAtMost = 1;
             dbd.mHaltOnWrite = false;
             hostProcessor->next(dbd);
@@ -178,6 +178,7 @@ public:
         ConversationProcessor* hostProcessor = static_cast<ConversationProcessor*>(out_processor);
         mbase::vector <mbase::inf_token_description> tokenDesc;
         mbase::decode_behavior_description dbd;
+        dbd.mHaltDelay = 1;
         dbd.mTokenAtMost = 1;
         dbd.mHaltOnWrite = false;
         hostProcessor->tokens_to_description_vector(out_token, tokenDesc);
@@ -385,7 +386,7 @@ int main(int argc, char** argv)
         mbase::sleep(2);
     }
 
-    //signal(SIGINT, catching_interrupt_signal);
+    signal(SIGINT, catching_interrupt_signal);
     mbase::string modelName;
     cnvModel.get_model_name(modelName);
     printf("==== Session Information ====\n\n");
