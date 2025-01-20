@@ -19,7 +19,8 @@ OpenaiModel::init_proc_err OpenaiModel::initialize_t2t_processors(
         const U32& in_batch_thread_count,
         const U32& in_context_length,
         const U32& in_batch_length,
-        const mbase::wstring& in_sys_prompt_file
+        const inf_sampling_set& in_sampling_set,
+        const mbase::string& in_sys_prompt_file
 )
 {
     if(!in_processor_count)
@@ -63,7 +64,7 @@ OpenaiModel::init_proc_err OpenaiModel::initialize_t2t_processors(
             in_thread_count,
             in_batch_thread_count,
             true,
-            {}
+            in_sampling_set
         );
         mAvailableT2tProcessors.push_back(newProcessor);
     }

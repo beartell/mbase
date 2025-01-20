@@ -31,7 +31,8 @@ public:
         const U32& in_batch_thread_count,
         const U32& in_context_length,
         const U32& in_batch_length,
-        const mbase::wstring& in_sys_prompt_file = wstring()
+        const inf_sampling_set& in_sampling_set,
+        const mbase::string& in_sys_prompt_file = string()
     );
     bool acquire_processor(OpenaiTextToTextProcessor*& out_processor);
     GENERIC release_processor(OpenaiTextToTextProcessor* in_processor);

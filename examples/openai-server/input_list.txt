@@ -26,4 +26,3 @@ context_length <int>
 batch_length <int>
 gpu_layers <int>
 sys_prompt_path <str> // path to file containing the system prompt
-
