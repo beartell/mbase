@@ -66,6 +66,7 @@ public:
 	flags execute_input_sync(const inf_text_token_vector& in_tokens, bool in_kv_locked = false);
 	flags next(const decode_behavior_description& in_description);
 	flags next_sync(const decode_behavior_description& in_description);
+	flags clear_response();
 	flags set_inference_client(InfClientBase* in_client) override;
 	flags initialize(
 		InfModelTextToText* in_model, 

@@ -464,6 +464,19 @@ InfProcessorTextToText::flags InfProcessorTextToText::next_sync(const decode_beh
 	return nextResult;
 }
 
+InfProcessorTextToText::flags InfProcessorTextToText::clear_response()
+{
+	MBASE_INF_T2T_PROC_RETURN_UNREGISTERED;
+	if(!mLogitStartIndex)
+	{
+		return flags::INF_PROC_SUCCESS;
+	}
+
+	llama_kv_cache_seq_rm(mModelContext, 0, mLogitStartIndex - 1, -1);
+	llama_kv_cache_update(mModelContext);
+	return flags::INF_PROC_SUCCESS;
+}
+
 InfProcessorTextToText::flags InfProcessorTextToText::set_inference_client(InfClientBase* in_client)
 {
 	MBASE_INF_T2T_PROC_RETURN_UNREGISTERED;

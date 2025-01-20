@@ -421,6 +421,8 @@ int main(int argc, char** argv)
         printf("\t%s ## Type: %s\n", tmpDescription.get_device_description().c_str(), tmpDescription.get_device_name().c_str());
     }
 
+    
+
     printf("- Samplers in order: \n");
     if(gSampleParams.mIsGreeady)
     {

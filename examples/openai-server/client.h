@@ -11,11 +11,15 @@ MBASE_BEGIN
 class OpenaiTextToTextClient : public mbase::InfClientTextToText {
 public:
 
+    bool is_processing() const;
+
     GENERIC set_http_data_sink(
-        httplib::DataSink& in_data_sink, 
+        httplib::DataSink* in_data_sink, 
         httplib::Response& in_resp, 
-        bool in_stream
+        bool in_stream,
+        long long in_gen_limit
     );
+    GENERIC set_is_processing(bool in_state);
 
     GENERIC on_register(InfProcessorBase* out_processor) override;
     GENERIC on_unregister(InfProcessorBase* out_processor) override;
@@ -24,10 +28,14 @@ public:
     GENERIC on_finish(InfProcessorTextToText* out_processor, size_type out_total_token_size, InfProcessorTextToText::finish_state out_finish_state) override;
 
 private:
+    bool mProcessing = false;
     bool mStreamMod = false;
+    long long mGenLimit = 0;
+    long long mGenCount = 0;
     httplib::DataSink* mDataSink = NULL;
     httplib::Response* mInResponse = NULL;
     mbase::string mClientId;
+    mbase::string mAccumulatedResponse;
 };
 
 MBASE_END

@@ -127,6 +127,7 @@ void chatCompletionHandler(const httplib::Request& in_req, httplib::Response& in
     /* /v1/chat/completions */
     /* /chat/completions */
 
+    printf("%s\n", in_req.body.c_str());
     mbase::string providedKey = "";
     if(!mbase::openaiAuthCheck(in_req, in_resp, gProgramData.apiKey, providedKey))
     {
@@ -317,14 +318,80 @@ void chatCompletionHandler(const httplib::Request& in_req, httplib::Response& in
         return;
     }
 
-    activeModel->release_processor(t2tProcessor);
-    mbase::sendOpenaiError(
-        in_req,
-        in_resp,
-        "success marker",
-        "server_error",
-        "server_error"
-    );
+    long long genLimit = I32_MAX;
+    
+    if(jsonObject["max_tokens"].isLong())
+    {
+        genLimit = jsonObject["max_tokens"].getLong();
+        if(genLimit <= 0)
+        {
+            activeModel->release_processor(t2tProcessor);
+            mbase::sendOpenaiError(
+                in_req,
+                in_resp,
+                "The server had an error while processing your request.",
+                "server_error",
+                "server_error"
+            );
+            return;
+        }
+    }
+
+    if(jsonObject["stream"].isBool())
+    {
+        if(jsonObject["stream"].getBool())
+        {
+            in_resp.set_chunked_content_provider(
+                "text/event-stream",
+                [activeModel, t2tProcessor, &in_resp, genLimit](size_t offset, httplib::DataSink &sink) {
+                    mbase::OpenaiTextToTextClient* t2tClient = static_cast<mbase::OpenaiTextToTextClient*>(t2tProcessor->get_assigned_client());
+                    t2tClient->set_http_data_sink(&sink, in_resp, true, genLimit);
+                    t2tClient->set_is_processing(true);
+
+                    while(t2tClient->is_processing())
+                    {
+                        mbase::sleep(2);
+                    }
+                    
+                    if(t2tProcessor->is_manual_caching())
+                    {
+                        t2tProcessor->clear_response();
+                    }
+
+                    activeModel->release_processor(t2tProcessor);
+
+                    return true;
+                }
+            );
+        }
+        else
+        {
+            mbase::OpenaiTextToTextClient* t2tClient = static_cast<mbase::OpenaiTextToTextClient*>(t2tProcessor->get_assigned_client());
+            t2tClient->set_http_data_sink(nullptr, in_resp, false, genLimit);
+            t2tClient->set_is_processing(true);
+
+            while(t2tClient->is_processing())
+            {
+                mbase::sleep(2);
+            }
+
+            activeModel->release_processor(t2tProcessor);
+        }
+    }
+
+    else
+    {
+        mbase::OpenaiTextToTextClient* t2tClient = static_cast<mbase::OpenaiTextToTextClient*>(t2tProcessor->get_assigned_client());
+        t2tClient->set_http_data_sink(nullptr, in_resp, false, genLimit);
+        t2tClient->set_is_processing(true);
+
+        while(t2tClient->is_processing())
+        {
+            mbase::sleep(2);
+        }
+
+        activeModel->release_processor(t2tProcessor);
+    }
 }
 
 void server_start()

@@ -138,7 +138,7 @@ private:
 		ino_t tmpThreadId = 0;
 		pthread_threadid_np(mThreadHandle, &tmpThreadId);
 		mThreadId = static_cast<I32>(tmpThreadId);
-#elif MBASE_PLATFORM_UNIX
+#elif defined(MBASE_PLATFORM_UNIX)
 		mThreadId = mThreadHandle;
 #endif
 		return thread_error::THREAD_SUCCESS;
@@ -197,7 +197,7 @@ MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE I32 thread<Func, Args...>::get_current_t
 	ino_t tmpTid = 0;
 	pthread_threadid_np(threadHandle, &tmpTid);
 	return tmpTid;
-#elif MBASE_PLATFORM_UNIX
+#elif defined(MBASE_PLATFORM_UNIX)
 	return pthread_self();
 #endif
 }

@@ -286,7 +286,7 @@ MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE mbase::wstring get_current_path() noe
 		return mbase::wstring(mbase::from_utf8(pathString));
 	}
 	return mbase::wstring();
-#elif MBASE_PLATFORM_UNIX
+#elif defined(MBASE_PLATFORM_UNIX)
 	return mbase::wstring(mbase::from_utf8(get_current_dir_name()));
 #endif
 }
