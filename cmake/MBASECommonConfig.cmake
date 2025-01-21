@@ -1,6 +1,5 @@
 include_guard(GLOBAL)
 
-include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)
 
 set(MBASE_GLOBAL_INCLUDE ${CMAKE_SOURCE_DIR}/include)
