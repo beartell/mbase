@@ -442,61 +442,6 @@ void apply_json_desc(const mbase::string& in_json_string)
             exit(1);
         }
 
-        mbase::inf_sampling_set samplerSet;
-        if(modelObject["samplers"].isObject())
-        {
-            mbase::InfSamplerDescription isd;
-            if(modelObject["samplers"]["top_k"].isLong())
-            {
-                isd.mTopK = modelObject["samplers"]["top_k"].getLong();
-                isd.mSamplerType = mbase::InfSamplerDescription::SAMPLER::TOP_K;
-                samplerSet.insert(isd);
-            }
-            
-            if(modelObject["samplers"]["top_p"].isFloat())
-            {
-                isd.mTopP = modelObject["samplers"]["top_p"].getFloat();
-                isd.mSamplerType = mbase::InfSamplerDescription::SAMPLER::TOP_P;
-                samplerSet.insert(isd);
-            }
-
-            if(modelObject["samplers"]["min_p"].isFloat())
-            {
-                isd.mMinP = modelObject["samplers"]["min_p"].getFloat();
-                isd.mSamplerType = mbase::InfSamplerDescription::SAMPLER::MIN_P;
-                samplerSet.insert(isd);
-            }
-
-            if(modelObject["samplers"]["temperature"].isFloat())
-            {
-                isd.mTemp = modelObject["samplers"]["temperature"].getFloat();
-                isd.mSamplerType = mbase::InfSamplerDescription::SAMPLER::TEMP;
-                samplerSet.insert(isd);
-            }
-
-            if(modelObject["samplers"]["repetition"].isObject())
-            {
-                isd.mSamplerType = mbase::InfSamplerDescription::SAMPLER::REPETITION;
-                if(modelObject["samplers"]["repetition"]["penalty_n"].isLong() && modelObject["samplers"]["repetition"]["penalty_repeat"].isFloat())
-                {
-                    isd.mRepetition.mPenaltyN = modelObject["samplers"]["repetition"]["penalty_n"].getLong();
-                    isd.mRepetition.mRepeatPenalty = modelObject["samplers"]["repetition"]["penalty_repeat"].getFloat();
-                }
-                samplerSet.insert(isd);
-            }
-
-            if(modelObject["samplers"]["mirostat_v2"].isObject())
-            {
-                isd.mSamplerType = mbase::InfSamplerDescription::SAMPLER::MIROSTAT_V2;
-                if(modelObject["samplers"]["mirostat_v2"]["tau"].isFloat() && modelObject["samplers"]["mirostat_v2"]["eta"].isFloat())
-                {
-                    isd.mMiroV2.mTau = modelObject["samplers"]["mirostat_v2"]["tau"].getFloat();
-                    isd.mMiroV2.mEta = modelObject["samplers"]["mirostat_v2"]["eta"].getFloat();
-                }
-                samplerSet.insert(isd);
-            }
-        }
-
         newModel->update();
         newModel->initialize_t2t_processors(
             processorCount,
@@ -504,7 +449,7 @@ void apply_json_desc(const mbase::string& in_json_string)
             batchThreadCount,
             contextLength,
             batchLength,
-            samplerSet
+            {}
         );
 
         gProgramData.programModels.push_back(newModel);
@@ -514,7 +459,6 @@ void apply_json_desc(const mbase::string& in_json_string)
 int main(int argc, char** argv)
 {
     mbase::vector<mbase::InfDeviceDescription> deviceDesc = mbase::inf_query_devices();
-
     if(argc < 2)
     {
         print_usage();
@@ -550,7 +494,6 @@ int main(int argc, char** argv)
             mbase::string jsonFile;
             mbase::argument_get<mbase::string>::value(i, argc, argv, jsonFile);
             mbase::wstring fileLocation = mbase::from_utf8(jsonFile);
-
             if(!mbase::is_file_valid(fileLocation))
             {
                 printf("Json file can't be opened\n");

@@ -10,7 +10,7 @@
 MBASE_BEGIN
 
 struct decode_behavior_description {
-	U32 mHaltDelay = 5; // in milliseconds
+	U32 mHaltDelay = 2; // in milliseconds
 	U32 mTokenAtMost = 1;
 	bool mHaltOnWrite = false;
 };
@@ -42,9 +42,11 @@ public:
 	bool is_init_failed() const;
 	bool is_available() const;
 	bool is_manual_caching() const;
+	bool signal_state_lora_operate() const;
 	bool signal_state_input_process() const;
 	bool signal_state_decode_process() const;
 	bool signal_state_kv_locked_process() const;
+	bool signal_lora_operate_process() const;
 	bool signal_input_process() const;
 	bool signal_decode_process() const;
 	bool signal_kv_locked_process() const;
@@ -68,6 +70,9 @@ public:
 	flags next_sync(const decode_behavior_description& in_description);
 	flags clear_response();
 	flags set_inference_client(InfClientBase* in_client) override;
+	flags declare_lora_assign(const inf_lora_adapter& in_adapter);
+	flags declare_lora_remove(const inf_lora_adapter& in_adapter);
+	flags start_lora_operation();
 	flags initialize(
 		InfModelTextToText* in_model, 
 		const U32& in_context_length, 
@@ -97,17 +102,22 @@ public:
 	GENERIC update() override;
 	GENERIC update_t() override;
 
+	virtual GENERIC on_lora_operate(const mbase::vector<inf_lora_adapter>& out_adapters);
 	virtual GENERIC on_initializing();
 	virtual GENERIC on_initialize_fail(last_fail_code out_code);
 	virtual GENERIC on_destroying();
 	virtual GENERIC on_initialize() = 0;
 	virtual GENERIC on_destroy() = 0;
 
+	// this is an internal call, do not call it manually
+	GENERIC _internal_adapter_remove(mbase::vector<inf_lora_adapter>& in_adapters_to_remove);
+
 private:
 	GENERIC _decode_cached_logits();
 	GENERIC _decode_kv_locked_input();
 	GENERIC _decode_input();
 	GENERIC _decode_next();
+	GENERIC _lora_operate();
 	GENERIC _initialize_context();
 	GENERIC _destroy_context();
 
@@ -119,6 +129,9 @@ private:
 	inf_text_token_vector mTokenizedInput;
 	inf_text_token_vector mGeneratedTokenVector;
 	inf_text_token_vector mLogitTokenVector;
+	mbase::vector<inf_lora_adapter> mDeclaredAdapters;
+	mbase::vector<inf_lora_adapter> mRemoveAdapters;
+	mbase::vector<inf_lora_adapter> mAssignedAdapters;
 	inf_sampling_set mSamplerDescriptions;
 	lora_adapter_map mLoraMap;
 	U32 mContextCursor; // -----> if it exceeds the context size, stop generating
@@ -131,6 +144,7 @@ private:
 	processor_signal mInputSignal;
 	processor_signal mDecodeSignal;
 	processor_signal mInputKvLockedSignal;
+	processor_signal mLoraOperationSignal;
 	finish_state mFinishState;
 	last_fail_code mLastFailCode;	
 	bool mFlashAttention;

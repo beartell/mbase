@@ -20,7 +20,6 @@ public:
 		INF_MODEL_ERR_UPDATE_LOOP_OCCUPIED,
 		INF_MODEL_INFO_REGISTERING_PROCESSOR,
 		INF_MODEL_INFO_INITIALIZING_MODEL,
-		INF_MODEL_INFO_ADDING_LORA,
 		INF_MODEL_INFO_DESTROYING_MODEL,
 		INF_MODEL_INFO_PROCESSOR_IS_BEING_DESTROYED,
 		INF_MODEL_INFO_UPDATE_REQUIRED,
@@ -34,7 +33,12 @@ public:
 		INF_MODEL_ERR_UNABLE_REGISTER_PROCESSOR,
 		INF_MODEL_ERR_NOT_INITIALIZED,
 		INF_MODEL_ERR_TOKENIZATION_FAILED,
+		INF_MODEL_ERR_LORA_MISSING,
+		INF_MODEL_ERR_LORA_NAME_MISSING,
 		INF_MODEL_ERR_LORA_EXISTS,
+		INF_MODEL_ERR_LORA_FILE_INVALID,
+		INF_MODEL_ERR_LORA_OPERATION_ACTIVE,
+		INF_MODEL_ERR_LORA_NOTHING_TO_OPERATE,
 		INF_MODEL_ERR_GENERIC
 	};
 
@@ -44,14 +48,12 @@ public:
 	/* ===== BUILDER METHODS END ===== */
 
 	/* ===== OBSERVATION METHODS BEGIN ===== */
-	MBASE_ND(MBASE_OBS_IGNORE) bool signal_lora_adding() const;
-	MBASE_ND(MBASE_OBS_IGNORE) bool signal_state_lora_adding() const;
-	MBASE_ND(MBASE_OBS_IGNORE) bool signal_state_lora_failed() const;
+	MBASE_ND(MBASE_OBS_IGNORE) bool signal_lora_operation() const;
+	MBASE_ND(MBASE_OBS_IGNORE) bool signal_state_lora_operation() const;
 	MBASE_ND(MBASE_OBS_IGNORE) bool is_available(const U32& in_context_size) const;
 	MBASE_ND(MBASE_OBS_IGNORE) bool is_embedding_model() const;
 	MBASE_ND(MBASE_OBS_IGNORE) bool has_lora_adapter(const mbase::string& in_name, inf_lora_adapter& out_adapter);
 	llama_model* get_raw_model();
-	flags get_adapter_map(lora_adapter_map& out_map) const;
 	flags get_special_tokens(mbase::vector<inf_text_token>& out_tokens) const;
 	flags get_special_tokens(mbase::vector<mbase::string>& out_tokens) const;
 	flags get_model_name(mbase::string& out_name) const;
@@ -92,9 +94,6 @@ public:
 	flags initialize_model_sync(const mbase::wstring& in_path, const U32& in_total_context_size, const I32& in_gpu_layers = -1);
 	flags destroy();
 	flags destroy_sync();
-	flags add_lora_adapter(const mbase::wstring& in_path, const mbase::string& in_byname = "");
-	flags remove_lora_adapter(const mbase::string& in_name);
-	flags remove_lora_adapter(inf_lora_adapter in_adapter);
 	flags register_context_process(
 		InfProcessorTextToText* in_processor, 
 		const U32& in_context_length,
@@ -109,6 +108,10 @@ public:
 		const U32& in_context_length,
 		U32 in_thread_count
 	);
+	flags declare_lora_remove(const inf_lora_adapter& in_adapter);
+	flags declare_lora_adapter(const inf_lora_adapter& in_adapter);
+	flags start_lora_operation();
+
 	/* ===== STATE-MODIFIER METHODS END ===== */
 
 	/* ===== NON-MODIFIER METHODS BEGIN ===== */
@@ -116,9 +119,7 @@ public:
 	/* ===== NON-MODIFIER METHODS END ===== */
 
 	/* ===== INTERFACE METHODS BEGIN ===== */
-	virtual GENERIC on_lora_added(inf_lora_adapter out_adapter);
-	virtual GENERIC on_lora_remove(inf_lora_adapter out_adapter);
-	virtual GENERIC on_lora_add_fail();
+	virtual GENERIC on_lora_operate(const mbase::vector<inf_lora_adapter>& out_active_loras);
 	/* ===== INTERFACE METHODS END ===== */
 
 	/* ===== STATE-MODIFIER METHODS BEGIN ===== */
@@ -129,11 +130,9 @@ public:
 private:
 	GENERIC _initialize_model();
 	GENERIC _destroy_model();
-	GENERIC _initialize_lora();
+	GENERIC _lora_operate();
 
 	llama_model* mModel;
-	inf_lora_adapter mLoraCandidate;
-	lora_adapter_map mLoraMap;
 	mbase::string mQuantizationString;
 	mbase::string mModelName;
 	mbase::string mModelArchitecture;
@@ -151,13 +150,15 @@ private:
 	mbase::vector<inf_text_token> mAssistantStartTokenized;
 	mbase::vector<inf_text_token> mUserStartTokenized;
 	mbase::vector<ggml_backend_dev_t> mPhysicalDevices;
+	mbase::vector<inf_lora_adapter> mLoraDeclares;
+	mbase::vector<inf_lora_adapter> mLoraRemoves;
+	mbase::vector<inf_lora_adapter> mLoraAdapters;
 	U64 mModelSize;
 	U32 mOccupiedContext;
 	U32 mTotalContextSize;
 	F32 mQuantizationCoefficient;
 	bool mIsEmbeddingModel; // Not supported if (llama_model_has_encoder(model) && llama_model_has_decoder(model) is true)
-	processor_signal mLoraInitializeSignal;
-	processor_signal mLoraFailSignal;
+	processor_signal mLoraOperationSignal;
 };
 
 MBASE_END

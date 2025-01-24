@@ -110,6 +110,11 @@ bool InfProcessorTextToText::is_manual_caching() const
 	return mIsManualCaching;
 }
 
+bool InfProcessorTextToText::signal_state_lora_operate() const
+{
+	return mLoraOperationSignal.get_signal_state();
+}
+
 bool InfProcessorTextToText::signal_state_input_process() const
 {
 	return mInputSignal.get_signal_state();
@@ -123,6 +128,11 @@ bool InfProcessorTextToText::signal_state_decode_process() const
 bool InfProcessorTextToText::signal_state_kv_locked_process() const
 {
 	return mInputKvLockedSignal.get_signal_state();
+}
+
+bool InfProcessorTextToText::signal_lora_operate_process() const
+{
+	return mLoraOperationSignal.get_signal();
 }
 
 bool InfProcessorTextToText::signal_input_process() const
@@ -633,6 +643,11 @@ GENERIC InfProcessorTextToText::set_manual_caching(bool in_manual_cache, cache_m
 	mCacheMode = in_cache_mode;
 }
 
+GENERIC InfProcessorTextToText::on_lora_operate(const mbase::vector<inf_lora_adapter>& out_adapters)
+{
+	
+}
+
 GENERIC InfProcessorTextToText::on_initializing()
 {
 	
@@ -851,6 +866,58 @@ GENERIC InfProcessorTextToText::_decode_next()
 	mDecodeSignal.set_signal_finished();
 }
 
+GENERIC InfProcessorTextToText::_lora_operate()
+{
+	for(mbase::vector<inf_lora_adapter>::iterator It = mDeclaredAdapters.begin(); It != mDeclaredAdapters.end(); ++It)
+	{
+		if(!llama_set_adapter_lora(mModelContext, It->mAdapterHandle, 1.0f))
+		{
+			// means success
+			mAssignedAdapters.push_back(*It);
+		}
+	}
+
+	mDeclaredAdapters.clear();
+
+	mbase::vector<inf_lora_adapter> newAssignedAdapters;
+
+	for(mbase::vector<inf_lora_adapter>::iterator It = mAssignedAdapters.begin(); It != mAssignedAdapters.end(); ++It)
+	{
+		if(mbase::find(mRemoveAdapters.begin(), mRemoveAdapters.end(), *It) != mRemoveAdapters.end())
+		{
+			llama_rm_adapter_lora(mModelContext, It->mAdapterHandle);
+		}
+
+		else
+		{
+			newAssignedAdapters.push_back(*It);
+		}
+	}
+
+	mRemoveAdapters.clear();
+	mAssignedAdapters = newAssignedAdapters;
+
+	mLoraOperationSignal.set_signal_finished();
+}
+
+GENERIC InfProcessorTextToText::_internal_adapter_remove(mbase::vector<inf_lora_adapter>& in_adapters_to_remove)
+{
+	mbase::vector<inf_lora_adapter> newAssignedAdapters;
+	for(mbase::vector<inf_lora_adapter>::iterator It = mAssignedAdapters.begin(); It != mAssignedAdapters.end(); ++It)
+	{
+		if(mbase::find(in_adapters_to_remove.begin(), in_adapters_to_remove.end(), *It) != in_adapters_to_remove.end())
+		{
+			llama_rm_adapter_lora(mModelContext, It->mAdapterHandle);
+		}
+
+		else
+		{
+			newAssignedAdapters.push_back(*It);
+		}
+	}
+	mAssignedAdapters = newAssignedAdapters;
+}
+
 GENERIC InfProcessorTextToText::_initialize_context()
 {
 	llama_context_params ctxParams = llama_context_default_params();
@@ -990,6 +1057,7 @@ GENERIC InfProcessorTextToText::_destroy_context()
 {
 	// CONTEXT FACTORY RESET
 
+	llama_clear_adapter_lora(mModelContext); // if any
 	llama_free(mModelContext);
 	mModelContext = NULL;
 	mPresetCandidates.clear();
@@ -997,6 +1065,9 @@ GENERIC InfProcessorTextToText::_destroy_context()
 	mSamplerDescriptions.clear();
 	mGeneratedTokenVector.clear();
 	mLogitTokenVector.clear();
+	mDeclaredAdapters.clear();
+	mRemoveAdapters.clear();
+	mAssignedAdapters.clear();
 	mContextCursor = 0;
 	mBatchSize = 0;
 	mThreadCount = 0;
@@ -1033,6 +1104,7 @@ GENERIC InfProcessorTextToText::update()
 		mDecodeSignal.reset_signal_with_state();
 		mInputSignal.reset_signal_with_state();
 		mInputKvLockedSignal.reset_signal_with_state();
+		mLoraOperationSignal.reset_signal_with_state();
 		this->release_object_watcher();
 		on_destroy();
 	}
@@ -1051,6 +1123,12 @@ GENERIC InfProcessorTextToText::update()
 			mIsRegistered = true;
 			on_initialize();
 		}
+	}
+
+	if(signal_state_lora_operate())
+	{
+		mLoraOperationSignal.reset_signal_state();
+		on_lora_operate(mAssignedAdapters);
 	}
 
 	if(signal_state_input_process())
@@ -1114,6 +1192,11 @@ GENERIC InfProcessorTextToText::update_t()
 
 		if (is_running())
 		{
+			if(signal_lora_operate_process())
+			{
+				_lora_operate();
+			}
+
 			if(signal_kv_locked_process())
 			{
 				_decode_kv_locked_input();
