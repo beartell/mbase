@@ -65,7 +65,7 @@ GENERIC catching_interrupt_signal([[maybe_unused]] I32 out_sig_id)
 GENERIC print_usage()
 {
     printf("========================================\n");
-    printf("#Program name:      mbase-simple-conversation\n");
+    printf("#Program name:      mbase_simple_conversation\n");
     printf("#Version:           %s\n", MBASE_SIMPLE_CONVERSATION_VERSION);
     printf("#Type:              Example\n");
     printf("#Further docs: \n");
@@ -74,7 +74,7 @@ GENERIC print_usage()
     printf("The given implementation is stable and shows the basics of non-blocking LLM inference.\n");
     printf("The code section here will mostly be used by other example programs.\n");
     printf("========================================\n\n");
-    printf("Usage: mbase-simple-conversation <model_path> *[<option> [<value>]]\n");
+    printf("Usage: mbase_simple_conversation <model_path> *[<option> [<value>]]\n");
     printf("Options: \n\n");
     printf("--help                            Print usage.\n");
     printf("-v, --version                     Shows program version.\n");

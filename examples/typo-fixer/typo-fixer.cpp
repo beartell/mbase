@@ -40,7 +40,7 @@ GENERIC catching_interrupt_signal([[maybe_unused]] I32 out_sig_id)
 GENERIC print_usage()
 {
     printf("========================================\n");
-    printf("#Program name:      mbase-typo-fixer\n");
+    printf("#Program name:      mbase_typo_fixer\n");
     printf("#Version:           %s\n", MBASE_TYPO_FIXER_VERSION);
     printf("#Type:              Example\n");
     printf("#Further docs: \n");
@@ -49,7 +49,7 @@ GENERIC print_usage()
     printf("The program is reading a user-supplied text file and fixing the typos.\n");
     printf("Fixed text will be written to a file specified by option -o or --output-file.\n");
     printf("========================================\n\n");
-    printf("Usage: mbase-typo-fixer <model_path> *[<option> [<value>]]\n");
+    printf("Usage: mbase_typo_fixer <model_path> *[<option> [<value>]]\n");
     printf("Options: \n\n");
     printf("--help                            Print usage.\n");
     printf("-v, --version                     Shows program version.\n");

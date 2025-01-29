@@ -38,7 +38,7 @@ GENERIC print_usage();
 GENERIC print_usage()
 {
     printf("========================================\n");
-    printf("#Program name:      mbase-embedding-simple\n");
+    printf("#Program name:      mbase_embedding_simple\n");
     printf("#Version:           %s\n", MBASE_EMBEDDING_SIMPLE_VERSION);
     printf("#Type:              Example\n");
     printf("#Further docs: \n");
@@ -46,7 +46,7 @@ GENERIC print_usage()
     printf("An example program for generating the embeddings of the given prompt or prompts.\n");
     printf("The given implementation is stable and shows the basics of how to generate embeddings using MBASE embedding procesor.\n");
     printf("========================================\n\n");
-    printf("Usage: mbase-embedding-simple <model_path> *[<option> [<value>]]\n");
+    printf("Usage: mbase_embedding_simple <model_path> *[<option> [<value>]]\n");
     printf("Options: \n\n");
     printf("-h, --help                      Print usage.\n");
     printf("-v, --version                   Shows program version.\n");
