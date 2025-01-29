@@ -49,7 +49,7 @@ GENERIC catching_interrupt_signal([[maybe_unused]] I32 out_sig_id)
 GENERIC print_usage()
 {
     printf("========================================\n");
-    printf("#Program name:      mbase-benchmark-t2t\n");
+    printf("#Program name:      mbase_benchmark_t2t\n");
     printf("#Version:           %s\n", MBASE_BENCHMARK_VERSION);
     printf("#Type:              Utility, Example\n");
     printf("#Further docs: \n");
@@ -66,7 +66,7 @@ GENERIC print_usage()
     printf("### NOTE ###\n");
     printf("If the context kv cache is filled and there still are tokens to predict, they will not be processed, since we are not doing context window shifting.\n");
     printf("========================================\n\n");
-    printf("Usage: mbase-benchmark-t2t <model_path> *[<option> [<value>]]\n");
+    printf("Usage: mbase_benchmark_t2t <model_path> *[<option> [<value>]]\n");
     printf("Options: \n\n");
     printf("-h, --help                           Print usage.\n");
     printf("-v, --version                        Shows program version.\n");

@@ -45,7 +45,7 @@ GENERIC print_usage();
 GENERIC print_usage()
 {
     printf("========================================\n");
-    printf("#Program name:      mbase-retrieval\n");
+    printf("#Program name:      mbase_retrieval\n");
     printf("#Version:           %s\n", MBASE_RETRIEVAL_VERSION);
     printf("#Type:              Example\n");
     printf("#Further docs: \n");
@@ -55,7 +55,7 @@ GENERIC print_usage()
     printf("After the embeddings are generated, it applies the cosine similarity function to all embeddings and shows the distance of the query to each text.\n");
     printf("The code here is using the embedder.cpp's implementation as a base and makes slight modifications to it.\n");
     printf("========================================\n\n");
-    printf("Usage: mbase-retrieval <model_path> *[<option> [<value>]]\n");
+    printf("Usage: mbase_retrieval <model_path> *[<option> [<value>]]\n");
     printf("Options: \n\n");
     printf("-h, --help                      Print usage.\n");
     printf("-v, --version                   Shows program version.\n");

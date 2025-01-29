@@ -17,24 +17,29 @@ message("${MBASE_INFERENCE_SYS_STRING} library version: ${MBASE_INFERENCE_VERSIO
 message("${MBASE_INFERENCE_SYS_STRING} install source path: ${MBASE_INFERENCE_INCLUDE_INSTALL_PATH}")
 message("${MBASE_INFERENCE_SYS_STRING} lib source path: ${MBASE_INFERENCE_LIB_PATH}")
 
-find_package(llama REQUIRED)
-
-if(NOT llama_LIBRARY)
-    message(FATAL "ERROR: llama.cpp backend is selected but library not found!")
-endif()
-
-message("${LLAMA_INCLUDE_DIR}")
-
 list(APPEND MBASE_INFERENCE_INCLUDE_DEPENDS
     ${MBASE_STD_INCLUDES}
     ${MBASE_CORE_INCLUDE_DEPENDS}
-    ${LLAMA_INCLUDE_DIR}
 )
 
 list(APPEND MBASE_INFERENCE_LIB_DEPENDS
     ${MBASE_STD_LIBS}
     mb_pc
 )
+
+find_package(llama)
+
+if(NOT llama_LIBRARY)
+    message(WARNING "llama.cpp library is not detected on the system. \nLinking through submodule.")
+    add_subdirectory(llama.cpp)
+    list(APPEND MBASE_INFERENCE_INCLUDE_DEPENDS
+        ${CMAKE_CURRENT_SOURCE_DIR}/llama.cpp/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/llama.cpp/ggml/include)
+    set(MBASE_BUNDLED_INSTALL ON)
+else()
+    message("-- Found llama.cpp library")
+    list(APPEND MBASE_INFERENCE_INCLUDE_DEPENDS ${LLAMA_INCLUDE_DIR})
+endif()
 
 configure_file(
     ${MBASE_INFERENCE_INCLUDE_INSTALL_PATH}/inf_common.h.in

@@ -4,3 +4,5 @@ target_compile_definitions(mbase_typo_fixer PRIVATE ${MBASE_COMMON_COMPILE_DEFIN
 target_compile_options(mbase_typo_fixer PRIVATE ${MBASE_COMMON_COMPILE_OPTIONS})
 target_include_directories(mbase_typo_fixer PUBLIC mb_pc mb_inference)
 target_link_libraries(mbase_typo_fixer PRIVATE ${MBASE_STD_LIBS} mb_pc mb_inference llama)
+
+install(TARGETS mbase_typo_fixer RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
