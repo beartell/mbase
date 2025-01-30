@@ -52,16 +52,10 @@ struct program_parameters {
 mbase::vector<InfDeviceDescription> deviceDescription;
 program_parameters gSampleParams;
 bool gIsProgramRunning = true;
+ConversationProcessor* gGlobalProcessor = NULL;
 
 GENERIC catching_interrupt_signal(I32 out_sig_id);
 GENERIC print_usage();
-
-GENERIC catching_interrupt_signal([[maybe_unused]] I32 out_sig_id)
-{
-    printf("Program interrupted\n");
-    gIsProgramRunning = false;
-}
-
 GENERIC print_usage()
 {
     printf("========================================\n");
@@ -141,6 +135,7 @@ public:
     GENERIC on_register(InfProcessorBase* out_processor) override
     {
         ConversationProcessor* hostProcessor = static_cast<ConversationProcessor*>(out_processor);
+        gGlobalProcessor = hostProcessor;
         hostProcessor->set_manual_caching(true, ConversationProcessor::cache_mode::KV_LOCK_MODE);
         printf("System >> %s\n", mSystemPromptString.c_str());
         mbase::context_line ctxLine;
@@ -206,6 +201,22 @@ public:
 private:
     mbase::string mSystemPromptString;
 };
+
+GENERIC catching_interrupt_signal([[maybe_unused]] I32 out_sig_id)
+{
+    printf("Program interrupted\n");
+    
+    if(gGlobalProcessor)
+    {
+        InfProcT2TDiagnostics& t2tDiag = gGlobalProcessor->get_diagnostics();
+        printf("\n==== Processor diagnostics ====\n");
+        printf("| Context load delay         | %lu ms\n", t2tDiag.loadTimeInMilliseconds);
+        printf("| Prompt processing rate(pp) | %f tokens/sec\n", t2tDiag.ppTokensPerSecond);
+        printf("| Token generation rate(tg)  | %f tokens/sec\n", t2tDiag.evalTokensPerSecond); 
+    }
+    exit(0);
+    gIsProgramRunning = false;
+}
 
 int main(int argc, char** argv)
 {
