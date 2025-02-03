@@ -2476,8 +2476,8 @@ MBASE_INLINE mbase::string to_utf8(const mbase::wstring& in_str)
 #ifdef MBASE_PLATFORM_WINDOWS
 
     I32 length = WideCharToMultiByte(CP_UTF8, 0, src, static_cast<I32>(src_length), 0, 0, NULL, NULL);
-    I32 allocationLength = (length + 1) * sizeof(IBYTE));
-    IBYTEBUFFER output_buffer = (IBYTEBUFFER)malloc(allocationLength);
+    I32 allocationLength = length + 1;
+    IBYTEBUFFER output_buffer = new IBYTE[allocationLength];
     if(!output_buffer)
     {
         return mbase::string();
@@ -2488,7 +2488,7 @@ MBASE_INLINE mbase::string to_utf8(const mbase::wstring& in_str)
     output_buffer[length] = '\0';
     
     mbase::string outStr(output_buffer, static_cast<SIZE_T>(length));
-    free(output_buffer);
+    delete [] output_buffer;
 
     return outStr;
 #endif // MBASE_PLATFORM_WINDOWS
@@ -2547,7 +2547,7 @@ MBASE_INLINE mbase::wstring from_utf8(const mbase::string& in_str)
     
 #ifdef MBASE_PLATFORM_WINDOWS
     I32 length = MultiByteToWideChar(CP_UTF8, 0, src, static_cast<I32>(src_length), 0, 0);
-    wchar_t* output_buffer = (wchar_t*)malloc((length + 1) * sizeof(wchar_t));
+    wchar_t* output_buffer = new wchar_t[(length + 1) * sizeof(wchar_t)];
     if(!output_buffer)
     {
         return wstring();
@@ -2560,7 +2560,7 @@ MBASE_INLINE mbase::wstring from_utf8(const mbase::string& in_str)
 
     mbase::wstring outStr(output_buffer, static_cast<SIZE_T>(length));
 
-    free(output_buffer);
+    delete [] output_buffer;
 
     return outStr;
 #endif // MBASE_PLATFORM_WINDOWS

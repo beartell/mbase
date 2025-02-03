@@ -119,9 +119,14 @@ public:
 
     GENERIC start_conversation(ConversationProcessor* in_processor)
     {
+		#ifdef MBASE_PLATFORM_WINDOWS
+			SetConsoleCP(CP_UTF8);
+			SetConsoleOutputCP(CP_UTF8);
+		#endif		
         printf("User >> ");
+	
         mbase::string userPrompt = mbase::get_line();
-
+		
         mbase::inf_text_token_vector tokenVector;
         context_line ctxLine;
         ctxLine.mRole = mbase::context_role::USER;
@@ -220,10 +225,7 @@ GENERIC catching_interrupt_signal([[maybe_unused]] I32 out_sig_id)
 
 int main(int argc, char** argv)
 {
-    if (std::setlocale(LC_ALL, "en_US.UTF-8") == nullptr) 
-    {
-        return 1;
-    }
+    std::setlocale(LC_ALL, "en_US.UTF-8"); 
 
     if(argc < 2)
     {
