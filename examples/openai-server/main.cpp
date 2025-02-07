@@ -421,13 +421,47 @@ void apply_json_desc(const mbase::string& in_json_string)
     for(mbase::Json& modelObject : tmpJson.getArray())
     {
         // TODO, CHECK MODEL DUPLICATE
-        mbase::wstring modelPath = mbase::from_utf8(modelObject["model_path"].getString());
-        uint32_t processorCount = modelObject["processor_count"].getLong(); 
-        uint32_t threadCount = modelObject["thread_count"].getLong();
-        uint32_t batchThreadCount = modelObject["batch_thread_count"].getLong();
-        uint32_t contextLength = modelObject["context_length"].getLong();
-        uint32_t batchLength = modelObject["batch_length"].getLong();
-        uint32_t gpuLayers = modelObject["gpu_layers"].getLong();
+        mbase::wstring modelPath;
+        uint32_t processorCount = 4;
+        uint32_t threadCount = 8;
+        uint32_t batchThreadCount = 8;
+        uint32_t contextLength = 2048;
+        uint32_t batchLength = 512;
+        uint32_t gpuLayers = 999;
+        if(modelObject["model_path"].isString())
+        {
+            modelPath = mbase::from_utf8(modelObject["model_path"].getString());
+        }
+
+        if(modelObject["processor_count"].isLong())
+        {
+            processorCount = modelObject["processor_count"].getLong();
+        }
+
+        if(modelObject["thread_count"].isLong())
+        {
+            threadCount = modelObject["thread_count"].getLong();
+        }
+
+        if(modelObject["batch_thread_count"].isLong())
+        {
+            batchThreadCount = modelObject["batch_thread_count"].getLong();
+        }
+
+        if(modelObject["context_length"].isLong())
+        {
+            contextLength = modelObject["context_length"].getLong();
+        }
+
+        if(modelObject["batch_length"].isLong())
+        {
+            batchLength = modelObject["batch_length"].getLong();
+        }
+
+        if(modelObject["gpu_layers"].isLong())
+        {
+            gpuLayers = modelObject["gpu_layers"].getLong();
+        }
 
         if(!mbase::is_file_valid(modelPath))
         {
