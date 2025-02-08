@@ -387,6 +387,7 @@ void chatCompletionHandler(const httplib::Request& in_req, httplib::Response& in
             mbase::sleep(2);
         }
 
+        
         activeModel->release_processor(t2tProcessor);
     }
 }
@@ -670,10 +671,11 @@ void apply_json_desc(const mbase::string& in_json_string)
     {
         // TODO, CHECK MODEL DUPLICATE
         mbase::wstring modelPath;
+        mbase::string systemPromptString;
         uint32_t processorCount = 4;
         uint32_t threadCount = 8;
         uint32_t batchThreadCount = 8;
-        uint32_t contextLength = 2048;
+        uint32_t contextLength = 4096;
         uint32_t batchLength = 512;
         uint32_t gpuLayers = 999;
         if(modelObject["model_path"].isString())
@@ -717,6 +719,11 @@ void apply_json_desc(const mbase::string& in_json_string)
             exit(1);
         }
 
+        if(modelObject["fsys"].isString())
+        {
+            systemPromptString = mbase::read_file_as_string(mbase::from_utf8(modelObject["fsys"].getString()));
+        }
+
         mbase::OpenaiModel* newModel = new mbase::OpenaiModel;
         if(newModel->initialize_model_sync(modelPath, 99999999, gpuLayers) != mbase::OpenaiModel::flags::INF_MODEL_INFO_UPDATE_REQUIRED)
         {
@@ -751,6 +758,33 @@ void apply_json_desc(const mbase::string& in_json_string)
         {
             newModel->update();
             mbase::sleep(5);
+        }
+
+        gProgramData.diagnostic.print_logs();
+        gProgramData.diagnostic.flush_logs();
+
+        if(!newModel->is_embedding_model() && systemPromptString.size())
+        {
+            // means we should cache the system prompt
+            gProgramData.diagnostic.log_stdout(mbase::PcDiagnostics::flags::LOGTYPE_INFO, mbase::PcDiagnostics::flags::LOGIMPORTANCE_MID, "Caching the system prompt on processors. This may take a while...");
+            for(mbase::OpenaiModel::context_processor_list::iterator It = newModel->get_registered_processors().begin(); It != newModel->get_registered_processors().end(); ++It)
+            {
+                mbase::OpenaiTextToTextProcessor* t2tProc = reinterpret_cast<mbase::OpenaiTextToTextProcessor*>(It->mSubject);
+                mbase::inf_text_token_vector tokVec;
+                if(t2tProc->tokenize_input(systemPromptString.c_str(), systemPromptString.size(), tokVec) == mbase::OpenaiTextToTextProcessor::flags::INF_PROC_ERR_UNABLE_TO_TOKENIZE_INPUT)
+                {
+                    gProgramData.diagnostic.log_stdout(mbase::PcDiagnostics::flags::LOGTYPE_ERROR, mbase::PcDiagnostics::flags::LOGIMPORTANCE_FATAL, "System prompt tokenization failed. This is happens if the system prompt contains a character outside the model's vocabulary");
+                }
+
+                if(tokVec.size() > t2tProc->get_context_size())
+                {
+                    gProgramData.diagnostic.log_stdout(mbase::PcDiagnostics::flags::LOGTYPE_ERROR, mbase::PcDiagnostics::flags::LOGIMPORTANCE_FATAL, "Tokenized system prompt exceeds context size: given(%d), context(%d)", tokVec.size(), t2tProc->get_context_size());
+                }
+
+                t2tProc->execute_input_sync(tokVec, true);
+                t2tProc->update();
+            }
+            gProgramData.diagnostic.log_stdout(mbase::PcDiagnostics::flags::LOGTYPE_SUCCESS, mbase::PcDiagnostics::flags::LOGIMPORTANCE_MID, "System prompt successfully cached.");
         }
 
         gProgramData.programModels.push_back(newModel);
@@ -804,24 +838,27 @@ int main(int argc, char** argv)
             apply_json_desc(jsonFile);
         }
     }
-    gProgramData.diagnostic.print_logs();
-    gProgramData.diagnostic.flush_logs();
+    
     printf("** Hosted Model Information **\n");
     for(mbase::vector<mbase::OpenaiModel*>::iterator It = gProgramData.programModels.begin(); It != gProgramData.programModels.end(); ++It)
     {
         mbase::OpenaiModel* tmpModel = *It;
         mbase::string outName = tmpModel->get_model_name();
-        mbase::U32 trainContextLength = tmpModel->get_max_embedding_context();
         printf("- Model name: %s\n", outName.c_str());
-        printf("- Context length: %d\n", trainContextLength);
         printf("- Processor count: %d\n", tmpModel->get_registered_processors().size());
         if(tmpModel->is_embedding_model())
         {
+            mbase::OpenaiEmbedderProcessor* embedderProc = static_cast<mbase::OpenaiEmbedderProcessor*>(tmpModel->get_registered_processors().front().mSubject);
             printf("- Embedder model: true\n");
+            printf("- Context length: %d\n", embedderProc->get_context_size());
         }
         else
         {
+            mbase::OpenaiTextToTextProcessor* t2tProc = static_cast<mbase::OpenaiTextToTextProcessor*>(tmpModel->get_registered_processors().front().mSubject);
             printf("- Embedder model: false\n");
+            printf("- Context length: %d\n", t2tProc->get_context_size());
+            printf("- Batch thread count: %d\n", t2tProc->get_batch_thread_count());
+            printf("- Gen thread count: %d\n", t2tProc->get_thread_count());
         }
         printf("\n");
     }

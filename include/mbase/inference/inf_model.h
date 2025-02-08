@@ -56,7 +56,7 @@ public:
 	/* ===== ITERATOR METHODS END ===== */
 
 	/* ===== OBSERVATION METHODS BEGIN ===== */
-	MBASE_ND(MBASE_OBS_IGNORE) const context_processor_list& get_registered_processors() const;
+	MBASE_ND(MBASE_OBS_IGNORE) context_processor_list& get_registered_processors();
 	MBASE_ND(MBASE_OBS_IGNORE) inf_model_category get_model_category() const;
 	MBASE_ND(MBASE_OBS_IGNORE) bool is_initialize_failed() const;
 	MBASE_ND(MBASE_OBS_IGNORE) bool is_initialized() const;

@@ -32,8 +32,7 @@ public:
         const U32& in_batch_thread_count,
         const U32& in_context_length,
         const U32& in_batch_length,
-        const inf_sampling_set& in_sampling_set,
-        const mbase::string& in_sys_prompt_file = string()
+        const inf_sampling_set& in_sampling_set
     );
     init_proc_err initialize_embedder_processors(
         const U32& in_processor_count,

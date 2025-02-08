@@ -20,8 +20,7 @@ OpenaiModel::init_proc_err OpenaiModel::initialize_t2t_processors(
         const U32& in_batch_thread_count,
         const U32& in_context_length,
         const U32& in_batch_length,
-        const inf_sampling_set& in_sampling_set,
-        const mbase::string& in_sys_prompt_file
+        const inf_sampling_set& in_sampling_set
 )
 {
     if(!in_processor_count)
@@ -57,10 +56,7 @@ OpenaiModel::init_proc_err OpenaiModel::initialize_t2t_processors(
     {
         OpenaiTextToTextProcessor* newProcessor = new OpenaiTextToTextProcessor(i);
         
-        if(in_sys_prompt_file.size())
-        {
-            newProcessor->set_manual_caching(true, mbase::InfProcessorTextToText::cache_mode::KV_LOCK_MODE);
-        }
+        newProcessor->set_manual_caching(true, mbase::InfProcessorTextToText::cache_mode::KV_LOCK_MODE);
         
         this->register_context_process(
             newProcessor,
@@ -105,9 +101,14 @@ OpenaiModel::init_proc_err OpenaiModel::initialize_embedder_processors(
     for(U32 i = 0; i < in_processor_count; i++)
     {
         OpenaiEmbedderProcessor* newProcessor = new OpenaiEmbedderProcessor(i);
+        U32 contextLength = in_context_length;
+        if(contextLength > this->get_max_embedding_context())
+        {
+            contextLength = this->get_max_embedding_context();
+        }
         this->register_context_process(
             newProcessor,
-            in_context_length,
+            contextLength,
             in_thread_count
         );
         mAvailableEmbedderProcessors.push_back(newProcessor);

@@ -429,9 +429,19 @@ InfProcessorTextToText::flags InfProcessorTextToText::execute_input_sync(const i
 	flags outResult = execute_input(in_tokens, in_kv_locked);
 	if(outResult == flags::INF_PROC_SUCCESS || outResult == flags::INF_PROC_ERR_ALREADY_PROCESSING)
 	{
-		while(signal_input_process())
+		if(in_kv_locked)
 		{
-			mbase::sleep(2);
+			while(signal_kv_locked_process())
+			{
+				mbase::sleep(2);
+			}
+		}
+		else
+		{
+			while(signal_input_process())
+			{
+				mbase::sleep(2);
+			}
 		}
 		return flags::INF_PROC_INFO_NEED_UPDATE;
 	}

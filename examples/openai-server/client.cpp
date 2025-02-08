@@ -43,6 +43,7 @@ GENERIC OpenaiTextToTextClient::on_batch_processed(InfProcessorTextToText* out_p
 {
     if(out_is_kv_locked)
     {
+        // this is for system prompt caching
         return;
     }
     mAccumulatedResponse.clear();
@@ -93,8 +94,6 @@ GENERIC OpenaiTextToTextClient::on_write(InfProcessorTextToText* out_processor, 
         mbase::string modelName = tmpModel->get_model_name();
         mbase::Json responseJson;
         mbase::Json choicesArray;
-
-        
 
         responseJson["id"] = "chatcmpl-" + mClientId;
         responseJson["object"] = "chat.completion.chunk";
