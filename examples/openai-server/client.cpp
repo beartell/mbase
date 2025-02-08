@@ -31,7 +31,7 @@ GENERIC OpenaiTextToTextClient::set_is_processing(bool in_state)
 
 GENERIC OpenaiTextToTextClient::on_register(InfProcessorBase* out_processor)
 {
-    std::cout << "Client awaiting instructions" << std::endl;
+    
 }
 
 GENERIC OpenaiTextToTextClient::on_unregister(InfProcessorBase* out_processor)
@@ -90,11 +90,11 @@ GENERIC OpenaiTextToTextClient::on_write(InfProcessorTextToText* out_processor, 
         }
 
         U64 currentTime = static_cast<U64>(time(NULL));
-        mbase::string modelName = "";
+        mbase::string modelName = tmpModel->get_model_name();
         mbase::Json responseJson;
         mbase::Json choicesArray;
 
-        tmpModel->get_model_name(modelName);
+        
 
         responseJson["id"] = "chatcmpl-" + mClientId;
         responseJson["object"] = "chat.completion.chunk";
@@ -139,11 +139,9 @@ GENERIC OpenaiTextToTextClient::on_finish(InfProcessorTextToText* out_processor,
     mbase::OpenaiModel* tmpModel = static_cast<mbase::OpenaiModel*>(tmpProcessor->get_processed_model());
 
     U64 currentTime = static_cast<U64>(time(NULL));
-    mbase::string modelName = "";
+    mbase::string modelName = tmpModel->get_model_name();
     mbase::Json responseJson;
     mbase::Json choicesArray;
-
-    tmpModel->get_model_name(modelName);
 
     responseJson["id"] = "chatcmpl-" + mClientId;
     responseJson["object"] = "chat.completion";
@@ -209,5 +207,93 @@ GENERIC OpenaiTextToTextClient::on_finish(InfProcessorTextToText* out_processor,
 
     set_is_processing(false);
 }
+
+bool OpenaiEmbedderClient::is_processing() const
+{
+    return mIsProcessing;
+}
+
+GENERIC OpenaiEmbedderClient::set_embedder_input(
+    InfEmbedderProcessor* in_processor,
+    httplib::Response& in_resp,
+    const mbase::vector<inf_text_token_vector>& in_embeddings_list
+)
+{
+
+    mInResponse = &in_resp;
+    mEmbeddingTokensInput = in_embeddings_list;
+    mTotalProcessedResponse = mbase::Json();
+    mPromptIndex = 0;
+
+    mTotalProcessedResponse.setObject();
+    mTotalProcessedResponse["object"] = "list";
+    mTotalProcessedResponse["data"].setArray();
+    
+    I32 promptTokens = 0;
+
+    for(inf_text_token_vector& n: mEmbeddingTokensInput)
+    {
+        promptTokens += n.size();
+    }
+
+    mTotalProcessedResponse["usage"]["prompt_tokens"] = promptTokens;
+    mTotalProcessedResponse["usage"]["total_tokens"] = promptTokens;
+
+    InfModelTextToText* processedModel = static_cast<InfModelTextToText*>(in_processor->get_processed_model());
+    mbase::string outName = processedModel->get_model_name();
+    mTotalProcessedResponse["model"] = outName;
+    mIsProcessing = true;
+
+    in_processor->execute_input({mEmbeddingTokensInput.back()});
+    mEmbeddingTokensInput.pop_back();
+}
+
+GENERIC OpenaiEmbedderClient::on_register(InfProcessorBase* out_processor)
+{
+
+}
+
+GENERIC OpenaiEmbedderClient::on_unregister(InfProcessorBase* out_processor)
+{
+
+}
+
+GENERIC OpenaiEmbedderClient::on_batch_processed(InfEmbedderProcessor* out_processor, const U32& out_proc_batch_length)
+{
+    // embeddings are generated
+    out_processor->next();
+}
+
+GENERIC OpenaiEmbedderClient::on_write(InfEmbedderProcessor* out_processor, PTRF32 out_embeddings, const U32& out_cursor, bool out_is_finished)
+{
+    // embeddings are displayed
+    mTotalProcessedResponse["data"][mPromptIndex]["object"] = "embedding";
+    mTotalProcessedResponse["data"][mPromptIndex]["index"] = mPromptIndex;
+    for(U32 i = 0; i < out_processor->get_embedding_length(); ++i)
+    {
+        mbase::inf_common_embd_normalize(out_embeddings, out_embeddings, out_processor->get_embedding_length());
+        mTotalProcessedResponse["data"][mPromptIndex]["embedding"][i] = out_embeddings[i];
+    }
+}
+
+GENERIC OpenaiEmbedderClient::on_finish(InfEmbedderProcessor* out_processor, const size_type& out_total_processed_embeddings)
+{
+    // embeddings display is finished
+
+    ++mPromptIndex;
+    if(!mEmbeddingTokensInput.size())
+    {
+        mbase::string embeddingsJsonString = mTotalProcessedResponse.toStringPretty();
+        mInResponse->set_content(embeddingsJsonString.c_str(), embeddingsJsonString.size(), "application/json");
+        mIsProcessing = false;
+    }
+
+    else
+    {
+        out_processor->execute_input({mEmbeddingTokensInput.back()});
+        mEmbeddingTokensInput.pop_back();
+    }
+}
+
 
 MBASE_END

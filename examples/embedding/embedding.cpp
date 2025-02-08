@@ -67,7 +67,7 @@ public:
     }
     GENERIC on_initialize() override
     {
-        this->get_model_name(gModelName);
+        gModelName = this->get_model_name();
     }
     GENERIC on_destroy() override{}
 private:
@@ -300,8 +300,7 @@ int main(int argc, char** argv)
         return 1;
     }
 
-    U32 ctxLength = 0;
-    embdModel.get_max_embedding_context(ctxLength);
+    U32 ctxLength = embdModel.get_max_embedding_context();
     embdModel.register_context_process(&embdProcessor, ctxLength, gSampleParams.mThreadCount);
 
     while(1)

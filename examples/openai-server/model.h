@@ -10,6 +10,7 @@
 MBASE_BEGIN
 
 class OpenaiTextToTextProcessor;
+class OpenaiEmbedderProcessor;
 
 class OpenaiModel : public mbase::InfModelTextToText {
 public:
@@ -34,8 +35,17 @@ public:
         const inf_sampling_set& in_sampling_set,
         const mbase::string& in_sys_prompt_file = string()
     );
+    init_proc_err initialize_embedder_processors(
+        const U32& in_processor_count,
+        const U32& in_context_length,
+        const U32& in_thread_count
+    );
     bool acquire_processor(OpenaiTextToTextProcessor*& out_processor);
+    bool acquire_processor(OpenaiEmbedderProcessor*& out_processor);
+    bool is_init_finished();
     GENERIC release_processor(OpenaiTextToTextProcessor* in_processor);
+    GENERIC release_processor(OpenaiEmbedderProcessor* out_processor);
+    GENERIC _incr_processor_count();
 
     GENERIC on_initialize_fail(init_fail_code out_fail_code) override;
 	GENERIC on_initialize() override;
@@ -44,8 +54,10 @@ public:
 private:
     mbase::mutex mProcDistributionSync;
     mbase::vector<OpenaiTextToTextProcessor*> mAvailableT2tProcessors; // will leak memory but its okay.
+    mbase::vector<OpenaiEmbedderProcessor*> mAvailableEmbedderProcessors;
     U32 mAccessLimit;
     U64 mCreationDate;
+    I32 mProcRgrCounter = 0;
 };
 
 MBASE_END

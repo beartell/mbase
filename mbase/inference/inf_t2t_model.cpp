@@ -101,9 +101,9 @@ llama_model* InfModelTextToText::get_raw_model()
 	return mModel;
 }
 
-InfModelTextToText::flags InfModelTextToText::get_special_tokens(mbase::vector<inf_text_token>& out_tokens) const
+mbase::vector<inf_text_token> InfModelTextToText::get_special_tokens() const
 {
-	MBASE_INF_T2T_MODEL_RETURN_UNINITIALIZED;
+	mbase::vector<inf_text_token> out_tokens;
 	const llama_vocab* tmpVocab = llama_model_get_vocab(mModel);
 	for (I32 i = 0; i < llama_vocab_n_tokens(tmpVocab); i++)
 	{
@@ -113,14 +113,12 @@ InfModelTextToText::flags InfModelTextToText::get_special_tokens(mbase::vector<i
 			out_tokens.push_back(i);
 		}
 	}
-	return flags::INF_MODEL_SUCCESS;
 }
 
-InfModelTextToText::flags InfModelTextToText::get_special_tokens(mbase::vector<mbase::string>& out_tokens) const
+mbase::vector<mbase::string> InfModelTextToText::get_special_tokens_string() const
 {
-	MBASE_INF_T2T_MODEL_RETURN_UNINITIALIZED;
-	mbase::vector<inf_text_token> specialTokens;
-	get_special_tokens(specialTokens);
+	mbase::vector<mbase::string> out_tokens;
+	mbase::vector<inf_text_token> specialTokens = get_special_tokens();
 	const llama_vocab* tmpVocab = llama_model_get_vocab(mModel);
 	for (auto& n : specialTokens)
 	{
@@ -132,143 +130,90 @@ InfModelTextToText::flags InfModelTextToText::get_special_tokens(mbase::vector<m
 		}
 		out_tokens.push_back(myChars);
 	}
-	return flags::INF_MODEL_SUCCESS;
+	return out_tokens;
 }
 
-InfModelTextToText::flags InfModelTextToText::get_model_name(mbase::string& out_name) const
+const mbase::string& InfModelTextToText::get_model_name() const
 {
-	MBASE_INF_T2T_MODEL_RETURN_UNINITIALIZED;
-	out_name = mModelName;
-	return flags::INF_MODEL_SUCCESS;
+	return mModelName;
 }
 
-InfModelTextToText::flags InfModelTextToText::get_architecture(mbase::string& out_architecture) const
+const mbase::string&InfModelTextToText::get_architecture() const
 {
-	MBASE_INF_T2T_MODEL_RETURN_UNINITIALIZED;
-	out_architecture = mModelArchitecture;
-	return flags::INF_MODEL_SUCCESS;
+	return mModelArchitecture;
 }
 
-InfModelTextToText::flags InfModelTextToText::get_sys_start(mbase::string& out_start) const
+const mbase::string& InfModelTextToText::get_sys_start() const
 {
-	MBASE_INF_T2T_MODEL_RETURN_UNINITIALIZED;
-	out_start = mSystemStart;
-	return flags::INF_MODEL_SUCCESS;
+	return mSystemStart;
 }
 
-InfModelTextToText::flags InfModelTextToText::get_sys_start(mbase::vector<inf_text_token>& out_tokens) const
+const mbase::string& InfModelTextToText::get_assistant_start() const
 {
-	MBASE_INF_T2T_MODEL_RETURN_UNINITIALIZED;
-	out_tokens = mSystemStartTokenized;
-	return flags::INF_MODEL_SUCCESS;
+	return mAssistantStart;
 }
 
-InfModelTextToText::flags InfModelTextToText::get_assistant_start(mbase::string& out_start) const
+const mbase::string& InfModelTextToText::get_usr_start() const
 {
-	MBASE_INF_T2T_MODEL_RETURN_UNINITIALIZED;
-	out_start = mAssistantStart;
-	return flags::INF_MODEL_SUCCESS;
+	return mUsrStart;
 }
 
-InfModelTextToText::flags InfModelTextToText::get_assistant_start(mbase::vector<inf_text_token>& out_tokens) const
+const mbase::string& InfModelTextToText::get_sys_end() const
 {
-	MBASE_INF_T2T_MODEL_RETURN_UNINITIALIZED;
-	out_tokens = mAssistantStartTokenized;
-	return flags::INF_MODEL_SUCCESS;
+	return mSystemEnd;
 }
 
-InfModelTextToText::flags InfModelTextToText::get_usr_start(mbase::string& out_start) const
+const mbase::string& InfModelTextToText::get_assistant_end() const
 {
-	MBASE_INF_T2T_MODEL_RETURN_UNINITIALIZED;
-	out_start = mUsrStart;
-	return flags::INF_MODEL_SUCCESS;
+	return mAssistantStart;
 }
 
-InfModelTextToText::flags InfModelTextToText::get_usr_start(mbase::vector<inf_text_token>& out_tokens) const
+const mbase::string& InfModelTextToText::get_usr_end() const
 {
-	MBASE_INF_T2T_MODEL_RETURN_UNINITIALIZED;
-	out_tokens = mUserStartTokenized;
-	return flags::INF_MODEL_SUCCESS;
+	return mUserEnd;
 }
 
-InfModelTextToText::flags InfModelTextToText::get_sys_end(mbase::string& out_end) const
+inf_text_token InfModelTextToText::get_eot_token() const
 {
-	MBASE_INF_T2T_MODEL_RETURN_UNINITIALIZED;
-	out_end = mSystemEnd;
-	return flags::INF_MODEL_SUCCESS;
-}
-
-InfModelTextToText::flags InfModelTextToText::get_assistant_end(mbase::string& out_end) const
-{
-	MBASE_INF_T2T_MODEL_RETURN_UNINITIALIZED;
-	out_end = mAssistantEnd;
-	return flags::INF_MODEL_SUCCESS;
-}
-
-InfModelTextToText::flags InfModelTextToText::get_usr_end(mbase::string& out_end) const
-{
-	MBASE_INF_T2T_MODEL_RETURN_UNINITIALIZED;
-	out_end = mUserEnd;
-	return flags::INF_MODEL_SUCCESS;
-}
-
-InfModelTextToText::flags InfModelTextToText::get_eot_token(inf_text_token& out_token) const
-{
-	MBASE_INF_T2T_MODEL_RETURN_UNINITIALIZED;
 	const llama_vocab* tmpVocab = llama_model_get_vocab(mModel);
-	out_token = llama_vocab_eot(tmpVocab);
-	return flags::INF_MODEL_SUCCESS;
+	return llama_vocab_eot(tmpVocab);
 }
 
-InfModelTextToText::flags InfModelTextToText::get_lf_token(inf_text_token& out_token) const
+inf_text_token InfModelTextToText::get_lf_token() const
 {
-	MBASE_INF_T2T_MODEL_RETURN_UNINITIALIZED;
 	const llama_vocab* tmpVocab = llama_model_get_vocab(mModel);
-	out_token = llama_vocab_nl(tmpVocab);
-	return flags::INF_MODEL_SUCCESS;
+	return llama_vocab_nl(tmpVocab);
 }
 
-InfModelTextToText::flags InfModelTextToText::get_vocab_count(I32& out_count) const
+I32 InfModelTextToText::get_vocab_count() const
 {
-	MBASE_INF_T2T_MODEL_RETURN_UNINITIALIZED;
 	const llama_vocab* tmpVocab = llama_model_get_vocab(mModel);
-	out_count = llama_vocab_n_tokens(tmpVocab);
-	return flags::INF_MODEL_SUCCESS;;
+	return llama_vocab_n_tokens(tmpVocab);
 }
 
-InfModelTextToText::flags InfModelTextToText::get_size(size_type& out_size) const
+typename InfModelTextToText::size_type InfModelTextToText::get_size() const
 {
-	MBASE_INF_T2T_MODEL_RETURN_UNINITIALIZED;
-	out_size = llama_model_size(mModel);
-	return flags::INF_MODEL_SUCCESS;
+	return llama_model_size(mModel);
 }
 
-InfModelTextToText::flags InfModelTextToText::get_embedding_length(U32& out_length) const
+U32 InfModelTextToText::get_embedding_length() const
 {
-	MBASE_INF_T2T_MODEL_RETURN_UNINITIALIZED;
-	out_length = llama_model_n_embd(mModel);
-	return flags::INF_MODEL_SUCCESS;
+	return llama_model_n_embd(mModel);
 }
 
-InfModelTextToText::flags InfModelTextToText::get_head_count(U32& out_head_count) const
+U32 InfModelTextToText::get_head_count() const
 {
-	MBASE_INF_T2T_MODEL_RETURN_UNINITIALIZED;
-	out_head_count = llama_model_n_head(mModel);
-	return flags::INF_MODEL_SUCCESS;
+	return llama_model_n_head(mModel);
 }
 
-InfModelTextToText::flags InfModelTextToText::get_layer_count(U32& out_layer_count) const
+U32 InfModelTextToText::get_layer_count() const
 {
-	MBASE_INF_T2T_MODEL_RETURN_UNINITIALIZED;
-	out_layer_count = llama_model_n_layer(mModel);
-	return flags::INF_MODEL_SUCCESS;
+	return llama_model_n_layer(mModel);
 }
 
-InfModelTextToText::flags InfModelTextToText::get_max_embedding_context(U32& out_context) const
+U32 InfModelTextToText::get_max_embedding_context() const
 {
-	MBASE_INF_T2T_MODEL_RETURN_UNINITIALIZED;
-	out_context = llama_model_n_ctx_train(mModel);
-	return flags::INF_MODEL_SUCCESS;
+	return llama_model_n_ctx_train(mModel);
 }
 
 bool InfModelTextToText::is_token_eof_generation(inf_text_token in_token) const
@@ -285,8 +230,7 @@ InfModelTextToText::flags InfModelTextToText::is_token_special(const mbase::stri
 {
 	MBASE_INF_T2T_MODEL_RETURN_UNINITIALIZED;
 
-	mbase::vector<mbase::string> specialTokens;
-	get_special_tokens(specialTokens);
+	mbase::vector<mbase::string> specialTokens = get_special_tokens_string();
 
 	if (std::find(specialTokens.begin(), specialTokens.end(), in_string) == specialTokens.end())
 	{
@@ -327,7 +271,7 @@ InfModelTextToText::flags InfModelTextToText::initialize_model_ex(const mbase::w
 	if(is_initialized())
 	{
 		return flags::INF_MODEL_SUCCESS;
-	}
+	} 
 	
 	if(signal_initializing())
 	{

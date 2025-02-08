@@ -332,17 +332,13 @@ int main(int argc, char** argv)
 
     signal(SIGINT, catching_interrupt_signal);
     
-    SIZE_T modelSize = 0;
-    U32 embeddingLength = 0;
-    U32 headCount = 0;
-    U32 layerCount = 0;
-    benchModel.get_size(modelSize);
-    benchModel.get_embedding_length(embeddingLength);
-    benchModel.get_head_count(headCount);
-    benchModel.get_layer_count(layerCount);
-    mbase::string modelName;
+    SIZE_T modelSize = benchModel.get_size();
+    U32 embeddingLength = benchModel.get_embedding_length();
+    U32 headCount = benchModel.get_head_count();
+    U32 layerCount = benchModel.get_layer_count();
+    mbase::string modelName = benchModel.get_model_name();
     F32 tmpModelSize = (modelSize / (F32)(1024*1024*1024));
-    benchModel.get_model_name(modelName);
+    
     printf("==== Session Information ====\n\n");
     printf("- Model Information: \n");
     printf("\tName: %s\n", modelName.c_str());

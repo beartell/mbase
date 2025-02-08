@@ -53,9 +53,11 @@ public:
 	#ifdef MBASE_INTERNAL_API
 		inf_text_token_candidates& get_token_candidates();
 	#endif // MBASE_INTERNAL_API
-	const U32& get_batch_size();
-	const U32& get_max_token_length();
-	const U32& get_context_cursor_position();
+	const U32& get_batch_size() const;
+	const U32& get_max_token_length() const;
+	const U32& get_context_cursor_position() const;
+	I32 get_batch_thread_count() const;
+	I32 get_thread_count() const;
 	bool has_sampler(InfSamplerDescription::SAMPLER in_sampler_type, InfSamplerDescription& out_sampler);
 	GENERIC get_available_samplers(inf_sampling_set& out_samplers);
 	flags get_processor_status() const;

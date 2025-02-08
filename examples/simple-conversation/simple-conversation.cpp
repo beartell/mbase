@@ -400,8 +400,7 @@ int main(int argc, char** argv)
     }
 
     signal(SIGINT, catching_interrupt_signal);
-    mbase::string modelName;
-    cnvModel.get_model_name(modelName);
+    mbase::string modelName = cnvModel.get_model_name();
     printf("==== Session Information ====\n\n");
     printf("- Model name: %s\n", modelName.c_str());
     printf("- Context length: %u\n", gSampleParams.mContextLength);

@@ -150,19 +150,28 @@ bool InfProcessorTextToText::signal_kv_locked_process() const
 	return mInputKvLockedSignal.get_signal();
 }
 
-const U32& InfProcessorTextToText::get_batch_size()
+const U32& InfProcessorTextToText::get_batch_size() const
 {
 	return mBatchSize;
 }
 
-const U32& InfProcessorTextToText::get_max_token_length()
+const U32& InfProcessorTextToText::get_max_token_length() const
 {
 	return mContextLength;
 }
 
-const U32& InfProcessorTextToText::get_context_cursor_position()
+const U32& InfProcessorTextToText::get_context_cursor_position() const
 {
 	return mContextCursor;
+}
+
+I32 InfProcessorTextToText::get_batch_thread_count() const
+{
+	return llama_n_threads_batch(mModelContext);
+}
+I32 InfProcessorTextToText::get_thread_count() const
+{
+	return llama_n_threads(mModelContext);
 }
 
 bool InfProcessorTextToText::has_sampler(InfSamplerDescription::SAMPLER in_sampler_type, InfSamplerDescription& out_sampler)
@@ -310,20 +319,20 @@ InfProcessorTextToText::flags InfProcessorTextToText::tokenize_input(context_lin
 		mbase::string endString;
 		if(tmpLine->mRole == context_role::SYSTEM)
 		{
-			t2tModel->get_sys_start(roleString);
-			t2tModel->get_sys_end(endString);
+			roleString = t2tModel->get_sys_start();
+			endString = t2tModel->get_sys_end();
 		}
 
 		else if(tmpLine->mRole == context_role::ASSISTANT)
 		{
-			t2tModel->get_assistant_start(roleString);
-			t2tModel->get_assistant_end(endString);
+			roleString = t2tModel->get_assistant_start();
+			endString = t2tModel->get_assistant_end();
 		}
 
 		else if(tmpLine->mRole == context_role::USER)
 		{
-			t2tModel->get_usr_start(roleString);
-			t2tModel->get_usr_end(endString);
+			roleString = t2tModel->get_usr_start();
+			endString = t2tModel->get_usr_end();
 		}
 		
 		totalMessage += (roleString + tmpLine->mMessage + endString);
@@ -336,9 +345,7 @@ InfProcessorTextToText::flags InfProcessorTextToText::tokenize_input(context_lin
 		{
 			if (in_append_assistant_token)
 			{
-				mbase::string assistantToken;
-				t2tModel->get_assistant_start(assistantToken);
-				totalMessage += assistantToken;
+				totalMessage += t2tModel->get_assistant_start();
 			}
 		}
 	}
@@ -701,7 +708,7 @@ GENERIC InfProcessorTextToText::_decode_cached_logits()
 	{
 		llama_decode(mModelContext, tempBatch);
 	}
-
+	
 	llama_batch_free(tempBatch);
 
 	mLogitStartIndex = 0;

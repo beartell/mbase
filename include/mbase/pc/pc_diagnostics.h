@@ -45,7 +45,7 @@ public:
 
 		mbase::string totalLog = _build_log_heading(in_log_type, in_log_importance);
 
-		totalLog += mbase::string::from_format(in_format, std::forward<Params>(in_params)..., MBASE_PLATFORM_NEWLINE);
+		totalLog += mbase::string::from_format(in_format, std::forward<Params>(in_params)...) + MBASE_PLATFORM_NEWLINE;
 
 		mLogList.push_back(totalLog);
 
@@ -62,7 +62,7 @@ public:
 
 		mbase::string totalLog = _build_log_heading(in_log_type, in_log_importance);
 
-		totalLog += mbase::string::from_format(in_format, std::forward<Params>(in_params)..., MBASE_PLATFORM_NEWLINE);
+		totalLog += mbase::string::from_format(in_format, std::forward<Params>(in_params)...) + MBASE_PLATFORM_NEWLINE;
 
 		printf("%s", totalLog.c_str());
 
