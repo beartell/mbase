@@ -38,6 +38,7 @@ public:
 
 	~mutex() noexcept 
 	{
+        this->release();
 #ifdef MBASE_PLATFORM_WINDOWS
 		CloseHandle(mHandle);
 #endif

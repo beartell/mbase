@@ -4,3 +4,5 @@ target_compile_definitions(mbase_simple_conversation PRIVATE ${MBASE_COMMON_COMP
 target_compile_options(mbase_simple_conversation PRIVATE ${MBASE_COMMON_COMPILE_OPTIONS})
 target_include_directories(mbase_simple_conversation PUBLIC mb_pc mb_inference)
 target_link_libraries(mbase_simple_conversation PRIVATE ${MBASE_STD_LIBS} mb_pc mb_inference llama)
+
+install(TARGETS mbase_simple_conversation RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})

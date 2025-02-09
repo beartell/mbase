@@ -90,6 +90,11 @@ const U32& InfEmbedderProcessor::get_max_token_length() const
     return mContextLength;
 }
 
+const I32& InfEmbedderProcessor::get_batch_thread_count() const
+{
+    return llama_n_threads_batch(mModelContext);
+}
+
 InfEmbedderProcessor::flags InfEmbedderProcessor::get_processor_status() const
 {
 	if(signal_initializing())
@@ -383,7 +388,7 @@ GENERIC InfEmbedderProcessor::_initialize_context()
 		return;
     }
 
-    t2tModel->get_embedding_length(mEmbeddingLength);
+    mEmbeddingLength = t2tModel->get_embedding_length();
 
     if(llama_model_has_encoder(rawModel) && !llama_model_has_decoder(rawModel))
     {

@@ -7,7 +7,7 @@
 #include <chrono>
 #include <signal.h>
 
-#define MBASE_SIMPLE_CONVERSATION_VERSION "v1.1.4"
+#define MBASE_SIMPLE_CONVERSATION_VERSION "v0.1.0"
 
 using namespace mbase;
 
@@ -52,20 +52,14 @@ struct program_parameters {
 mbase::vector<InfDeviceDescription> deviceDescription;
 program_parameters gSampleParams;
 bool gIsProgramRunning = true;
+ConversationProcessor* gGlobalProcessor = NULL;
 
 GENERIC catching_interrupt_signal(I32 out_sig_id);
 GENERIC print_usage();
-
-GENERIC catching_interrupt_signal([[maybe_unused]] I32 out_sig_id)
-{
-    printf("Program interrupted\n");
-    gIsProgramRunning = false;
-}
-
 GENERIC print_usage()
 {
     printf("========================================\n");
-    printf("#Program name:      mbase-simple-conversation\n");
+    printf("#Program name:      mbase_simple_conversation\n");
     printf("#Version:           %s\n", MBASE_SIMPLE_CONVERSATION_VERSION);
     printf("#Type:              Example\n");
     printf("#Further docs: \n");
@@ -74,7 +68,10 @@ GENERIC print_usage()
     printf("The given implementation is stable and shows the basics of non-blocking LLM inference.\n");
     printf("The code section here will mostly be used by other example programs.\n");
     printf("========================================\n\n");
-    printf("Usage: mbase-simple-conversation <model_path> *[<option> [<value>]]\n");
+    printf("Usage: mbase_simple_conversation <model_path> *[<option> [<value>]]\n");
+    printf("       mbase_simple_conversation model.gguf\n");
+    printf("       mbase_simple_conversation model.gguf -gl 80\n");
+    printf("       mbase_simple_conversation model.gguf -gl 80 -sys 'You are a helpful assistant.'\n");
     printf("Options: \n\n");
     printf("--help                            Print usage.\n");
     printf("-v, --version                     Shows program version.\n");
@@ -125,9 +122,14 @@ public:
 
     GENERIC start_conversation(ConversationProcessor* in_processor)
     {
+		#ifdef MBASE_PLATFORM_WINDOWS
+			SetConsoleCP(CP_UTF8);
+			SetConsoleOutputCP(CP_UTF8);
+		#endif		
         printf("User >> ");
+	
         mbase::string userPrompt = mbase::get_line();
-
+		
         mbase::inf_text_token_vector tokenVector;
         context_line ctxLine;
         ctxLine.mRole = mbase::context_role::USER;
@@ -141,6 +143,7 @@ public:
     GENERIC on_register(InfProcessorBase* out_processor) override
     {
         ConversationProcessor* hostProcessor = static_cast<ConversationProcessor*>(out_processor);
+        gGlobalProcessor = hostProcessor;
         hostProcessor->set_manual_caching(true, ConversationProcessor::cache_mode::KV_LOCK_MODE);
         printf("System >> %s\n", mSystemPromptString.c_str());
         mbase::context_line ctxLine;
@@ -207,12 +210,25 @@ private:
     mbase::string mSystemPromptString;
 };
 
+GENERIC catching_interrupt_signal([[maybe_unused]] I32 out_sig_id)
+{
+    printf("Program interrupted\n");
+    
+    if(gGlobalProcessor)
+    {
+        InfProcT2TDiagnostics& t2tDiag = gGlobalProcessor->get_diagnostics();
+        printf("\n==== Processor diagnostics ====\n");
+        printf("| Context load delay         | %lu ms\n", t2tDiag.loadTimeInMilliseconds);
+        printf("| Prompt processing rate(pp) | %f tokens/sec\n", t2tDiag.ppTokensPerSecond);
+        printf("| Token generation rate(tg)  | %f tokens/sec\n", t2tDiag.evalTokensPerSecond); 
+    }
+    exit(0);
+    gIsProgramRunning = false;
+}
+
 int main(int argc, char** argv)
 {
-    if (std::setlocale(LC_ALL, "en_US.UTF-8") == nullptr) 
-    {
-        return 1;
-    }
+    std::setlocale(LC_ALL, "en_US.UTF-8"); 
 
     if(argc < 2)
     {
@@ -387,8 +403,7 @@ int main(int argc, char** argv)
     }
 
     signal(SIGINT, catching_interrupt_signal);
-    mbase::string modelName;
-    cnvModel.get_model_name(modelName);
+    mbase::string modelName = cnvModel.get_model_name();
     printf("==== Session Information ====\n\n");
     printf("- Model name: %s\n", modelName.c_str());
     printf("- Context length: %u\n", gSampleParams.mContextLength);

@@ -37,9 +37,19 @@ enum class inf_model_category {
     UNDEFINED
 };
 
-struct inf_lora_adapter {
-	mbase::string mAdapterName;
-	mbase::string mLoraPath;
+struct MBASE_API inf_lora_adapter {
+    friend bool operator!=(const inf_lora_adapter& in_lhs, const inf_lora_adapter& in_rhs)
+    {
+        return in_lhs.mAdapterName != in_rhs.mAdapterName;
+    }
+
+    friend bool operator==(const inf_lora_adapter& in_lhs, const inf_lora_adapter& in_rhs)
+    {
+        return in_lhs.mAdapterName == in_rhs.mAdapterName;
+    }
+
+	mbase::string mAdapterName = "";
+	mbase::wstring mLoraPath = L"";
 	llama_adapter_lora* mAdapterHandle = NULL;
 };
 

@@ -4,24 +4,37 @@
 #include "openai_errors.h"
 #include <mbase/argument_get_value.h>
 #include <mbase/filesystem.h>
-#include <mbase/json/json.h>
+#include "global_state.h"
 
 #define MBASE_OPENAI_SERVER_VERSION "v1.2.0"
 void print_usage();
 void print_usage()
 {
+    printf("========================================\n");
+    printf("#Program name:      mbase-openai-server\n");
+    printf("#Version:           %s\n", MBASE_OPENAI_SERVER_VERSION);
+    printf("#Type:              Example\n");
+    printf("#Further docs: \n");
+    printf("***** DESCRIPTION *****\n");
+    printf("Openai api compatible http server for serving LLMs.\n");
+    printf("Keep in mind that this implementation is an example that show what is possible with MBASE.\n");
+    printf("This program provides chat completion API for TextToText models and embeddings API for embedder models.\n");
+    printf("========================================\n\n");
+    printf("Usage: mbase-openai-server *[<option> [<value>]]\n");
+    printf("Options: \n\n");
+    printf("--help                          Print usage.\n");
+    printf("-v, --version                   Shows program version.\n");
+    printf("--api-key <str>                 Api key.\n");
+    printf("-h, --hostname <str>            Hostname to listen to (default=127.0.0.1).\n");
+    printf("-p, --port <int>                Port to assign to (default=8080).\n");
+    printf("-al, --access-limit <int>       Amount of clients that can access concurrently (default=-1).\n");
+    printf("-m, --model-path <str>          Model file to be hosted. To host multiple models, pass this argument multiple times.\n");
+    printf("-t, --thread-count <int>        Amount of threads to use for output processing (default=16).\n");
+    printf("-bt, --batch-thread-count <int> Amount of threads to use for initial batch processing (default=8).\n");
+    printf("-c, --context-length <int>      Total context length (default=8192).\n");
+    printf("-b, --batch-length <int>        Batch length (default=4096).\n");
+    printf("-gl, --gpu-layers <int>         GPU layers to offload to (default=999).\n\n");
 }
-
-struct mbase_openai_program_data {
-    mbase::vector<mbase::OpenaiModel*> programModels;
-    mbase::string apiKey;
-    mbase::string hostName = "127.0.0.1"; // --hostname || -h;
-    int listenPort = 8080; // --port || -p
-    mbase::Json jsonDescription; // -jsdesc
-    bool serverListening = true;
-};
-
-mbase_openai_program_data gProgramData;
 
 void modelListHandler(const httplib::Request& in_req, httplib::Response& in_resp)
 {
@@ -39,15 +52,14 @@ void modelListHandler(const httplib::Request& in_req, httplib::Response& in_resp
         );
         return;
     }
-
+   
     mbase::Json modelList;
     modelList.setArray();
 
     for(size_t i = 0; i < gProgramData.programModels.size(); i++)
     {
         mbase::OpenaiModel* tmpModel = gProgramData.programModels[i];
-        mbase::string modelName;
-        tmpModel->get_model_name(modelName);
+        mbase::string modelName = tmpModel->get_model_name();
         modelList[i]["id"] = modelName;
         modelList[i]["object"] = "model";
         modelList[i]["created"] = tmpModel->get_creation_date_in_epoch();
@@ -97,8 +109,7 @@ void modelRetrieveHandler(const httplib::Request& in_req, httplib::Response& in_
     for(size_t i = 0; i < gProgramData.programModels.size(); i++)
     {
         mbase::OpenaiModel* tmpModel = gProgramData.programModels[i];
-        mbase::string tmpModelName;
-        tmpModel->get_model_name(tmpModelName);
+        mbase::string tmpModelName = tmpModel->get_model_name();
         if(requestedModel == tmpModelName)
         {
             mbase::Json dataObject;
@@ -127,7 +138,6 @@ void chatCompletionHandler(const httplib::Request& in_req, httplib::Response& in
     /* /v1/chat/completions */
     /* /chat/completions */
 
-    printf("%s\n", in_req.body.c_str());
     mbase::string providedKey = "";
     if(!mbase::openaiAuthCheck(in_req, in_resp, gProgramData.apiKey, providedKey))
     {
@@ -189,10 +199,21 @@ void chatCompletionHandler(const httplib::Request& in_req, httplib::Response& in
     for(mbase::vector<mbase::OpenaiModel*>::iterator It = gProgramData.programModels.begin(); It != gProgramData.programModels.end(); ++It)
     {
         mbase::OpenaiModel* tmpModel = *It;
-        mbase::string tmpModelName;
-        tmpModel->get_model_name(tmpModelName);
+        mbase::string tmpModelName = tmpModel->get_model_name();
         if(tmpModelName == requestedModel)
         {
+            if(tmpModel->is_embedding_model())
+            {
+                // Trying to call chat completions api on embedder model
+                mbase::sendOpenaiError(
+                    in_req,
+                    in_resp,
+                    "The specified model is not available or invalid.",
+                    "invalid_request_error",
+                    "invalid_model"
+                );
+                return;
+            }
             activeModel = tmpModel;
             break;
         }
@@ -390,7 +411,249 @@ void chatCompletionHandler(const httplib::Request& in_req, httplib::Response& in
             mbase::sleep(2);
         }
 
+        
         activeModel->release_processor(t2tProcessor);
+    }
+}
+
+void embeddingsHandler(const httplib::Request& in_req, httplib::Response& in_resp)
+{
+    /* /v1/embeddings */
+    mbase::string providedKey = "";
+    if(!mbase::openaiAuthCheck(in_req, in_resp, gProgramData.apiKey, providedKey))
+    {
+        in_resp.status = 401;
+        mbase::sendOpenaiError(
+            in_req,
+            in_resp,
+            mbase::string::from_format("Invalid API key provided: [%s]", providedKey.c_str()),
+            "invalid_request_error",
+            "missing_parameter"
+        );
+        return;
+    }
+
+    if(!in_req.body.size())
+    {
+        mbase::sendOpenaiError(
+            in_req,
+            in_resp,
+            "Request body is missing",
+            "invalid_request_error",
+            "missing_parameter"
+        );
+        return;
+    }
+
+    mbase::string reqBody(in_req.body.c_str(), in_req.body.size());
+    std::pair<mbase::Json::Status, mbase::Json> parseResult = mbase::Json::parse(reqBody);
+
+    if(parseResult.first != mbase::Json::Status::success)
+    {
+        // Parse failed, handle later
+        mbase::sendOpenaiError(
+            in_req,
+            in_resp,
+            "Request body incorrect format",
+            "invalid_request_error",
+            "missing_parameter"
+        );
+        return;
+    }
+
+    mbase::Json jsonObject = parseResult.second;
+    if(!jsonObject["model"].isString())
+    {
+        mbase::sendOpenaiError(
+            in_req,
+            in_resp,
+            "Required parameter is missing: model",
+            "invalid_request_error",
+            "missing_parameter"
+        );
+        return;
+    }
+
+    mbase::string requestedModel = jsonObject["model"].getString();
+    mbase::OpenaiModel* activeModel = NULL;
+
+    for(mbase::vector<mbase::OpenaiModel*>::iterator It = gProgramData.programModels.begin(); It != gProgramData.programModels.end(); ++It)
+    {
+        mbase::OpenaiModel* tmpModel = *It;
+        mbase::string tmpModelName = tmpModel->get_model_name();
+        if(tmpModelName == requestedModel)
+        {
+            if(!tmpModel->is_embedding_model())
+            {
+                // Trying to call embedder api on t2t model
+                mbase::sendOpenaiError(
+                    in_req,
+                    in_resp,
+                    "The specified model is not available or invalid.",
+                    "invalid_request_error",
+                    "invalid_model"
+                );
+                return;
+            }
+            activeModel = tmpModel;
+            break;
+        }
+    }
+
+    if(!activeModel)
+    {
+        mbase::sendOpenaiError(
+            in_req,
+            in_resp,
+            "The specified model is not available or invalid.",
+            "invalid_request_error",
+            "invalid_model"
+        );
+        return;
+    }
+
+    mbase::OpenaiEmbedderProcessor* embedderProcesor = NULL;
+    if(!activeModel->acquire_processor(embedderProcesor))
+    {
+        mbase::sendOpenaiError(
+            in_req,
+            in_resp,
+            "The engine is currently overloaded. Please try again later.",
+            "server_error",
+            "engine_overloaded"
+        );
+        return;
+    }
+
+    // we acquired the processor
+    mbase::vector<mbase::inf_text_token_vector> tokVec;
+    if(jsonObject["input"].isString())
+    {
+        if(jsonObject["input"].getString().size())
+        {
+            mbase::inf_text_token_vector generatedTokens;
+            if(embedderProcesor->tokenize_input(jsonObject["input"].getString(), generatedTokens) == mbase::OpenaiEmbedderProcessor::flags::INF_PROC_ERR_UNABLE_TO_TOKENIZE_INPUT)
+            {
+                activeModel->release_processor(embedderProcesor);
+                mbase::sendOpenaiError(
+                    in_req,
+                    in_resp,
+                    "The server had an error while processing your request.",
+                    "server_error",
+                    "server_error"
+                );
+                return;
+            }
+
+            if(generatedTokens.size() > embedderProcesor->get_context_size())
+            {
+                activeModel->release_processor(embedderProcesor);
+                mbase::sendOpenaiError(
+                    in_req,
+                    in_resp,
+                    "The server had an error while processing your request.",
+                    "server_error",
+                    "server_error"
+                );
+                return;
+            }
+
+            if(generatedTokens.size())
+            {
+                tokVec.push_back(generatedTokens);
+            }
+        }
+    }
+    else if(jsonObject["input"].isArray())
+    {
+        for(mbase::Json& n : jsonObject["input"].getArray())
+        {
+            if(!n.isString())
+            {
+                activeModel->release_processor(embedderProcesor);
+                mbase::sendOpenaiError(
+                    in_req,
+                    in_resp,
+                    "Input field must be either string or array of strings.",
+                    "invalid_request_error",
+                    "invalid_message_structure"
+                );
+                return;
+            }
+            else
+            {
+                if(n.getString().size())
+                {
+                    mbase::inf_text_token_vector generatedTokens;
+                    if(embedderProcesor->tokenize_input(n.getString(), generatedTokens) == mbase::OpenaiEmbedderProcessor::flags::INF_PROC_ERR_UNABLE_TO_TOKENIZE_INPUT)
+                    {
+                        activeModel->release_processor(embedderProcesor);
+                        mbase::sendOpenaiError(
+                            in_req,
+                            in_resp,
+                            "The server had an error while processing your request.",
+                            "server_error",
+                            "server_error"
+                        );
+                        return;
+                    }
+
+                    if(generatedTokens.size() > embedderProcesor->get_context_size())
+                    {
+                        activeModel->release_processor(embedderProcesor);
+                        mbase::sendOpenaiError(
+                            in_req,
+                            in_resp,
+                            "The server had an error while processing your request.",
+                            "server_error",
+                            "server_error"
+                        );
+                        return;
+                    }
+
+                    if(generatedTokens.size())
+                    {
+                        tokVec.push_back(generatedTokens);
+                    }
+                }
+            }
+        }
+    }
+    else
+    {
+        // invalid message format
+        activeModel->release_processor(embedderProcesor);
+        mbase::sendOpenaiError(
+            in_req,
+            in_resp,
+            "Input field must be either string or array of strings.",
+            "invalid_request_error",
+            "invalid_message_structure"
+        );
+        return;
+    }
+
+    if(tokVec.size())
+    {
+        mbase::OpenaiEmbedderClient* embedderClient = static_cast<mbase::OpenaiEmbedderClient*>(embedderProcesor->get_assigned_client());
+        embedderClient->set_embedder_input(embedderProcesor, in_resp, tokVec);
+        while(embedderClient->is_processing())
+        {
+            mbase::sleep(2);
+        }
+        activeModel->release_processor(embedderProcesor);
+    }
+    else
+    {
+        activeModel->release_processor(embedderProcesor);
+        mbase::sendOpenaiError(
+            in_req,
+            in_resp,
+            "Unable to process input.",
+            "invalid_request_error",
+            "invalid_message_structure"
+        );
+        return;
     }
 }
 
@@ -402,14 +665,24 @@ void server_start()
     svr.Get("/v1/models/:model", modelRetrieveHandler);
     svr.Post("/chat/completions", chatCompletionHandler);
     svr.Post("/v1/chat/completions", chatCompletionHandler);
+    svr.Post("/v1/embeddings", embeddingsHandler);
 
     std::string httpHost(gProgramData.hostName.c_str(), gProgramData.hostName.size());
     svr.listen(httpHost, gProgramData.listenPort);
+    gProgramData.diagnostic.log(mbase::PcDiagnostics::flags::LOGTYPE_ERROR, mbase::PcDiagnostics::flags::LOGIMPORTANCE_FATAL, "Unable to listen on host: %s:%d", gProgramData.hostName.c_str(), gProgramData.listenPort);
     gProgramData.serverListening = false;
 }
 
 void apply_json_desc(const mbase::string& in_json_string)
 {
+    std::pair<mbase::Json::Status, mbase::Json> parsedJson = mbase::Json::parse(in_json_string);
+    
+    if(parsedJson.first != mbase::Json::Status::success)
+    {
+        printf("ERR: JSON parse failed\n");
+        exit(0);
+    }
+
     gProgramData.jsonDescription = mbase::Json::parse(in_json_string).second;
     mbase::Json& tmpJson = gProgramData.jsonDescription;
 
@@ -421,18 +694,58 @@ void apply_json_desc(const mbase::string& in_json_string)
     for(mbase::Json& modelObject : tmpJson.getArray())
     {
         // TODO, CHECK MODEL DUPLICATE
-        mbase::wstring modelPath = mbase::from_utf8(modelObject["model_path"].getString());
-        uint32_t processorCount = modelObject["processor_count"].getLong(); 
-        uint32_t threadCount = modelObject["thread_count"].getLong();
-        uint32_t batchThreadCount = modelObject["batch_thread_count"].getLong();
-        uint32_t contextLength = modelObject["context_length"].getLong();
-        uint32_t batchLength = modelObject["batch_length"].getLong();
-        uint32_t gpuLayers = modelObject["gpu_layers"].getLong();
+        mbase::wstring modelPath;
+        mbase::string systemPromptString;
+        uint32_t processorCount = 4;
+        uint32_t threadCount = 8;
+        uint32_t batchThreadCount = 8;
+        uint32_t contextLength = 4096;
+        uint32_t batchLength = 512;
+        uint32_t gpuLayers = 999;
+        if(modelObject["model_path"].isString())
+        {
+            modelPath = mbase::from_utf8(modelObject["model_path"].getString());
+        }
+
+        if(modelObject["processor_count"].isLong())
+        {
+            processorCount = modelObject["processor_count"].getLong();
+        }
+
+        if(modelObject["thread_count"].isLong())
+        {
+            threadCount = modelObject["thread_count"].getLong();
+        }
+
+        if(modelObject["batch_thread_count"].isLong())
+        {
+            batchThreadCount = modelObject["batch_thread_count"].getLong();
+        }
+
+        if(modelObject["context_length"].isLong())
+        {
+            contextLength = modelObject["context_length"].getLong();
+        }
+
+        if(modelObject["batch_length"].isLong())
+        {
+            batchLength = modelObject["batch_length"].getLong();
+        }
+
+        if(modelObject["gpu_layers"].isLong())
+        {
+            gpuLayers = modelObject["gpu_layers"].getLong();
+        }
 
         if(!mbase::is_file_valid(modelPath))
         {
             printf("ERR: Cant open file: %s\n", modelObject["model_path"].getString().c_str());
             exit(1);
+        }
+
+        if(modelObject["fsys"].isString())
+        {
+            systemPromptString = mbase::read_file_as_string(mbase::from_utf8(modelObject["fsys"].getString()));
         }
 
         mbase::OpenaiModel* newModel = new mbase::OpenaiModel;
@@ -442,70 +755,121 @@ void apply_json_desc(const mbase::string& in_json_string)
             exit(1);
         }
 
-        mbase::inf_sampling_set samplerSet;
+        mbase::inf_sampling_set samplersList;
+
         if(modelObject["samplers"].isObject())
         {
+            mbase::Json &samplerObject = modelObject["samplers"];
             mbase::InfSamplerDescription isd;
-            if(modelObject["samplers"]["top_k"].isLong())
+            if(samplerObject["top_k"].isLong())
             {
-                isd.mTopK = modelObject["samplers"]["top_k"].getLong();
                 isd.mSamplerType = mbase::InfSamplerDescription::SAMPLER::TOP_K;
-                samplerSet.insert(isd);
+                isd.mTopK = samplerObject["top_k"].getLong();
+                samplersList.insert(isd);
             }
             
-            if(modelObject["samplers"]["top_p"].isFloat())
+            if(samplerObject["top_p"].isFloat())
             {
-                isd.mTopP = modelObject["samplers"]["top_p"].getFloat();
                 isd.mSamplerType = mbase::InfSamplerDescription::SAMPLER::TOP_P;
-                samplerSet.insert(isd);
+                isd.mTopP = samplerObject["top_p"].getFloat();
+                samplersList.insert(isd);
             }
 
-            if(modelObject["samplers"]["min_p"].isFloat())
+            if(samplerObject["min_p"].isFloat())
             {
-                isd.mMinP = modelObject["samplers"]["min_p"].getFloat();
                 isd.mSamplerType = mbase::InfSamplerDescription::SAMPLER::MIN_P;
-                samplerSet.insert(isd);
+                isd.mMinP = samplerObject["min_p"].getFloat();
+                samplersList.insert(isd);
             }
 
-            if(modelObject["samplers"]["temperature"].isFloat())
+            if(samplerObject["temp"].isFloat())
             {
-                isd.mTemp = modelObject["samplers"]["temperature"].getFloat();
                 isd.mSamplerType = mbase::InfSamplerDescription::SAMPLER::TEMP;
-                samplerSet.insert(isd);
+                isd.mTemp = samplerObject["temp"].getFloat();
+                samplersList.insert(isd);
             }
 
-            if(modelObject["samplers"]["repetition"].isObject())
-            {
-                isd.mSamplerType = mbase::InfSamplerDescription::SAMPLER::REPETITION;
-                if(modelObject["samplers"]["repetition"]["penalty_n"].isLong() && modelObject["samplers"]["repetition"]["penalty_repeat"].isFloat())
-                {
-                    isd.mRepetition.mPenaltyN = modelObject["samplers"]["repetition"]["penalty_n"].getLong();
-                    isd.mRepetition.mRepeatPenalty = modelObject["samplers"]["repetition"]["penalty_repeat"].getFloat();
-                }
-                samplerSet.insert(isd);
-            }
-
-            if(modelObject["samplers"]["mirostat_v2"].isObject())
+            if(samplerObject["mirostat_v2"].isObject())
             {
                 isd.mSamplerType = mbase::InfSamplerDescription::SAMPLER::MIROSTAT_V2;
-                if(modelObject["samplers"]["mirostat_v2"]["tau"].isFloat() && modelObject["samplers"]["mirostat_v2"]["eta"].isFloat())
+                if(samplerObject["mirostat_v2"]["tau"].isFloat() && samplerObject["mirostat_v2"]["eta"].isFloat())
                 {
-                    isd.mMiroV2.mTau = modelObject["samplers"]["mirostat_v2"]["tau"].getFloat();
-                    isd.mMiroV2.mEta = modelObject["samplers"]["mirostat_v2"]["eta"].getFloat();
+                    isd.mMiroV2.mTau = samplerObject["mirostat_v2"]["tau"].getFloat();
+                    isd.mMiroV2.mEta = samplerObject["mirostat_v2"]["eta"].getFloat();
+                    samplersList.insert(isd);
                 }
-                samplerSet.insert(isd);
+            }
+
+            if(samplerObject["repetition"].isObject())
+            {
+                isd.mSamplerType = mbase::InfSamplerDescription::SAMPLER::REPETITION;
+                isd.mRepetition.mPenaltyLinefeed = true;
+                isd.mRepetition.mPenaltyEos = false;
+
+                if(samplerObject["repetition"]["penalty_n"].isLong() && samplerObject["repetition"]["penalty_repeat"].isFloat())
+                {
+                    isd.mRepetition.mPenaltyN = samplerObject["repetition"]["penalty_n"].getLong();
+                    isd.mRepetition.mRepeatPenalty = samplerObject["repetition"]["penalty_repeat"].getFloat();
+                    samplersList.insert(isd);
+                }
             }
         }
 
         newModel->update();
-        newModel->initialize_t2t_processors(
-            processorCount,
-            threadCount,
-            batchThreadCount,
-            contextLength,
-            batchLength,
-            samplerSet
-        );
+
+        if(newModel->is_embedding_model())
+        {
+            newModel->initialize_embedder_processors(
+                processorCount,
+                contextLength,
+                threadCount
+            );
+        }
+
+        else
+        {
+            newModel->initialize_t2t_processors(
+                processorCount,
+                threadCount,
+                batchThreadCount,
+                contextLength,
+                batchLength,
+                samplersList
+            );
+        }
+
+        while(!newModel->is_init_finished())
+        {
+            newModel->update();
+            mbase::sleep(5);
+        }
+
+        gProgramData.diagnostic.print_logs();
+        gProgramData.diagnostic.flush_logs();
+
+        if(!newModel->is_embedding_model() && systemPromptString.size())
+        {
+            // means we should cache the system prompt
+            gProgramData.diagnostic.log_stdout(mbase::PcDiagnostics::flags::LOGTYPE_INFO, mbase::PcDiagnostics::flags::LOGIMPORTANCE_MID, "Caching the system prompt on processors. This may take a while...");
+            for(mbase::OpenaiModel::context_processor_list::iterator It = newModel->get_registered_processors().begin(); It != newModel->get_registered_processors().end(); ++It)
+            {
+                mbase::OpenaiTextToTextProcessor* t2tProc = reinterpret_cast<mbase::OpenaiTextToTextProcessor*>(It->mSubject);
+                mbase::inf_text_token_vector tokVec;
+                if(t2tProc->tokenize_input(systemPromptString.c_str(), systemPromptString.size(), tokVec) == mbase::OpenaiTextToTextProcessor::flags::INF_PROC_ERR_UNABLE_TO_TOKENIZE_INPUT)
+                {
+                    gProgramData.diagnostic.log_stdout(mbase::PcDiagnostics::flags::LOGTYPE_ERROR, mbase::PcDiagnostics::flags::LOGIMPORTANCE_FATAL, "System prompt tokenization failed. This is happens if the system prompt contains a character outside the model's vocabulary");
+                }
+
+                if(tokVec.size() > t2tProc->get_context_size())
+                {
+                    gProgramData.diagnostic.log_stdout(mbase::PcDiagnostics::flags::LOGTYPE_ERROR, mbase::PcDiagnostics::flags::LOGIMPORTANCE_FATAL, "Tokenized system prompt exceeds context size: given(%d), context(%d)", tokVec.size(), t2tProc->get_context_size());
+                }
+
+                t2tProc->execute_input_sync(tokVec, true);
+                t2tProc->update();
+            }
+            gProgramData.diagnostic.log_stdout(mbase::PcDiagnostics::flags::LOGTYPE_SUCCESS, mbase::PcDiagnostics::flags::LOGIMPORTANCE_MID, "System prompt successfully cached.");
+        }
 
         gProgramData.programModels.push_back(newModel);
     }
@@ -514,19 +878,27 @@ void apply_json_desc(const mbase::string& in_json_string)
 int main(int argc, char** argv)
 {
     mbase::vector<mbase::InfDeviceDescription> deviceDesc = mbase::inf_query_devices();
-
     if(argc < 2)
     {
         print_usage();
-        return 1;
+        return 0;
     }
+
+    mbase::string jsonFile;
 
     for(int i= 0; i < argc; i++)
     {
         mbase::string argumentString = argv[i];
+
         if(argumentString == "-v" || argumentString == "--version")
         {
             printf("MBASE Openai server %s\n", MBASE_OPENAI_SERVER_VERSION);
+            return 0;
+        }
+
+        else if(argumentString == "-h" || argumentString == "--help")
+        {
+            print_usage();
             return 0;
         }
 
@@ -547,19 +919,53 @@ int main(int argc, char** argv)
 
         else if(argumentString == "-jsdesc")
         {
-            mbase::string jsonFile;
             mbase::argument_get<mbase::string>::value(i, argc, argv, jsonFile);
-            mbase::wstring fileLocation = mbase::from_utf8(jsonFile);
-
-            if(!mbase::is_file_valid(fileLocation))
-            {
-                printf("Json file can't be opened\n");
-                return 0;
-            }
-            jsonFile = mbase::read_file_as_string(fileLocation);
-            apply_json_desc(jsonFile);
         }
     }
+    
+    if(!jsonFile.size())
+    {
+        printf("ERR: Missing JSON description file\n");
+        return 1;
+    }
+
+    mbase::wstring fileLocation = mbase::from_utf8(jsonFile);
+    if(!mbase::is_file_valid(fileLocation))
+    {
+        printf("ERR: Json file can't be opened\n");
+        return 1;
+    }
+    jsonFile = mbase::read_file_as_string(fileLocation);
+    apply_json_desc(jsonFile);
+
+
+    printf("** Hosted Model Information **\n");
+    for(mbase::vector<mbase::OpenaiModel*>::iterator It = gProgramData.programModels.begin(); It != gProgramData.programModels.end(); ++It)
+    {
+        mbase::OpenaiModel* tmpModel = *It;
+        mbase::string outName = tmpModel->get_model_name();
+        printf("- Model name: %s\n", outName.c_str());
+        printf("- Processor count: %d\n", tmpModel->get_registered_processors().size());
+        if(tmpModel->is_embedding_model())
+        {
+            mbase::OpenaiEmbedderProcessor* embedderProc = static_cast<mbase::OpenaiEmbedderProcessor*>(tmpModel->get_registered_processors().front().mSubject);
+            printf("- Embedder model: true\n");
+            printf("- Context length: %d\n", embedderProc->get_context_size());
+        }
+        else
+        {
+            mbase::OpenaiTextToTextProcessor* t2tProc = static_cast<mbase::OpenaiTextToTextProcessor*>(tmpModel->get_registered_processors().front().mSubject);
+            printf("- Embedder model: false\n");
+            printf("- Context length: %d\n", t2tProc->get_context_size());
+            printf("- Batch thread count: %d\n", t2tProc->get_batch_thread_count());
+            printf("- Gen thread count: %d\n", t2tProc->get_thread_count());
+        }
+        printf("\n");
+    }
+
+    printf("HTTPS OFF\n");
+    printf("HTTP Listening on: %s:%d\n", gProgramData.hostName.c_str(), gProgramData.listenPort);
+    printf("\n");
 
     mbase::thread serverThread(server_start);
     serverThread.run();
@@ -572,4 +978,6 @@ int main(int argc, char** argv)
             n->update();
         }
     }
+
+    gProgramData.diagnostic.print_logs();    
 }

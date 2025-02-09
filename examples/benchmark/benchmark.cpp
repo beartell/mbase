@@ -8,7 +8,7 @@
 #include <chrono>
 #include <signal.h>
 
-#define MBASE_BENCHMARK_VERSION "v1.4.0"
+#define MBASE_BENCHMARK_VERSION "v0.1.0"
 
 using namespace mbase;
 
@@ -49,7 +49,7 @@ GENERIC catching_interrupt_signal([[maybe_unused]] I32 out_sig_id)
 GENERIC print_usage()
 {
     printf("========================================\n");
-    printf("#Program name:      mbase-benchmark-t2t\n");
+    printf("#Program name:      mbase_benchmark_t2t\n");
     printf("#Version:           %s\n", MBASE_BENCHMARK_VERSION);
     printf("#Type:              Utility, Example\n");
     printf("#Further docs: \n");
@@ -66,7 +66,9 @@ GENERIC print_usage()
     printf("### NOTE ###\n");
     printf("If the context kv cache is filled and there still are tokens to predict, they will not be processed, since we are not doing context window shifting.\n");
     printf("========================================\n\n");
-    printf("Usage: mbase-benchmark-t2t <model_path> *[<option> [<value>]]\n");
+    printf("Usage: mbase_benchmark_t2t <model_path> *[<option> [<value>]]\n");
+    printf("       mbase_benchmark_t2t model.gguf -uc 1 -fps 500 -jout .\n");
+    printf("       mbase_benchmark_t2t model.gguf -uc 1 -fps 500 -jout . -mdout .\n");
     printf("Options: \n\n");
     printf("-h, --help                           Print usage.\n");
     printf("-v, --version                        Shows program version.\n");
@@ -332,17 +334,13 @@ int main(int argc, char** argv)
 
     signal(SIGINT, catching_interrupt_signal);
     
-    SIZE_T modelSize = 0;
-    U32 embeddingLength = 0;
-    U32 headCount = 0;
-    U32 layerCount = 0;
-    benchModel.get_size(modelSize);
-    benchModel.get_embedding_length(embeddingLength);
-    benchModel.get_head_count(headCount);
-    benchModel.get_layer_count(layerCount);
-    mbase::string modelName;
+    SIZE_T modelSize = benchModel.get_size();
+    U32 embeddingLength = benchModel.get_embedding_length();
+    U32 headCount = benchModel.get_head_count();
+    U32 layerCount = benchModel.get_layer_count();
+    mbase::string modelName = benchModel.get_model_name();
     F32 tmpModelSize = (modelSize / (F32)(1024*1024*1024));
-    benchModel.get_model_name(modelName);
+    
     printf("==== Session Information ====\n\n");
     printf("- Model Information: \n");
     printf("\tName: %s\n", modelName.c_str());

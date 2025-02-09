@@ -60,19 +60,14 @@ InfModelTextToText::~InfModelTextToText()
 	}
 }
 
-bool InfModelTextToText::signal_lora_adding() const
+bool InfModelTextToText::signal_lora_operation() const
 {
-	return mLoraInitializeSignal.get_signal();
+	return mLoraOperationSignal.get_signal();
 }
 
-bool InfModelTextToText::signal_state_lora_adding() const
+bool InfModelTextToText::signal_state_lora_operation() const
 {
-	return mLoraInitializeSignal.get_signal_state();
-}
-
-bool InfModelTextToText::signal_state_lora_failed() const
-{
-	return mLoraFailSignal.get_signal_state();
+	return mLoraOperationSignal.get_signal_state();
 }
 
 bool InfModelTextToText::is_available(const U32& in_context_size) const
@@ -101,33 +96,14 @@ bool InfModelTextToText::is_embedding_model() const
 	return mIsEmbeddingModel;
 }
 
-bool InfModelTextToText::has_lora_adapter(const mbase::string& in_name, inf_lora_adapter& out_adapter)
-{
-	lora_adapter_map::iterator adapterIt = mLoraMap.find(in_name);
-	if(adapterIt == mLoraMap.end())
-	{
-		return false;
-	}
-
-	out_adapter = adapterIt->second;
-	return true;
-}
-
 llama_model* InfModelTextToText::get_raw_model()
 {
 	return mModel;
 }
 
-InfModelTextToText::flags InfModelTextToText::get_adapter_map(lora_adapter_map& out_map) const
+mbase::vector<inf_text_token> InfModelTextToText::get_special_tokens() const
 {
-	MBASE_INF_T2T_MODEL_RETURN_UNINITIALIZED;
-	out_map = mLoraMap;
-	return flags::INF_MODEL_SUCCESS;
-}
-
-InfModelTextToText::flags InfModelTextToText::get_special_tokens(mbase::vector<inf_text_token>& out_tokens) const
-{
-	MBASE_INF_T2T_MODEL_RETURN_UNINITIALIZED;
+	mbase::vector<inf_text_token> out_tokens;
 	const llama_vocab* tmpVocab = llama_model_get_vocab(mModel);
 	for (I32 i = 0; i < llama_vocab_n_tokens(tmpVocab); i++)
 	{
@@ -137,14 +113,12 @@ InfModelTextToText::flags InfModelTextToText::get_special_tokens(mbase::vector<i
 			out_tokens.push_back(i);
 		}
 	}
-	return flags::INF_MODEL_SUCCESS;
 }
 
-InfModelTextToText::flags InfModelTextToText::get_special_tokens(mbase::vector<mbase::string>& out_tokens) const
+mbase::vector<mbase::string> InfModelTextToText::get_special_tokens_string() const
 {
-	MBASE_INF_T2T_MODEL_RETURN_UNINITIALIZED;
-	mbase::vector<inf_text_token> specialTokens;
-	get_special_tokens(specialTokens);
+	mbase::vector<mbase::string> out_tokens;
+	mbase::vector<inf_text_token> specialTokens = get_special_tokens();
 	const llama_vocab* tmpVocab = llama_model_get_vocab(mModel);
 	for (auto& n : specialTokens)
 	{
@@ -156,143 +130,90 @@ InfModelTextToText::flags InfModelTextToText::get_special_tokens(mbase::vector<m
 		}
 		out_tokens.push_back(myChars);
 	}
-	return flags::INF_MODEL_SUCCESS;
+	return out_tokens;
 }
 
-InfModelTextToText::flags InfModelTextToText::get_model_name(mbase::string& out_name) const
+const mbase::string& InfModelTextToText::get_model_name() const
 {
-	MBASE_INF_T2T_MODEL_RETURN_UNINITIALIZED;
-	out_name = mModelName;
-	return flags::INF_MODEL_SUCCESS;
+	return mModelName;
 }
 
-InfModelTextToText::flags InfModelTextToText::get_architecture(mbase::string& out_architecture) const
+const mbase::string&InfModelTextToText::get_architecture() const
 {
-	MBASE_INF_T2T_MODEL_RETURN_UNINITIALIZED;
-	out_architecture = mModelArchitecture;
-	return flags::INF_MODEL_SUCCESS;
+	return mModelArchitecture;
 }
 
-InfModelTextToText::flags InfModelTextToText::get_sys_start(mbase::string& out_start) const
+const mbase::string& InfModelTextToText::get_sys_start() const
 {
-	MBASE_INF_T2T_MODEL_RETURN_UNINITIALIZED;
-	out_start = mSystemStart;
-	return flags::INF_MODEL_SUCCESS;
+	return mSystemStart;
 }
 
-InfModelTextToText::flags InfModelTextToText::get_sys_start(mbase::vector<inf_text_token>& out_tokens) const
+const mbase::string& InfModelTextToText::get_assistant_start() const
 {
-	MBASE_INF_T2T_MODEL_RETURN_UNINITIALIZED;
-	out_tokens = mSystemStartTokenized;
-	return flags::INF_MODEL_SUCCESS;
+	return mAssistantStart;
 }
 
-InfModelTextToText::flags InfModelTextToText::get_assistant_start(mbase::string& out_start) const
+const mbase::string& InfModelTextToText::get_usr_start() const
 {
-	MBASE_INF_T2T_MODEL_RETURN_UNINITIALIZED;
-	out_start = mAssistantStart;
-	return flags::INF_MODEL_SUCCESS;
+	return mUsrStart;
 }
 
-InfModelTextToText::flags InfModelTextToText::get_assistant_start(mbase::vector<inf_text_token>& out_tokens) const
+const mbase::string& InfModelTextToText::get_sys_end() const
 {
-	MBASE_INF_T2T_MODEL_RETURN_UNINITIALIZED;
-	out_tokens = mAssistantStartTokenized;
-	return flags::INF_MODEL_SUCCESS;
+	return mSystemEnd;
 }
 
-InfModelTextToText::flags InfModelTextToText::get_usr_start(mbase::string& out_start) const
+const mbase::string& InfModelTextToText::get_assistant_end() const
 {
-	MBASE_INF_T2T_MODEL_RETURN_UNINITIALIZED;
-	out_start = mUsrStart;
-	return flags::INF_MODEL_SUCCESS;
+	return mAssistantStart;
 }
 
-InfModelTextToText::flags InfModelTextToText::get_usr_start(mbase::vector<inf_text_token>& out_tokens) const
+const mbase::string& InfModelTextToText::get_usr_end() const
 {
-	MBASE_INF_T2T_MODEL_RETURN_UNINITIALIZED;
-	out_tokens = mUserStartTokenized;
-	return flags::INF_MODEL_SUCCESS;
+	return mUserEnd;
 }
 
-InfModelTextToText::flags InfModelTextToText::get_sys_end(mbase::string& out_end) const
+inf_text_token InfModelTextToText::get_eot_token() const
 {
-	MBASE_INF_T2T_MODEL_RETURN_UNINITIALIZED;
-	out_end = mSystemEnd;
-	return flags::INF_MODEL_SUCCESS;
-}
-
-InfModelTextToText::flags InfModelTextToText::get_assistant_end(mbase::string& out_end) const
-{
-	MBASE_INF_T2T_MODEL_RETURN_UNINITIALIZED;
-	out_end = mAssistantEnd;
-	return flags::INF_MODEL_SUCCESS;
-}
-
-InfModelTextToText::flags InfModelTextToText::get_usr_end(mbase::string& out_end) const
-{
-	MBASE_INF_T2T_MODEL_RETURN_UNINITIALIZED;
-	out_end = mUserEnd;
-	return flags::INF_MODEL_SUCCESS;
-}
-
-InfModelTextToText::flags InfModelTextToText::get_eot_token(inf_text_token& out_token) const
-{
-	MBASE_INF_T2T_MODEL_RETURN_UNINITIALIZED;
 	const llama_vocab* tmpVocab = llama_model_get_vocab(mModel);
-	out_token = llama_vocab_eot(tmpVocab);
-	return flags::INF_MODEL_SUCCESS;
+	return llama_vocab_eot(tmpVocab);
 }
 
-InfModelTextToText::flags InfModelTextToText::get_lf_token(inf_text_token& out_token) const
+inf_text_token InfModelTextToText::get_lf_token() const
 {
-	MBASE_INF_T2T_MODEL_RETURN_UNINITIALIZED;
 	const llama_vocab* tmpVocab = llama_model_get_vocab(mModel);
-	out_token = llama_vocab_nl(tmpVocab);
-	return flags::INF_MODEL_SUCCESS;
+	return llama_vocab_nl(tmpVocab);
 }
 
-InfModelTextToText::flags InfModelTextToText::get_vocab_count(I32& out_count) const
+I32 InfModelTextToText::get_vocab_count() const
 {
-	MBASE_INF_T2T_MODEL_RETURN_UNINITIALIZED;
 	const llama_vocab* tmpVocab = llama_model_get_vocab(mModel);
-	out_count = llama_vocab_n_tokens(tmpVocab);
-	return flags::INF_MODEL_SUCCESS;;
+	return llama_vocab_n_tokens(tmpVocab);
 }
 
-InfModelTextToText::flags InfModelTextToText::get_size(size_type& out_size) const
+typename InfModelTextToText::size_type InfModelTextToText::get_size() const
 {
-	MBASE_INF_T2T_MODEL_RETURN_UNINITIALIZED;
-	out_size = llama_model_size(mModel);
-	return flags::INF_MODEL_SUCCESS;
+	return llama_model_size(mModel);
 }
 
-InfModelTextToText::flags InfModelTextToText::get_embedding_length(U32& out_length) const
+U32 InfModelTextToText::get_embedding_length() const
 {
-	MBASE_INF_T2T_MODEL_RETURN_UNINITIALIZED;
-	out_length = llama_model_n_embd(mModel);
-	return flags::INF_MODEL_SUCCESS;
+	return llama_model_n_embd(mModel);
 }
 
-InfModelTextToText::flags InfModelTextToText::get_head_count(U32& out_head_count) const
+U32 InfModelTextToText::get_head_count() const
 {
-	MBASE_INF_T2T_MODEL_RETURN_UNINITIALIZED;
-	out_head_count = llama_model_n_head(mModel);
-	return flags::INF_MODEL_SUCCESS;
+	return llama_model_n_head(mModel);
 }
 
-InfModelTextToText::flags InfModelTextToText::get_layer_count(U32& out_layer_count) const
+U32 InfModelTextToText::get_layer_count() const
 {
-	MBASE_INF_T2T_MODEL_RETURN_UNINITIALIZED;
-	out_layer_count = llama_model_n_layer(mModel);
-	return flags::INF_MODEL_SUCCESS;
+	return llama_model_n_layer(mModel);
 }
 
-InfModelTextToText::flags InfModelTextToText::get_max_embedding_context(U32& out_context) const
+U32 InfModelTextToText::get_max_embedding_context() const
 {
-	MBASE_INF_T2T_MODEL_RETURN_UNINITIALIZED;
-	out_context = llama_model_n_ctx_train(mModel);
-	return flags::INF_MODEL_SUCCESS;
+	return llama_model_n_ctx_train(mModel);
 }
 
 bool InfModelTextToText::is_token_eof_generation(inf_text_token in_token) const
@@ -309,8 +230,7 @@ InfModelTextToText::flags InfModelTextToText::is_token_special(const mbase::stri
 {
 	MBASE_INF_T2T_MODEL_RETURN_UNINITIALIZED;
 
-	mbase::vector<mbase::string> specialTokens;
-	get_special_tokens(specialTokens);
+	mbase::vector<mbase::string> specialTokens = get_special_tokens_string();
 
 	if (std::find(specialTokens.begin(), specialTokens.end(), in_string) == specialTokens.end())
 	{
@@ -351,7 +271,7 @@ InfModelTextToText::flags InfModelTextToText::initialize_model_ex(const mbase::w
 	if(is_initialized())
 	{
 		return flags::INF_MODEL_SUCCESS;
-	}
+	} 
 	
 	if(signal_initializing())
 	{
@@ -493,75 +413,6 @@ InfModelTextToText::flags InfModelTextToText::destroy_sync()
 	}
 
 	return flags::INF_MODEL_INFO_UPDATE_REQUIRED;
-}
-
-InfModelTextToText::flags InfModelTextToText::add_lora_adapter(const mbase::wstring& in_path, const mbase::string& in_byname)
-{
-	MBASE_INF_T2T_MODEL_RETURN_UNINITIALIZED;
-
-	if(signal_lora_adding())
-	{
-		if(mLoraCandidate.mAdapterName == in_byname)
-		{
-			return flags::INF_MODEL_INFO_ADDING_LORA;
-		}
-		else
-		{
-			return flags::INF_MODEL_INFO_ADDING_LORA;
-		}
-		
-	}
-
-	if(signal_state_lora_adding())
-	{
-		return flags::INF_MODEL_INFO_UPDATE_REQUIRED;
-	}
-
-	if(!mbase::is_file_valid(in_path))
-	{
-		// CANT OPEN FILE
-		return flags::INF_MODEL_ERR_MISSING_MODEL;
-	}	
-
-	mbase::string adapterPathUtf8 = mbase::to_utf8(in_path);
-	mbase::string loraCustomName = in_byname;
-
-	if(!loraCustomName.size())
-	{
-		// If no name is given, name of lora will be the same with file's name
-		loraCustomName = adapterPathUtf8;
-	}
-
-	if(mLoraMap.find(loraCustomName) != mLoraMap.end())
-	{
-		return flags::INF_MODEL_ERR_LORA_EXISTS;
-	}
-
-	mLoraCandidate.mAdapterName = loraCustomName;
-	mLoraCandidate.mAdapterHandle = NULL;
-	mLoraCandidate.mLoraPath = adapterPathUtf8;
-
-	mLoraInitializeSignal.set_signal();
-	start_processor();
-
-	return flags::INF_MODEL_INFO_ADDING_LORA;
-}
-
-InfModelTextToText::flags InfModelTextToText::remove_lora_adapter(const mbase::string& in_name)
-{
-	MBASE_INF_T2T_MODEL_RETURN_UNINITIALIZED;
-	lora_adapter_map::iterator It = mLoraMap.find(in_name);
-	if(It == mLoraMap.end())
-	{
-		return flags::INF_MODEL_ERR_GENERIC;
-	}
-	llama_adapter_lora_free(It->second.mAdapterHandle);
-	return flags::INF_MODEL_SUCCESS;
-}
-
-InfModelTextToText::flags InfModelTextToText::remove_lora_adapter(inf_lora_adapter in_adapter)
-{
-	return remove_lora_adapter(in_adapter.mAdapterName);
 }
 
 InfModelTextToText::flags InfModelTextToText::register_context_process
@@ -718,6 +569,90 @@ InfModelTextToText::flags InfModelTextToText::register_context_process
 	return flags::INF_MODEL_INFO_REGISTERING_PROCESSOR;
 }
 
+InfModelTextToText::flags InfModelTextToText::declare_lora_remove(const inf_lora_adapter& in_adapter)
+{
+	MBASE_INF_T2T_MODEL_RETURN_UNINITIALIZED;
+
+	if(mbase::find(mLoraAdapters.begin(), mLoraAdapters.end(), in_adapter) == mLoraAdapters.end())
+	{
+		return flags::INF_MODEL_ERR_LORA_MISSING;
+	}
+
+	if(!in_adapter.mAdapterName.size())
+	{
+		return flags::INF_MODEL_ERR_LORA_NAME_MISSING;
+	}
+
+	if(signal_lora_operation())
+	{
+		return flags::INF_MODEL_ERR_LORA_OPERATION_ACTIVE;	
+	}
+
+	if(signal_state_lora_operation())
+	{
+		return flags::INF_MODEL_INFO_UPDATE_REQUIRED;
+	}
+
+	if(mbase::find(mLoraRemoves.begin(), mLoraRemoves.end(), in_adapter) != mLoraRemoves.end())
+	{
+		// Removed adapter already exists in remove list, do not bother pushing
+		return flags::INF_MODEL_SUCCESS;
+	}
+
+	mLoraRemoves.push_back(in_adapter);
+
+	return flags::INF_MODEL_SUCCESS;
+}
+
+InfModelTextToText::flags InfModelTextToText::declare_lora_adapter(const inf_lora_adapter& in_adapter)
+{
+	MBASE_INF_T2T_MODEL_RETURN_UNINITIALIZED;
+
+	if(mbase::find(mLoraAdapters.begin(), mLoraAdapters.end(), in_adapter) != mLoraAdapters.end())
+	{
+		return flags::INF_MODEL_ERR_LORA_EXISTS;
+	}
+
+	if(signal_lora_operation())
+	{
+		return flags::INF_MODEL_ERR_LORA_OPERATION_ACTIVE;	
+	}
+
+	if(signal_state_lora_operation())
+	{
+		return flags::INF_MODEL_INFO_UPDATE_REQUIRED;
+	}
+
+	if(mbase::find(mLoraDeclares.begin(), mLoraDeclares.end(), in_adapter) != mLoraDeclares.end())
+	{
+		// LoRA already declared, don't bother pushing
+		return flags::INF_MODEL_SUCCESS;
+	}
+
+	mLoraDeclares.push_back(in_adapter);
+
+	return flags::INF_MODEL_SUCCESS;
+}
+
+InfModelTextToText::flags InfModelTextToText::start_lora_operation()
+{
+	MBASE_INF_T2T_MODEL_RETURN_UNINITIALIZED;
+
+	if(!mLoraDeclares.size() && !mLoraRemoves.size())
+	{
+		// If declared and removes are empty, nothing to operate on P2
+		return flags::INF_MODEL_ERR_LORA_NOTHING_TO_OPERATE;
+	}
+
+	if(signal_lora_operation())
+	{
+		return flags::INF_MODEL_SUCCESS;	
+	}
+
+	mLoraOperationSignal.set_signal();
+	return flags::INF_MODEL_SUCCESS;
+}
+
 InfModelTextToText::flags InfModelTextToText::tokenize_input(CBYTEBUFFER in_data, size_type in_size, inf_text_token_vector& out_tokens)
 {
 	MBASE_INF_T2T_MODEL_RETURN_UNINITIALIZED;
@@ -747,6 +682,10 @@ InfModelTextToText::flags InfModelTextToText::tokenize_input(CBYTEBUFFER in_data
 	
 	out_tokens = std::move(tokenizedInput);
 	return flags::INF_MODEL_SUCCESS;
+}
+
+GENERIC InfModelTextToText::on_lora_operate(const mbase::vector<inf_lora_adapter>& out_active_loras)
+{
 }
 
 GENERIC InfModelTextToText::_initialize_model()
@@ -947,18 +886,10 @@ GENERIC InfModelTextToText::_destroy_model()
 		}
 	}
 
-	for(lora_adapter_map::iterator It = mLoraMap.begin(); It != mLoraMap.end(); ++It)
-	{
-		llama_adapter_lora_free(It->second.mAdapterHandle);
-		It = mLoraMap.erase(It);
-	}
-
 	llama_model_free(mModel);
 	mModel = NULL;
-	mLoraCandidate.mAdapterHandle = NULL;
 
 	mModelName.clear();
-	mLoraCandidate.mLoraPath.clear();
 	mModelArchitecture.clear();
 	mUsrStart.clear();
 	mSystemStart.clear();
@@ -975,35 +906,69 @@ GENERIC InfModelTextToText::_destroy_model()
 	mDestroySignal.set_signal_finished();
 }
 
-GENERIC InfModelTextToText::_initialize_lora()
+GENERIC InfModelTextToText::_lora_operate()
 {
-	llama_adapter_lora* adapterOut = llama_adapter_lora_init(mModel, mLoraCandidate.mLoraPath.c_str());
-	if(adapterOut)
+	// LoRA operation order is as follows:
+	// - Stop all registered context processors
+	// - Initialize declared loras
+	// - Remove, loras from context processors
+	// - Remove, remove tagged loras
+	
+	mbase::lock_guard tmpListMutex(mProcessorListMutex);
+	for(context_processor_list::iterator It = mRegisteredProcessors.begin(); It != mRegisteredProcessors.end(); ++It)
 	{
-		mLoraCandidate.mAdapterHandle = adapterOut;
-		mLoraMap.insert(mbase::pair(mLoraCandidate.mAdapterName, mLoraCandidate));
+		InfModelBase::watcher_type& wt = *It;
+		if(wt.mSubject)
+		{
+			InfProcessorBase* baseProcessor = wt.mSubject;
+			baseProcessor->stop_processor();
+		}
 	}
-	else
+	
+	for(mbase::vector<inf_lora_adapter>::iterator It = mLoraDeclares.begin(); It != mLoraDeclares.end(); ++It)
 	{
-		// set lora init fail signal
-		mLoraFailSignal.set_signal_finished();
-		mLoraInitializeSignal.reset_signal();
-		return;
+		llama_adapter_lora* loraOut = llama_adapter_lora_init(mModel, mbase::to_utf8(It->mLoraPath).c_str());
+		if(loraOut)
+		{
+			// Means adapter init is successful
+			inf_lora_adapter loraAdapter = *It;
+			loraAdapter.mAdapterHandle = loraOut;
+			mLoraAdapters.push_back(loraAdapter);
+		}
 	}
 
-	mLoraInitializeSignal.set_signal_finished();
-}
+	mLoraDeclares.clear(); // Clear declared loras
 
-GENERIC InfModelTextToText::on_lora_added([[maybe_unused]] inf_lora_adapter out_adapter)
-{
-}
+	// removing loras from context processors
+	for(context_processor_list::iterator It = mRegisteredProcessors.begin(); It != mRegisteredProcessors.end(); ++It)
+	{
+		InfModelBase::watcher_type& wt = *It;
+		if(wt.mSubject)
+		{
+			InfProcessorTextToText* baseProcessor = static_cast<InfProcessorTextToText*>(wt.mSubject);
+			baseProcessor->_internal_adapter_remove(mLoraRemoves);
+		}
+	}
 
-GENERIC InfModelTextToText::on_lora_remove([[maybe_unused]] inf_lora_adapter out_adapter)
-{
-}
+	mbase::vector<inf_lora_adapter> newAssignedAdapters;
 
-GENERIC InfModelTextToText::on_lora_add_fail()
-{
+	for(mbase::vector<inf_lora_adapter>::iterator It = mLoraAdapters.begin(); It != mLoraAdapters.end(); ++It)
+	{
+		if(mbase::find(mLoraRemoves.begin(), mLoraRemoves.end(), *It) != mLoraRemoves.end())
+		{
+			llama_adapter_lora_free(It->mAdapterHandle);
+		}
+
+		else
+		{
+			newAssignedAdapters.push_back(*It);
+		}
+	}
+
+	mLoraRemoves.clear();
+	mLoraAdapters = newAssignedAdapters;
+
+	mLoraOperationSignal.set_signal_finished();
 }
 
 GENERIC InfModelTextToText::update()
@@ -1019,9 +984,7 @@ GENERIC InfModelTextToText::update()
 		// Means destruction finished
 		// Reset all signals
 		reset_base_signals();
-		mLoraInitializeSignal.reset_signal_with_state();
-		mLoraFailSignal.reset_signal_with_state();
-
+		mLoraOperationSignal.reset_signal_with_state();
 		mbase::lock_guard tmpListMutex(mProcessorListMutex);
 		for(context_processor_list::iterator It = mRegisteredProcessors.begin(); It != mRegisteredProcessors.end(); ++It)
 		{
@@ -1056,16 +1019,11 @@ GENERIC InfModelTextToText::update()
 		return;
 	}
 
-	if(signal_state_lora_failed())
+	if(signal_state_lora_operation())
 	{
-		mLoraFailSignal.reset_signal_state();
-		on_lora_add_fail();
-	}
-
-	if(signal_state_lora_adding())
-	{
-		mLoraInitializeSignal.reset_signal_state();
-		on_lora_added(mLoraCandidate);
+		mLoraOperationSignal.reset_signal_state();
+		on_lora_operate(mLoraAdapters);
+		return;
 	}
 
 	mbase::lock_guard tmpListMutex(mProcessorListMutex);
@@ -1092,17 +1050,17 @@ GENERIC InfModelTextToText::update_t()
 		{
 			_destroy_model();
 		}
-
-		if(signal_lora_adding())
-		{
-			_initialize_lora();
-		}
 	}
 	else
 	{
 		if(signal_initializing())
 		{
 			_initialize_model();
+		}
+
+		if(signal_lora_operation())
+		{
+			_lora_operate();
 		}
 	}
 }

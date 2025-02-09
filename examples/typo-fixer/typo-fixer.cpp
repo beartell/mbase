@@ -7,7 +7,7 @@
 #include <chrono>
 #include <signal.h>
 
-#define MBASE_TYPO_FIXER_VERSION "v1.0.2"
+#define MBASE_TYPO_FIXER_VERSION "v0.1.0"
 
 using namespace mbase;
 
@@ -40,7 +40,7 @@ GENERIC catching_interrupt_signal([[maybe_unused]] I32 out_sig_id)
 GENERIC print_usage()
 {
     printf("========================================\n");
-    printf("#Program name:      mbase-typo-fixer\n");
+    printf("#Program name:      mbase_typo_fixer\n");
     printf("#Version:           %s\n", MBASE_TYPO_FIXER_VERSION);
     printf("#Type:              Example\n");
     printf("#Further docs: \n");
@@ -49,7 +49,8 @@ GENERIC print_usage()
     printf("The program is reading a user-supplied text file and fixing the typos.\n");
     printf("Fixed text will be written to a file specified by option -o or --output-file.\n");
     printf("========================================\n\n");
-    printf("Usage: mbase-typo-fixer <model_path> *[<option> [<value>]]\n");
+    printf("Usage: mbase_typo_fixer <model_path> *[<option> [<value>]]\n");
+    printf("       mbase_typo_fixer model.gguf -gl 80 -s typo.txt -o fixed.txt\n");
     printf("Options: \n\n");
     printf("--help                            Print usage.\n");
     printf("-v, --version                     Shows program version.\n");
@@ -313,8 +314,7 @@ int main(int argc, char** argv)
 
     signal(SIGINT, catching_interrupt_signal);
 
-    mbase::string modelName;
-    fixerModel.get_model_name(modelName);
+    mbase::string modelName = fixerModel.get_model_name();
     printf("==== Session Information ====\n\n");
     printf("- Model name: %s\n", modelName.c_str());
     printf("- Context length: %u\n", tmpContextLength);

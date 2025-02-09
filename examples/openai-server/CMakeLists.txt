@@ -17,3 +17,5 @@ target_compile_definitions(mbase_openai_server PRIVATE openailib)
 #target_compile_options(mbase_openai_server PRIVATE ${MBASE_COMMON_COMPILE_OPTIONS})
 target_include_directories(mbase_openai_server PUBLIC openailib)
 target_link_libraries(mbase_openai_server PRIVATE openailib)
+
+install(TARGETS mbase_openai_server RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})

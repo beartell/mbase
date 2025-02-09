@@ -25,7 +25,7 @@ find_package_handle_standard_args(
 
 if(MBASE_INFERENCE_FOUND)
     find_package(mbase-pc HINTS ${MBASE_CURRENT_CONFIG_DIRECTORY})
-    find_package(llama REQUIRED)
+    find_package(llama REQUIRED HINTS ${MBASE_INFERENCE_LIB_DIR}/cmake)
     
     list(APPEND MBASE_INFERENCE_LIBRARIES ${MBASE_PC_LIBRARIES})
     list(APPEND MBASE_INFERENCE_INCLUDE_DIRS ${LLAMA_INCLUDE_DIR})

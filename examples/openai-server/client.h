@@ -4,7 +4,9 @@
 #include <mbase/common.h>
 #include <mbase/inference/inf_common.h>
 #include <mbase/inference/inf_t2t_client.h>
+#include <mbase/inference/inf_embedder_client.h>
 #include <cpp-httplib/httplib.h>
+#include <mbase/json/json.h>
 
 MBASE_BEGIN
 
@@ -14,8 +16,8 @@ public:
     bool is_processing() const;
 
     GENERIC set_http_data_sink(
-        httplib::DataSink* in_data_sink, 
-        httplib::Response& in_resp, 
+        httplib::DataSink* in_data_sink,
+        httplib::Response& in_resp,
         bool in_stream,
         long long in_gen_limit
     );
@@ -36,6 +38,32 @@ private:
     httplib::Response* mInResponse = NULL;
     mbase::string mClientId;
     mbase::string mAccumulatedResponse;
+};
+
+class OpenaiEmbedderClient : public mbase::InfClientEmbedder {
+public:
+    
+    bool is_processing() const;
+
+    GENERIC set_embedder_input(
+        InfEmbedderProcessor* in_processor,
+        httplib::Response& in_resp,
+        const mbase::vector<inf_text_token_vector>& in_embeddings_list
+    );
+
+    GENERIC on_register(InfProcessorBase* out_processor) override;
+    GENERIC on_unregister(InfProcessorBase* out_processor) override;
+    GENERIC on_batch_processed(InfEmbedderProcessor* out_processor, const U32& out_proc_batch_length) override;
+    GENERIC on_write(InfEmbedderProcessor* out_processor, PTRF32 out_embeddings, const U32& out_cursor, bool out_is_finished) override;
+    GENERIC on_finish(InfEmbedderProcessor* out_processor, const size_type& out_total_processed_embeddings) override;
+
+private:
+    bool mIsProcessing = false;
+    httplib::Response* mInResponse = NULL;
+    mbase::string mClientId;
+    mbase::Json mTotalProcessedResponse;
+    mbase::vector<inf_text_token_vector> mEmbeddingTokensInput;
+    I32 mPromptIndex;
 };
 
 MBASE_END

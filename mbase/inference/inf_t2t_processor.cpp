@@ -110,6 +110,11 @@ bool InfProcessorTextToText::is_manual_caching() const
 	return mIsManualCaching;
 }
 
+bool InfProcessorTextToText::signal_state_lora_operate() const
+{
+	return mLoraOperationSignal.get_signal_state();
+}
+
 bool InfProcessorTextToText::signal_state_input_process() const
 {
 	return mInputSignal.get_signal_state();
@@ -123,6 +128,11 @@ bool InfProcessorTextToText::signal_state_decode_process() const
 bool InfProcessorTextToText::signal_state_kv_locked_process() const
 {
 	return mInputKvLockedSignal.get_signal_state();
+}
+
+bool InfProcessorTextToText::signal_lora_operate_process() const
+{
+	return mLoraOperationSignal.get_signal();
 }
 
 bool InfProcessorTextToText::signal_input_process() const
@@ -140,19 +150,28 @@ bool InfProcessorTextToText::signal_kv_locked_process() const
 	return mInputKvLockedSignal.get_signal();
 }
 
-const U32& InfProcessorTextToText::get_batch_size()
+const U32& InfProcessorTextToText::get_batch_size() const
 {
 	return mBatchSize;
 }
 
-const U32& InfProcessorTextToText::get_max_token_length()
+const U32& InfProcessorTextToText::get_max_token_length() const
 {
 	return mContextLength;
 }
 
-const U32& InfProcessorTextToText::get_context_cursor_position()
+const U32& InfProcessorTextToText::get_context_cursor_position() const
 {
 	return mContextCursor;
+}
+
+I32 InfProcessorTextToText::get_batch_thread_count() const
+{
+	return llama_n_threads_batch(mModelContext);
+}
+I32 InfProcessorTextToText::get_thread_count() const
+{
+	return llama_n_threads(mModelContext);
 }
 
 bool InfProcessorTextToText::has_sampler(InfSamplerDescription::SAMPLER in_sampler_type, InfSamplerDescription& out_sampler)
@@ -300,20 +319,20 @@ InfProcessorTextToText::flags InfProcessorTextToText::tokenize_input(context_lin
 		mbase::string endString;
 		if(tmpLine->mRole == context_role::SYSTEM)
 		{
-			t2tModel->get_sys_start(roleString);
-			t2tModel->get_sys_end(endString);
+			roleString = t2tModel->get_sys_start();
+			endString = t2tModel->get_sys_end();
 		}
 
 		else if(tmpLine->mRole == context_role::ASSISTANT)
 		{
-			t2tModel->get_assistant_start(roleString);
-			t2tModel->get_assistant_end(endString);
+			roleString = t2tModel->get_assistant_start();
+			endString = t2tModel->get_assistant_end();
 		}
 
 		else if(tmpLine->mRole == context_role::USER)
 		{
-			t2tModel->get_usr_start(roleString);
-			t2tModel->get_usr_end(endString);
+			roleString = t2tModel->get_usr_start();
+			endString = t2tModel->get_usr_end();
 		}
 		
 		totalMessage += (roleString + tmpLine->mMessage + endString);
@@ -326,9 +345,7 @@ InfProcessorTextToText::flags InfProcessorTextToText::tokenize_input(context_lin
 		{
 			if (in_append_assistant_token)
 			{
-				mbase::string assistantToken;
-				t2tModel->get_assistant_start(assistantToken);
-				totalMessage += assistantToken;
+				totalMessage += t2tModel->get_assistant_start();
 			}
 		}
 	}
@@ -412,9 +429,19 @@ InfProcessorTextToText::flags InfProcessorTextToText::execute_input_sync(const i
 	flags outResult = execute_input(in_tokens, in_kv_locked);
 	if(outResult == flags::INF_PROC_SUCCESS || outResult == flags::INF_PROC_ERR_ALREADY_PROCESSING)
 	{
-		while(signal_input_process())
+		if(in_kv_locked)
 		{
-			mbase::sleep(2);
+			while(signal_kv_locked_process())
+			{
+				mbase::sleep(2);
+			}
+		}
+		else
+		{
+			while(signal_input_process())
+			{
+				mbase::sleep(2);
+			}
 		}
 		return flags::INF_PROC_INFO_NEED_UPDATE;
 	}
@@ -633,6 +660,11 @@ GENERIC InfProcessorTextToText::set_manual_caching(bool in_manual_cache, cache_m
 	mCacheMode = in_cache_mode;
 }
 
+GENERIC InfProcessorTextToText::on_lora_operate(const mbase::vector<inf_lora_adapter>& out_adapters)
+{
+	
+}
+
 GENERIC InfProcessorTextToText::on_initializing()
 {
 	
@@ -686,7 +718,7 @@ GENERIC InfProcessorTextToText::_decode_cached_logits()
 	{
 		llama_decode(mModelContext, tempBatch);
 	}
-
+	
 	llama_batch_free(tempBatch);
 
 	mLogitStartIndex = 0;
@@ -851,6 +883,58 @@ GENERIC InfProcessorTextToText::_decode_next()
 	mDecodeSignal.set_signal_finished();
 }
 
+GENERIC InfProcessorTextToText::_lora_operate()
+{
+	for(mbase::vector<inf_lora_adapter>::iterator It = mDeclaredAdapters.begin(); It != mDeclaredAdapters.end(); ++It)
+	{
+		if(!llama_set_adapter_lora(mModelContext, It->mAdapterHandle, 1.0f))
+		{
+			// means success
+			mAssignedAdapters.push_back(*It);
+		}
+	}
+
+	mDeclaredAdapters.clear();
+
+	mbase::vector<inf_lora_adapter> newAssignedAdapters;
+
+	for(mbase::vector<inf_lora_adapter>::iterator It = mAssignedAdapters.begin(); It != mAssignedAdapters.end(); ++It)
+	{
+		if(mbase::find(mRemoveAdapters.begin(), mRemoveAdapters.end(), *It) != mRemoveAdapters.end())
+		{
+			llama_rm_adapter_lora(mModelContext, It->mAdapterHandle);
+		}
+
+		else
+		{
+			newAssignedAdapters.push_back(*It);
+		}
+	}
+
+	mRemoveAdapters.clear();
+	mAssignedAdapters = newAssignedAdapters;
+
+	mLoraOperationSignal.set_signal_finished();
+}
+
+GENERIC InfProcessorTextToText::_internal_adapter_remove(mbase::vector<inf_lora_adapter>& in_adapters_to_remove)
+{
+	mbase::vector<inf_lora_adapter> newAssignedAdapters;
+	for(mbase::vector<inf_lora_adapter>::iterator It = mAssignedAdapters.begin(); It != mAssignedAdapters.end(); ++It)
+	{
+		if(mbase::find(in_adapters_to_remove.begin(), in_adapters_to_remove.end(), *It) != in_adapters_to_remove.end())
+		{
+			llama_rm_adapter_lora(mModelContext, It->mAdapterHandle);
+		}
+
+		else
+		{
+			newAssignedAdapters.push_back(*It);
+		}
+	}
+	mAssignedAdapters = newAssignedAdapters;
+}
+
 GENERIC InfProcessorTextToText::_initialize_context()
 {
 	llama_context_params ctxParams = llama_context_default_params();
@@ -990,6 +1074,7 @@ GENERIC InfProcessorTextToText::_destroy_context()
 {
 	// CONTEXT FACTORY RESET
 
+	llama_clear_adapter_lora(mModelContext); // if any
 	llama_free(mModelContext);
 	mModelContext = NULL;
 	mPresetCandidates.clear();
@@ -997,6 +1082,9 @@ GENERIC InfProcessorTextToText::_destroy_context()
 	mSamplerDescriptions.clear();
 	mGeneratedTokenVector.clear();
 	mLogitTokenVector.clear();
+	mDeclaredAdapters.clear();
+	mRemoveAdapters.clear();
+	mAssignedAdapters.clear();
 	mContextCursor = 0;
 	mBatchSize = 0;
 	mThreadCount = 0;
@@ -1033,6 +1121,7 @@ GENERIC InfProcessorTextToText::update()
 		mDecodeSignal.reset_signal_with_state();
 		mInputSignal.reset_signal_with_state();
 		mInputKvLockedSignal.reset_signal_with_state();
+		mLoraOperationSignal.reset_signal_with_state();
 		this->release_object_watcher();
 		on_destroy();
 	}
@@ -1051,6 +1140,12 @@ GENERIC InfProcessorTextToText::update()
 			mIsRegistered = true;
 			on_initialize();
 		}
+	}
+
+	if(signal_state_lora_operate())
+	{
+		mLoraOperationSignal.reset_signal_state();
+		on_lora_operate(mAssignedAdapters);
 	}
 
 	if(signal_state_input_process())
@@ -1114,6 +1209,11 @@ GENERIC InfProcessorTextToText::update_t()
 
 		if (is_running())
 		{
+			if(signal_lora_operate_process())
+			{
+				_lora_operate();
+			}
+
 			if(signal_kv_locked_process())
 			{
 				_decode_kv_locked_input();

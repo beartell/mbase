@@ -7,25 +7,25 @@ endif()
 
 cmake_minimum_required(VERSION 3.15...3.31)
 
-project("mbase.libs" VERSION 1.0.0 LANGUAGES CXX)
+project("mbase.libs" LANGUAGES CXX)
 
 include(GNUInstallDirs)
 
 option(BUILD_SHARED_LIBS "MBASE Shared library build default." ON)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/")
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 17)
 
 set(MBASE_LIBS_INCLUDE_INSTALL_DIR ${CMAKE_INSTALL_INCLUDEDIR})
 set(MBASE_LIBS_LIB_INSTALL_DIR ${CMAKE_INSTALL_LIBDIR})
 set(MBASE_LIBS_BIN_INSTALL_DIR ${CMAKE_INSTALL_BINDIR})
 set(MBASE_LIBS_LIB_NAME "mbase.libs")
-set(MBASE_LIBS_VERSION "0.1.0")
 set(MBASE_LIBS_MAJOR 0)
 set(MBASE_LIBS_MINOR 1)
 set(MBASE_LIBS_PATCH 0)
+set(MBASE_LIBS_VERSION "${MBASE_LIBS_MAJOR}.${MBASE_LIBS_MINOR}.${MBASE_LIBS_PATCH}")
 set(MBASE_LIBS_README ${CMAKE_CURRENT_SOURCE_DIR}/README.md)
-set(MBASE_LIBS_LICENCE ${CMAKE_CURRENT_SOURCE_DIR}/LICENCE)
+set(MBASE_LIBS_LICENSE ${CMAKE_CURRENT_SOURCE_DIR}/LICENSE)
 
 include(MBASEStdSys)
 include(MBASEJsonSys)
@@ -56,6 +56,16 @@ install(
   DESTINATION ${MBASE_LIBS_LIB_INSTALL_DIR}/cmake/mbase.libs
 )
 
+install(
+  FILES ${MBASE_LIBS_LICENSE}
+  PERMISSIONS
+      OWNER_READ
+      OWNER_WRITE
+      GROUP_READ
+      WORLD_READ
+  DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/mbase/license
+)
+
 add_subdirectory(examples/openai-server)
 add_subdirectory(examples/simple-conversation)
 add_subdirectory(examples/typo-fixer)
@@ -63,21 +73,4 @@ add_subdirectory(examples/benchmark)
 add_subdirectory(examples/embedding)
 add_subdirectory(examples/retrieval)
 
-# set(CPACK_GENERATOR "DEB")
-# set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Saul E. Erdog")
-# set(CPACK_PACKAGE_NAME "MBASE-Libraries")
-# set(CPACK_PACKAGE_VENDOR "mbaselibs.com")
-# set(CPACK_PACKAGE_DESCRIPTION_SUMMARY
-#     "MBASELibraries-Installation Wizard")
-# set(CPACK_PACKAGE_VERSION "1.3.142stable")
-# set(CPACK_PACKAGE_VERSION_MAJOR "1")
-# set(CPACK_PACKAGE_VERSION_MINOR "3")
-# set(CPACK_PACKAGE_VERSION_PATCH "142")
-# set(CPACK_PACKAGE_INSTALL_DIRECTORY "MBASELibraries")
-
-# # This must always be after all CPACK\_\* variables are defined
-# include(CPack)
-
-#target_include_directories(mbase_test_program PUBLIC ${MBASE_INFERENCE_TARGET_INCLUDES})
-#target_link_libraries(mbase_test_program PRIVATE mb_core mb_inference)
-
+include(mbase_packaging)

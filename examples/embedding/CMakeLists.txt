@@ -1,6 +1,8 @@
-add_executable(mbase_embedder_util embedding.cpp)
+add_executable(mbase_embedding_simple embedding.cpp)
 
-target_compile_definitions(mbase_embedder_util PRIVATE ${MBASE_COMMON_COMPILE_DEFINITIONS})
-target_compile_options(mbase_embedder_util PRIVATE ${MBASE_COMMON_COMPILE_OPTIONS})
-target_include_directories(mbase_embedder_util PUBLIC mb_inference mb_json)
-target_link_libraries(mbase_embedder_util PRIVATE ${MBASE_STD_LIBS} mb_inference mb_json)
+target_compile_definitions(mbase_embedding_simple PRIVATE ${MBASE_COMMON_COMPILE_DEFINITIONS})
+target_compile_options(mbase_embedding_simple PRIVATE ${MBASE_COMMON_COMPILE_OPTIONS})
+target_include_directories(mbase_embedding_simple PUBLIC mb_inference mb_json)
+target_link_libraries(mbase_embedding_simple PRIVATE ${MBASE_STD_LIBS} mb_inference mb_json)
+
+install(TARGETS mbase_embedding_simple RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
