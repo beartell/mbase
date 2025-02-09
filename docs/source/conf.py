@@ -9,7 +9,7 @@ from dataclasses import asdict
 
 project = 'MBASE Software Documentation'
 copyright = '2025, MBASE Yazılım Ltd. Şti.'
-author = 'Mustafa Emre Erdog'
+author = 'Saul Emre Erdog'
 
 extensions = [
     "sphinx.ext.extlinks",

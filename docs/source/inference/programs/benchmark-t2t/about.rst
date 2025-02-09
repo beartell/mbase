@@ -6,8 +6,8 @@ Benchmark T2T
 Program Identification
 ----------------------
 
-.. |pi_author| replace:: Mustafa Emre Erdog
-.. |pi_maintainer| replace:: Mustafa Emre Erdog
+.. |pi_author| replace:: Saul Emre Erdog
+.. |pi_maintainer| replace:: Saul Emre Erdog
 .. |pi_email| replace:: erdog@mbasesoftware.com
 .. |pi_name| replace:: mbase_benchmark_t2t
 .. |pi_version| replace:: v0.1.0
@@ -25,6 +25,8 @@ Synopsis
 .. code-block:: bash
 
   mbase_benchmark_t2t model_path *[option [value]]
+  mbase_benchmark_t2t model.gguf -uc 1 -fps 500 -jout .
+  mbase_benchmark_t2t model.gguf -uc 1 -fps 500 -jout . -mdout .
 
 -----------
 Description

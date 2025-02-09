@@ -6,11 +6,11 @@ Simple Conversation Program
 Program Identification
 ----------------------
 
-.. |pi_author| replace:: Mustafa Emre Erdog
-.. |pi_maintainer| replace:: Mustafa Emre Erdog
+.. |pi_author| replace:: Saul Emre Erdog
+.. |pi_maintainer| replace:: Saul Emre Erdog
 .. |pi_email| replace:: erdog@mbasesoftware.com
 .. |pi_name| replace:: mbase_simple_conversation
-.. |pi_version| replace:: v1.1.4
+.. |pi_version| replace:: v0.1.0
 .. |pi_type| replace:: Example, Utility
 .. |pi_net_usage| replace:: No
 .. |pi_lib_depends| replace:: mbase-std mbase-inference
@@ -25,6 +25,9 @@ Synopsis
 .. code-block:: bash
 
     mbase_simple_conversation model_path *[option [value]]
+    mbase_simple_conversation model.gguf
+    mbase_simple_conversation model.gguf -gl 80
+    mbase_simple_conversation model.gguf -gl 80 -sys 'You are a helpful assistant.'
 
 -----------
 Description
@@ -36,7 +39,7 @@ what can be implemented using MBASE and show the capabilities.
 The program is a simple executable where you are having a dialogue
 with the LLM you provide. 
 
-You can adjust the sampling parameters, thread counts, or supply 
+You can adjust the sampling parameters, thread count, or supply 
 a system prompt either from file or from string using the options.
 
 At the end of the program, it will print useful information about

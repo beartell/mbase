@@ -6,11 +6,11 @@ Embedding Program
 Program Identification
 ----------------------
 
-.. |pi_author| replace:: Mustafa Emre Erdog
-.. |pi_maintainer| replace:: Mustafa Emre Erdog
+.. |pi_author| replace:: Saul Emre Erdog
+.. |pi_maintainer| replace:: Saul Emre Erdog
 .. |pi_email| replace:: erdog@mbasesoftware.com
 .. |pi_name| replace:: mbase_embedding_simple
-.. |pi_version| replace:: v1.0.0
+.. |pi_version| replace:: v0.1.0
 .. |pi_type| replace:: Utility, Example
 .. |pi_net_usage| replace:: No
 .. |pi_lib_depends| replace:: mbase-std mbase-inference
@@ -25,6 +25,8 @@ Synopsis
 .. code-block:: bash
 
     mbase_embedding_simple model_path *[option [value]]
+    mbase_embedding_simple model.gguf -gl 80 -p 'What is life?'
+    mbase_embedding_simple model.gguf -gl 80 -pf prompt1.txt -pf prompt2.txt
 
 -----------
 Description

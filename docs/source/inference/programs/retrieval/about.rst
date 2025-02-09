@@ -6,11 +6,11 @@ Retrieval Program
 Program Identification
 ----------------------
 
-.. |pi_author| replace:: Mustafa Emre Erdog
-.. |pi_maintainer| replace:: Mustafa Emre Erdog
+.. |pi_author| replace:: Saul Emre Erdog
+.. |pi_maintainer| replace:: Saul Emre Erdog
 .. |pi_email| replace:: erdog@mbasesoftware.com
 .. |pi_name| replace:: mbase_retrieval
-.. |pi_version| replace:: v1.0.0
+.. |pi_version| replace:: v0.1.0
 .. |pi_type| replace:: Example
 .. |pi_net_usage| replace:: No
 .. |pi_lib_depends| replace:: mbase-std mbase-inference
@@ -25,6 +25,7 @@ Synopsis
 .. code-block:: bash
 
     mbase_retrieval model_path *[option [value]]
+    mbase_retrieval model.gguf -q 'What is MBASE' -pf file1.txt -pf file2.txt -gl 80
 
 -----------
 Description

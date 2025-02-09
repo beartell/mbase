@@ -39,7 +39,7 @@ Features
 * Openai server program supporting both TextToText and Embedder endpoints with system prompt caching support which implies significant performance boost.
 * Hosting multiple models in a single Openai server program.
 * Using `llama.cpp <llama.cpp_>`_ as an inference backend so that models that are supported by the `llama.cpp <llama.cpp_>`_ library are supported by default.
-* Benchmark application for measuring the impact of LLM inference on your applications.
+* Benchmark application for measuring the impact of LLM inference on your application.
 * Plus anything `llama.cpp <llama.cpp_>`_ supports.
 
 -------------------

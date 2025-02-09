@@ -18,7 +18,7 @@ MBASE Libraries Documentation
 
 Welcome to the MBASE libraries documentation.
 
-MBASE libraries are a set of libraries actively being maintained and developed by Mustafa Emre Erdog
+MBASE libraries are a set of libraries actively being maintained and developed by Saul Emre Erdog
 and the MBASE Software. 
 
 Its job is to supply the necessary tools and functionalities to develop high-quality programs

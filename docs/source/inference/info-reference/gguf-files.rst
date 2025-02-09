@@ -138,23 +138,24 @@ Now, in your working directory, clone the `microsoft/Phi-3-mini-128k-instruct <h
 
     git clone https://huggingface.co/microsoft/Phi-3-mini-128k-instruct
 
-Now, go into that directory and make sure that the model is downloaded successfully:
+Now, go into that directory and make sure that the model is downloaded successfully.
+After the download is finished, we will apply the conversion script.
+
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Using the Conversion Script
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+First, clone the `llama.cpp <llama.cpp_>`_ repository and go into that directory:
 
 .. code-block:: bash
 
-    cd Phi-3-mini-128k-instruct
-    ls -l
+    git clone https://github.com/ggerganov/llama.cpp.git
 
-The safetensor files should be great in size.
+Then, you need to install the necessary python packages:
 
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-Acknowledging the Naming Convention
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. code-block:: bash
 
-The conversion script doesn't automatically apply the correct naming to the output file.
-You must manually specify the output gguf file name by yourself.
-
-### TODO: Keep writing ###
+    pip install -r llama.cpp/requirements.txt
 
 ---------
 SDK Usage

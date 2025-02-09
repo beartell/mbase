@@ -18,8 +18,7 @@ Then, we will initialize the `llama.cpp <llama.cpp_>`_ submodule:
 
 .. code-block:: bash
 
-    git submodule init
-    git submodule update --remote
+    git submodule update --init --recursive
 
 Which will clone the latest `llama.cpp <llama.cpp_>`_ repository from github.
 After we clone the `llama.cpp <llama.cpp_>`_ repository we will create the build directory
