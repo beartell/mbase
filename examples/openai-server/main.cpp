@@ -10,6 +10,30 @@
 void print_usage();
 void print_usage()
 {
+    printf("========================================\n");
+    printf("#Program name:      mbase-openai-server\n");
+    printf("#Version:           %s\n", MBASE_OPENAI_SERVER_VERSION);
+    printf("#Type:              Example\n");
+    printf("#Further docs: \n");
+    printf("***** DESCRIPTION *****\n");
+    printf("Openai api compatible http server for serving LLMs.\n");
+    printf("Keep in mind that this implementation is an example that show what is possible with MBASE.\n");
+    printf("This program provides chat completion API for TextToText models and embeddings API for embedder models.\n");
+    printf("========================================\n\n");
+    printf("Usage: mbase-openai-server *[<option> [<value>]]\n");
+    printf("Options: \n\n");
+    printf("--help                          Print usage.\n");
+    printf("-v, --version                   Shows program version.\n");
+    printf("--api-key <str>                 Api key.\n");
+    printf("-h, --hostname <str>            Hostname to listen to (default=127.0.0.1).\n");
+    printf("-p, --port <int>                Port to assign to (default=8080).\n");
+    printf("-al, --access-limit <int>       Amount of clients that can access concurrently (default=-1).\n");
+    printf("-m, --model-path <str>          Model file to be hosted. To host multiple models, pass this argument multiple times.\n");
+    printf("-t, --thread-count <int>        Amount of threads to use for output processing (default=16).\n");
+    printf("-bt, --batch-thread-count <int> Amount of threads to use for initial batch processing (default=8).\n");
+    printf("-c, --context-length <int>      Total context length (default=8192).\n");
+    printf("-b, --batch-length <int>        Batch length (default=4096).\n");
+    printf("-gl, --gpu-layers <int>         GPU layers to offload to (default=999).\n\n");
 }
 
 void modelListHandler(const httplib::Request& in_req, httplib::Response& in_resp)
@@ -731,6 +755,66 @@ void apply_json_desc(const mbase::string& in_json_string)
             exit(1);
         }
 
+        mbase::inf_sampling_set samplersList;
+
+        if(modelObject["samplers"].isObject())
+        {
+            mbase::Json &samplerObject = modelObject["samplers"];
+            mbase::InfSamplerDescription isd;
+            if(samplerObject["top_k"].isLong())
+            {
+                isd.mSamplerType = mbase::InfSamplerDescription::SAMPLER::TOP_K;
+                isd.mTopK = samplerObject["top_k"].getLong();
+                samplersList.insert(isd);
+            }
+            
+            if(samplerObject["top_p"].isFloat())
+            {
+                isd.mSamplerType = mbase::InfSamplerDescription::SAMPLER::TOP_P;
+                isd.mTopP = samplerObject["top_p"].getFloat();
+                samplersList.insert(isd);
+            }
+
+            if(samplerObject["min_p"].isFloat())
+            {
+                isd.mSamplerType = mbase::InfSamplerDescription::SAMPLER::MIN_P;
+                isd.mMinP = samplerObject["min_p"].getFloat();
+                samplersList.insert(isd);
+            }
+
+            if(samplerObject["temp"].isFloat())
+            {
+                isd.mSamplerType = mbase::InfSamplerDescription::SAMPLER::TEMP;
+                isd.mTemp = samplerObject["temp"].getFloat();
+                samplersList.insert(isd);
+            }
+
+            if(samplerObject["mirostat_v2"].isObject())
+            {
+                isd.mSamplerType = mbase::InfSamplerDescription::SAMPLER::MIROSTAT_V2;
+                if(samplerObject["mirostat_v2"]["tau"].isFloat() && samplerObject["mirostat_v2"]["eta"].isFloat())
+                {
+                    isd.mMiroV2.mTau = samplerObject["mirostat_v2"]["tau"].getFloat();
+                    isd.mMiroV2.mEta = samplerObject["mirostat_v2"]["eta"].getFloat();
+                    samplersList.insert(isd);
+                }
+            }
+
+            if(samplerObject["repetition"].isObject())
+            {
+                isd.mSamplerType = mbase::InfSamplerDescription::SAMPLER::REPETITION;
+                isd.mRepetition.mPenaltyLinefeed = true;
+                isd.mRepetition.mPenaltyEos = false;
+
+                if(samplerObject["repetition"]["penalty_n"].isLong() && samplerObject["repetition"]["penalty_repeat"].isFloat())
+                {
+                    isd.mRepetition.mPenaltyN = samplerObject["repetition"]["penalty_n"].getLong();
+                    isd.mRepetition.mRepeatPenalty = samplerObject["repetition"]["penalty_repeat"].getFloat();
+                    samplersList.insert(isd);
+                }
+            }
+        }
+
         newModel->update();
 
         if(newModel->is_embedding_model())
@@ -750,7 +834,7 @@ void apply_json_desc(const mbase::string& in_json_string)
                 batchThreadCount,
                 contextLength,
                 batchLength,
-                {}
+                samplersList
             );
         }
 
@@ -797,15 +881,24 @@ int main(int argc, char** argv)
     if(argc < 2)
     {
         print_usage();
-        return 1;
+        return 0;
     }
+
+    mbase::string jsonFile;
 
     for(int i= 0; i < argc; i++)
     {
         mbase::string argumentString = argv[i];
+
         if(argumentString == "-v" || argumentString == "--version")
         {
             printf("MBASE Openai server %s\n", MBASE_OPENAI_SERVER_VERSION);
+            return 0;
+        }
+
+        else if(argumentString == "-h" || argumentString == "--help")
+        {
+            print_usage();
             return 0;
         }
 
@@ -826,19 +919,26 @@ int main(int argc, char** argv)
 
         else if(argumentString == "-jsdesc")
         {
-            mbase::string jsonFile;
             mbase::argument_get<mbase::string>::value(i, argc, argv, jsonFile);
-            mbase::wstring fileLocation = mbase::from_utf8(jsonFile);
-            if(!mbase::is_file_valid(fileLocation))
-            {
-                printf("Json file can't be opened\n");
-                return 0;
-            }
-            jsonFile = mbase::read_file_as_string(fileLocation);
-            apply_json_desc(jsonFile);
         }
     }
     
+    if(!jsonFile.size())
+    {
+        printf("ERR: Missing JSON description file\n");
+        return 1;
+    }
+
+    mbase::wstring fileLocation = mbase::from_utf8(jsonFile);
+    if(!mbase::is_file_valid(fileLocation))
+    {
+        printf("ERR: Json file can't be opened\n");
+        return 1;
+    }
+    jsonFile = mbase::read_file_as_string(fileLocation);
+    apply_json_desc(jsonFile);
+
+
     printf("** Hosted Model Information **\n");
     for(mbase::vector<mbase::OpenaiModel*>::iterator It = gProgramData.programModels.begin(); It != gProgramData.programModels.end(); ++It)
     {

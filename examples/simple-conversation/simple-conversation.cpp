@@ -7,7 +7,7 @@
 #include <chrono>
 #include <signal.h>
 
-#define MBASE_SIMPLE_CONVERSATION_VERSION "v1.1.4"
+#define MBASE_SIMPLE_CONVERSATION_VERSION "v0.1.0"
 
 using namespace mbase;
 
@@ -69,6 +69,9 @@ GENERIC print_usage()
     printf("The code section here will mostly be used by other example programs.\n");
     printf("========================================\n\n");
     printf("Usage: mbase_simple_conversation <model_path> *[<option> [<value>]]\n");
+    printf("       mbase_simple_conversation model.gguf\n");
+    printf("       mbase_simple_conversation model.gguf -gl 80\n");
+    printf("       mbase_simple_conversation model.gguf -gl 80 -sys 'You are a helpful assistant.'\n");
     printf("Options: \n\n");
     printf("--help                            Print usage.\n");
     printf("-v, --version                     Shows program version.\n");

@@ -7,7 +7,7 @@
 #include <mbase/json/json.h>
 #include <iostream>
 
-#define MBASE_RETRIEVAL_VERSION "v1.0.0"
+#define MBASE_RETRIEVAL_VERSION "v0.1.0"
 
 using namespace mbase;
 
@@ -56,6 +56,7 @@ GENERIC print_usage()
     printf("The code here is using the embedder.cpp's implementation as a base and makes slight modifications to it.\n");
     printf("========================================\n\n");
     printf("Usage: mbase_retrieval <model_path> *[<option> [<value>]]\n");
+    printf("       mbase_retrieval model.gguf -q 'What is MBASE' -pf file1.txt -pf file2.txt -gl 80\n");
     printf("Options: \n\n");
     printf("-h, --help                      Print usage.\n");
     printf("-v, --version                   Shows program version.\n");

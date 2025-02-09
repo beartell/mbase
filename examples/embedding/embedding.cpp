@@ -7,7 +7,7 @@
 #include <mbase/json/json.h>
 #include <iostream>
 
-#define MBASE_EMBEDDING_SIMPLE_VERSION "v1.1.0"
+#define MBASE_EMBEDDING_SIMPLE_VERSION "v0.1.0"
 
 using namespace mbase;
 
@@ -47,6 +47,8 @@ GENERIC print_usage()
     printf("The given implementation is stable and shows the basics of how to generate embeddings using MBASE embedding procesor.\n");
     printf("========================================\n\n");
     printf("Usage: mbase_embedding_simple <model_path> *[<option> [<value>]]\n");
+    printf("       mbase_embedding_simple model.gguf -gl 80 -p 'What is life?'\n");
+    printf("       mbase_embedding_simple model.gguf -gl 80 -pf prompt1.txt -pf prompt2.txt\n");
     printf("Options: \n\n");
     printf("-h, --help                      Print usage.\n");
     printf("-v, --version                   Shows program version.\n");

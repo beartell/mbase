@@ -8,7 +8,7 @@
 #include <chrono>
 #include <signal.h>
 
-#define MBASE_BENCHMARK_VERSION "v1.4.0"
+#define MBASE_BENCHMARK_VERSION "v0.1.0"
 
 using namespace mbase;
 
@@ -67,6 +67,8 @@ GENERIC print_usage()
     printf("If the context kv cache is filled and there still are tokens to predict, they will not be processed, since we are not doing context window shifting.\n");
     printf("========================================\n\n");
     printf("Usage: mbase_benchmark_t2t <model_path> *[<option> [<value>]]\n");
+    printf("       mbase_benchmark_t2t model.gguf -uc 1 -fps 500 -jout .\n");
+    printf("       mbase_benchmark_t2t model.gguf -uc 1 -fps 500 -jout . -mdout .\n");
     printf("Options: \n\n");
     printf("-h, --help                           Print usage.\n");
     printf("-v, --version                        Shows program version.\n");
