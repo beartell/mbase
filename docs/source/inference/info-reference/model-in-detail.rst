@@ -584,27 +584,24 @@ TextToText Model Object
         MBASE_ND(MBASE_OBS_IGNORE) bool is_embedding_model() const;
         MBASE_ND(MBASE_OBS_IGNORE) bool has_lora_adapter(const mbase::string& in_name, inf_lora_adapter& out_adapter);
         llama_model* get_raw_model();
-        flags get_special_tokens(mbase::vector<inf_text_token>& out_tokens) const;
-        flags get_special_tokens(mbase::vector<mbase::string>& out_tokens) const;
-        flags get_model_name(mbase::string& out_name) const;
-        flags get_architecture(mbase::string& out_architecture) const;
-        flags get_sys_start(mbase::string& out_start) const;
-        flags get_sys_start(mbase::vector<inf_text_token>& out_tokens) const;
-        flags get_assistant_start(mbase::string& out_start) const;
-        flags get_assistant_start(mbase::vector<inf_text_token>& out_tokens) const;
-        flags get_usr_start(mbase::string& out_start) const;
-        flags get_usr_start(mbase::vector<inf_text_token>& out_tokens) const;
-        flags get_sys_end(mbase::string& out_end) const;
-        flags get_assistant_end(mbase::string& out_end) const;
-        flags get_usr_end(mbase::string& out_end) const;
-        flags get_eot_token(inf_text_token& out_token) const;
-        flags get_lf_token(inf_text_token& out_token) const;
-        flags get_vocab_count(I32& out_count) const;
-        flags get_size(size_type& out_size) const;
-        flags get_embedding_length(U32& out_embed_length) const;
-        flags get_head_count(U32& out_head_count) const;
-        flags get_layer_count(U32& out_layer_count) const;
-        flags get_max_embedding_context(U32& out_context) const;
+        mbase::vector<inf_text_token> get_special_tokens() const;
+        mbase::vector<mbase::string> get_special_tokens_string() const;
+        const mbase::string& get_model_name() const;
+        const mbase::string& get_architecture() const;
+        const mbase::string& get_sys_start() const;
+        const mbase::string& get_assistant_start() const;
+        const mbase::string& get_usr_start() const;
+        const mbase::string& get_sys_end() const;
+        const mbase::string& get_assistant_end() const;
+        const mbase::string& get_usr_end() const;
+        inf_text_token get_eot_token() const;
+        inf_text_token get_lf_token() const;
+        I32 get_vocab_count() const;
+        size_type get_size() const;
+        U32 get_embedding_length() const;
+        U32 get_head_count() const;
+        U32 get_layer_count() const;
+        U32 get_max_embedding_context() const;
         bool is_token_eof_generation(inf_text_token in_token) const;
         flags is_token_special(const mbase::string& in_string) const;
         flags is_token_control(inf_text_token in_token) const;
@@ -687,99 +684,87 @@ TextToText Model Object
     
     Returns the raw llama.cpp C SDK model pointer. It can be used by advanced users who want to leverage the capabilites of the low-level llama C SDK.
 
-.. cpp:function:: flags get_special_tokens(mbase::vector<inf_text_token>& out_tokens) const
-
-    On success, it will return the flag :code:`INF_MODEL_SUCCESS` and populate the :code:`out_tokens` vector with the special tokens of the model vocabulary.
-
-.. cpp:function:: flags get_special_tokens(mbase::vector<mbase::string>& out_tokens) const
+.. cpp:function:: mbase::vector<inf_text_token> get_special_tokens() const
     
-    Similar to :code:`flags get_special_tokens(mbase::vector<inf_text_token>& out_tokens) const`. The difference is that the this one populates the :code:`out_tokens` vector with stringified special tokens of the model vocabulary. 
+    Returns the special tokens of the model's vocabulary.
 
-.. cpp:function:: flags get_model_name(mbase::string& out_name) const
+.. cpp:function:: mbase::vector<mbase::string> get_special_tokens_string() const
+    
+    Returns the stringified special tokens of the model's vocabulary.
+
+.. cpp:function:: const mbase::string& get_model_name() const
    
     Returns the model name which is extracted from the GGUF File.
 
-.. cpp:function:: flags get_architecture(mbase::string& out_architecture) const
+.. cpp:function:: const mbase::string& get_architecture() const
     
     Returns the model architecture.
 
-.. cpp:function:: flags get_sys_start(mbase::string& out_start) const
+.. cpp:function:: const mbase::string& get_sys_start() const
     
-    If the model chat template is defined in MBASE and there is a system prompt part in the model's chat template, it returns the beginning of the system part of the template.
+    It returns the beginning of the system part of the template if the model chat template is defined in MBASE and there is a system prompt part in the model's chat template.
 
     Empty string if there is no system start template.
 
-.. cpp:function:: flags get_sys_start(mbase::vector<inf_text_token>& out_tokens) const
+.. cpp:function:: const mbase::string& get_assistant_start() const
     
-    Returns the vector of tokens that constitute the system prompt part of the chat template.
-
-.. cpp:function:: flags get_assistant_start(mbase::string& out_start) const
-    
-    If the model chat template is defined in MBASE and there is an assistant prompt part in the model's chat template, it returns the beginning of the assistant part of the template.
+    It returns the beginning of the assistant part of the template if the model chat template is defined in MBASE and there is a assistant prompt part in the model's chat template.
 
     Empty string if there is no assistant start template.
-
-.. cpp:function:: flags get_assistant_start(mbase::vector<inf_text_token>& out_tokens) const
-
-    Returns the vector of tokens that constitute the assistant prompt part of the chat template.
     
-.. cpp:function:: flags get_usr_start(mbase::string& out_start) const
+.. cpp:function:: const mbase::string& get_usr_start() const
     
-    If the model chat template is defined in MBASE and there is a user prompt part in the model's chat template, it returns the beginning of the user part of the template.
+    It returns the beginning of the user part of the template if the model chat template is defined in MBASE and there is a user prompt part in the model's chat template.
 
     Empty string if there is no user start template.
    
-.. cpp:function:: flags get_usr_start(mbase::vector<inf_text_token>& out_tokens) const
-     
-    Returns the vector of tokens that constitute the user prompt part of the chat template.
-
-.. cpp:function:: flags get_sys_end(mbase::string& out_end) const
+.. cpp:function:: const mbase::string& get_sys_end() const
     
-    If the model chat template is defined in MBASE and there is a system prompt part in the model's chat template, it returns the end of the system part of the template.
+    It returns the ending of the system part of the template if the model chat template is defined in MBASE and there is a system prompt part in the model's chat template.
     
     Empty string if there is no system end template. 
 
-.. cpp:function:: flags get_assistant_end(mbase::string& out_end) const
+.. cpp:function:: const mbase::string& get_assistant_end() const
        
-    If the model chat template is defined in MBASE and there is an assistant prompt part in the model's chat template, it returns the end of the assistant part of the template.
+    It returns the ending of the assistant part of the template if the model chat template is defined in MBASE and there is a assistant prompt part in the model's chat template.
 
     Empty string if there is no assistant end template.
 
-.. cpp:function:: flags get_usr_end(mbase::string& out_end) const
+.. cpp:function:: const mbase::string& get_usr_end() const
 
-    If the model chat template is defined in MBASE and there is a user prompt part in the model's chat template, it returns the end of the user part of the template.
+    It returns the ending of the user part of the template if the model chat template is defined in MBASE and there is a user prompt part in the model's chat template.
 
     Empty string if there is no user end template.
 
-.. cpp:function:: flags get_eot_token(inf_text_token& out_token) const
+.. cpp:function:: inf_text_token get_eot_token() const
 
     Returns the end of token token.
     
-.. cpp:function:: flags get_lf_token(inf_text_token& out_token) const
+.. cpp:function:: inf_text_token get_lf_token() const
 
     Returns the linefeed token.
 
-.. cpp:function:: flags get_vocab_count(I32& out_count) const
+.. cpp:function:: I32 get_vocab_count() const
 
     Returns the number of tokens in the model vocabulary.
 
-.. cpp:function:: flags get_size(size_type& out_size) const
+.. cpp:function:: size_type get_size() const
     
     Returns the size of the model in bytes.
 
-.. cpp:function:: flags get_embedding_length(U32& out_embed_length) const
+.. cpp:function:: U32 get_embedding_length() const
 
     Returns the embedding length. It is also called hidden layer in some contexts.
 
-.. cpp:function:: flags get_head_count(U32& out_head_count) const
+.. cpp:function:: U32 get_head_count() const
     
     Returns the kv head count. 
 
-.. cpp:function:: flags get_layer_count(U32& out_layer_count) const
+.. cpp:function:: U32 get_layer_count() const
     
     Number of layers in the model.
 
-.. cpp:function:: flags get_max_embedding_context(U32& out_context) const
+.. cpp:function:: U32 get_max_embedding_context() const
 
     Maximum context length of the embedder model.
 

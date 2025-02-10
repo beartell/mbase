@@ -1,6 +1,6 @@
-=======================
-About Retrieval Example
-=======================
+==================
+Embeddings Example
+==================
 
 In this example, we will write a program that will read a user query and
 generate embeddings using an open-source LLM model.

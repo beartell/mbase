@@ -14,7 +14,8 @@ of the given T2T LLM and its impact on your main application logic.
 
 :doc:`Embedding <embedding/about>`: An example program for generating the embeddings of the given prompt or prompts.
 
-:doc:`Openai Server <openai-server/about>`: TBD
+:doc:`Openai Server <openai-server/about>`: An Openai API compatible HTTP/HTTPS server for serving LLMs.
+This program provides chat completion API for TextToText models and embeddings API For embedder models.
 
 :doc:`Retrieval <retrieval/about>`: An example for calculating the distance between the
 given query and multiple text files/documents and applying retrieval operation.
