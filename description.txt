@@ -1,3 +1,0 @@
-MBASE SDK is a set of libraries, tools and technologies primarily developed for 
-bulding high-performance non-blocking applications with easy LLM integration.
-
