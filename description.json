@@ -1,0 +1,11 @@
+[
+    {
+        "model_path" : "model.gguf"
+    },
+    {
+        "model_path" : "model1.gguf"
+    },
+    {
+        "model_path" : "model2.gguf"
+    }
+]

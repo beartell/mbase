@@ -24,27 +24,141 @@ Synopsis
 
 .. code-block:: bash
 
-    mbase_simple_conversation model_path *[option [value]]
-    mbase_simple_conversation model.gguf
-    mbase_simple_conversation model.gguf -gl 80
-    mbase_simple_conversation model.gguf -gl 80 -sys 'You are a helpful assistant.'
+    mbase_openai_server *[option [value]]
+    mbase_openai_server --hostname "127.0.0.1" -jsdesc description.json
+    mbase_openai_server --hostname "127.0.0.1" --port 8080 -jsdesc description.json
+    mbase_openai_server --hostname "127.0.0.1" --port 8080 -jsdesc description.json
+    mbase_openai_server --hostname "127.0.0.1" --port 8080 --ssl-pub public_key_file --ssl-key private_key_file -jsdesc description.json
 
 -----------
 Description
 -----------
 
-This is a simple conversation program implemented to demonstrate 
-what can be implemented using MBASE and show the capabilities.
+An Openai API compatible HTTP/HTTPS server for serving LLMs.
+This program provides chat completion API For TextToText models and embeddings API For embedder models.
 
-The program is a simple executable where you are having a dialogue
-with the LLM you provide. 
+The :code:`mbase_openai_server` can host either single or multiple models and serve its clients simultaneusly 
+which is specified by the key :code:`processor_count` in the provided JSON description file.
 
-You can adjust the sampling parameters, thread count, or supply 
-a system prompt either from file or from string using the options.
+In order to properly use the :code:`mbase_openai_server` program, you should supply a json file, describing
+the behavior of the openai server program.
 
-At the end of the program, it will print useful information about
-the performance of the program such as, pp and tg rates as well as
-model load delay.
+Along with the program description json, you can specify the hostname(default=127.0.0.1) to listen to and the port(default=8080).
+The specified hostname and port must be configured properly so that the application may listen.
+
+----------------------
+JSON Description Usage
+----------------------
+
+User must write a JSON description file and specify its path in the option :code:`-jsdesc`:
+
+.. code-block:: bash
+
+    mbase_openai_server --hostname "127.0.0.1" -jsdesc description.json
+
+In the description file, user will specify multiple parameters such as the source of the model file,
+amount of concurrent users, samplers etc. 
+
+^^^^^^^^^^^^^^^^^^^^^
+Format and Parameters
+^^^^^^^^^^^^^^^^^^^^^
+
+JSON file will contain an array of objects that contains the given keys and values:
+
+- :code:`model_path`: Path of the model. It must be a valid GGUF file.
+- :code:`processor_count` (default=4): Amount of users that the server will concurrently serve the LLM to.
+- :code:`thread_count` (default=8): Amount of generation threads to use for inference engine to generate tokens.
+- :code:`batch_thread_count` (default=8): Amount of threads to use for initial batch processing.
+- :code:`context_length` (default=2048): Context length of each processor. The inference engine will allocate a context for each processor.
+- :code:`batch_length` (default=512): User's input will be processed in batches by the inference engine. Higher the number, better the performance but significant increase on RAM usage. This number can't exceed the context size.
+- :code:`gpu_layers` (default=80): Number of layers to be offloaded to GPU if there are any GPU devices in your system. Ignored if there are no GPUs.
+
+If you are hosting a TextToText model, the following samplers may also be specified.
+
+- :code:`samplers.top_k`
+- :code:`samplers.top_p`
+- :code:`samplers.min_p`
+- :code:`temp`
+- :code:`mirostat_v2.tau`
+- :code:`mirostat_v2_eta`
+- :code:`repetition.penalty_n`
+- :code:`repetition.penalty_repeat` 
+
+If you don't specify any sampling parameters, the greedy sampling will be applied by default.
+
+----------------------------
+Single Model Hosting Example
+----------------------------
+
+.. code-block:: json
+    :caption: description.json
+
+    [
+        {
+            "model_path" : "model.gguf" 
+        }
+    ]
+
+For 8 concurrent access with 4096 context length each:
+
+.. code-block:: json
+    :caption: description.json
+
+    [
+        {
+            "model_path" : "model.gguf",
+            "processor_count" : 8,
+            "context_length" : 4096
+        }
+    ]
+
+Specifying all parameters and some samplers:
+
+.. code-block:: json
+    :caption: description.json
+
+    [
+        {
+            "model_path" : "model.gguf",
+            "processor_count" : 8,
+            "context_length" : 4096,
+            "thread_count" : 8,
+            "batch_thread_count" : 8,
+            "batch_length" : 512,
+            "gpu_layers" : 80,
+            "samplers" :
+            {
+                "top_k" : 40,
+                "top_p" : 1.0,
+                "min_p" : 0.3,
+                "temp" : 0.8,
+                "repetition" :
+                {
+                    "penalty_n" : 64,
+                    "penalty_repeat" : 1.2
+                }
+            }
+        }
+    ]
+
+---------------------------
+Multi Model Hosting Example
+---------------------------
+
+.. code-block:: json
+    :caption: description.json
+
+    [
+        {
+            "model_path" : "model.gguf"
+        },
+        {
+            "model_path" : "model1.gguf"
+        },
+        {
+            "model_path" : "model2.gguf"
+        }
+    ]
 
 -------
 Options
@@ -58,72 +172,27 @@ Options
 
     Shows program version.
 
-.. option:: -sys prompt, --system prompt
+.. option:: --api-key key
 
-    LLM system prompt.
-    If this option is given after -fsys, it will overwrite it. (default="")
+    API key to be checked by the server.
 
-.. option:: -fsys file, --system-prompt-file file
+.. option:: -h host, --hostname host
 
-    Text file that contains the LLM system prompt.
-    If this option is given after -sys, it will overwrite it. (default="")
+    Hostname to listen to. (default=127.0.0.1)
 
-.. option:: -t count, --thread-count count
+.. option:: -p port, --port port
 
-    Amount of threads to use for token generation. (default=16)
+    Port to assign to. (default=8080)
 
-.. option:: -bt count, --batch-thread-count count
+.. option:: --ssl-public file
+
+    SSL public file for HTTPS support.
+
+.. option:: --ssl-key file
     
-    Amount of thread to use for initial batch processing. (default=8)
+    SSL private key file for HTTPS support.
 
-.. option:: -c length, --context-length length 
+.. option:: -jsdesc description_file
 
-    Total context length of the conversation which includes
-    the special tokens and the response of the LLM. (default=8192)
+    JSON description file for the openai server program.
 
-.. option:: -b length, --batch-length length 
-
-    The input is executed in batches in processor decode loop.
-    This is the maximum batch length to be processed in single iteration. (default=4096)
-
-.. option:: -gl count, --gpu-layers count
-
-    Number of layers too offload to GPU.
-    Ignored if there is no GPU is present. (default=999)
-
-.. option:: -tk k, --top-k k
-
-    Top k most tokens to pick from, during the sampling phase. (default=20, min=1, max=<model_vocabulary>)
-
-.. option:: -tp p, --top-p p
-
-    Token probability at most during the sampling phase with
-    values between (0.0, 1.0] where the higher the 'p', the bigger the pool.
-    (default=1.0)
-
-.. option:: -mp p, --min-p p
-
-    Token probability at most during the sampling phase with
-    values between (0.0, 1.0] where the higher the 'p', the smaller the pool.
-    (default=0.3)
-
-.. option:: -pn n, --penalty-n n
-
-    Apply repetition penalty on last 'n' tokens.
-    (default=64)
-
-.. option:: -pr frequency, --penalty-repeat frequency
-
-    Discourages repeating exact tokens based on their past presence.
-    The higher the frequency, the lower the repetition.
-    (default=1.3, min=1.0, max=2.0)
-
-.. option:: -temp n, --temperature n
-
-    Higher values increase the randomness.
-    (default=0.1, min.01, max 1.4)
-
-.. option:: -gr, --greedy
-
-    Ignore all sampling techniques, pick the most probable token.
-    In other words, apply greedy. (default=false)

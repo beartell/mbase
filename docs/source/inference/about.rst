@@ -50,6 +50,114 @@ Supported Platforms
 * Linux
 * Windows
 
+---------------
+Useful Programs
+---------------
+
+^^^^^^^^^^^^^
+Openai Server
+^^^^^^^^^^^^^
+
+Detailed documentation: :doc:`programs/openai-server/about`
+
+An Openai API compatible HTTP/HTTPS server for serving LLMs.
+This program provides chat completion API for TextToText models and embeddings API For embedder models.
+
+**Usage:**
+
+.. code-block:: bash
+
+    mbase_openai_server *[option [value]]
+    mbase_openai_server --hostname "127.0.0.1" -jsdesc description.json
+    mbase_openai_server --hostname "127.0.0.1" --port 8080 -jsdesc description.json
+    mbase_openai_server --hostname "127.0.0.1" --port 8080 -jsdesc description.json
+    mbase_openai_server --hostname "127.0.0.1" --port 8080 --ssl-pub public_key_file --ssl-key private_key_file -jsdesc description.json
+
+^^^^^^^^^^^^^
+Benchmark T2T
+^^^^^^^^^^^^^
+
+Detailed documentation: :doc:`programs/benchmark-t2t/about`
+
+It is a program written to measure the performance
+of the given T2T LLM and its impact on your main application logic.
+
+**Usage:**
+
+.. code-block:: bash
+
+    mbase_benchmark_t2t model_path *[option [value]]
+    mbase_benchmark_t2t model.gguf -uc 1 -fps 500 -jout .
+    mbase_benchmark_t2t model.gguf -uc 1 -fps 500 -jout . -mdout .
+
+^^^^^^^^^
+Embedding
+^^^^^^^^^
+
+Detailed documentation: :doc:`programs/embedding/about`
+
+An example program for generating the embeddings of the given prompt or prompts.
+
+**Usage:**
+
+.. code-block:: bash
+
+    mbase_embedding_simple model_path *[option [value]]
+    mbase_embedding_simple model.gguf -gl 80 -p 'What is life?'
+    mbase_embedding_simple model.gguf -gl 80 -pf prompt1.txt -pf prompt2.txt
+
+^^^^^^^^^
+Retrieval
+^^^^^^^^^
+
+Detailed documentation: :doc:`programs/retrieval/about`
+
+An example for calculating the distance between the
+given query and multiple text files/documents and applying a retrieval operation.
+
+**Usage:**
+
+.. code-block:: bash
+
+    mbase_retrieval model_path *[option [value]]
+    mbase_retrieval model.gguf -q 'What is MBASE' -pf file1.txt -pf file2.txt -gl 80
+
+
+^^^^^^^^^^^^^^^^^^^
+Simple Conversation
+^^^^^^^^^^^^^^^^^^^
+
+Detailed documentation: :doc:`programs/simple-conversation/about`
+
+It is a simple executable program where you are having
+a dialogue with the LLM you provide. It is useful for examining the answer of the LLM since the system prompt 
+and sampler values can be altered.
+
+**Usage:**
+
+.. code-block:: bash
+
+    mbase_simple_conversation model_path *[option [value]]
+    mbase_simple_conversation model.gguf
+    mbase_simple_conversation model.gguf -gl 80
+    mbase_simple_conversation model.gguf -gl 80 -sys 'You are a helpful assistant.'
+
+^^^^^^^^^^
+Typo Fixer
+^^^^^^^^^^
+
+Detailed documentation: :doc:`programs/typo-fixer/about`
+
+This is an applied example use case of the MBASE library.
+The program is reading a user-supplied text file and fixing the typos.
+
+**Usage:**
+
+.. code-block:: bash
+
+    mbase_typo_fixer model_path *[option [value]]
+    mbase_typo_fixer model.gguf -gl 80 -s typo.txt -o fixed.txt
+
 -------------------
 Document Navigation
 -------------------
