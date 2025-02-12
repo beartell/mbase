@@ -21,6 +21,7 @@ exclude_patterns = []
 
 html_theme = 'furo'
 html_static_path = ['_static']
+html_favicon = 'favicon.png'
 
 html_title = project
 html_logo = "mbase_logo.svg"

@@ -12,7 +12,7 @@ Bundled SDK
 
 If you don't have the `llama.cpp <llama.cpp_>`_ on your system, go with the bundled SDK which will install both `llama.cpp <llama.cpp_>`_ and MBASE SDK with proper configuration.
 
-.. dropdown:: x86_64, Apple Silicon CPU/GPU
+.. dropdown:: x86_64, Apple Metal
     :open:
 
     .. grid:: 3
