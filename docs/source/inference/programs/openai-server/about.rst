@@ -160,6 +160,66 @@ Multi Model Hosting Example
         }
     ]
 
+----------------------
+REST API Usage Example
+----------------------
+
+After you create your JSON description file and run the openai-server program, you can request the server using the Openai API.
+
+^^^^^^^^^^^^^^^
+Chat Completion
+^^^^^^^^^^^^^^^
+
+.. important::
+
+    You can observe the model names by sending a GET request to the :code:`/v1/models` endpoint.
+
+**Using CURL:**
+
+.. code-block:: bash
+
+    curl "http://localhost:8080/v1/chat/completions" \
+    -H "Content-Type: application/json" \
+    -H "Authorization: Bearer $OPENAI_API_KEY" \
+    -d '{
+        "model": "$MODEL_NAME",
+        "messages": [
+            {
+                "role": "developer",
+                "content": "You are a helpful assistant."
+            },
+            {
+                "role": "user",
+                "content": "How are you?"
+            }
+        ]
+    }'
+
+**Using Python:**
+
+.. code-block:: python
+
+    from openai import OpenAI
+
+    client = OpenAI(
+            base_url="http://localhost:8080/v1",
+            api_key="OPENAI_API_KEY"
+    )
+
+    completion = client.chat.completions.create(
+        model="MODEL_NAME",
+        messages=[
+            {"role": "developer", "content": "You are a helpful assistant."},
+            {
+                "role": "user",
+                "content": "How are you?"
+            }
+        ]
+    )
+
+    print(completion.choices[0].message)
+
+
 -------
 Options
 -------
