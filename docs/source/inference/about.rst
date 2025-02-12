@@ -42,6 +42,18 @@ Features
 * Benchmark application for measuring the impact of LLM inference on your application.
 * Plus anything `llama.cpp <llama.cpp_>`_ supports.
 
+---------------------
+Implementation Matrix
+---------------------
+
++------------+--------------------------------------------------+--------------------------------------------------+---------------------------+
+| Type       | SDK Support                                      | Openai API Support                               | Engine                    |
++============+==================================================+==================================================+===========================+
+| TextToText | :octicon:`check-circle-fill;1em;sd-text-success` | :octicon:`check-circle-fill;1em;sd-text-success` | `llama.cpp <llama.cpp_>`_ |
++------------+--------------------------------------------------+--------------------------------------------------+---------------------------+
+| Embedder   | :octicon:`check-circle-fill;1em;sd-text-success` | :octicon:`check-circle-fill;1em;sd-text-success` | `llama.cpp <llama.cpp_>`_ |
++------------+--------------------------------------------------+--------------------------------------------------+---------------------------+
+
 -------------------
 Supported Platforms
 -------------------
@@ -49,6 +61,14 @@ Supported Platforms
 * Mac OS
 * Linux
 * Windows
+
+-----------------------
+Download and Setting up
+-----------------------
+
+Download page: :doc:`quickstart/setup/download`
+
+SDK setup and compiling from source: :doc:`quickstart/setup/setting_up`
 
 ---------------
 Useful Programs

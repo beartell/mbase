@@ -23,7 +23,7 @@ html_theme = 'furo'
 html_static_path = ['_static']
 
 html_title = project
-html_logo = "mbase_logo_no_text.svg"
+html_logo = "mbase_logo.svg"
 html_theme_options = {
     "source_repository": "https://github.com/Emreerdog/mbase",
     "source_branch": "main",
