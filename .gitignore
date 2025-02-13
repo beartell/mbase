@@ -2,6 +2,7 @@
 .vscode/
 out/
 build/
+docs/build/
 scripts/__pycache__
 change_log.txt
 .DS_Store
