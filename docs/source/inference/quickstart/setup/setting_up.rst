@@ -23,6 +23,7 @@ Then, optional compiling from source and creating an empty project.
     Download <download>
     Preparing Ubuntu <preparing_ubuntu>
     Preparing Windows <preparing_windows>
+    Preparing macOS <preparing_macos>
     Compiling from Source <compile_from_source>
     Creating Empty Project <creating_empty_project>
     Finish <finish>

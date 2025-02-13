@@ -25,13 +25,13 @@ After we clone the `llama.cpp <llama.cpp_>`_ repository we will create the build
 and start compiling the project. However, since the `llama.cpp <llama.cpp_>`_ library will
 be compiled with `MBASE <mbase_main_>`_, you should look at the
 `llama.cpp <llama.cpp_>`_ cmake build flags in the original repository for detailed
-build configuration. This documentation will include build configuration only for CUDA and
-x86_64 builds.
+build configuration. This documentation will include build configuration only for CUDA,
+x86_64, and Apple Metal builds.
 
 .. important::
 
     llama.cpp supports multiple backends for inference.
-    This documentation only mentions the normal x86_64 and CUDA GPU backend builds.
+    This documentation only mentions the normal CUDA GPU, x86_64, and Apple Metal backend builds.
     In order to build the llama.cpp library with the backend you desire or detailed configuration and for more information in general, refer to `llama.cpp <llama.cpp_>`_ repository.
 
 ------------
@@ -47,6 +47,21 @@ In order to build x86_64 backend, do the following:
     cd build_cpu
     cmake ..
     cmake --build . --config Release -j
+
+The compilation may take some time so do not worry.
+
+-----------------
+Apple Metal BUILD
+-----------------
+
+In order to build Apple Metal backend, do the following:
+
+.. code-block:: bash
+
+    cd llama.cpp
+    mkdir build_metal
+    cd build_metal
+    cmake -DGGML_METAL=ON -DGGML_METAL_USE_BF16=ON -DGGML_METAL_EMBED_LIBRARY=ON ..
 
 The compilation may take some time so do not worry.
 
@@ -89,11 +104,11 @@ In order to install it in windows, your terminal (cmd or powershell) must be run
 
    cmake --install .
 
--------------------
-Linux Install Paths
--------------------
+--------------------------
+Linux, macOS Install Paths
+--------------------------
 
-MBASE will be installed to given paths in Linux:
+MBASE will be installed to given paths in Linux and macOS:
 
 * Library files: **/usr/local/lib**
 * CMake config modules: **/usr/local/lib/cmake/mbase.libs**
