@@ -26,6 +26,19 @@ else()
     set(CPACK_PACKAGE_NAME "mbase.libs")
 endif(MBASE_BUNDLED_INSTALL)
 
+if(GGML_CUDA)
+    if (WIN32)
+        find_package(CUDAToolkit)
+        install(
+            FILES ${CUDAToolkit_BIN_DIR}/cublas64_12.dll ${CUDAToolkit_BIN_DIR}/cublasLt64_12.dll ${CUDAToolkit_BIN_DIR}/cudart64_12.dll
+            DESTINATION ${MBASE_LIBS_BIN_INSTALL_DIR}
+        )
+        message("BIN INSTALL DIR: ${CUDAToolkit_BIN_DIR}")
+    elseif(UNIX)
+
+    endif()
+endif()
+
 set(CPACK_NSIS_ENABLE_UNINSTALL_BEFORE_INSTALL ON)
 set(CPACK_NSIS_MODIFY_PATH ON)
 set(CPACK_NSIS_DISPLAY_NAME "MBASE SDK")

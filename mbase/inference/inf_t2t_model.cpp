@@ -113,6 +113,8 @@ mbase::vector<inf_text_token> InfModelTextToText::get_special_tokens() const
 			out_tokens.push_back(i);
 		}
 	}
+
+	return out_tokens;
 }
 
 mbase::vector<mbase::string> InfModelTextToText::get_special_tokens_string() const
