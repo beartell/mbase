@@ -1,0 +1,2 @@
+This software includes NVIDIA CUDA components – specifically, cudart64_12.dll, cublas64_12.dll, and cublasLt64_12.dll – which are redistributed under the terms of the NVIDIA CUDA Toolkit End User License Agreement. These files are provided “as is” and must not be modified or stripped of their proprietary notices. For full details of the license terms, please refer to the NVIDIA CUDA EULA available at:
+https://docs.nvidia.com/cuda/eula/index.html

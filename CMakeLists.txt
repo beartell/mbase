@@ -73,4 +73,6 @@ add_subdirectory(examples/benchmark)
 add_subdirectory(examples/embedding)
 add_subdirectory(examples/retrieval)
 
-include(mbase_packaging)
+if(MBASE_PACKAGING)
+  include(mbase_packaging)
+endif()

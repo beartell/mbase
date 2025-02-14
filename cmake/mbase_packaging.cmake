@@ -27,15 +27,13 @@ else()
 endif(MBASE_BUNDLED_INSTALL)
 
 if(GGML_CUDA)
+    set(CPACK_PACKAGE_NAME "${CPACK_PACKAGE_NAME}-cuda")
     if (WIN32)
         find_package(CUDAToolkit)
         install(
             FILES ${CUDAToolkit_BIN_DIR}/cublas64_12.dll ${CUDAToolkit_BIN_DIR}/cublasLt64_12.dll ${CUDAToolkit_BIN_DIR}/cudart64_12.dll
             DESTINATION ${MBASE_LIBS_BIN_INSTALL_DIR}
         )
-        message("BIN INSTALL DIR: ${CUDAToolkit_BIN_DIR}")
-    elseif(UNIX)
-
     endif()
 endif()
 
