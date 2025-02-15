@@ -8,7 +8,7 @@
 from dataclasses import asdict
 
 project = 'MBASE Software Documentation'
-copyright = '2025, MBASE Yazılım Ltd. Şti.'
+copyright = '2025, MBASE Yazılım A.Ş.'
 author = 'Saul Emre Erdog'
 
 extensions = [
