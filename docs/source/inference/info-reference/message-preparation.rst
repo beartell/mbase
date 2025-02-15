@@ -7,7 +7,7 @@ Message Preparation
 .. tip::
 
     You can observe the chat template of the model by reading the :code:`tokenizer.chat_template` key
-    in gguf file. To understand how to read values from gguf file, refer to: 
+    in gguf file. To understand how to read values from gguf file, see: :doc:`gguf-files` 
 
 --------------------
 About Chat Templates

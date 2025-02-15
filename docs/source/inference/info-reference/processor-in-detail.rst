@@ -70,6 +70,11 @@ Here is a list of methods that correspond to expensive operations:
 Essential Callbacks
 -------------------
 
+.. important::
+
+   LoRA related callbacks are not mentioned here.
+
+
 There are some essential callbacks that derived classes must implement to inherit from in order to catch the events related to the processor object.
 
 Those callbacks are as follows:
@@ -81,6 +86,39 @@ Those callbacks are as follows:
 -----------------
 Essential Signals
 -----------------
+
+.. important::
+
+   LoRA related signals are not mentioned here.
+
+User can observe signals on the processor object to see if an operation is still operating in parallel.
+Here are the essential signals that can be observed in the program loop:
+
+* :code:`signal_state_initializing()`: If this is true, it indicates that the processor is initialized and the processor object should be updated by calling :code:`update()`.
+* :code:`signal_state_destroying()`: If this is true, it means that the processor is destroyed and the processor object should be updated by calling :code:`update()`.
+* :code:`signal_initializing()`: It is true if the processor is actively being initialized in parallel.
+* :code:`signal_destroying()`: It is true if the processor is actively being destroyed in parallel.
+
+.. code-block:: cpp
+   :caption: mbase/inference/inf_processor.h 
+
+   class MBASE_API InfProcessorBase : public mbase::logical_processor {
+   public:
+      ...
+      MBASE_ND(MBASE_OBS_IGNORE) bool signal_state_initializing() const noexcept;
+      MBASE_ND(MBASE_OBS_IGNORE) bool signal_state_destroying() const noexcept;
+      MBASE_ND(MBASE_OBS_IGNORE) bool signal_initializing() const noexcept;
+      MBASE_ND(MBASE_OBS_IGNORE) bool signal_destroying() const noexcept;
+      ...
+   protected:
+      ...
+   };
+
+* :code:`signal_state_input_process()`:
+* :code:`signal_state_decode_process()`:
+* :code:`signal_state_kv_locked_process()`:
+* :code:`signal_input_process()`:
+* :code:`signal_decode_process()`:
 
 -------------------------
 TextToText Execution Flow
@@ -100,7 +138,32 @@ TextToText Execution Flow
 
    In the documentation, there is a fully-implemented example. See :doc:`Single-Prompt Example <../quickstart/single_prompt_ex/about>`
 
-     
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Client Registration Example
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Input Execution and Token Generation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+--------
+Advanced
+--------
 
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Decode Behavior Description
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+// GENERATION BEHAVIOR MANIP
+
+^^^^^^^^^^^^^^
+Manual Caching
+^^^^^^^^^^^^^^
+
+// FOR PROMPT CACHING
+
+^^^^^^^^^^^^^^^^
+Context Shifting
+^^^^^^^^^^^^^^^^
+
+// FOR INFINITE TOKEN GENERATION
