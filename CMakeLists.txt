@@ -33,6 +33,19 @@ include(MBASEFrameworkSys)
 include(MBASECoreSys)
 include(MBASEInferenceSys)
 
+if(MBASE_BUNDLED_INSTALL STREQUAL "ON")
+  install(
+    FILES ${CMAKE_CURRENT_SOURCE_DIR}/llama.cpp/LICENSE
+    PERMISSIONS
+        OWNER_READ
+        OWNER_WRITE
+        GROUP_READ
+        WORLD_READ
+    DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/mbase/license
+    RENAME LICENSE-llama.cpp.txt
+  )
+endif()
+
 include(InstallRequiredSystemLibraries)
 mbase_install_libraries()
 

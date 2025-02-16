@@ -39,7 +39,6 @@ if(NOT llama_LIBRARY)
 else()
     message("-- Found llama.cpp library")
     list(APPEND MBASE_INFERENCE_INCLUDE_DEPENDS ${LLAMA_INCLUDE_DIR})
-    
 endif()
 
 configure_file(

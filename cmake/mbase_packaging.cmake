@@ -29,10 +29,20 @@ endif(MBASE_BUNDLED_INSTALL)
 if(GGML_CUDA)
     set(CPACK_PACKAGE_NAME "${CPACK_PACKAGE_NAME}-cuda")
     if (WIN32)
+        set(CPACK_RESOURCE_FILE_LICENSE ${CMAKE_CURRENT_SOURCE_DIR}/legal/LICENSE-full)
         find_package(CUDAToolkit)
         install(
             FILES ${CUDAToolkit_BIN_DIR}/cublas64_12.dll ${CUDAToolkit_BIN_DIR}/cublasLt64_12.dll ${CUDAToolkit_BIN_DIR}/cudart64_12.dll
             DESTINATION ${MBASE_LIBS_BIN_INSTALL_DIR}
+        )
+        install(
+        FILES ${CMAKE_CURRENT_SOURCE_DIR}/legal/cuda_redis_disclaimer
+        PERMISSIONS
+            OWNER_READ
+            OWNER_WRITE
+            GROUP_READ
+            WORLD_READ
+        DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/mbase/license
         )
     endif()
 endif()
