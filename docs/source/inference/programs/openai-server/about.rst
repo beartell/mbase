@@ -27,7 +27,6 @@ Synopsis
     mbase_openai_server *[option [value]]
     mbase_openai_server --hostname "127.0.0.1" -jsdesc description.json
     mbase_openai_server --hostname "127.0.0.1" --port 8080 -jsdesc description.json
-    mbase_openai_server --hostname "127.0.0.1" --port 8080 -jsdesc description.json
     mbase_openai_server --hostname "127.0.0.1" --port 8080 --ssl-pub public_key_file --ssl-key private_key_file -jsdesc description.json
 
 -----------
@@ -35,7 +34,7 @@ Description
 -----------
 
 An Openai API compatible HTTP/HTTPS server for serving LLMs.
-This program provides chat completion API For TextToText models and embeddings API For embedder models.
+This program provides chat completion API for TextToText models and embeddings API for embedder models.
 
 The :code:`mbase_openai_server` can host either single or multiple models and serve its clients simultaneusly 
 which is specified by the key :code:`processor_count` in the provided JSON description file.
