@@ -78,6 +78,10 @@ Now, we will talk about how the model initialization and destruction work non-bl
 Essential Callbacks
 -------------------
 
+.. important::
+
+    LoRA related callbacks are not mentioned here.
+
 There are some essential callbacks that derived classes must implement to inherit from
 in order to catch the events related to model object.
 
@@ -103,11 +107,13 @@ Here is how they look like in the model base class:
             ...
     }
 
-LoRA related callbacks are not mentioned here.
-
 -----------------
 Essential Signals
 -----------------
+
+.. important::
+
+    LoRA related signals are not mentioned here.
 
 User can observe signals on the model object to see if the model initialization/destruction is still operating in parallel.
 Here are the essential signals that can be observed in the program loop:
@@ -131,8 +137,6 @@ Here are the essential signals that can be observed in the program loop:
         private:
             ...
     }
-
-LoRA related signals are not mentioned here.
 
 --------------------------
 General Operation Workflow

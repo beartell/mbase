@@ -145,7 +145,7 @@ After the download is finished, we will apply the conversion script.
 Using the Conversion Script
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-First, clone the `llama.cpp <llama.cpp_>`_ repository and go into that directory:
+First, clone the `llama.cpp <llama.cpp_>`_ repository:
 
 .. code-block:: bash
 
@@ -156,6 +156,144 @@ Then, you need to install the necessary python packages:
 .. code-block:: bash
 
     pip install -r llama.cpp/requirements.txt
+
+After the packages are installed, we can call the conversion script. Here is the usage output of the conversion script:
+
+.. code-block:: bash
+
+    usage: convert_hf_to_gguf.py [-h] [--vocab-only] [--outfile OUTFILE] [--outtype {f32,f16,bf16,q8_0,tq1_0,tq2_0,auto}] [--bigendian] 
+    [--use-temp-file] [--no-lazy] [--model-name MODEL_NAME] [--verbose] 
+    [--split-max-tensors SPLIT_MAX_TENSORS] [--split-max-size SPLIT_MAX_SIZE] [--dry-run] 
+    [--no-tensor-first-split] [--metadata METADATA] [--print-supported-models] 
+    [model]
+
+Based-off of the usage information, we will call the conversion script to convert to GGUF format with f16 quantization method:
+
+.. code-block:: bash
+
+    python llama.cpp/convert_hf_to_gguf.py --outfile Phi-3-mini-128k-instruct-f16.gguf --outtype f16 ./Phi-3-mini-128k-instruct
+
+After the conversion is complete, you can quantize the :code:`Phi-3-mini-128k-instruct-f16.gguf` to Q4 using the :code:`llama-quantize` executable.
+
+Here is the usage output of the quantization program:
+
+.. code-block:: bash
+
+    usage: llama-quantize [--help] [--allow-requantize] [--leave-output-tensor] [--pure] [--imatrix] [--include-weights] 
+    [--exclude-weights] [--output-tensor-type] [--token-embedding-type] 
+    [--override-kv] model-f32.gguf [model-quant.gguf] type [nthreads]
+
+Based-off of the usage information, we will call the quantization program as follows:
+
+.. code-block:: bash
+
+    llama-quantize Phi-3-mini-128k-instruct-f16.gguf Phi-3-mini-128k-instruct-Q4_0.gguf Q4_0 8
+
+This program will quantize your f16 quantization model into Q4_0 quantization model and the number '8' at the end of the line
+tells the program how many threads to use for quantization.
+
+The quantization program states that the following quantization methods are possible:
+
+.. code-block:: bash
+
+    Allowed quantization types:
+    2  or  Q4_0    :  4.34G, +0.4685 ppl @ Llama-3-8B
+    3  or  Q4_1    :  4.78G, +0.4511 ppl @ Llama-3-8B
+    8  or  Q5_0    :  5.21G, +0.1316 ppl @ Llama-3-8B
+    9  or  Q5_1    :  5.65G, +0.1062 ppl @ Llama-3-8B
+    19  or  IQ2_XXS :  2.06 bpw quantization
+    20  or  IQ2_XS  :  2.31 bpw quantization
+    28  or  IQ2_S   :  2.5  bpw quantization
+    29  or  IQ2_M   :  2.7  bpw quantization
+    24  or  IQ1_S   :  1.56 bpw quantization
+    31  or  IQ1_M   :  1.75 bpw quantization
+    36  or  TQ1_0   :  1.69 bpw ternarization
+    37  or  TQ2_0   :  2.06 bpw ternarization
+    10  or  Q2_K    :  2.96G, +3.5199 ppl @ Llama-3-8B
+    21  or  Q2_K_S  :  2.96G, +3.1836 ppl @ Llama-3-8B
+    23  or  IQ3_XXS :  3.06 bpw quantization
+    26  or  IQ3_S   :  3.44 bpw quantization
+    27  or  IQ3_M   :  3.66 bpw quantization mix
+    12  or  Q3_K    : alias for Q3_K_M
+    22  or  IQ3_XS  :  3.3 bpw quantization
+    11  or  Q3_K_S  :  3.41G, +1.6321 ppl @ Llama-3-8B
+    12  or  Q3_K_M  :  3.74G, +0.6569 ppl @ Llama-3-8B
+    13  or  Q3_K_L  :  4.03G, +0.5562 ppl @ Llama-3-8B
+    25  or  IQ4_NL  :  4.50 bpw non-linear quantization
+    30  or  IQ4_XS  :  4.25 bpw non-linear quantization
+    15  or  Q4_K    : alias for Q4_K_M
+    14  or  Q4_K_S  :  4.37G, +0.2689 ppl @ Llama-3-8B
+    15  or  Q4_K_M  :  4.58G, +0.1754 ppl @ Llama-3-8B
+    17  or  Q5_K    : alias for Q5_K_M
+    16  or  Q5_K_S  :  5.21G, +0.1049 ppl @ Llama-3-8B
+    17  or  Q5_K_M  :  5.33G, +0.0569 ppl @ Llama-3-8B
+    18  or  Q6_K    :  6.14G, +0.0217 ppl @ Llama-3-8B
+    7  or  Q8_0    :  7.96G, +0.0026 ppl @ Llama-3-8B
+    1  or  F16     : 14.00G, +0.0020 ppl @ Mistral-7B
+    32  or  BF16    : 14.00G, -0.0050 ppl @ Mistral-7B
+    0  or  F32     : 26.00G              @ 7B
+
+^^^^^^^^^^^^^^^^^^^^^^
+Remarks on GGUF Naming
+^^^^^^^^^^^^^^^^^^^^^^
+
+.. important::
+
+    In order to get super-detailed explanation about
+    GGUF naming, See: `GGUF Specification <https://github.com/ggml-org/ggml/blob/master/docs/gguf.md#gguf-naming-convention>`_
+
+Since the conversion script doesn't automatically generate a name for the output gguf file, you should 
+correctly name your output file by specifying the option :code:`--outfile`.
+
+The `GGUF Specification <https://github.com/ggml-org/ggml/blob/master/docs/gguf.md#gguf-naming-convention>`_ designates
+a clean and structured output gguf file naming. Even though the correct output naming is not mandatory,
+it is a good practice to name your output model correctly for other people to understand some parameters about the model.
+
+GGUF follow a naming convention of :code:`<BaseName><SizeLabel><FineTune><Version><Encoding><Type><Shard>.gguf` where each
+component is delimited by a :code:`-` if present.
+
+The components are:
+
+1. **BaseName**: A descriptive name for the model base type or architecture.
+
+2. **SizeLabel**: Parameter weigth class such as Q, T, B, M, K. 
+
+3. **FineTune**: A descriptive name for the model fine tuning goal(e.g. Chat, Instruct, etc...)
+
+4. **Version**: Denotes the model version number, formatted as v<Major>.<Minor>. This is an optional field.
+
+5. **Encoding**: Indicates the weights encoding scheme that was applied to the model.
+
+6. **Type**: Indicates the kind of gguf file and the intended purpose for it.
+
+Here is a list of gguf file examples:
+
+* :code:`Hermes-2-Pro-Llama-3-8B-F16.gguf`:
+
+    * Model Name: Hermes 2 Pro Llama 3
+    * Expert Count: 0
+    * Parameter Count: 8B
+    * Version Number: v1.0
+    * Weight Encoding Scheme: F16
+    * Shard: N/A
+
+* :code:`Phi-3-mini-128k-instruct-Q4_0.gguf`:
+
+    * Model Name: Phi 3 mini 128k
+    * Export Count: 0
+    * Parameter Count: 3B
+    * FineTune: Instruct
+    * Version Number: v1.0
+    * Weight Encoding Scheme: Q4_0
+    * Shard: N/A
+
+* :code:`Mixtral-8x7B-v0.1-KQ2.gguf`:
+
+    * Model Name: Mixtral
+    * Expert Count: 8
+    * Parameter Count: 7B
+    * Version Number: v0.1
+    * Weight Encoding Scheme: KQ2
 
 ---------
 SDK Usage
