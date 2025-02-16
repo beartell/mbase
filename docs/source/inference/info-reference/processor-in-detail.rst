@@ -114,11 +114,31 @@ Here are the essential signals that can be observed in the program loop:
       ...
    };
 
-* :code:`signal_state_input_process()`:
-* :code:`signal_state_decode_process()`:
-* :code:`signal_state_kv_locked_process()`:
-* :code:`signal_input_process()`:
-* :code:`signal_decode_process()`:
+* :code:`signal_state_input_process()`: It is true if the initial input batch processing is finished and the processor object should be updated by calling :code:`update()`.
+* :code:`signal_state_decode_process()`: It is true if the next token is calculated by the LLM and the processor object should be updated by calling :code:`update()`.
+* :code:`signal_state_kv_locked_process()`: It is true if the input caching on processor is finished and the processor object should be updated by calling :code:`update()`.
+* :code:`signal_input_process()`: It is true if the initial input batch processing is active in parallel.
+* :code:`signal_decode_process()`: It is true if the next token calculation processing is active in parallel.
+* :code:`signal_kv_locked_process()`: It is true if the input caching processing is active in parallel.
+
+.. code-block:: cpp
+   :caption: mbase/inference/inf_t2t_processor.h
+
+   class MBASE_API InfProcessorTextToText : public mbase::InfProcessorBase {
+   public:
+      ...
+      bool signal_state_lora_operate() const;
+      bool signal_state_input_process() const;
+      bool signal_state_decode_process() const;
+      bool signal_state_kv_locked_process() const;
+      bool signal_lora_operate_process() const;
+      bool signal_input_process() const;
+      bool signal_decode_process() const;
+      bool signal_kv_locked_process() const;
+      ...
+   private:
+      ...
+   };
 
 -------------------------
 TextToText Execution Flow
