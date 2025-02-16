@@ -976,8 +976,15 @@ GENERIC InfModelTextToText::_lora_operate()
 GENERIC InfModelTextToText::update()
 {
 	// load and unload control
-	if(signal_destroying() || signal_initializing())
+	if(signal_initializing())
 	{
+		on_initializing();
+		return;
+	}
+
+	if(signal_destroying())
+	{
+		on_destroying();
 		return;
 	}
 

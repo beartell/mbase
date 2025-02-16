@@ -567,7 +567,6 @@ InfProcessorTextToText::flags InfProcessorTextToText::initialize(
 	mFlashAttention = in_flash_attention;
 
 	mInitializeSignal.set_signal();
-	on_initializing();
 	start_processor();
 	return flags::INF_PROC_INFO_INITIALIZING;
 }
@@ -614,7 +613,6 @@ InfProcessorTextToText::flags InfProcessorTextToText::destroy()
 	}
 
 	release_inference_client();
-	on_destroying();
 
 	mDestroySignal.set_signal();
 	start_processor();
@@ -975,7 +973,7 @@ GENERIC InfProcessorTextToText::_initialize_context()
 
 	mContextCursor = 0;
 	srand(time(NULL));
-	I32 seedValue = rand();
+	U32 seedValue = static_cast<U32>(rand()); // Default random seed if no rng is specified.
 
 	mSamplerChain = llama_sampler_chain_init(llama_sampler_chain_default_params());
 
@@ -989,6 +987,11 @@ GENERIC InfProcessorTextToText::_initialize_context()
 	{
 		for(inf_sampling_set::iterator It = mSamplerDescriptions.begin(); It != mSamplerDescriptions.end(); ++It)
 		{
+			if(It->mSamplerType == InfSamplerDescription::SAMPLER::RNG)
+			{
+				seedValue = It->mRng;
+			}
+
 			if(It->mSamplerType == InfSamplerDescription::SAMPLER::REPETITION)
 			{
 				InfSamplingRepetition repeatSampler = It->mRepetition;
@@ -1109,8 +1112,35 @@ GENERIC InfProcessorTextToText::_destroy_context()
 
 GENERIC InfProcessorTextToText::update()
 {
+	if(signal_initializing())
+	{
+		on_initializing();
+		return;
+	}
+
 	if(signal_destroying())
 	{
+		on_destroying();
+		return;
+	}
+
+	if(signal_input_process() || signal_kv_locked_process())
+	{
+		InfClientTextToText* t2tClient = static_cast<InfClientTextToText*>(get_assigned_client());
+		if(t2tClient)
+		{
+			t2tClient->on_batch_processing(this);
+		}
+		return;
+	}
+
+	if(signal_decode_process())
+	{
+		InfClientTextToText* t2tClient = static_cast<InfClientTextToText*>(get_assigned_client());
+		if(t2tClient)
+		{
+			t2tClient->on_decoding(this);
+		}
 		return;
 	}
 
@@ -1124,6 +1154,7 @@ GENERIC InfProcessorTextToText::update()
 		mLoraOperationSignal.reset_signal_with_state();
 		this->release_object_watcher();
 		on_destroy();
+		return;
 	}
 
 	if(signal_state_initializing())
@@ -1140,12 +1171,14 @@ GENERIC InfProcessorTextToText::update()
 			mIsRegistered = true;
 			on_initialize();
 		}
+		return;
 	}
 
 	if(signal_state_lora_operate())
 	{
 		mLoraOperationSignal.reset_signal_state();
 		on_lora_operate(mAssignedAdapters);
+		return;
 	}
 
 	if(signal_state_input_process())
@@ -1156,6 +1189,7 @@ GENERIC InfProcessorTextToText::update()
 		{
 			t2tClient->on_batch_processed(this, mProcessedBatchLength, false);
 		}
+		return;
 	}
 
 	if(signal_state_kv_locked_process())
@@ -1166,6 +1200,7 @@ GENERIC InfProcessorTextToText::update()
 		{
 			t2tClient->on_batch_processed(this, mProcessedBatchLength, true);
 		}
+		return;
 	}
 
 	if(signal_state_decode_process())

@@ -36,6 +36,7 @@ struct InfSamplingMirostatV2 {
 
 struct InfSamplerDescription {
 	enum class SAMPLER : U32 {
+		RNG,
         REPETITION,
         DRY,
 		TOP_K,
@@ -67,6 +68,7 @@ struct InfSamplerDescription {
 		InfSamplingXTC mXtc;
 		InfSamplingDRY mDry;
 		InfSamplingMirostatV2 mMiroV2;
+		U32 mRng;
 	};
 };
 

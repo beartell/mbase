@@ -68,6 +68,8 @@ public:
 	/* ===== OBSERVATION METHODS END ===== */
 
 	/* ===== INTERFACE METHODS BEGIN =====*/
+	virtual GENERIC on_initializing();
+	virtual GENERIC on_destroying();
 	virtual GENERIC on_initialize_fail(init_fail_code out_fail_code) = 0;
 	virtual GENERIC on_initialize() = 0;
 	virtual GENERIC on_destroy() = 0;

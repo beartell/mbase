@@ -18,17 +18,20 @@ class ConversationClient;
 struct program_parameters {
     program_parameters()
     {
+        mSeed.mSamplerType = InfSamplerDescription::SAMPLER::RNG;
         mTkSampler.mSamplerType = InfSamplerDescription::SAMPLER::TOP_K;
         mTpSampler.mSamplerType = InfSamplerDescription::SAMPLER::TOP_P;
         mMpSampler.mSamplerType = InfSamplerDescription::SAMPLER::MIN_P;
         mPenalty.mSamplerType = InfSamplerDescription::SAMPLER::REPETITION;
         mTmp.mSamplerType = InfSamplerDescription::SAMPLER::TEMP;
 
+        srand(time(NULL));
+        mSeed.mRng = rand();
         mTkSampler.mTopK = 40;
         mTpSampler.mTopP = 1.0f;
         mMpSampler.mMinP = 0.2f;
         mPenalty.mRepetition.mPenaltyN = 64;
-        mPenalty.mRepetition.mRepeatPenalty = 1.2f;
+        mPenalty.mRepetition.mRepeatPenalty = 1.15f;
         mPenalty.mRepetition.mPenaltyLinefeed = true;
         mPenalty.mRepetition.mPenaltyEos = false;
         mTmp.mTemp = 0.1f;
@@ -47,6 +50,7 @@ struct program_parameters {
     InfSamplerDescription mMpSampler;
     InfSamplerDescription mPenalty;
     InfSamplerDescription mTmp;
+    InfSamplerDescription mSeed;
 };
 
 mbase::vector<InfDeviceDescription> deviceDescription;
@@ -86,8 +90,9 @@ GENERIC print_usage()
     printf("-tp, --top-p <float>              Token probability at most (default=1.0, min=0.1, max=1.0).\n");
     printf("-mp, --min-p <float>              Token probability at least (default=0.3), min=0.1, max=1.0.\n");
     printf("-pn, --penatly-n <int>            Apply repetition penalty on last 'n' tokens (default=64).\n");
-    printf("-pr, --penalty-repeat <float>     Discourages repeating exact tokens based on their past presence (default=1.2, min=1.0, max=2.0).\n");
+    printf("-pr, --penalty-repeat <float>     Discourages repeating exact tokens based on their past presence (default=1.15, min=1.0, max=2.0).\n");
     printf("-temp, --temperature <float>      Higher values increase the randomness (default=0.1, min=0.1, max=1.4).\n");
+    printf("-s, --seed <int>                  If it is 0, the program will generate an arbitrary number (default=0).\n");
     printf("-gr, --greedy                     Ignore all sampling techniques, pick the most probable token. (default=false).\n\n");
 }
 
@@ -337,6 +342,11 @@ int main(int argc, char** argv)
             mbase::argument_get<F32>::value(i, argc, argv, gSampleParams.mTmp.mTemp);
         }
 
+        else if(argumentString == "-s" || argumentString == "--seed")
+        {
+            mbase::argument_get<U32>::value(i, argc, argv, gSampleParams.mSeed.mRng);
+        }
+
         else if(argumentString == "-gr" || argumentString == "--greedy")
         {
             gSampleParams.mIsGreeady = true;
@@ -378,6 +388,7 @@ int main(int argc, char** argv)
     inf_sampling_set samplingSet;
     if(!gSampleParams.mIsGreeady)
     {
+        samplingSet.insert(gSampleParams.mSeed);
         samplingSet.insert(gSampleParams.mTkSampler);
         samplingSet.insert(gSampleParams.mTpSampler);
         samplingSet.insert(gSampleParams.mMpSampler);

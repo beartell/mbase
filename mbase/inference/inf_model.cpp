@@ -129,4 +129,14 @@ GENERIC InfModelBase::reset_base_signals()
 	mDestroySignal.reset_signal_with_state();
 }
 
+GENERIC InfModelBase::on_initializing()
+{
+
+}
+
+GENERIC InfModelBase::on_destroying()
+{
+	
+}
+
 MBASE_END

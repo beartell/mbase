@@ -6,34 +6,39 @@
 #include <mbase/filesystem.h>
 #include "global_state.h"
 
-#define MBASE_OPENAI_SERVER_VERSION "v1.2.0"
+#define MBASE_OPENAI_SERVER_VERSION "v0.1.0"
 void print_usage();
 void print_usage()
 {
     printf("========================================\n");
-    printf("#Program name:      mbase-openai-server\n");
+    printf("#Program name:      mbase_openai_server\n");
     printf("#Version:           %s\n", MBASE_OPENAI_SERVER_VERSION);
-    printf("#Type:              Example\n");
+    printf("#Type:              Example, Utility\n");
     printf("#Further docs: \n");
     printf("***** DESCRIPTION *****\n");
-    printf("Openai api compatible http server for serving LLMs.\n");
-    printf("Keep in mind that this implementation is an example that show what is possible with MBASE.\n");
-    printf("This program provides chat completion API for TextToText models and embeddings API for embedder models.\n");
+    printf("An Openai API compatible HTTP/HTTPS server for serving LLMs.\n");
+    printf("This program provides chat completion API For TextToText models and embeddings API For embedder models.\n\n");
+    printf("The mbase_openai_server can host either single or multiple models and serve its clients simultaneusly\n");
+    printf("which is specified by the key processor_count in the provided JSON description file.\n\n");
+    printf("In order to properly use the mbase_openai_server program, you should supply a json file, describing\n");
+    printf("the behavior of the openai server program.\n\n");
+    printf("Along with the program description json, you can specify the hostname(default=127.0.0.1) to listen to\n");
+    printf("and the port(default=8080). The specified hostname and port must be configured properly so that\n");
+    printf("the application may listen.\n");
     printf("========================================\n\n");
-    printf("Usage: mbase-openai-server *[<option> [<value>]]\n");
+    printf("Usage: mbase_openai_server *[option [value]]\n");
+    printf("       mbase_openai_server --hostname \"127.0.0.1\" -jsdesc description.json\n");
+    printf("       mbase_openai_server --hostname \"127.0.0.1\" --port 8080 -jsdesc description.json\n");
+    printf("       mbase_openai_server --hostname \"127.0.0.1\" --port 8080 --ssl-pub public_key_file --ssl-key private_key_file -jsdesc description.json\n");
     printf("Options: \n\n");
     printf("--help                          Print usage.\n");
     printf("-v, --version                   Shows program version.\n");
-    printf("--api-key <str>                 Api key.\n");
+    printf("--api-key <str>                 API key to be checked by the server.\n");
     printf("-h, --hostname <str>            Hostname to listen to (default=127.0.0.1).\n");
     printf("-p, --port <int>                Port to assign to (default=8080).\n");
-    printf("-al, --access-limit <int>       Amount of clients that can access concurrently (default=-1).\n");
-    printf("-m, --model-path <str>          Model file to be hosted. To host multiple models, pass this argument multiple times.\n");
-    printf("-t, --thread-count <int>        Amount of threads to use for output processing (default=16).\n");
-    printf("-bt, --batch-thread-count <int> Amount of threads to use for initial batch processing (default=8).\n");
-    printf("-c, --context-length <int>      Total context length (default=8192).\n");
-    printf("-b, --batch-length <int>        Batch length (default=4096).\n");
-    printf("-gl, --gpu-layers <int>         GPU layers to offload to (default=999).\n\n");
+    printf("--ssl-public <str>              SSL public file for HTTPS support.\n");
+    printf("--ssl-key <str>                 SSL private key file for HTTPS support.\n");
+    printf("-jsdesc <str>                   JSON description file for the openai server program.\n\n");
 }
 
 void modelListHandler(const httplib::Request& in_req, httplib::Response& in_resp)
