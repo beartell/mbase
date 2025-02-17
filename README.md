@@ -1,11 +1,11 @@
+# MBASE
+
 <div align="center">
   <a href="" />
     <img alt="MBASE" height="325px" src="https://github.com/user-attachments/assets/89d4b07a-1540-442f-9d86-5e105424ed70">
   </a>
 </div>
-
-# MBASE
-
+<br>
 MBASE inference library is a high-level non-blocking LLM inference library written on top
 of the [llama.cpp](https://github.com/ggml-org/llama.cpp) library to provide the necessary tools and APIs to allow developers
 to integrate popular LLMs into their application with minimal performance loss and development time.
