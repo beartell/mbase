@@ -40,7 +40,7 @@ the impact of the inference operation on your main program loop. For further det
 ## Supported Models
 
 Since the MBASE SDK uses [llama.cpp](https://github.com/ggml-org/llama.cpp) as a backend inference engine,
-the model that are supported by [llama.cpp](https://github.com/ggml-org/llama.cpp) are supported by default
+the models that are supported by [llama.cpp](https://github.com/ggml-org/llama.cpp) are supported by default
 which includes major models such as **Phi**, **Deepseek**, **Llama** and **Qwen**.
 
 You can see the full list [here](https://github.com/ggml-org/llama.cpp?tab=readme-ov-file#description).
