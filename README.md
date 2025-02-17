@@ -37,6 +37,14 @@ the impact of the inference operation on your main program loop. For further det
 - Benchmark application for measuring the impact of LLM inference on your application.
 - Plus anything [llama.cpp](https://github.com/ggml-org/llama.cpp) supports.
 
+## Supported Models
+
+Since the MBASE SDK uses [llama.cpp](https://github.com/ggml-org/llama.cpp) as a backend inference engine,
+the model that are supported by [llama.cpp](https://github.com/ggml-org/llama.cpp) are supported by default
+which includes major models such as **Phi**, **Deepseek**, **Llama** and **Qwen**.
+
+You can see the full list [here](https://github.com/ggml-org/llama.cpp?tab=readme-ov-file#description).
+
 ## Implementation Matrix
 
 | Type       | SDK Support | Openai API Support | Engine                                             |
