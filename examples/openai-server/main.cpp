@@ -57,7 +57,7 @@ void modelListHandler(const httplib::Request& in_req, httplib::Response& in_resp
         );
         return;
     }
-   
+    
     mbase::Json modelList;
     modelList.setArray();
 
@@ -481,7 +481,7 @@ void embeddingsHandler(const httplib::Request& in_req, httplib::Response& in_res
 
     mbase::string requestedModel = jsonObject["model"].getString();
     mbase::OpenaiModel* activeModel = NULL;
-
+    
     for(mbase::vector<mbase::OpenaiModel*>::iterator It = gProgramData.programModels.begin(); It != gProgramData.programModels.end(); ++It)
     {
         mbase::OpenaiModel* tmpModel = *It;
@@ -664,16 +664,25 @@ void embeddingsHandler(const httplib::Request& in_req, httplib::Response& in_res
 
 void server_start()
 {
-    httplib::Server svr;
+    httplib::Server* svr = NULL;
+    if(gProgramData.keyFileSet)
+    {
+        svr = new httplib::SSLServer(gProgramData.publicKeyFile.c_str(), gProgramData.privateKeyFile.c_str());
+    }
 
-    svr.Get("/v1/models", modelListHandler);
-    svr.Get("/v1/models/:model", modelRetrieveHandler);
-    svr.Post("/chat/completions", chatCompletionHandler);
-    svr.Post("/v1/chat/completions", chatCompletionHandler);
-    svr.Post("/v1/embeddings", embeddingsHandler);
+    else
+    {
+        svr = new httplib::Server;
+    }
+
+    svr->Get("/v1/models", modelListHandler);
+    svr->Get("/v1/models/:model", modelRetrieveHandler);
+    svr->Post("/chat/completions", chatCompletionHandler);
+    svr->Post("/v1/chat/completions", chatCompletionHandler);
+    svr->Post("/v1/embeddings", embeddingsHandler);
 
     std::string httpHost(gProgramData.hostName.c_str(), gProgramData.hostName.size());
-    svr.listen(httpHost, gProgramData.listenPort);
+    svr->listen(httpHost, gProgramData.listenPort);
     gProgramData.diagnostic.log(mbase::PcDiagnostics::flags::LOGTYPE_ERROR, mbase::PcDiagnostics::flags::LOGIMPORTANCE_FATAL, "Unable to listen on host: %s:%d", gProgramData.hostName.c_str(), gProgramData.listenPort);
     gProgramData.serverListening = false;
 }
@@ -919,7 +928,18 @@ int main(int argc, char** argv)
 
         else if(argumentString == "--port" || argumentString == "-p")
         {
+            gProgramData.customPortSet = true;
             mbase::argument_get<int>::value(i, argc, argv, gProgramData.listenPort);
+        }
+
+        else if(argumentString == "--ssl-public")
+        {
+            mbase::argument_get<mbase::string>::value(i, argc, argv, gProgramData.publicKeyFile);
+        }
+
+        else if(argumentString == "--ssl-key")
+        {
+            mbase::argument_get<mbase::string>::value(i, argc, argv, gProgramData.privateKeyFile);
         }
 
         else if(argumentString == "-jsdesc")
@@ -928,6 +948,21 @@ int main(int argc, char** argv)
         }
     }
     
+    if(gProgramData.publicKeyFile.size() || gProgramData.privateKeyFile.size())
+    {
+        if(!mbase::is_file_valid(mbase::from_utf8(gProgramData.publicKeyFile)))
+        {
+            printf("ERR: Public key file invalid: %s\n", gProgramData.publicKeyFile.c_str());
+        }
+
+        if(!mbase::is_file_valid(mbase::from_utf8(gProgramData.privateKeyFile)))
+        {
+            printf("ERR: Private key file invalid: %d\n", gProgramData.privateKeyFile);
+        }
+
+        gProgramData.keyFileSet = true;
+    }
+
     if(!jsonFile.size())
     {
         printf("ERR: Missing JSON description file\n");
@@ -968,9 +1003,20 @@ int main(int argc, char** argv)
         printf("\n");
     }
 
-    printf("HTTPS OFF\n");
-    printf("HTTP Listening on: %s:%d\n", gProgramData.hostName.c_str(), gProgramData.listenPort);
-    printf("\n");
+    if(gProgramData.keyFileSet)
+    {
+        if(!gProgramData.customPortSet)
+        {
+            gProgramData.listenPort = 443;
+        }
+        printf("HTTPS ON\n");
+        printf("HTTPS Listening on: %s:%d\n", gProgramData.hostName.c_str(), gProgramData.listenPort);
+    }
+    else
+    {
+        printf("HTTPS OFF\n");
+        printf("HTTP Listening on: %s:%d\n", gProgramData.hostName.c_str(), gProgramData.listenPort);
+    }
 
     mbase::thread serverThread(server_start);
     serverThread.run();

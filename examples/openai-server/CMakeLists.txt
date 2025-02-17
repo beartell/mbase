@@ -1,7 +1,5 @@
 add_executable(mbase_openai_server main.cpp)
 
-# Options are commented out because cpp-httplib can't get compiled for some reason
-
 add_library(
     openailib STATIC
     model.cpp
@@ -9,12 +7,19 @@ add_library(
     client.cpp
 )
 
-target_compile_definitions(openailib PUBLIC ${MBASE_COMMON_COMPILE_DEFINITIONS})
-target_include_directories(openailib PUBLIC mb_pc mb_inference ${CMAKE_SOURCE_DIR}/external mb_json)
-target_link_libraries(openailib PUBLIC ${MBASE_STD_LIBS} mb_pc mb_inference mb_json)
+if (WIN32)
+    set(OPENSSL_MSVC_STATIC_RT "TRUE")
+endif()
+
+set(OPENSSL_USE_STATIC_LIBS "TRUE")
+
+find_package(OpenSSL REQUIRED)
+
+target_compile_definitions(openailib PUBLIC ${MBASE_COMMON_COMPILE_DEFINITIONS} CPPHTTPLIB_OPENSSL_SUPPORT)
+target_include_directories(openailib PUBLIC mb_pc mb_inference ${CMAKE_SOURCE_DIR}/external mb_json ${OPENSSL_INCLUDE_DIR})
+target_link_libraries(openailib PUBLIC ${MBASE_STD_LIBS} mb_pc mb_inference mb_json ${OPENSSL_SSL_LIBRARY} ${OPENSSL_CRYPTO_LIBRARY})
 
 target_compile_definitions(mbase_openai_server PRIVATE openailib)
-#target_compile_options(mbase_openai_server PRIVATE ${MBASE_COMMON_COMPILE_OPTIONS})
 target_include_directories(mbase_openai_server PUBLIC openailib)
 target_link_libraries(mbase_openai_server PRIVATE openailib)
 

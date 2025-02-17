@@ -14,12 +14,16 @@ struct mbase_openai_program_data {
     // Program Arguments
     mbase::string apiKey;
     mbase::string hostName = "127.0.0.1"; // --hostname || -h;
+    mbase::string publicKeyFile;
+    mbase::string privateKeyFile;
     int listenPort = 8080; // --port || -p
     mbase::Json jsonDescription; // -jsdesc
 
     // Program data
     mbase::vector<mbase::OpenaiModel*> programModels;
     bool serverListening = true;
+    bool keyFileSet = false;
+    bool customPortSet = false;
     mbase::PcDiagnostics diagnostic;
 };
 
