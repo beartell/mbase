@@ -70,20 +70,50 @@ CUDA GPU BUILD
 --------------
 
 .. important::
-    Before you attempt to build CUDA backend, make sure you have cuda toolkit installed in your environment.
+    Before you attempt to build CUDA backend, make sure you have the cuda toolkit installed in your environment.
 
     * :doc:`For Windows<preparing_windows>`
 
     * :doc:`For Ubuntu<preparing_ubuntu>`
 
-In order to build CUDA GPU backend, do the following:
+NVIDIA GPUs have different CUDA compute capabilities which can be seen `here <https://developer.nvidia.com/cuda-gpus>`_.
+MBASE SDK CUDA compilation workflow consider this fact and allows you to select for which CUDA devices you want to compile the program.
+
+This is specified by the option :code:`MBASE_CUDA_TARGET`. Values of the :code:`MBASE_CUDA_TARGET` can be one of the following:
+
+- :code:`datacenter`: NVIDIA Datacenter Products.
+- :code:`quadro-rtx`: NVIDIA Quadro and NVIDIA RTX.
+- :code:`geforce-titan`: NVIDIA GeForce and TITAN Products.
+- :code:`jetson`: NVIDIA Jetson Products.
+
+Be aware that since the GPUs that have a CUDA compute capability under 5.2 are too old, they won't be included as
+CUDA architectures in the CMake configuration. 
+
+Here is what MBASE do in its CMakeLists.txt file:
+
+.. code-block:: cmake
+
+    if(NOT DEFINED CMAKE_CUDA_ARCHITECTURES)
+        set(CMAKE_CUDA_ARCHITECTURES "89;86;75;70;61;60;52")
+        if(MBASE_CUDA_TARGET STREQUAL "datacenter")
+            set(CMAKE_CUDA_ARCHITECTURES "90;89;86;80;75;70;61;60")
+        elseif(MBASE_CUDA_TARGET STREQUAL "quadro-rtx")
+            set(CMAKE_CUDA_ARCHITECTURES "89;86;75;70;61;60;52")
+        elseif(MBASE_CUDA_TARGET STREQUAL "geforce-titan")
+            set(CMAKE_CUDA_ARCHITECTURES "89;86;75;70;61;60;52")
+        elseif(MBASE_CUDA_TARGET STREQUAL "jetson")
+            set(CMAKE_CUDA_ARCHITECTURES "87;72;62;53")
+        endif()
+    endif()
+
+Now, in order to compile with CUDA you should specify the CUDA target and set the "GGML_CUDA" option to on:
 
 .. code-block:: bash
 
    cd llama.cpp
    mkdir build_gpu
    cd build_gpu
-   cmake -DGGML_CUDA=0N ..
+   cmake -DGGML_CUDA=0N -DMBASE_CUDA_TARGET="geforce-titan" ..
    cmake --build . --config Release -j
 
 The compilation may take some time so do not worry.
