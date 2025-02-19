@@ -957,7 +957,7 @@ int main(int argc, char** argv)
 
         if(!mbase::is_file_valid(mbase::from_utf8(gProgramData.privateKeyFile)))
         {
-            printf("ERR: Private key file invalid: %d\n", gProgramData.privateKeyFile);
+            printf("ERR: Private key file invalid: %s\n", gProgramData.privateKeyFile.c_str());
         }
 
         gProgramData.keyFileSet = true;
