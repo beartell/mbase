@@ -46,6 +46,8 @@ We will make an implementation for both of these cases individually.
 
     Context Lines <context_lines>
     Prompt Resupplying <prompt_resupply>
+    Complete Program Resupplying <complete_program_resupply>
     Manual Caching <manual_caching>
+    Complete Program Caching <complete_program_caching>
 
 

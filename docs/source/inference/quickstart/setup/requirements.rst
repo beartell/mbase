@@ -23,7 +23,6 @@ Library Requirements
 Here is a list of tools and libraries you need:
 
 * CUDA Toolkit if NVIDIA GPU inference is desired.
-* AMD HIP (DOCUMENT LATER...)
 * `MBASE <mbase_main_>`_
 * `llama.cpp <llama.cpp_>`_
 

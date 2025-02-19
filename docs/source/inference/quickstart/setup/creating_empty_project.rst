@@ -104,7 +104,7 @@ After you run this program, you will see the available devices in your system fo
 
 
 .. important::
-    If you have an NVIDIA or AMD GPU and its is not being displayed by the program,
+    If you have an NVIDIA GPU and its is not being displayed by the program,
     make sure you have installed the necessary drivers and installed the `llama.cpp <llama.cpp_>`_ library with proper configuration.
 
     Refer to: :doc:`Setting up<setting_up>`
