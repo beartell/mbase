@@ -9,7 +9,7 @@
 
 MBASE inference library is a high-level non-blocking LLM inference library written on top
 of the [llama.cpp](https://github.com/ggml-org/llama.cpp) library to provide the necessary tools and APIs to allow developers
-to integrate popular LLMs into their application with minimal performance loss and development time.
+to integrate popular LLMs into their applications with minimal performance loss and development time.
 
 The inference SDK will allow developers the utilize the LLMs and create their own solutions,
 tooling mechanisms etc.
@@ -18,7 +18,7 @@ When the phrase "local LLM inference" is thrown around,
 it usually means that hosting an Openai API compatible HTTP server and using the completions API locally.
 The MBASE inference library is expected to change this notion by providing you the LLM inference capability 
 through its low-level objects and procedures so that 
-you can integrate and embedd LLM into your high-performance application such as games, server applications and many more.
+you can integrate and embedd LLM into your high-performance applications such as games, server applications and many more.
 
 Also you still have the option of hosting Openai server using the [mbase_openai_server](doc_link) program or you can
 code a similar one yourself!
@@ -82,7 +82,6 @@ This program provides chat completion API for TextToText models and embeddings A
 ```bash
 mbase_openai_server *[option [value]]
 mbase_openai_server --hostname "127.0.0.1" -jsdesc description.json
-mbase_openai_server --hostname "127.0.0.1" --port 8080 -jsdesc description.json
 mbase_openai_server --hostname "127.0.0.1" --port 8080 -jsdesc description.json
 mbase_openai_server --hostname "127.0.0.1" --port 8080 --ssl-pub public_key_file --ssl-key private_key_file -jsdesc description.json
 ```
@@ -176,7 +175,7 @@ In order to find the library using cmake, write the following:
 find_package(mbase.libs REQUIRED COMPONENTS inference)
 ```
 
-This will find the inference SDK. In order to link both include directories and link libraries, write the following:
+This will find the inference SDK. In order to set the include directories and link the libraries, write the following:
 
 ```cmake
 target_compile_features(<your_target> PUBLIC cxx_std_17)
@@ -241,3 +240,19 @@ int main()
     return 0;
 }
 ```
+
+## Project State and Goals
+
+The MBASE SDK is in its early stages for now and it is expected
+to err on some scenarios because not all cases are tested and the product
+is not yet fully-polished.
+
+The project has been developed only by me and I was planning to open-source
+in the near future. However, the complication and the workload forced me to open-source the project much earlier
+before being perfectly tested and polished. In other words, I am once again asking for your contribution to this project.
+
+The company is being established to accelerate the development of the MBASE SDK and for creating both proprietary and open-source products
+built using the MBASE SDK.
+
+The goal of the MBASE SDK is expected to provide non-blocking LLM inference to both beginner and advanced users of the C++ library
+and very useful tools and programs to non-programmer users.
