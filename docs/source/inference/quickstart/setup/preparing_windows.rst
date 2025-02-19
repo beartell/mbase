@@ -15,5 +15,3 @@ When it comes to uuid, it is not necessary to download anything because uuid fun
 
 After you download and install all those softwares, make sure they are properly set.
 Next, we will build the MBASE library.
-
----- AMD HIP CHECK LATER ----
