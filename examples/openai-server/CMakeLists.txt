@@ -13,9 +13,14 @@ endif()
 
 set(OPENSSL_USE_STATIC_LIBS "TRUE")
 
-find_package(OpenSSL REQUIRED)
+if(MBASE_SERVER_SSL STREQUAL "ON")
+    find_package(OpenSSL REQUIRED)
+    target_compile_definitions(openailib PUBLIC ${MBASE_COMMON_COMPILE_DEFINITIONS} CPPHTTPLIB_OPENSSL_SUPPORT)
+else()
+    target_compile_definitions(openailib PUBLIC ${MBASE_COMMON_COMPILE_DEFINITIONS})
+endif()
 
-target_compile_definitions(openailib PUBLIC ${MBASE_COMMON_COMPILE_DEFINITIONS} CPPHTTPLIB_OPENSSL_SUPPORT)
+# disclaimer here: even if the openssl is missing, those are empty strings and won't cause a problem at configuration and linking
 target_include_directories(openailib PUBLIC mb_pc mb_inference ${CMAKE_SOURCE_DIR}/external mb_json ${OPENSSL_INCLUDE_DIR})
 target_link_libraries(openailib PUBLIC ${MBASE_STD_LIBS} mb_pc mb_inference mb_json ${OPENSSL_SSL_LIBRARY} ${OPENSSL_CRYPTO_LIBRARY})
 

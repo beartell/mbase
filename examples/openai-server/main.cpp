@@ -36,8 +36,12 @@ void print_usage()
     printf("--api-key <str>                 API key to be checked by the server.\n");
     printf("-h, --hostname <str>            Hostname to listen to (default=127.0.0.1).\n");
     printf("-p, --port <int>                Port to assign to (default=8080).\n");
+
+    #ifdef CPPHTTPLIB_OPENSSL_SUPPORT
     printf("--ssl-public <str>              SSL public file for HTTPS support.\n");
     printf("--ssl-key <str>                 SSL private key file for HTTPS support.\n");
+    #endif
+
     printf("-jsdesc <str>                   JSON description file for the openai server program.\n\n");
 }
 
@@ -665,8 +669,10 @@ void embeddingsHandler(const httplib::Request& in_req, httplib::Response& in_res
 void server_start()
 {
     httplib::Server* svr = NULL;
+    #ifdef CPPHTTPLIB_OPENSSL_SUPPORT
     if(gProgramData.keyFileSet)
     {
+        
         svr = new httplib::SSLServer(gProgramData.publicKeyFile.c_str(), gProgramData.privateKeyFile.c_str());
     }
 
@@ -674,6 +680,10 @@ void server_start()
     {
         svr = new httplib::Server;
     }
+    #else
+    httplib::Server server;
+    svr = &server;
+    #endif
 
     svr->Get("/v1/models", modelListHandler);
     svr->Get("/v1/models/:model", modelRetrieveHandler);
@@ -931,7 +941,7 @@ int main(int argc, char** argv)
             gProgramData.customPortSet = true;
             mbase::argument_get<int>::value(i, argc, argv, gProgramData.listenPort);
         }
-
+        #ifdef CPPHTTPLIB_OPENSSL_SUPPORT
         else if(argumentString == "--ssl-public")
         {
             mbase::argument_get<mbase::string>::value(i, argc, argv, gProgramData.publicKeyFile);
@@ -941,7 +951,7 @@ int main(int argc, char** argv)
         {
             mbase::argument_get<mbase::string>::value(i, argc, argv, gProgramData.privateKeyFile);
         }
-
+        #endif
         else if(argumentString == "-jsdesc")
         {
             mbase::argument_get<mbase::string>::value(i, argc, argv, jsonFile);
