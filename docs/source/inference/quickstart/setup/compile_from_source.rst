@@ -27,8 +27,8 @@ Common Options
 
 There are some common CMake options worth mentioning. They can be specified at the cmake configuration stage.
 
-:code:`MBASE_SERVER_SSL`: If set, openai server program will be compiled without SSL support. However, if you set this up, make sure you have the :code:`openssl` installed in your environment. (default=OFF)
-:code:`MBASE_FORCE_BUNDLE`: It set, the compilation will be bundled even if you have `llama.cpp <llama.cpp_>`_ installed in your environment. (default=OFF)
+:code:`MBASE_SERVER_SSL`: If set, openai server program will be with SSL support. However, if you set this up, make sure you have the :code:`openssl` installed in your environment. (default=OFF)
+:code:`MBASE_FORCE_BUNDLE`: It set, the compilation will be force bundled even if you have `llama.cpp <llama.cpp_>`_ installed in your environment. (default=OFF)
 
 -------------------
 Bundled Compilation
