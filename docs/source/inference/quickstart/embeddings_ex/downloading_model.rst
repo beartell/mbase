@@ -36,7 +36,13 @@ From Website
 
 Step 1: Click the "Files and versions" tab:
 
-Step 2: Then download the Q4 quantized version of the model:
+.. image:: hf_download_step1.png
+    :align: center
+
+Step 2: Then download the Q8 quantized version of the model:
+
+.. image:: hf_download_step2.png
+    :align: center
 
 ^^^^^^^^^^
 Using wget
