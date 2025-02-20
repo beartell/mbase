@@ -27,18 +27,27 @@ list(APPEND MBASE_INFERENCE_LIB_DEPENDS
     mb_pc
 )
 
-find_package(llama)
-
-if(NOT llama_LIBRARY)
-    message(WARNING "llama.cpp library is not detected on the system. \nLinking through submodule.")
+if(MBASE_FORCE_BUNDLE STREQUAL "ON")
+    message(WARNING "Applying force bundled configuration")
     add_subdirectory(llama.cpp)
     list(APPEND MBASE_INFERENCE_INCLUDE_DEPENDS
         ${CMAKE_CURRENT_SOURCE_DIR}/llama.cpp/include
         ${CMAKE_CURRENT_SOURCE_DIR}/llama.cpp/ggml/include)
     set(MBASE_BUNDLED_INSTALL ON)
 else()
-    message("-- Found llama.cpp library")
-    list(APPEND MBASE_INFERENCE_INCLUDE_DEPENDS ${LLAMA_INCLUDE_DIR})
+    find_package(llama)
+
+    if(NOT llama_LIBRARY)
+        message(WARNING "llama.cpp library is not detected on the system. \nLinking through submodule.")
+        add_subdirectory(llama.cpp)
+        list(APPEND MBASE_INFERENCE_INCLUDE_DEPENDS
+            ${CMAKE_CURRENT_SOURCE_DIR}/llama.cpp/include
+            ${CMAKE_CURRENT_SOURCE_DIR}/llama.cpp/ggml/include)
+        set(MBASE_BUNDLED_INSTALL ON)
+    else()
+        message("-- Found llama.cpp library")
+        list(APPEND MBASE_INFERENCE_INCLUDE_DEPENDS ${LLAMA_INCLUDE_DIR})
+    endif()
 endif()
 
 configure_file(
