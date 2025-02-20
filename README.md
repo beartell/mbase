@@ -260,3 +260,7 @@ and very useful tools and programs to non-programmer users.
 ## Contributing
 
 Before you submit a change, make sure to read the contribution guidelines.
+
+## Contact
+
+If you have any questions, ideas, want information or, if you want to be active in MBASE project, send me an email at erdog@mbasesoftware.com

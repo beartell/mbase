@@ -20,7 +20,7 @@ html_title = project
 html_logo = "mbase_logo.svg"
 html_theme_options = {
     "source_repository": "https://github.com/Emreerdog/mbase",
-    "source_branch": "main",
+    "source_branch": "documents/docs/source",
     "footer_icons": [
         {
             "name": "GitHub",
