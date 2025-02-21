@@ -64,15 +64,15 @@ Detailed MBASE SDK documentation can be found [here](https://docs.mbasesoftware.
 
 ## Download and Setting up
 
-Download page: quickstart/setup/download
+Download page: [quickstart/setup/download](https://docs.mbasesoftware.com/inference/quickstart/setup/download)
 
-SDK setup and compiling from source: quickstart/setup/setting_up
+SDK setup and compiling from source: [quickstart/setup/setting_up](https://docs.mbasesoftware.com/inference/quickstart/setup/setting_up)
 
 ## Useful Programs
 
 ### Openai Server
 
-Detailed documentation: programs/openai-server/about
+Detailed documentation: [programs/openai-server/about](https://docs.mbasesoftware.com/inference/programs/openai-server/about)
 
 An Openai API compatible HTTP/HTTPS server for serving LLMs.
 This program provides chat completion API for TextToText models and embeddings API For embedder models.
