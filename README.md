@@ -88,7 +88,7 @@ mbase_openai_server --hostname "127.0.0.1" --port 8080 --ssl-pub public_key_file
 
 ### Benchmark T2T
 
-Detailed documentation: programs/benchmark-t2t/about
+Detailed documentation: [programs/benchmark-t2t/about](https://docs.mbasesoftware.com/inference/programs/benchmark-t2t/about)
 
 It is a program written to measure the performance
 of the given T2T LLM and its impact on your main application logic.
@@ -103,7 +103,7 @@ mbase_benchmark_t2t model.gguf -uc 1 -fps 500 -jout . -mdout .
 
 ### Embedding
 
-Detailed documentation: programs/embedding/about
+Detailed documentation: [programs/embedding/about](https://docs.mbasesoftware.com/inference/programs/embedding/about)
 
 An example program for generating the embeddings of the given prompt or prompts.
 
@@ -117,7 +117,7 @@ mbase_embedding_simple model.gguf -gl 80 -pf prompt1.txt -pf prompt2.txt
 
 ### Retrieval
 
-Detailed documentation: programs/embedding/about
+Detailed documentation: [programs/retrieval/about](https://docs.mbasesoftware.com/inference/programs/retrieval/about)
 
 An example program for generating the embeddings of the given prompt or prompts.
 
@@ -130,7 +130,7 @@ mbase_retrieval model.gguf -q 'What is MBASE' -pf file1.txt -pf file2.txt -gl 80
 
 ### Simple Conversation
 
-Detailed documentation: programs/simple-conversation/about
+Detailed documentation: [programs/simple-conversation/about](https://docs.mbasesoftware.com/inference/programs/simple-conversation/about)
 
 It is a simple executable program where you are having
 a dialogue with the LLM you provide. It is useful for examining the answer of the LLM since the system prompt 
@@ -147,7 +147,7 @@ mbase_simple_conversation model.gguf -gl 80 -sys 'You are a helpful assistant.'
 
 ### Typo Fixer
 
-Detailed documentation: programs/typo-fixer/about
+Detailed documentation: [programs/typo-fixer/about](https://docs.mbasesoftware.com/inference/programs/typo-fixer/about)
 
 This is an applied example use case of the MBASE library.
 The program is reading a user-supplied text file and fixing the typos.
@@ -165,7 +165,7 @@ mbase_typo_fixer model.gguf -gl 80 -s typo.txt -o fixed.txt
 
 ## Finding the SDK
 
-Detailed documentation: SDK_STRUCTURE_DOC
+Detailed documentation: [Finding the SDK](https://docs.mbasesoftware.com/inference/info-reference/sdk-structure#finding-the-sdk)
 
 If you have installed the MBASE SDK, you can find the library using CMake find_package function with components specification.
 
@@ -185,7 +185,7 @@ target_include_directories(<your_target> PUBLIC mbase-inference)
 
 ## GGUF, Displaying General Metadata
 
-Detailed documentation: ABOUT GGUF FILES
+Detailed documentation: [About GGUF Files](https://docs.mbasesoftware.com/inference/info-reference/gguf-files)
 
 ```cpp
 #include <mbase/inference/inf_gguf_metadata_configurator.h>
