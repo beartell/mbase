@@ -23,20 +23,20 @@ If you don't have the `llama.cpp <llama.cpp_>`_ on your system, go with the bund
             
             .. image:: Linux.png
 
-            .. button-link:: https://example.com
+            .. button-link:: https://github.com/Emreerdog/mbase/releases/download/v0.1.0/mbase.libs-bundled_0.1.0_amd64.deb
                 :color: success
                 :shadow:
                 :expand:
 
                 :octicon:`download` .deb installer
                 
-            :octicon:`package` :bdg-link-primary:`.deb installer <https://example.com>`
+            :octicon:`package` :bdg-link-primary:`.deb installer <https://github.com/Emreerdog/mbase/releases/download/v0.1.0/mbase.libs-bundled_0.1.0_amd64.deb>`
             
-            :octicon:`package` :bdg-link-primary:`.rpm installer <https://example.com>`
+            :octicon:`package` :bdg-link-primary:`.rpm installer <https://github.com/Emreerdog/mbase/releases/download/v0.1.0/mbase.libs-bundled-0.1.0-x86_64.rpm>`
 
-            :octicon:`code` :bdg-link-primary:`.tar.gz source package <https://example.com>`
+            :octicon:`code` :bdg-link-primary:`.tar.gz source package <https://github.com/Emreerdog/mbase/releases/download/v0.1.0/mbase.libs-bundled-0.1.0-x86_64.tar.gz>`
 
-            :octicon:`code` :bdg-link-primary:`.zip source package <https://example.com>`
+            :octicon:`code` :bdg-link-primary:`.zip source package <https://github.com/Emreerdog/mbase/releases/download/v0.1.0/mbase.libs-bundled-0.1.0-x86_64.zip>`
 
         .. grid-item-card::
 
@@ -44,18 +44,18 @@ If you don't have the `llama.cpp <llama.cpp_>`_ on your system, go with the bund
 
             .. image:: Windows11.png
                 
-            .. button-link:: https://example.com
+            .. button-link:: https://github.com/Emreerdog/mbase/releases/download/v0.1.0/mbase.libs-bundled-0.1.0-amd64.exe
                 :color: success
                 :shadow:
                 :expand:
 
                 :octicon:`download` .exe installer
 
-            :octicon:`package` :bdg-link-primary:`.exe installer <https://example.com>`
+            :octicon:`package` :bdg-link-primary:`.exe installer <https://github.com/Emreerdog/mbase/releases/download/v0.1.0/mbase.libs-bundled-0.1.0-amd64.exe>`
             
-            :octicon:`code` :bdg-link-primary:`.tar.gz source package <https://example.com>`
+            :octicon:`code` :bdg-link-primary:`.tar.gz source package <https://github.com/Emreerdog/mbase/releases/download/v0.1.0/mbase.libs-bundled-0.1.0-amd64.tar.gz>`
 
-            :octicon:`code` :bdg-link-primary:`.zip source package <https://example.com>`
+            :octicon:`code` :bdg-link-primary:`.zip source package <https://github.com/Emreerdog/mbase/releases/download/v0.1.0/mbase.libs-bundled-0.1.0-amd64.zip>`
 
         .. grid-item-card::
 
@@ -63,71 +63,190 @@ If you don't have the `llama.cpp <llama.cpp_>`_ on your system, go with the bund
 
             .. image:: Apple.png
 
-            .. button-link:: https://example.com
+            .. button-link:: https://github.com/Emreerdog/mbase/releases/download/v0.1.0/mbase.libs-bundled-metal-0.1.0-arm64.tar.gz
                 :color: success
                 :shadow:
                 :expand:
 
-                :octicon:`download` .dmg installer
+                :octicon:`download` .tar.gz
             
-            :octicon:`package` :bdg-link-primary:`.dmg installer <https://example.com>`
+            :octicon:`package` :bdg-link-primary:`.tar.gz source package <https://github.com/Emreerdog/mbase/releases/download/v0.1.0/mbase.libs-bundled-metal-0.1.0-arm64.tar.gz>`
 
-            :octicon:`code` :bdg-link-primary:`.tar.gz source package <https://example.com>`
+            :octicon:`code` :bdg-link-primary:`.tar.gz source package <https://github.com/Emreerdog/mbase/releases/download/v0.1.0/mbase.libs-bundled-metal-0.1.0-arm64.tar.gz>`
 
-            :octicon:`code` :bdg-link-primary:`.zip source package <https://example.com>`
+            :octicon:`code` :bdg-link-primary:`.zip source package <https://github.com/Emreerdog/mbase/releases/download/v0.1.0/mbase.libs-bundled-metal-0.1.0-arm64.zip>`
 
-.. dropdown:: NVIDIA CUDA GPU
+.. dropdown:: x86 CPU, NVIDIA CUDA GPU
 
-    Before you attempt to download the CUDA backend, make sure you have cuda toolkit installed in your environment.
+    Find your NVIDIA GPU: https://developer.nvidia.com/cuda-gpus
 
-    * :doc:`For Windows<preparing_windows>`
-
-    * :doc:`For Ubuntu<preparing_ubuntu>`
-
-    .. grid:: 2
+    .. dropdown:: NVIDIA Datacenter GPUs Compatible
+        
+        .. grid:: 2
     
-        .. grid-item-card::
-            
-            **For Linux x64**
-            
-            .. image:: Linux.png
-
-            .. button-link:: https://example.com
-                :color: success
-                :shadow:
-
-                :octicon:`download` .deb installer
+            .. grid-item-card::
                 
-            :octicon:`package` :bdg-link-primary:`.deb installer <https://example.com>`
-            
-            :octicon:`package` :bdg-link-primary:`.rpm installer <https://example.com>`
-
-            :octicon:`code` :bdg-link-primary:`.tar.gz source package <https://example.com>`
-
-            :octicon:`code` :bdg-link-primary:`.zip source package <https://example.com>`
-
-        .. grid-item-card::
-
-            **For Windows x64**
-
-            .. image:: Windows11.png
+                **For Linux x64**
                 
-            .. button-link:: https://example.com
-                :color: success
-                :shadow:
+                .. image:: Linux.png
 
-                :octicon:`download` .exe installer
+                .. button-link:: https://github.com/Emreerdog/mbase/releases/download/v0.1.0/mbase.libs-bundled-cuda-9089868075706160_0.1.0_amd64.deb
+                    :color: success
+                    :shadow:
 
-            :octicon:`package` :bdg-link-primary:`.exe installer <https://example.com>`
-            
-            :octicon:`code` :bdg-link-primary:`.tar.gz source package <https://example.com>`
+                    :octicon:`download` .deb installer
+                    
+                :octicon:`package` :bdg-link-primary:`.deb installer <https://github.com/Emreerdog/mbase/releases/download/v0.1.0/mbase.libs-bundled-cuda-9089868075706160_0.1.0_amd64.deb>`
+                
+                :octicon:`package` :bdg-link-primary:`.rpm installer <https://github.com/Emreerdog/mbase/releases/download/v0.1.0/mbase.libs-bundled-cuda-9089868075706160-0.1.0-x86_64.rpm>`
 
-            :octicon:`code` :bdg-link-primary:`.zip source package <https://example.com>`
+                :octicon:`code` :bdg-link-primary:`.tar.gz source package <https://github.com/Emreerdog/mbase/releases/download/v0.1.0/mbase.libs-bundled-cuda-9089868075706160-0.1.0-x86_64.tar.gz>`
 
+                :octicon:`code` :bdg-link-primary:`.zip source package <https://github.com/Emreerdog/mbase/releases/download/v0.1.0/mbase.libs-bundled-cuda-9089868075706160-0.1.0-x86_64.zip>`
 
-.. dropdown:: Vulkan
-   
-    TODO 
+            .. grid-item-card::
+
+                **For Windows x64**
+
+                .. image:: Windows11.png
+                    
+                .. button-link:: https://github.com/Emreerdog/mbase/releases/download/v0.1.0/mbase.libs-bundled-cuda-9089868075706160-0.1.0-amd64.exe
+                    :color: success
+                    :shadow:
+
+                    :octicon:`download` .exe installer
+
+                :octicon:`package` :bdg-link-primary:`.exe installer <https://github.com/Emreerdog/mbase/releases/download/v0.1.0/mbase.libs-bundled-cuda-9089868075706160-0.1.0-amd64.exe>`
+                
+                :octicon:`code` :bdg-link-primary:`.tar.gz source package <https://github.com/Emreerdog/mbase/releases/download/v0.1.0/mbase.libs-bundled-cuda-9089868075706160-0.1.0-win-amd64-.tar.gz>`
+
+                :octicon:`code` :bdg-link-primary:`.zip source package <https://github.com/Emreerdog/mbase/releases/download/v0.1.0/mbase.libs-bundled-cuda-9089868075706160-0.1.0-win-amd64.zip>`
+
+    .. dropdown:: NVIDIA Quadro and NVIDIA RTX GPUs Compatible
+        
+        .. grid:: 2
+    
+            .. grid-item-card::
+                
+                **For Linux x64**
+                
+                .. image:: Linux.png
+
+                .. button-link:: https://github.com/Emreerdog/mbase/releases/download/v0.1.0/mbase.libs-bundled-cuda-89867570616052_0.1.0_amd64.deb
+                    :color: success
+                    :shadow:
+
+                    :octicon:`download` .deb installer
+                    
+                :octicon:`package` :bdg-link-primary:`.deb installer <https://github.com/Emreerdog/mbase/releases/download/v0.1.0/mbase.libs-bundled-cuda-89867570616052_0.1.0_amd64.deb>`
+                
+                :octicon:`package` :bdg-link-primary:`.rpm installer <https://github.com/Emreerdog/mbase/releases/download/v0.1.0/mbase.libs-bundled-cuda-89867570616052-0.1.0-x86_64.rpm>`
+
+                :octicon:`code` :bdg-link-primary:`.tar.gz source package <https://github.com/Emreerdog/mbase/releases/download/v0.1.0/mbase.libs-bundled-cuda-89867570616052-0.1.0-x86_64.tar.gz>`
+
+                :octicon:`code` :bdg-link-primary:`.zip source package <https://github.com/Emreerdog/mbase/releases/download/v0.1.0/mbase.libs-bundled-cuda-89867570616052-0.1.0-x86_64.zip>`
+
+            .. grid-item-card::
+
+                **For Windows x64**
+
+                .. image:: Windows11.png
+                    
+                .. button-link:: https://github.com/Emreerdog/mbase/releases/download/v0.1.0/mbase.libs-bundled-cuda-89867570616052-0.1.0-amd64.exe
+                    :color: success
+                    :shadow:
+
+                    :octicon:`download` .exe installer
+
+                :octicon:`package` :bdg-link-primary:`.exe installer <https://github.com/Emreerdog/mbase/releases/download/v0.1.0/mbase.libs-bundled-cuda-89867570616052-0.1.0-amd64.exe>`
+                
+                :octicon:`code` :bdg-link-primary:`.tar.gz source package <https://github.com/Emreerdog/mbase/releases/download/v0.1.0/mbase.libs-bundled-cuda-89867570616052-0.1.0-win-amd64.tar.gz>`
+
+                :octicon:`code` :bdg-link-primary:`.zip source package <https://github.com/Emreerdog/mbase/releases/download/v0.1.0/mbase.libs-bundled-cuda-89867570616052-0.1.0-win-amd64.zip>`
+
+    .. dropdown:: NVIDIA GeForce and Titan GPUs Compatible
+
+        .. grid:: 2
+    
+            .. grid-item-card::
+                
+                **For Linux x64**
+                
+                .. image:: Linux.png
+
+                .. button-link:: https://github.com/Emreerdog/mbase/releases/download/v0.1.0/mbase.libs-bundled-cuda-89867570616052_0.1.0_amd64.deb
+                    :color: success
+                    :shadow:
+
+                    :octicon:`download` .deb installer
+                    
+                :octicon:`package` :bdg-link-primary:`.deb installer <https://github.com/Emreerdog/mbase/releases/download/v0.1.0/mbase.libs-bundled-cuda-89867570616052_0.1.0_amd64.deb>`
+                
+                :octicon:`package` :bdg-link-primary:`.rpm installer <https://github.com/Emreerdog/mbase/releases/download/v0.1.0/mbase.libs-bundled-cuda-89867570616052-0.1.0-x86_64.rpm>`
+
+                :octicon:`code` :bdg-link-primary:`.tar.gz source package <https://github.com/Emreerdog/mbase/releases/download/v0.1.0/mbase.libs-bundled-cuda-89867570616052-0.1.0-x86_64.tar.gz>`
+
+                :octicon:`code` :bdg-link-primary:`.zip source package <https://github.com/Emreerdog/mbase/releases/download/v0.1.0/mbase.libs-bundled-cuda-89867570616052-0.1.0-x86_64.zip>`
+
+            .. grid-item-card::
+
+                **For Windows x64**
+
+                .. image:: Windows11.png
+                    
+                .. button-link:: https://github.com/Emreerdog/mbase/releases/download/v0.1.0/mbase.libs-bundled-cuda-89867570616052-0.1.0-amd64.exe
+                    :color: success
+                    :shadow:
+
+                    :octicon:`download` .exe installer
+
+                :octicon:`package` :bdg-link-primary:`.exe installer <https://github.com/Emreerdog/mbase/releases/download/v0.1.0/mbase.libs-bundled-cuda-89867570616052-0.1.0-amd64.exe>`
+                
+                :octicon:`code` :bdg-link-primary:`.tar.gz source package <https://github.com/Emreerdog/mbase/releases/download/v0.1.0/mbase.libs-bundled-cuda-89867570616052-0.1.0-win-amd64.tar.gz>`
+
+                :octicon:`code` :bdg-link-primary:`.zip source package <https://github.com/Emreerdog/mbase/releases/download/v0.1.0/mbase.libs-bundled-cuda-89867570616052-0.1.0-win-amd64.zip>`
+
+    .. dropdown:: NVIDIA Jetson GPUs Compatible
+
+        .. grid:: 2
+    
+            .. grid-item-card::
+                
+                **For Linux x64**
+                
+                .. image:: Linux.png
+
+                .. button-link:: https://github.com/Emreerdog/mbase/releases/download/v0.1.0/mbase.libs-bundled-cuda-87726253_0.1.0_amd64.deb
+                    :color: success
+                    :shadow:
+
+                    :octicon:`download` .deb installer
+                    
+                :octicon:`package` :bdg-link-primary:`.deb installer <https://github.com/Emreerdog/mbase/releases/download/v0.1.0/mbase.libs-bundled-cuda-87726253_0.1.0_amd64.deb>`
+                
+                :octicon:`package` :bdg-link-primary:`.rpm installer <https://github.com/Emreerdog/mbase/releases/download/v0.1.0/mbase.libs-bundled-cuda-87726253-0.1.0-x86_64.rpm>`
+
+                :octicon:`code` :bdg-link-primary:`.tar.gz source package <https://github.com/Emreerdog/mbase/releases/download/v0.1.0/mbase.libs-bundled-cuda-87726253-0.1.0-x86_64.tar.gz>`
+
+                :octicon:`code` :bdg-link-primary:`.zip source package <https://github.com/Emreerdog/mbase/releases/download/v0.1.0/mbase.libs-bundled-cuda-87726253-0.1.0-x86_64.zip>`
+
+            .. grid-item-card::
+
+                **For Windows x64**
+
+                .. image:: Windows11.png
+                    
+                .. button-link:: https://github.com/Emreerdog/mbase/releases/download/v0.1.0/mbase.libs-bundled-cuda-87726253-0.1.0-amd64.exe
+                    :color: success
+                    :shadow:
+
+                    :octicon:`download` .exe installer
+
+                :octicon:`package` :bdg-link-primary:`.exe installer <https://github.com/Emreerdog/mbase/releases/download/v0.1.0/mbase.libs-bundled-cuda-87726253-0.1.0-amd64.exe>`
+                
+                :octicon:`code` :bdg-link-primary:`.tar.gz source package <https://github.com/Emreerdog/mbase/releases/download/v0.1.0/mbase.libs-bundled-cuda-87726253-0.1.0-win-amd64.tar.gz>`
+
+                :octicon:`code` :bdg-link-primary:`.zip source package <https://github.com/Emreerdog/mbase/releases/download/v0.1.0/mbase.libs-bundled-cuda-87726253-0.1.0-win-amd64.zip>`
 
 --------------
 Standalone SDK
@@ -143,20 +262,20 @@ Only the MBASE SDK. If you have a llama.cpp library already installed on your sy
         
         .. image:: Linux.png
 
-        .. button-link:: https://example.com
+        .. button-link:: https://github.com/Emreerdog/mbase/releases/download/v0.1.0/mbase.libs_0.1.0_standalone_linux_amd64.deb
             :color: success
             :shadow:
             :expand:
 
             :octicon:`download` .deb installer
             
-        :octicon:`package` :bdg-link-primary:`.deb installer <https://example.com>`
+        :octicon:`package` :bdg-link-primary:`.deb installer <https://github.com/Emreerdog/mbase/releases/download/v0.1.0/mbase.libs_0.1.0_standalone_linux_amd64.deb>`
         
-        :octicon:`package` :bdg-link-primary:`.rpm installer <https://example.com>`
+        :octicon:`package` :bdg-link-primary:`.rpm installer <https://github.com/Emreerdog/mbase/releases/download/v0.1.0/mbase.libs-0.1.0-standalone-linux-x86_64.rpm>`
 
-        :octicon:`code` :bdg-link-primary:`.tar.gz source package <https://example.com>`
+        :octicon:`code` :bdg-link-primary:`.tar.gz source package <https://github.com/Emreerdog/mbase/releases/download/v0.1.0/mbase.libs-0.1.0-standalone-linux-x86_64.tar.gz>`
 
-        :octicon:`code` :bdg-link-primary:`.zip source package <https://example.com>`
+        :octicon:`code` :bdg-link-primary:`.zip source package <https://github.com/Emreerdog/mbase/releases/download/v0.1.0/mbase.libs-0.1.0-standalone-linux-x86_64.zip>`
 
     .. grid-item-card::
 
@@ -164,18 +283,18 @@ Only the MBASE SDK. If you have a llama.cpp library already installed on your sy
 
         .. image:: Windows11.png
             
-        .. button-link:: https://example.com
+        .. button-link:: https://github.com/Emreerdog/mbase/releases/download/v0.1.0/mbase.libs-0.1.0-standalone-amd64.exe
             :color: success
             :shadow:
             :expand:
 
             :octicon:`download` .exe installer
 
-        :octicon:`package` :bdg-link-primary:`.exe installer <https://example.com>`
+        :octicon:`package` :bdg-link-primary:`.exe installer <https://github.com/Emreerdog/mbase/releases/download/v0.1.0/mbase.libs-0.1.0-standalone-amd64.exe>`
         
-        :octicon:`code` :bdg-link-primary:`.tar.gz source package <https://example.com>`
+        :octicon:`code` :bdg-link-primary:`.tar.gz source package <https://github.com/Emreerdog/mbase/releases/download/v0.1.0/mbase.libs-0.1.0-standalone-win-amd64.tar.gz>`
 
-        :octicon:`code` :bdg-link-primary:`.zip source package <https://example.com>`
+        :octicon:`code` :bdg-link-primary:`.zip source package <https://github.com/Emreerdog/mbase/releases/download/v0.1.0/mbase.libs-0.1.0-standalone-win-amd64.zip>`
 
     .. grid-item-card::
 
@@ -183,15 +302,13 @@ Only the MBASE SDK. If you have a llama.cpp library already installed on your sy
 
         .. image:: Apple.png
 
-        .. button-link:: https://example.com
+        .. button-link:: https://github.com/Emreerdog/mbase/releases/download/v0.1.0/mbase.libs-metal-0.1.0-standalone-arm64.tar.gz
             :color: success
             :shadow:
             :expand:
 
-            :octicon:`download` .dmg installer
+            :octicon:`download` .tar.gz
         
-        :octicon:`package` :bdg-link-primary:`.dmg installer <https://example.com>`
+        :octicon:`code` :bdg-link-primary:`.tar.gz source package <https://github.com/Emreerdog/mbase/releases/download/v0.1.0/mbase.libs-metal-0.1.0-standalone-arm64.tar.gz>`
 
-        :octicon:`code` :bdg-link-primary:`.tar.gz source package <https://example.com>`
-
-        :octicon:`code` :bdg-link-primary:`.zip source package <https://example.com>`
+        :octicon:`code` :bdg-link-primary:`.zip source package <https://github.com/Emreerdog/mbase/releases/download/v0.1.0/mbase.libs-metal-0.1.0-standalone-arm64.zip>`
