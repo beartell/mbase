@@ -60,7 +60,7 @@ You can see the full list [here](https://github.com/ggml-org/llama.cpp?tab=readm
 
 ## Documentation
 
-Detailed MBASE SDK documentation can be found here.
+Detailed MBASE SDK documentation can be found [here](https://docs.mbasesoftware.com/inference/about).
 
 ## Download and Setting up
 
