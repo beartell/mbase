@@ -62,6 +62,27 @@ You can see the full list [here](https://github.com/ggml-org/llama.cpp?tab=readm
 
 Detailed MBASE SDK documentation can be found [here](https://docs.mbasesoftware.com/inference/about).
 
+## What do I mean by Non-blocking
+
+**Since there are multiple questions arised from people asking what non-blocking means in this context, this title is addressing those questions**
+
+Let's don't think about the LLMs for a second and think about IO management in the program.
+
+IO and network operations are expensive operations. Their performance are limited by the read/write speed or the network operations highly influenced by your network environment speec etc.
+
+In IO scenario, when you want to write multiple Gigs of data into a disk, you should write a mechanism in your program so that the write won't block your main application logic.
+You may do this by writing data to a file by specifying a threshold let's say writing 1KB every iteration. Or you may do your IO operations in seperate thread and write a synchronization mechanism based-off of your needs.
+Or, you can use async io libraries that can do this for you.
+
+In my opinion, LLM inference deserve its own non-blocking terminology because the operations such as language model initialization(llama_model_load_from_file), destruction(llama_model_free), context creation(llama_init_from_model), encoder/decoder(llama_encode/llama_decode) methods are extremelly expensive which makes them really difficult to integrate into your main application logic.
+
+Even with high-end GPU, the amount your program halts on llama_model_load_from_file, llama_init_from_model, llama_encode/llama_decode prevents people from integrating LLMs into their applications.
+
+This SDK apply those operations in a non-blocking manner or in other words, the model initialization, destruction, context creation, encoder/decoder methods doesn't block your main thread and synchronization is handled by the MBASE SDK.
+
+Using this, you will be able to load/unload multiple models, create contexts, and apply encode/decoder operations all at the same time while not blocking your main application thread because MBASE will handle all those
+operations in parallel and will provide you the synchronized callbacks so that you won't need to consider issues arise from parallel programming.
+
 ## Download and Setting up
 
 Download page: [quickstart/setup/download](https://docs.mbasesoftware.com/inference/quickstart/setup/download)
