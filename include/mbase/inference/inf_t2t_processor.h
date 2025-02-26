@@ -56,6 +56,7 @@ public:
 	const U32& get_batch_size() const;
 	const U32& get_max_token_length() const;
 	const U32& get_context_cursor_position() const;
+	I32 get_cache_token_count() const;
 	I32 get_batch_thread_count() const;
 	I32 get_thread_count() const;
 	bool has_sampler(InfSamplerDescription::SAMPLER in_sampler_type, InfSamplerDescription& out_sampler);

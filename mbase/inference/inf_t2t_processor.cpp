@@ -165,6 +165,11 @@ const U32& InfProcessorTextToText::get_context_cursor_position() const
 	return mContextCursor;
 }
 
+I32 InfProcessorTextToText::get_cache_token_count() const
+{
+	return llama_get_kv_cache_token_count(mModelContext);
+}
+
 I32 InfProcessorTextToText::get_batch_thread_count() const
 {
 	return llama_n_threads_batch(mModelContext);
@@ -531,6 +536,19 @@ InfProcessorTextToText::flags InfProcessorTextToText::set_inference_client(InfCl
 	return flags::INF_PROC_SUCCESS;
 }
 
+InfProcessorTextToText::flags InfProcessorTextToText::declare_lora_assign(const inf_lora_adapter& in_adapter)
+{
+	MBASE_INF_T2T_PROC_RETURN_UNREGISTERED;
+	return flags::INF_PROC_SUCCESS;
+}
+
+InfProcessorTextToText::flags InfProcessorTextToText::declare_lora_remove(const inf_lora_adapter& in_adapter)
+{
+	MBASE_INF_T2T_PROC_RETURN_UNREGISTERED;
+	return flags::INF_PROC_SUCCESS;
+}
+
+
 InfProcessorTextToText::flags InfProcessorTextToText::initialize(
 	InfModelTextToText* in_model, 
 	const U32& in_context_length, 
@@ -885,7 +903,7 @@ GENERIC InfProcessorTextToText::_lora_operate()
 {
 	for(mbase::vector<inf_lora_adapter>::iterator It = mDeclaredAdapters.begin(); It != mDeclaredAdapters.end(); ++It)
 	{
-		if(!llama_set_adapter_lora(mModelContext, It->mAdapterHandle, 1.0f))
+		if(!llama_set_adapter_lora(mModelContext, It->mAdapterHandle, It->mLoraScale))
 		{
 			// means success
 			mAssignedAdapters.push_back(*It);
