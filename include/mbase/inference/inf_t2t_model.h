@@ -53,6 +53,7 @@ public:
 	MBASE_ND(MBASE_OBS_IGNORE) bool is_available(const U32& in_context_size) const;
 	MBASE_ND(MBASE_OBS_IGNORE) bool is_embedding_model() const;
 	MBASE_ND(MBASE_OBS_IGNORE) bool has_lora_adapter(const mbase::string& in_name, inf_lora_adapter& out_adapter);
+	mbase::vector<inf_lora_adapter> get_adapters() const;
 	llama_model* get_raw_model();
 	mbase::vector<inf_text_token> get_special_tokens() const;
 	mbase::vector<mbase::string> get_special_tokens_string() const;

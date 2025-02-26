@@ -96,6 +96,24 @@ bool InfModelTextToText::is_embedding_model() const
 	return mIsEmbeddingModel;
 }
 
+bool InfModelTextToText::has_lora_adapter(const mbase::string& in_name, inf_lora_adapter& out_adapter)
+{
+	inf_lora_adapter loraAdapter;
+	loraAdapter.mAdapterName = in_name;
+	mbase::vector<inf_lora_adapter>::iterator It = mbase::find(mLoraAdapters.begin(), mLoraAdapters.end(), loraAdapter);
+	if(It != mLoraAdapters.end())
+	{
+		return false;
+	}
+	out_adapter = *It;
+	return true;
+}
+
+mbase::vector<inf_lora_adapter> InfModelTextToText::get_adapters() const
+{
+	return mLoraAdapters;
+}
+
 llama_model* InfModelTextToText::get_raw_model()
 {
 	return mModel;

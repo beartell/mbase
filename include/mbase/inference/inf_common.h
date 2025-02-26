@@ -51,6 +51,7 @@ struct MBASE_API inf_lora_adapter {
 	mbase::string mAdapterName = "";
 	mbase::wstring mLoraPath = L"";
 	llama_adapter_lora* mAdapterHandle = NULL;
+    F32 mLoraScale = 1.0f;
 };
 
 using lora_adapter_map = mbase::unordered_map<mbase::string, inf_lora_adapter>;
