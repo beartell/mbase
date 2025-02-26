@@ -105,6 +105,9 @@ public:
 		const U32& in_context_length,
 		U32 in_thread_count
 	);
+	flags unregister_context_process(
+		InfProcessorBase* in_processor
+	);
 	flags declare_lora_remove(const inf_lora_adapter& in_adapter);
 	flags declare_lora_adapter(const inf_lora_adapter& in_adapter);
 	flags start_lora_operation();

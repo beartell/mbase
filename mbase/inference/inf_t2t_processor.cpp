@@ -165,6 +165,11 @@ const U32& InfProcessorTextToText::get_context_cursor_position() const
 	return mContextCursor;
 }
 
+I32 InfProcessorTextToText::get_cache_token_count() const
+{
+	return llama_get_kv_cache_token_count(mModelContext);
+}
+
 I32 InfProcessorTextToText::get_batch_thread_count() const
 {
 	return llama_n_threads_batch(mModelContext);

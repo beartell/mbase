@@ -571,6 +571,32 @@ InfModelTextToText::flags InfModelTextToText::register_context_process
 	return flags::INF_MODEL_INFO_REGISTERING_PROCESSOR;
 }
 
+InfModelTextToText::flags InfModelTextToText::unregister_context_process(
+		InfProcessorBase* in_processor
+)
+{
+	MBASE_INF_T2T_MODEL_RETURN_UNINITIALIZED;
+
+	if (!in_processor->is_registered())
+	{
+		return flags::INF_MODEL_ERR_PROCESSOR_NOT_FOUND;
+	}
+
+	mProcessorListMutex.acquire();
+	for (context_processor_list::iterator It = mRegisteredProcessors.begin(); It != mRegisteredProcessors.end(); ++It)
+	{
+		InfProcessorBase* baseProcessor = It->mSubject;
+		if(baseProcessor == in_processor)
+		{
+			baseProcessor->destroy();
+			return flags::INF_MODEL_INFO_PROCESSOR_IS_BEING_DESTROYED;
+		}
+	}
+	mProcessorListMutex.release();
+
+	return flags::INF_MODEL_ERR_PROCESSOR_NOT_FOUND;
+}
+
 InfModelTextToText::flags InfModelTextToText::declare_lora_remove(const inf_lora_adapter& in_adapter)
 {
 	MBASE_INF_T2T_MODEL_RETURN_UNINITIALIZED;
