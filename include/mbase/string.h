@@ -26,6 +26,7 @@
 MBASE_STD_BEGIN
 
 static const U32 gStringDefaultCapacity = 8;
+static const I32 gNumericControlMaxStringLength = 128;
 
 /* --- OBJECT BEHAVIOURS --- */
 
@@ -209,6 +210,8 @@ public:
     MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE bool is_digit(const_iterator in_begin, const_iterator in_end) const noexcept;
     MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE bool is_digit(size_type in_from, size_type in_to) const noexcept;
     MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE bool is_digit() const noexcept;
+    MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE bool is_number() const noexcept;
+    MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE bool is_float() const noexcept;
 
     MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE bool operator==(const character_sequence& in_rhs) noexcept;
     MBASE_ND(MBASE_RESULT_IGNORE) MBASE_INLINE bool operator!=(const character_sequence& in_rhs) noexcept;
@@ -352,13 +355,21 @@ public:
             in_string++;
         }
 
+        I32 maxLengthCounter = 0;
+
         while (*in_string) 
         {
+            if(maxLengthCounter == gNumericControlMaxStringLength)
+            {
+                // maximum string length exceeded
+                return 0;
+            }
             if (!is_digit(*in_string)) 
             {
                 return 0;
             }
             in_string++;
+            maxLengthCounter++;
         }
         return 1;
     }
@@ -378,8 +389,16 @@ public:
             in_string++;
         }
 
+        I32 maxLengthCounter = 0;
+
         while (*in_string) 
         {
+            if(maxLengthCounter == gNumericControlMaxStringLength)
+            {
+                // maximum string length exceeded
+                return 0;
+            }
+
             if (*in_string == '.') 
             {
                 if (tempDecimalControl) 
@@ -396,6 +415,7 @@ public:
             {
                 return 0;
             }
+            maxLengthCounter++;
             in_string++;
         }
 
@@ -1507,6 +1527,18 @@ template<typename SeqType, typename SeqBase, typename Allocator>
 MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE bool character_sequence<SeqType, SeqBase, Allocator>::is_digit() const noexcept
 {
     return is_digit(cbegin(), cend());
+}
+
+template<typename SeqType, typename SeqBase, typename Allocator>
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE bool character_sequence<SeqType, SeqBase, Allocator>::is_number() const noexcept
+{
+    return character_sequence<SeqType, SeqBase, Allocator>::is_number(this->mRawData);
+}
+
+template<typename SeqType, typename SeqBase, typename Allocator>
+MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE bool character_sequence<SeqType, SeqBase, Allocator>::is_float() const noexcept
+{
+    return character_sequence<SeqType, SeqBase, Allocator>::is_float(this->mRawData);
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>
