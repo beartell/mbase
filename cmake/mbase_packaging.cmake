@@ -36,7 +36,7 @@ if(GGML_CUDA)
         set(CPACK_RESOURCE_FILE_LICENSE ${CMAKE_CURRENT_SOURCE_DIR}/legal/LICENSE-full)
         find_package(CUDAToolkit)
         install(
-            FILES ${CUDAToolkit_BIN_DIR}/cublas64_${CUDA_VERSION_MAJOR}.dll ${CUDAToolkit_BIN_DIR}/cublasLt64_${CUDA_VERSION_MAJOR}.dll ${CUDAToolkit_BIN_DIR}/cudart64_${CUDA_VERSION_MAJOR}.dll
+            FILES ${CUDAToolkit_BIN_DIR}/cublas64_${CUDAToolkit_VERSION_MAJOR}.dll ${CUDAToolkit_BIN_DIR}/cublasLt64_${CUDAToolkit_VERSION_MAJOR}.dll ${CUDAToolkit_BIN_DIR}/cudart64_${CUDAToolkit_VERSION_MAJOR}.dll
             DESTINATION ${MBASE_LIBS_BIN_INSTALL_DIR}
         )
         install(
