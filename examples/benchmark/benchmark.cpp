@@ -52,7 +52,7 @@ GENERIC print_usage()
     printf("#Program name:      mbase_benchmark_t2t\n");
     printf("#Version:           %s\n", MBASE_BENCHMARK_VERSION);
     printf("#Type:              Utility, Example\n");
-    printf("#Further docs: \n");
+    printf("#Further docs:      https://docs.mbasesoftware.com/inference/programs/benchmark-t2t/about\n");
     printf("***** DESCRIPTION *****\n");
     printf("This is a utility program to measure the performance of the given T2T LLM.\n");
     printf("The program will do an inference based-off of the given context size, batch length, and n predict, simultaneusly on multiple users at the same time.\n");
