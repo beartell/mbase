@@ -43,7 +43,7 @@ GENERIC print_usage()
     printf("#Program name:      mbase_typo_fixer\n");
     printf("#Version:           %s\n", MBASE_TYPO_FIXER_VERSION);
     printf("#Type:              Example\n");
-    printf("#Further docs: \n");
+    printf("#Further docs:      https://docs.mbasesoftware.com/inference/programs/typo-fixer/about\n");
     printf("***** DESCRIPTION *****\n");
     printf("This is an applied example use case of MBASE Library.\n");
     printf("The program is reading a user-supplied text file and fixing the typos.\n");
