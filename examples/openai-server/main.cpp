@@ -14,7 +14,7 @@ void print_usage()
     printf("#Program name:      mbase_openai_server\n");
     printf("#Version:           %s\n", MBASE_OPENAI_SERVER_VERSION);
     printf("#Type:              Example, Utility\n");
-    printf("#Further docs: \n");
+    printf("#Further docs:      https://docs.mbasesoftware.com/inference/programs/openai-server/about\n");
     printf("***** DESCRIPTION *****\n");
     printf("An Openai API compatible HTTP/HTTPS server for serving LLMs.\n");
     printf("This program provides chat completion API For TextToText models and embeddings API For embedder models.\n\n");
