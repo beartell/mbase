@@ -48,7 +48,7 @@ GENERIC print_usage()
     printf("#Program name:      mbase_retrieval\n");
     printf("#Version:           %s\n", MBASE_RETRIEVAL_VERSION);
     printf("#Type:              Example\n");
-    printf("#Further docs: \n");
+    printf("#Further docs:      https://docs.mbasesoftware.com/inference/programs/retrieval/about\n");
     printf("***** DESCRIPTION *****\n");
     printf("An example program for generating using the embedder to retrieval operation on multiple text seperated by <embd_sep>.\n");
     printf("What this program does is that it takes a query from the user and creates the embeddings of the user input and all other texts.\n");
