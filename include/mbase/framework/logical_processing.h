@@ -62,7 +62,7 @@ public:
 		}
 		else
 		{
-			mProcessorThread.join(); // Internally checks the validity of the thread
+			stop_processor();
 		}
 		mIsProcessorRunning = true;
 		mProcessorThread.run();
@@ -71,6 +71,7 @@ public:
 	GENERIC stop_processor()
 	{
 		mIsProcessorRunning = false;
+		mLogicSynchronizer.release();
 		mProcessorThread.join(); // Internally checks the validity of the thread
 	}
 	GENERIC acquire_synchronizer() { mLogicSynchronizer.acquire(); }

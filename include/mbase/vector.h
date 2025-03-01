@@ -704,33 +704,24 @@ MBASE_INLINE_EXPR GENERIC vector<T, Allocator>::reserve(size_type in_capacity) n
 }
 
 template<typename T, typename Allocator>
-MBASE_INLINE_EXPR typename vector<T, Allocator>::iterator vector<T, Allocator>::erase(iterator in_pos) noexcept
+MBASE_INLINE_EXPR typename vector<T, Allocator>::iterator 
+vector<T, Allocator>::erase(iterator in_pos) noexcept
 {
-	if (in_pos == end())
-	{
-		pop_back();
-		return end();
-	}
+    if (in_pos == end()) 
+    {
+        pop_back();
+        return end();
+    }
 
-	else
-	{
-		if (mSize)
-		{
-			mbase::vector<T, Allocator> vc(mCapacity);
-			for(iterator It = begin(); It != end(); It++)
-			{
-				if(It == in_pos)
-				{
-					continue;
-				}
-				vc.push_back(std::move(*It));
-			}
-			*this = std::move(vc);
-		}
-	}
-	return end();
+    for (iterator it = in_pos; it + 1 != end(); ++it) 
+    {
+        *it = std::move(*(it + 1));
+    }
+
+    pop_back();
+
+    return in_pos;
 }
-
 template<typename T, typename Allocator>
 MBASE_INLINE_EXPR typename vector<T, Allocator>::iterator vector<T, Allocator>::erase(iterator in_begin, iterator in_end) noexcept 
 {

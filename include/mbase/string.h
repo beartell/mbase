@@ -2158,24 +2158,20 @@ MBASE_INLINE_EXPR character_sequence<SeqType, SeqBase, Allocator>& character_seq
 
 template<typename SeqType, typename SeqBase, typename Allocator>
 MBASE_INLINE_EXPR typename character_sequence<SeqType, SeqBase, Allocator>::iterator character_sequence<SeqType, SeqBase, Allocator>::erase(const_iterator in_pos) {
-    if(in_pos >= cend())
+    if (in_pos == end()) 
     {
         pop_back();
+        return end();
     }
-    else
+
+    for (const_iterator it = in_pos; it + 1 != end(); ++it) 
     {
-        character_sequence cs(cbegin(), in_pos);
-        in_pos++;
-        for(; in_pos != cend(); in_pos++)
-        {
-            cs.push_back(*in_pos);
-        }
-
-        *this = std::move(cs);
-
+        *it = *(it + 1);
     }
-    // TODO: RETURN THE CORRECT THING
-    return begin();
+
+    pop_back();
+
+    return in_pos;
 }
 
 template<typename SeqType, typename SeqBase, typename Allocator>

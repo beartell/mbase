@@ -393,7 +393,6 @@ InfProcessorTextToText::flags InfProcessorTextToText::execute_input(const inf_te
 		return flags::INF_PROC_ERR_ALREADY_PROCESSING;
 	}
 
-	stop_processor(); // Stop the processor if it is not stopped already
 	mTokenizedInput = in_tokens;
 	if(in_kv_locked)
 	{
@@ -412,8 +411,9 @@ InfProcessorTextToText::flags InfProcessorTextToText::execute_input(const inf_te
 	{
 		mInputSignal.set_signal();
 	}
-	start_processor();
 
+	start_processor();
+	release_synchronizer();
 	return flags::INF_PROC_SUCCESS;
 }
 
@@ -477,8 +477,9 @@ InfProcessorTextToText::flags InfProcessorTextToText::next(const decode_behavior
 	mGeneratedTokenVector.clear();
 	mDecodeBehavior = in_description;
 	mDecodeSignal.set_signal();
-	start_processor();
 
+	start_processor();
+	release_synchronizer();
 	return flags::INF_PROC_SUCCESS;
 }
 
@@ -586,6 +587,7 @@ InfProcessorTextToText::flags InfProcessorTextToText::initialize(
 
 	mInitializeSignal.set_signal();
 	start_processor();
+	release_synchronizer();
 	return flags::INF_PROC_INFO_INITIALIZING;
 }
 
@@ -633,7 +635,9 @@ InfProcessorTextToText::flags InfProcessorTextToText::destroy()
 	release_inference_client();
 
 	mDestroySignal.set_signal();
+	
 	start_processor();
+	release_synchronizer();
 	return flags::INF_PROC_INFO_DESTROYING;
 }
 
@@ -780,6 +784,11 @@ GENERIC InfProcessorTextToText::_decode_input()
 		clear_kv_cache();
 		totalPosition = 0;
 	}
+	else
+	{
+		_decode_cached_logits();
+	}
+	totalPosition = llama_get_kv_cache_token_count(mModelContext);
 	llama_sampler_reset(mSamplerChain);
 	std::chrono::high_resolution_clock::time_point beginTime;
 	std::chrono::high_resolution_clock::time_point endTime;
@@ -1171,12 +1180,14 @@ GENERIC InfProcessorTextToText::update()
 		mInputKvLockedSignal.reset_signal_with_state();
 		mLoraOperationSignal.reset_signal_with_state();
 		this->release_object_watcher();
+		stop_processor();
 		on_destroy();
 		return;
 	}
 
 	if(signal_state_initializing())
 	{
+		acquire_synchronizer();
 		mInitializeSignal.reset_signal_state();
 		if(is_init_failed())
 		{
@@ -1194,6 +1205,7 @@ GENERIC InfProcessorTextToText::update()
 
 	if(signal_state_lora_operate())
 	{
+		acquire_synchronizer();
 		mLoraOperationSignal.reset_signal_state();
 		on_lora_operate(mAssignedAdapters);
 		return;
@@ -1201,6 +1213,7 @@ GENERIC InfProcessorTextToText::update()
 
 	if(signal_state_input_process())
 	{
+		acquire_synchronizer();
 		mInputSignal.reset_signal_state();
 		InfClientTextToText* t2tClient = static_cast<InfClientTextToText*>(get_assigned_client());
 		if(t2tClient)
@@ -1212,6 +1225,7 @@ GENERIC InfProcessorTextToText::update()
 
 	if(signal_state_kv_locked_process())
 	{
+		acquire_synchronizer();
 		mInputKvLockedSignal.reset_signal_state();
 		InfClientTextToText* t2tClient = static_cast<InfClientTextToText*>(get_assigned_client());
 		if(t2tClient)
@@ -1223,6 +1237,7 @@ GENERIC InfProcessorTextToText::update()
 
 	if(signal_state_decode_process())
 	{
+		acquire_synchronizer();
 		mDecodeSignal.reset_signal_state();		
 		bool isFinish = false;
 
@@ -1233,7 +1248,6 @@ GENERIC InfProcessorTextToText::update()
 
 		if(isFinish)
 		{
-			stop_processor();
 			mInputSignal.reset_signal_with_state();
 		}
 
@@ -1253,57 +1267,50 @@ GENERIC InfProcessorTextToText::update()
 
 GENERIC InfProcessorTextToText::update_t()
 {
-	if(is_registered())
+	while(is_processor_running())
 	{
-		if (signal_destroying())
+		release_synchronizer();
+
+		if(is_registered())
 		{
-			_destroy_context();
-		}
-
-		if (is_running())
-		{
-			if(signal_lora_operate_process())
+			if (signal_destroying())
 			{
-				_lora_operate();
+				_destroy_context();
 			}
 
-			if(signal_kv_locked_process())
+			if (is_running())
 			{
-				_decode_kv_locked_input();
-			}
+				if(signal_lora_operate_process())
+				{
+					_lora_operate();
+				}
 
-			if (signal_input_process())
-			{
-				_decode_input();
-			}
-			
-			while(is_processor_running())
-			{
+				if(signal_kv_locked_process())
+				{
+					_decode_kv_locked_input();
+				}
+
+				if (signal_input_process())
+				{
+					_decode_input();
+				}
+				
 				if (signal_decode_process())
 				{
 					_decode_next();
 				}
-
-				else if(!mDecodeBehavior.mHaltOnWrite)
-				{
-					// If it is not halt on write, busy wait for logic thread to process the generated tokens
-					mbase::sleep(mDecodeBehavior.mHaltDelay);
-				}
-
-				else
-				{
-					break;
-				}
 			}
 		}
-	}
-	else
-	{
-		if(signal_initializing())
+		else
 		{
-			_initialize_context();
+			if(signal_initializing())
+			{
+				_initialize_context();
+			}
 		}
+		acquire_synchronizer();
 	}
+	release_synchronizer();
 }
 
 MBASE_END
