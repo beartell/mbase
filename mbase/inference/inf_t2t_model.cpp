@@ -344,7 +344,7 @@ InfModelTextToText::flags InfModelTextToText::initialize_model_ex(const mbase::w
 		if(gpuCount)
 		{
 			mSuppliedParams.n_gpu_layers = in_gpu_layers;
-			mSuppliedParams.split_mode = LLAMA_SPLIT_MODE_ROW;
+			mSuppliedParams.split_mode = LLAMA_SPLIT_MODE_LAYER;
 		}
 	}
 
