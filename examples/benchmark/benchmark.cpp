@@ -117,7 +117,7 @@ public:
     I32 get_predict_count(){ return mNPredict; }
     F32 get_average_eval_per_second()
     {
-        F32 totalEvalSeconds;
+        F32 totalEvalSeconds = 0;
         for(auto& n : tokensSet)
         {
             totalEvalSeconds += n;
