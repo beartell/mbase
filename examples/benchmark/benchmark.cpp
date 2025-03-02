@@ -8,7 +8,7 @@
 #include <chrono>
 #include <signal.h>
 
-#define MBASE_BENCHMARK_VERSION "v0.1.0"
+#define MBASE_BENCHMARK_VERSION "v1.0.0"
 
 using namespace mbase;
 
@@ -97,7 +97,10 @@ private:
 class BenchmarkProcessor : public InfProcessorTextToText {
 public:
     BenchmarkProcessor() : mNPredict(gSampleParams.mPredictCount) {}
-    GENERIC on_initialize() override{}
+    GENERIC on_initialize() override
+    {
+        this->set_benchmark(true);
+    }
     GENERIC on_initialize_fail([[maybe_unused]] last_fail_code out_code) override
     {
         fflush(stdout);
@@ -106,9 +109,23 @@ public:
         exit(1);
     }
     GENERIC on_destroy() override{}
-    GENERIC decrement_predict() {--mNPredict;}
+    GENERIC decrement_predict() 
+    {
+        tokensSet.push_back(this->get_diagnostics().evalTokensPerSecond);
+        --mNPredict;
+    }
     I32 get_predict_count(){ return mNPredict; }
+    F32 get_average_eval_per_second()
+    {
+        F32 totalEvalSeconds;
+        for(auto& n : tokensSet)
+        {
+            totalEvalSeconds += n;
+        }
+        return totalEvalSeconds / tokensSet.size();
+    }
 private:
+    mbase::vector<F32> tokensSet;
     I32 mNPredict = 0;
 };
 
@@ -134,39 +151,29 @@ public:
     GENERIC on_write(InfProcessorTextToText* out_processor,[[maybe_unused]] const inf_text_token_vector& out_token, bool out_is_finish) override
     {
         BenchmarkProcessor* hostProcessor = static_cast<BenchmarkProcessor*>(out_processor);
-        if(out_is_finish)
+        if(!hostProcessor->get_predict_count())
         {
-            return;
+            hostProcessor->stop_processor();
+            gFinishedProcessors++;
+            if(gFinishedProcessors == gSampleParams.mUserCount)
+            {
+                gIsProgramRunning = false;
+            }
         }
         else
         {
-            if(!hostProcessor->get_predict_count())
-            {
-                hostProcessor->stop_processor();
-                gFinishedProcessors++;
-                if(gFinishedProcessors == gSampleParams.mUserCount)
-                {
-                    gIsProgramRunning = false;
-                }
-            }
+            hostProcessor->decrement_predict();
+            mbase::inf_token_description tokenDesc;
+            mbase::decode_behavior_description dbd;
+            dbd.mTokenAtMost = 1;
+            dbd.mHaltOnWrite = false;
+            hostProcessor->next(dbd);
         }
-
-        hostProcessor->decrement_predict();
-        mbase::inf_token_description tokenDesc;
-        mbase::decode_behavior_description dbd;
-        dbd.mTokenAtMost = 1;
-        dbd.mHaltOnWrite = false;
-        hostProcessor->next(dbd);
     }
 
     GENERIC on_finish(InfProcessorTextToText* out_processor, [[maybe_unused]] size_type out_total_token_size, [[maybe_unused]] InfProcessorTextToText::finish_state out_finish_state) override
     {
-        out_processor->release_inference_client_stacked();
-        gFinishedProcessors++;
-        if(gFinishedProcessors == gSampleParams.mUserCount)
-        {
-            gIsProgramRunning = false;
-        }
+        
     }
 private:
 };
@@ -436,7 +443,7 @@ int main(int argc, char** argv)
     for(BenchmarkProcessor* tmpProc : processorsList)
     {
         InfProcT2TDiagnostics& t2tDiag = tmpProc->get_diagnostics();
-        printf("|%" PRId64 "\t\t| %.2f |\t %.2f \t|\n", t2tDiag.loadTimeInMilliseconds, t2tDiag.ppTokensPerSecond, t2tDiag.evalTokensPerSecond);
+        printf("|%" PRId64 "\t\t| %.2f |\t %.2f \t|\n", t2tDiag.loadTimeInMilliseconds, t2tDiag.ppTokensPerSecond, tmpProc->get_average_eval_per_second());
         tmpProc->release_inference_client_stacked();
     }
 
@@ -505,7 +512,7 @@ int main(int argc, char** argv)
             InfProcT2TDiagnostics& t2tDiag = tmpProc->get_diagnostics();
             processorDiagnostics[i]["load_delay_ms"] = t2tDiag.loadTimeInMilliseconds;
             processorDiagnostics[i]["pp tokens per sec"] = t2tDiag.ppTokensPerSecond;
-            processorDiagnostics[i]["tg tokens per sec"] = t2tDiag.evalTokensPerSecond;
+            processorDiagnostics[i]["tg tokens per sec"] = tmpProc->get_average_eval_per_second();
             ++i;
         }
 
@@ -563,7 +570,7 @@ int main(int argc, char** argv)
         for(BenchmarkProcessor* tmpProc : processorsList)
         {
             InfProcT2TDiagnostics& t2tDiag = tmpProc->get_diagnostics();
-            processorDiagnostics += mbase::string::from_format("| %lld | %.2f | %.2f |\n", t2tDiag.loadTimeInMilliseconds, t2tDiag.ppTokensPerSecond, t2tDiag.evalTokensPerSecond);
+            processorDiagnostics += mbase::string::from_format("| %lld | %.2f | %.2f |\n", t2tDiag.loadTimeInMilliseconds, t2tDiag.ppTokensPerSecond, tmpProc->get_average_eval_per_second());
         }
         mbase::string totalMdContent = modelInfoMd + sessionInfoMd + usefulMetricsMd + processorDiagnostics;
         

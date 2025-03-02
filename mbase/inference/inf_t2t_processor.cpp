@@ -45,6 +45,7 @@ InfProcessorTextToText::InfProcessorTextToText():
 	mFlashAttention(false),
 	mIsInitializeFailed(false),
 	mIsManualCaching(false),
+	mIsBenchmarkOn(false),
 	mCacheMode(cache_mode::AUTO_LOGIT_STORE_MODE)
 {
 	mModelCategory = inf_model_category::TEXT_TO_TEXT;
@@ -79,6 +80,11 @@ InfProcessorTextToText::last_fail_code InfProcessorTextToText::get_last_fail_cod
 InfProcessorTextToText::cache_mode InfProcessorTextToText::get_manual_cache_mode() const
 {
 	return mCacheMode;
+}
+
+bool InfProcessorTextToText::is_benchmark() const
+{
+	return mIsBenchmarkOn;
 }
 
 bool InfProcessorTextToText::is_update_required() const
@@ -652,6 +658,11 @@ InfProcessorTextToText::flags InfProcessorTextToText::destroy_sync()
 	return flags::INF_PROC_INFO_NEED_UPDATE;
 }
 
+GENERIC InfProcessorTextToText::set_benchmark(bool in_is_on)
+{
+	mIsBenchmarkOn = in_is_on;
+}
+
 GENERIC InfProcessorTextToText::clear_token_candidates()
 {
 	mPresetCandidates.clear();
@@ -846,7 +857,16 @@ GENERIC InfProcessorTextToText::_decode_next()
 		std::chrono::high_resolution_clock::time_point beginTime = std::chrono::high_resolution_clock::now();
 		InfModelTextToText* t2tModel = static_cast<InfModelTextToText*>(this->mTargetModel_md_model);
 		const llama_vocab* tmpVocab = llama_model_get_vocab(t2tModel->get_raw_model());
+		
 		inf_text_token tmpGeneratedToken = llama_sampler_sample(mSamplerChain, mModelContext, -1);
+		if(is_benchmark())
+		{
+			tmpGeneratedToken = llama_vocab_n_tokens(tmpVocab) / 2; // the token selection is arbitrary. it literally has no meaning
+		}
+		else
+		{	
+			tmpGeneratedToken = llama_sampler_sample(mSamplerChain, mModelContext, -1);
+		}
 		
 		//llama_sampler_accept(mSamplerChain, tmpGeneratedToken);
 		mGeneratedTokenVector.push_back(tmpGeneratedToken);
@@ -1125,6 +1145,7 @@ GENERIC InfProcessorTextToText::_destroy_context()
 	mIsRunning = false;
 	mIsInitializeFailed = false;
 	mIsManualCaching = false;
+	mIsBenchmarkOn = false;
 	mFinishState = finish_state::FINISHED;
 	mAssignedClient = NULL;
 	mCacheMode = cache_mode::AUTO_LOGIT_STORE_MODE;

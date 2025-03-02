@@ -38,6 +38,7 @@ public:
 	InfProcT2TDiagnostics& get_diagnostics();
 	last_fail_code get_last_fail_code() const;
 	cache_mode get_manual_cache_mode() const;
+	bool is_benchmark() const;
 	bool is_update_required() const;
 	bool is_init_failed() const;
 	bool is_available() const;
@@ -98,6 +99,7 @@ public:
 	);
 	flags destroy() override;
 	flags destroy_sync() override;
+	GENERIC set_benchmark(bool in_is_on);
 	GENERIC clear_token_candidates();
 	GENERIC clear_samplers();
 	GENERIC clear_kv_cache();
@@ -153,6 +155,7 @@ private:
 	bool mFlashAttention;
 	bool mIsInitializeFailed;
 	bool mIsManualCaching;
+	bool mIsBenchmarkOn;
 	decode_behavior_description mDecodeBehavior;
 	cache_mode mCacheMode;
 };
