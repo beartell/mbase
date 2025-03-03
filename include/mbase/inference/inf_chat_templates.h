@@ -17,13 +17,13 @@ struct InfTemplateQwen {
 };
 
 struct InfTemplatePhi3 {
-	mbase::string systemStart = "<|system|>\n";
-	mbase::string assistantStart = "<|assistant|>\n";
-	mbase::string userStart = "<|user|>\n";
+	mbase::string systemStart = "<|im_start|>system<|im_sep|>\n";
+	mbase::string assistantStart = "<|im_start|>assistant<|im_sep|>\n";
+	mbase::string userStart = "<|im_start|>user<|im_sep|>\n";
 
-	mbase::string systemEnd = "<|end|>\n";
-	mbase::string assistantEnd = "<|end|>\n";
-	mbase::string userEnd = "<|end|>\n";
+	mbase::string systemEnd = "<|im_end|>\n";
+	mbase::string assistantEnd = "<|im_end|>\n";
+	mbase::string userEnd = "<|im_end|>\n";
 };
 
 struct InfTemplateOrion {
