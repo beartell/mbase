@@ -87,6 +87,7 @@ public:
 
 	/* ===== STATE-MODIFIER METHODS BEGIN ===== */
 	MBASE_INLINE os_file_handle open_file(const mbase::wstring& in_filename, access_mode in_accmode = access_mode::RW_ACCESS, disposition in_disp = disposition::OVERWRITE) noexcept;
+	MBASE_INLINE os_file_handle open_file(const mbase::string& in_filename, access_mode in_accmode = access_mode::RW_ACCESS, disposition in_disp = disposition::OVERWRITE) noexcept;
 	MBASE_INLINE GENERIC close_file() noexcept;
 	MBASE_INLINE GENERIC clear_file() noexcept;
 	MBASE_INLINE size_type write_data(CBYTEBUFFER in_src) override;
@@ -176,6 +177,46 @@ MBASE_INLINE io_base::os_file_handle io_file::open_file(const mbase::wstring& in
 #endif
 #ifdef MBASE_PLATFORM_UNIX
 	I32 fHandle = open(mbase::to_utf8(in_filename).c_str(), (U32)in_disp | (U32)in_accmode, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP);
+	if(fHandle == -1)
+	{
+		_set_last_error(errno);
+	}
+	else
+	{
+		mOperateReady = true;
+		_set_raw_context(fHandle);
+	}
+#endif
+
+	return mRawContext.raw_handle;
+}
+
+MBASE_INLINE io_base::os_file_handle io_file::open_file(const mbase::string& in_filename, access_mode in_accmode, disposition in_disp) noexcept
+{
+	close_file();
+#ifdef MBASE_PLATFORM_WINDOWS
+	DWORD fileAttrs = FILE_ATTRIBUTE_NORMAL;
+	
+	mFileName = in_filename;
+	PTRGENERIC rawHandle = CreateFileA(mFileName.c_str(), (DWORD)in_accmode, FILE_SHARE_READ, nullptr, (DWORD)in_disp, fileAttrs, nullptr);	
+	
+	if (rawHandle == INVALID_HANDLE_VALUE)
+	{
+		_set_last_error(GetLastError());
+	}
+	else
+	{
+		
+		mOperateReady = true;
+		_set_raw_context(rawHandle);
+		if (in_disp == disposition::APPEND)
+		{
+			SetFilePointer(mRawContext.raw_handle, 0, nullptr, FILE_END);
+		}
+	}
+#endif
+#ifdef MBASE_PLATFORM_UNIX
+	I32 fHandle = open(in_filename.c_str(), (U32)in_disp | (U32)in_accmode, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP);
 	if(fHandle == -1)
 	{
 		_set_last_error(errno);
@@ -406,6 +447,79 @@ MBASE_INLINE mbase::string read_file_as_string(const mbase::wstring& in_path)
 	}
 
 	return read_file_as_string(iof);
+}
+
+MBASE_INLINE mbase::string read_file_as_string(const mbase::string& in_path)
+{
+	mbase::io_file iof;
+	iof.open_file(in_path, mbase::io_file::access_mode::READ_ACCESS, mbase::io_file::disposition::OPEN);
+	if(!iof.is_file_open())
+	{
+		return mbase::string();
+	}
+
+	return read_file_as_string(iof);
+}
+
+MBASE_INLINE bool write_string_to_file(const mbase::wstring& in_path, const mbase::string& in_string)
+{
+	mbase::io_file iof;
+	iof.open_file(in_path, mbase::io_file::access_mode::RW_ACCESS, mbase::io_file::disposition::OVERWRITE);
+	if(!iof.is_file_open())
+	{
+		return false;
+	}
+
+	iof.write_data(in_string);
+	return true;
+}
+
+MBASE_INLINE bool append_string_to_file(const mbase::wstring& in_path, const mbase::string& in_string)
+{
+	mbase::io_file iof;
+	iof.open_file(in_path, mbase::io_file::access_mode::WRITE_ACCESS, mbase::io_file::disposition::APPEND);
+	if(!iof.is_file_open())
+	{
+		iof.open_file(in_path);
+	}
+
+	if(!iof.is_file_open())
+	{
+		return false;
+	}
+
+	iof.write_data(in_string);
+	return true;
+}
+
+
+MBASE_INLINE bool write_string_to_file(const mbase::string& in_path, const mbase::string& in_string)
+{
+	mbase::io_file iof;
+	iof.open_file(in_path, mbase::io_file::access_mode::RW_ACCESS, mbase::io_file::disposition::OVERWRITE);
+	if(!iof.is_file_open())
+	{
+		return false;
+	}
+	iof.write_data(in_string);
+	return true;
+}
+
+MBASE_INLINE bool append_string_to_file(const mbase::string& in_path, const mbase::string& in_string)
+{
+	mbase::io_file iof;
+	iof.open_file(in_path, mbase::io_file::access_mode::WRITE_ACCESS, mbase::io_file::disposition::APPEND);
+	if(!iof.is_file_open())
+	{
+		iof.open_file(in_path);
+	}
+
+	if(!iof.is_file_open())
+	{
+		return false;
+	}
+	iof.write_data(in_string);
+	return true;
 }
 
 MBASE_STD_END
