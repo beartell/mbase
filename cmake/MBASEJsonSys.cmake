@@ -10,17 +10,17 @@ mbase_build_version(1 0 0 ${MBASE_VERSION_STABLE} MBASE_JSON_VERSION)
 mbase_build_include_install_path(${MBASE_JSON_LIB_NAME} MBASE_JSON_INCLUDE_INSTALL_PATH)
 mbase_build_lib_path(${MBASE_JSON_LIB_NAME} MBASE_JSON_LIB_PATH)
 
-list(APPEND MBASE_JSON_INCLUDE_DEPENDS ${MBASE_STD_INCLUDES} ${CMAKE_SOURCE_DIR}/external)
+list(APPEND MBASE_JSON_INCLUDE_DEPENDS ${MBASE_STD_INCLUDES} ${CMAKE_CURRENT_SOURCE_DIR}/external)
 
 add_library(double-conversion STATIC
-    ${CMAKE_SOURCE_DIR}/external/double-conversion/bignum.cc
-    ${CMAKE_SOURCE_DIR}/external/double-conversion/bignum-dtoa.cc
-    ${CMAKE_SOURCE_DIR}/external/double-conversion/cached-powers.cc
-    ${CMAKE_SOURCE_DIR}/external/double-conversion/double-to-string.cc
-    ${CMAKE_SOURCE_DIR}/external/double-conversion/fast-dtoa.cc
-    ${CMAKE_SOURCE_DIR}/external/double-conversion/fixed-dtoa.cc
-    ${CMAKE_SOURCE_DIR}/external/double-conversion/string-to-double.cc
-    ${CMAKE_SOURCE_DIR}/external/double-conversion/strtod.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/external/double-conversion/bignum.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/external/double-conversion/bignum-dtoa.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/external/double-conversion/cached-powers.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/external/double-conversion/double-to-string.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/external/double-conversion/fast-dtoa.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/external/double-conversion/fixed-dtoa.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/external/double-conversion/string-to-double.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/external/double-conversion/strtod.cc
 )
 
 set_property(TARGET double-conversion PROPERTY POSITION_INDEPENDENT_CODE ON)
