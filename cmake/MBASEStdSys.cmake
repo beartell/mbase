@@ -23,7 +23,7 @@ elseif(UNIX)
     find_package(Threads REQUIRED)
     list(APPEND MBASE_STD_INCLUDES ${UUID_INCLUDE_DIRS})
     list(APPEND MBASE_STD_LIBS ${UUID_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
-    file(READ ${CMAKE_SOURCE_DIR}/cmake/FindUUID.cmake MBASE_EMBEDDED_FIND_UUID_CMAKE)
+    file(READ ${CMAKE_CURRENT_SOURCE_DIR}/cmake/FindUUID.cmake MBASE_EMBEDDED_FIND_UUID_CMAKE)
 endif()
 
 list(APPEND MBASE_STD_INCLUDE_STABLE_FILES
@@ -77,7 +77,7 @@ set(MBASE_STD_CMAKE_CONFIG_NAME mbase-std-config.cmake)
 set(MBASE_STD_CMAKE_INSTALL_DESTINATION ${MBASE_STD_LIB_INSTALL_DIR}/cmake/mbase.libs)
 
 configure_package_config_file(
-            ${CMAKE_SOURCE_DIR}/cmake_config_in/mbase-std-config.cmake.in
+            ${CMAKE_CURRENT_SOURCE_DIR}/cmake_config_in/mbase-std-config.cmake.in
             ${CMAKE_BINARY_DIR}/mbase-std-config.cmake
             INSTALL_DESTINATION ${MBASE_STD_CMAKE_INSTALL_DESTINATION}
             PATH_VARS
