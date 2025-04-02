@@ -3,6 +3,29 @@ on:
   push:
     branches:
       - devel
+      - configuration
+      - examples/benchmark
+      - examples/embedding
+      - examples/openai-server
+      - examples/retrieval
+      - examples/simple-conversation
+      - examples/typo-fixer
+      - inf/devel
+      - pc/devel
+      - std/devel
+  pull_request:
+    branches:
+      - devel
+      - configuration
+      - examples/benchmark
+      - examples/embedding
+      - examples/openai-server
+      - examples/retrieval
+      - examples/simple-conversation
+      - examples/typo-fixer
+      - inf/devel
+      - pc/devel
+      - std/devel
 jobs:
   ubuntu-amd64-build:
     runs-on: ubuntu-latest
