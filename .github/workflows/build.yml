@@ -2,7 +2,6 @@ name: MBASE SDK Build
 on:
   push:
     branches:
-      - main
       - devel
       - configuration
       - examples/benchmark
@@ -16,7 +15,6 @@ on:
       - std/devel
   pull_request:
     branches:
-      - main
       - devel
       - configuration
       - examples/benchmark
