@@ -36,6 +36,8 @@ if(NOT DEFINED CMAKE_CUDA_ARCHITECTURES)
     elseif(MBASE_CUDA_TARGET STREQUAL "jetson")
         set(CMAKE_CUDA_ARCHITECTURES "87;72")
     endif()
+else()
+    set(MBASE_CUDA_TARGET ${CMAKE_CUDA_ARCHITECTURES})
 endif()
 
 include(MBASEStdSys)
