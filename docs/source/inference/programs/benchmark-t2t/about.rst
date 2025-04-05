@@ -6,8 +6,8 @@ Benchmark T2T
 Program Identification
 ----------------------
 
-.. |pi_author| replace:: M. Emre Erdog
-.. |pi_maintainer| replace:: M. Emre Erdog
+.. |pi_author| replace:: M\. Emre Erdog
+.. |pi_maintainer| replace:: M\. Emre Erdog
 .. |pi_email| replace:: erdog@mbasesoftware.com
 .. |pi_name| replace:: mbase_benchmark_t2t
 .. |pi_version| replace:: v1.0.0
