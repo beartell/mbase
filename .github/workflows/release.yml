@@ -3,9 +3,6 @@ name: MBASE SDK Release
 on:
   workflow_dispatch:
 
-env:
-  GH_TOKEN: ${{ github.token }}
-
 jobs:
   ubuntu-amd64-release:
     runs-on: ubuntu-latest
@@ -36,3 +33,6 @@ jobs:
           rm -rf ./_CPack_Packages
           cd ..
           gh release upload "$(git describe --tags --abbrev=0)" ./output/* --clobber
+
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
