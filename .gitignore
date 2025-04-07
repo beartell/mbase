@@ -7,4 +7,5 @@ build_cuda/
 docs/build/
 scripts/__pycache__
 change_log.txt
+output/
 .DS_Store
