@@ -30,5 +30,6 @@ jobs:
         run: |
           cd output
           cpack -G "ZIP;TGZ;DEB;RPM" --config ../build_amd64_bundle/CPackConfig.cmake
+          rm -rf ./_CPack_Packages
           cd ..
-          ls ./output
+          gh release upload "$(git describe --tags --abbrev=0)" ./output/* --clobber
