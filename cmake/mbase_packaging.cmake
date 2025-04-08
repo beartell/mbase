@@ -28,7 +28,7 @@ else()
 endif(MBASE_BUNDLED_INSTALL)
 
 if(GGML_CUDA)
-    set(CPACK_PACKAGE_NAME "${CPACK_PACKAGE_NAME}-cuda-${MBASE_CUDA_TARGET}")
+    set(CPACK_PACKAGE_NAME "${CPACK_PACKAGE_NAME}-cuda")
     if (WIN32)
         set(CPACK_RESOURCE_FILE_LICENSE ${CMAKE_CURRENT_SOURCE_DIR}/legal/LICENSE-full)
         find_package(CUDAToolkit)
