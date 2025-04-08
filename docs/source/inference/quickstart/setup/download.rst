@@ -4,6 +4,10 @@
 Download
 ========
 
+.. warning::
+
+    This download page will be updated and the links are outdated! Refer to :doc:`compiling from source <compile_from_source>`
+
 MBASE SDK v0.1.0 download page
 
 -----------

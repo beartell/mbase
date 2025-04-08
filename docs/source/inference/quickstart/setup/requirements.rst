@@ -23,6 +23,7 @@ Library Requirements
 Here is a list of tools and libraries you need:
 
 * CUDA Toolkit if NVIDIA GPU inference is desired.
+* OpenSSL library for enabling SSL support on :doc:`mbase_openai_server <../../programs/openai-server/about>`.
 * `MBASE <mbase_main_>`_
 * `llama.cpp <llama.cpp_>`_
 

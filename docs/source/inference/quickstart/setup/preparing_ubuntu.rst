@@ -8,29 +8,11 @@ Preparing Ubuntu
 Tool Installation
 -----------------
 
-To install gcc:
+To install all tools
 
 .. code-block:: bash
 
-    sudo apt install git gcc g++
-
-To install cmake:
-
-.. code-block:: bash
-
-    sudo apt install git cmake
-
-To install git:
-
-.. code-block:: bash
-
-    sudo apt install git
-
-To install uuid:
-
-.. code-block:: bash
-
-    sudo apt install uuid-dev
+    sudo apt-get -y install git gcc g++ cmake uuid-dev libssl-dev
 
 ------------
 CUDA Toolkit
@@ -40,7 +22,7 @@ To enable NVIDIA GPU Support, you need the CUDA toolkit installed which can be d
 
 .. code-block:: bash
 
-    sudo apt install nvidia-cuda-toolkit
+    sudo apt-get -y install nvidia-cuda-toolkit
 
 After you download and install all those softwares, make sure they are properly set.
 Next, we will build the MBASE library.
