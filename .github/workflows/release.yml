@@ -4,8 +4,9 @@ on:
   workflow_dispatch:
 
 jobs:
-  ubuntu-amd64-release:
-    runs-on: ubuntu-latest
+
+  macos-metal-release:
+    runs-on: mbase-arm-mac1
     steps:
       - name: Checkout the main branch
         uses: actions/checkout@v4
@@ -13,26 +14,18 @@ jobs:
           ref: ${{ github.ref }}
           submodules: recursive
       
-      - name: System dependency install
+      - name: Metal bundled build
         run: |
-          sudo apt-get -y install file
-          sudo apt-get -y install uuid-dev
-          sudo apt-get -y install rpm
-
-      - name: AMD64 bundled build
-        run: |
-          cmake -B build_amd64_bundle -DMBASE_FORCE_BUNDLE=ON -DMBASE_SERVER_SSL=ON -DMBASE_PACKAGING=ON
-          cmake --build build_amd64_bundle --config Release -j
+          rm -rf build_metal_bundle
+          cmake -B build_metal_bundle -DMBASE_FORCE_BUNDLE=ON -DMBASE_SERVER_SSL=ON -DMBASE_PACKAGING=ON
+          cmake --build build_metal_bundle --config Release -j
           rm -rf ./output
           mkdir output
-
-      - name: Packaging the program
-        run: |
           cd output
-          cpack -G "ZIP;TGZ;DEB;RPM" --config ../build_amd64_bundle/CPackConfig.cmake
+          cpack -G "ZIP;TGZ" --config ../build_metal_bundle/CPackConfig.cmake
           rm -rf ./_CPack_Packages
           cd ..
+      
+      - name: Uploading artifacts
+        run: |
           gh release upload "$(git describe --tags --abbrev=0)" ./output/* --clobber
-
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
