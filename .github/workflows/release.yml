@@ -10,6 +10,7 @@ jobs:
     steps:
       - name: Checkout the main branch
         uses: actions/checkout@v4
+        run: git fetch --prune --unshallow
         with:
           ref: ${{ github.ref }}
           submodules: recursive
