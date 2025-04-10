@@ -1,4 +1,5 @@
 name: MBASE Documentation Build
+
 on:
   push:
     branches:
