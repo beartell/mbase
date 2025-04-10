@@ -28,7 +28,10 @@ Common Options
 There are some common CMake options worth mentioning. They can be specified at the cmake configuration stage.
 
 :code:`MBASE_SERVER_SSL`: If set, openai server program will be with SSL support. However, if you set this up, make sure you have the :code:`openssl` installed in your environment. (default=OFF)
-:code:`MBASE_FORCE_BUNDLE`: It set, the compilation will be force bundled even if you have `llama.cpp <llama.cpp_>`_ installed in your environment. (default=OFF)
+
+:code:`MBASE_FORCE_BUNDLE`: It set, the compilation will compile the `llama.cpp <llama.cpp_>`_ with MBASE even if you have `llama.cpp <llama.cpp_>`_ installed in your environment. (default=OFF)
+
+:code:`GGML_CUDA`: `llama.cpp <llama.cpp_>`_ library option. If set, cuda compilation will be enabled.
 
 -------------------
 Bundled Compilation
@@ -67,10 +70,8 @@ In order to build x86_64 backend, do the following:
 .. code-block:: bash
 
     cd mbase
-    mkdir build_cpu
-    cd build_cpu
-    cmake ..
-    cmake --build . --config Release -j
+    cmake -B build_x86 -DMBASE_SERVER_SSL=ON -DMBASE_FORCE_BUNDLE=ON
+    cmake --build build_x86 --config Release -j
 
 The compilation may take some time so do not worry.
 
@@ -83,9 +84,8 @@ In order to build Apple Metal backend, do the following:
 .. code-block:: bash
 
     cd mbase
-    mkdir build_metal
-    cd build_metal
-    cmake -DGGML_METAL=ON -DGGML_METAL_USE_BF16=ON -DGGML_METAL_EMBED_LIBRARY=ON ..
+    cmake -B build_metal -DGGML_METAL=ON -DGGML_METAL_USE_BF16=ON -DGGML_METAL_EMBED_LIBRARY=ON -DMBASE_SERVER_SSL=ON -DMBASE_FORCE_BUNDLE=ON
+    cmake --build build_metal --config Release -j
 
 The compilation may take some time so do not worry.
 
@@ -100,49 +100,16 @@ CUDA GPU BUILD
 
     * :doc:`For Ubuntu<preparing_ubuntu>`
 
-NVIDIA GPUs have different CUDA compute capabilities which can be seen `here <https://developer.nvidia.com/cuda-gpus>`_.
-MBASE SDK CUDA compilation workflow consider this fact and allows you to select for which CUDA devices you want to compile the program.
+NVIDIA GPUs have different CUDA compute capabilities which can be seen `here <https://developer.nvidia.com/cuda-gpus>`_. 
+User must set the :code:`CMAKE_CUDA_ARCHITECTURES` option accordingly to what GPUs user wants the compile the MBASE to. In our case, we simply will compile for the native GPU we have.
 
-This is specified by the option :code:`MBASE_CUDA_TARGET`. Values of the :code:`MBASE_CUDA_TARGET` can be one of the following:
-
-- :code:`datacenter`: NVIDIA Datacenter Products.
-- :code:`quadro-rtx`: NVIDIA Quadro and NVIDIA RTX.
-- :code:`geforce-titan`: NVIDIA GeForce and TITAN Products.
-- :code:`jetson`: NVIDIA Jetson Products.
-
-Be aware that since the GPUs that have a CUDA compute capability under 5.2 are too old, they won't be included as
-CUDA architectures in the CMake configuration. 
-
-.. important::
-    If you don't specify the :code:`MBASE_CUDA_TARGET`, it will be set to your host GPU compute capability and the compiled program will
-    work on GPUs that have the same CUDA compute capability as yours.
-
-Here is what MBASE do in its CMakeLists.txt file:
-
-.. code-block:: cmake
-
-    if(NOT DEFINED CMAKE_CUDA_ARCHITECTURES)
-        set(CMAKE_CUDA_ARCHITECTURES "native")
-        if(MBASE_CUDA_TARGET STREQUAL "datacenter")
-            set(CMAKE_CUDA_ARCHITECTURES "90;89;86;80;75;70;61;60")
-        elseif(MBASE_CUDA_TARGET STREQUAL "quadro-rtx")
-            set(CMAKE_CUDA_ARCHITECTURES "89;86;75;70;61;60;52")
-        elseif(MBASE_CUDA_TARGET STREQUAL "geforce-titan")
-            set(CMAKE_CUDA_ARCHITECTURES "89;86;75;70;61;60;52")
-        elseif(MBASE_CUDA_TARGET STREQUAL "jetson")
-            set(CMAKE_CUDA_ARCHITECTURES "87;72;62;53")
-        endif()
-    endif()
-
-Now, in order to compile with CUDA you should specify the CUDA target and set the "GGML_CUDA" option to on:
+Now, in order to compile with CUDA you should specify the :code:`CMAKE_CUDA_ARCHITECTURES` as native and set the :code:`GGML_CUDA` option to on:
 
 .. code-block:: bash
 
    cd mbase
-   mkdir build_gpu
-   cd build_gpu
-   cmake -DGGML_CUDA=0N -DMBASE_CUDA_TARGET="geforce-titan" ..
-   cmake --build . --config Release -j
+   cmake -B build_gpu -DGGML_CUDA=0N -DCMAKE_CUDA_ARCHITECTURES="native" -DMBASE_SERVER_SSL=ON -DMBASE_FORCE_BUNDLE=ON
+   cmake --build build_gpu --config Release -j
 
 The compilation may take some time so do not worry.
 
@@ -155,10 +122,8 @@ In order to build the MBASE, do the following:
 .. code-block:: bash
 
     cd mbase
-    mkdir build
-    cd build
-    cmake ..
-    cmake --build . --config Release -j
+    cmake -B build -DMBASE_SERVER_SSL=ON
+    cmake --build build --config Release -j
 
 The compilation may take some time so do not worry.
 
