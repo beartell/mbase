@@ -71,6 +71,7 @@ JSON file will contain an array of objects that contains the given keys and valu
 - :code:`context_length` (default=2048): Context length of each processor. The inference engine will allocate a context for each processor.
 - :code:`batch_length` (default=512): User's input will be processed in batches by the inference engine. Higher the number, better the performance but significant increase on RAM usage. This number can't exceed the context size.
 - :code:`gpu_layers` (default=80): Number of layers to be offloaded to GPU if there are any GPU devices in your system. Ignored if there are no GPUs.
+- :code:`fsys`: Path to the file containing the system prompt. It will cached to the LLM's KV cache.
 
 If you are hosting a TextToText model, the following samplers may also be specified.
 
@@ -125,6 +126,7 @@ Specifying all parameters and some samplers:
             "batch_thread_count" : 8,
             "batch_length" : 512,
             "gpu_layers" : 80,
+            "fsys" : "your_system_prompt.txt",
             "samplers" :
             {
                 "top_k" : 40,
