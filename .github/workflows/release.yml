@@ -15,7 +15,7 @@ jobs:
           ref: ${{ github.ref }}
           submodules: recursive
       
-      - name: Metal bundled build
+      - name: Metal llama.cpp bundled build
         run: |
           rm -rf build_metal_bundle
           cmake -B build_metal_bundle -DMBASE_FORCE_BUNDLE=ON -DMBASE_SERVER_SSL=ON -DMBASE_PACKAGING=ON
@@ -27,6 +27,52 @@ jobs:
           rm -rf ./_CPack_Packages
           cd ..
       
+      - name: ARM MBASE standalone build
+        run: |
+          rm -rf build_standalone
+          cmake -B build_standalone -DMBASE_SERVER_SSL=ON -DMBASE_PACKAGING=ON
+          cmake --build build_standalone --config Release -j
+          cd output
+          cpack -G "ZIP;TGZ" --config ../build_standalone/CPackConfig.cmake
+          rm -rf ./_CPack_Packages
+          cd ..
+
+      - name: Uploading artifacts
+        run: |
+          gh release upload "$(git describe --tags --abbrev=0)" ./output/* --clobber
+  
+  ubuntu-amd64-cuda-release:
+    runs-on: mbase-ubuntu-cuda-amd64-r16p8-1
+    steps:
+      - name: Checkout the main branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.ref }}
+          submodules: recursive
+      
+      - name: CUDA amd64 llama.cpp bundled build
+        run: |
+          rm -rf build_cuda_amd64
+          cmake -B build_cuda_amd64 -DMBASE_FORCE_BUNDLE=ON -DMBASE_SERVER_SSL=ON -DMBASE_PACKAGING=ON -DGGML_NATIVE=OFF -DGGML_CUDA=ON
+          cmake --build build_cuda_amd64 --config Release -j
+          rm -rf ./output
+          mkdir output
+          cd output
+          cpack -G "ZIP;TGZ;DEB;RPM" --config ../build_cuda_amd64/CPackConfig.cmake
+          rm -rf ./_CPack_Packages
+          cd ..
+      
+      - name: AMD64 MBASE standalone build
+        run: |
+          rm -rf build_standalone
+          cmake -B build_standalone -DMBASE_SERVER_SSL=ON -DMBASE_PACKAGING=ON
+          cmake --build build_standalone --config Release -j
+          cd output
+          cpack -G "ZIP;TGZ;DEB;RPM" --config ../build_standalone/CPackConfig.cmake
+          rm -rf ./_CPack_Packages
+          cd ..
+
       - name: Uploading artifacts
         run: |
           gh release upload "$(git describe --tags --abbrev=0)" ./output/* --clobber
