@@ -1,8 +1,6 @@
-# MBASE
-
 <div align="center">
   <a href="" />
-    <img alt="MBASE" height="325px" src="https://github.com/user-attachments/assets/89d4b07a-1540-442f-9d86-5e105424ed70">
+    <img alt="MBASE" height="325px" src="https://github.com/user-attachments/assets/dff9b454-fbab-4be7-a3b9-55bbb0fb2058">
   </a>
 </div>
 <br>
