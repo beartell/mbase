@@ -116,6 +116,16 @@ struct InfTemplateGemma2 {
 	mbase::string userEnd = "<end_of_turn>\n";
 };
 
+struct InfTemplateGemma3 {
+	mbase::string systemStart = "<start_of_turn>system\n";
+	mbase::string assistantStart = "<start_of_turn>model\n";
+	mbase::string userStart = "<start_of_turn>user\n";
+
+	mbase::string systemEnd = "<end_of_turn>\n";
+	mbase::string assistantEnd = "<end_of_turn>\n";
+	mbase::string userEnd = "<end_of_turn>\n";
+};
+
 MBASE_INLINE GENERIC tokenizer_align_instruct_template(const mbase::string& in_template,
 	mbase::string& out_system_start,
 	mbase::string& out_assistant_start,
@@ -247,6 +257,18 @@ MBASE_INLINE GENERIC tokenizer_align_instruct_template(const mbase::string& in_t
 	else if(in_template == "gemma2" || in_template == "gemma")
 	{
 		InfTemplateGemma2 chatTemplate;
+		out_system_start = chatTemplate.systemStart;
+		out_assistant_start = chatTemplate.assistantStart;
+		out_user_start = chatTemplate.userStart;
+
+		out_system_end = chatTemplate.systemEnd;
+		out_assistant_end = chatTemplate.assistantEnd;
+		out_user_end = chatTemplate.userEnd;
+	}
+
+	else if(in_template == "gemma3")
+	{
+		InfTemplateGemma3 chatTemplate;
 		out_system_start = chatTemplate.systemStart;
 		out_assistant_start = chatTemplate.assistantStart;
 		out_user_start = chatTemplate.userStart;
