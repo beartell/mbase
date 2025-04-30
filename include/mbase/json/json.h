@@ -188,6 +188,9 @@ class MBASE_API Json
     F64 getDouble() const;
     F64 getNumber() const;
     long long getLong() const;
+    const mbase::string& getString() const;
+    const mbase::vector<Json>& getArray() const;
+    const std::map<mbase::string, Json>& getObject() const;
     mbase::string& getString();
     mbase::vector<Json>& getArray();
     std::map<mbase::string, Json>& getObject();

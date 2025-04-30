@@ -508,6 +508,36 @@ Json::getDouble() const
     }
 }
 
+const mbase::string& Json::getString() const
+{
+    switch (type_) {
+        case String:
+            return string_value;
+        default:
+            abort();
+    }
+}
+
+const mbase::vector<Json>& Json::getArray() const
+{
+    switch (type_) {
+        case Array:
+            return array_value;
+        default:
+            abort();
+    }
+}
+
+const std::map<mbase::string, Json>& Json::getObject() const
+{
+    switch (type_) {
+        case Object:
+            return object_value;
+        default:
+            abort();
+    }
+}
+
 mbase::string&
 Json::getString()
 {
