@@ -42,14 +42,8 @@ public:
 		{
 			return flags::DIAGNOSTICS_ERR_MISSING_MESSAGE;
 		}
-
-		mbase::string totalLog = _build_log_heading(in_log_type, in_log_importance);
-
-		totalLog += mbase::string::from_format(in_format, std::forward<Params>(in_params)...) + MBASE_PLATFORM_NEWLINE;
-
-		mLogList.push_back(totalLog);
-
-		return flags::DIAGNOSTICS_SUCCESS;
+		
+		return log(in_log_type, in_log_importance, mbase::string::from_format(in_format, std::forward<Params>(in_params)...) + MBASE_PLATFORM_NEWLINE);
 	}
 	flags log_stdout(flags in_log_type, flags in_log_importance, const mbase::string& in_message) noexcept;
 	template<typename ... Params>
@@ -60,13 +54,7 @@ public:
 			return flags::DIAGNOSTICS_ERR_MISSING_MESSAGE;
 		}
 
-		mbase::string totalLog = _build_log_heading(in_log_type, in_log_importance);
-
-		totalLog += mbase::string::from_format(in_format, std::forward<Params>(in_params)...) + MBASE_PLATFORM_NEWLINE;
-
-		printf("%s", totalLog.c_str());
-
-		return flags::DIAGNOSTICS_SUCCESS;
+		return log_stdout(in_log_type, in_log_importance, mbase::string::from_format(in_format, std::forward<Params>(in_params)...) + MBASE_PLATFORM_NEWLINE);
 	}
 	GENERIC flush_logs() noexcept;
 	GENERIC print_logs() const noexcept;
