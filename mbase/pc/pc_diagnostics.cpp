@@ -1,5 +1,6 @@
 #include <mbase/pc/pc_diagnostics.h>
 #include <mbase/io_file.h>
+#include <stdio.h>
 
 MBASE_BEGIN
 
@@ -22,7 +23,7 @@ PcDiagnostics::flags PcDiagnostics::log(flags in_log_type, flags in_log_importan
 	{
 		return flags::DIAGNOSTICS_ERR_MISSING_MESSAGE;
 	}
-
+	
 	mbase::string totalLog = _build_log_heading(in_log_type, in_log_importance);
 	totalLog += in_message + MBASE_PLATFORM_NEWLINE;
 
