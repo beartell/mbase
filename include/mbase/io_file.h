@@ -14,6 +14,7 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <sys/stat.h>
+#include <unistd.h>
 #endif
 
 MBASE_STD_BEGIN
@@ -43,6 +44,37 @@ io_file does not make further control on read/write operations whether the file 
 To achieve async io behavior, refer to the section Async I/O in MBASE.
 
 */
+
+class io_std_handle_setter {
+public:
+	#ifdef MBASE_PLATFORM_WINDOWS
+	using _std_file_handle = PTRGENERIC;
+	#endif
+	#ifdef MBASE_PLATFORM_UNIX
+	using _std_file_handle = I32;
+	#endif
+
+	io_std_handle_setter()
+	{
+		#ifdef MBASE_PLATFORM_WINDOWS
+		mStdinFileHandle = GetStdHandle(STD_INPUT_HANDLE);
+		mStdoutFileHandle = GetStdHandle(STD_OUTPUT_HANDLE);
+		mStderrFileHandle = GetStdHandle(STD_ERROR_HANDLE);
+		#endif
+
+		#ifdef MBASE_PLATFORM_UNIX
+		mStdoutFileHandle = STDOUT_FILENO;
+		mStdinFileHandle = STDIN_FILENO;
+		mStderrFileHandle = STDERR_FILENO;
+		#endif
+	}
+
+	_std_file_handle mStdinFileHandle;
+	_std_file_handle mStdoutFileHandle;
+	_std_file_handle mStderrFileHandle;
+};
+
+static inline io_std_handle_setter gIoStdHandleStter;
 
 class io_file : public io_base, public non_copymovable {
 public:
@@ -75,6 +107,7 @@ public:
 
 	/* ===== BUILDER METHODS BEGIN ===== */
 	MBASE_INLINE io_file() noexcept;
+	MBASE_INLINE io_file(os_file_handle in_file_handle) noexcept; // internal call. it is for setting standard handles, 
 	MBASE_INLINE io_file(const mbase::wstring& in_filename, access_mode in_accmode = access_mode::RW_ACCESS, disposition in_disp = disposition::OVERWRITE) noexcept;
 	MBASE_INLINE ~io_file() noexcept;
 	/* ===== BUILDER METHODS END ===== */
@@ -106,6 +139,12 @@ private:
 
 MBASE_INLINE io_file::io_file() noexcept : mFileName()
 {
+}
+
+MBASE_INLINE io_file::io_file(os_file_handle in_file_handle) noexcept
+{
+	mOperateReady = true;
+	_set_raw_context(in_file_handle);
 }
 
 MBASE_INLINE io_file::io_file(const mbase::wstring& in_filename, access_mode in_accmode, disposition in_disp) noexcept : mFileName(in_filename)
@@ -235,6 +274,16 @@ MBASE_INLINE GENERIC io_file::close_file() noexcept
 {
 	if (mRawContext.raw_handle)
 	{
+		// we do not need to close the standard handles
+		if(
+			mRawContext.raw_handle == gIoStdHandleStter.mStdoutFileHandle || 
+			mRawContext.raw_handle == gIoStdHandleStter.mStdinFileHandle ||
+			mRawContext.raw_handle == gIoStdHandleStter.mStderrFileHandle
+		)
+		{
+			return;
+		}
+
 #ifdef MBASE_PLATFORM_WINDOWS
 		CloseHandle(mRawContext.raw_handle);
 #endif
@@ -521,6 +570,10 @@ MBASE_INLINE bool append_string_to_file(const mbase::string& in_path, const mbas
 	iof.write_data(in_string);
 	return true;
 }
+
+static inline mbase::io_file gStdout(gIoStdHandleStter.mStdoutFileHandle);
+static inline mbase::io_file gStdin(gIoStdHandleStter.mStdinFileHandle);
+static inline mbase::io_file gStderr(gIoStdHandleStter.mStderrFileHandle);
 
 MBASE_STD_END
 
