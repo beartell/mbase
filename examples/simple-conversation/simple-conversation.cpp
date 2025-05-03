@@ -390,7 +390,11 @@ int main(int argc, char** argv)
 
     printf("Given model is: %s\n", gSampleParams.mModelFile.c_str());
 
-    cnvModel.initialize_model_ex(mbase::from_utf8(gSampleParams.mModelFile), 1200000, gSampleParams.mGpuLayer, true, true, deviceDescription);
+    if(cnvModel.initialize_model_ex(mbase::from_utf8(gSampleParams.mModelFile), 120000000, gSampleParams.mGpuLayer, true, true, deviceDescription) != ConversationModel::flags::INF_MODEL_INFO_INITIALIZING_MODEL)
+    {
+        printf("ERR: Model not found\n");
+        return 1;
+    }
     mbase::vector<char> loadingCharacters = {'\\', '|', '-', '/'};
     while(cnvModel.signal_initializing())
     {
