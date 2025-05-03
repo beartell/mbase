@@ -693,7 +693,7 @@ void server_start()
 
     std::string httpHost(gProgramData.hostName.c_str(), gProgramData.hostName.size());
     svr->listen(httpHost, gProgramData.listenPort);
-    gProgramData.diagnostic.log(mbase::PcDiagnostics::flags::LOGTYPE_ERROR, mbase::PcDiagnostics::flags::LOGIMPORTANCE_FATAL, "Unable to listen on host: %s:%d", gProgramData.hostName.c_str(), gProgramData.listenPort);
+    printf("ERR: Unable to listen on host: %s:%d\n", gProgramData.hostName.c_str(), gProgramData.listenPort);
     gProgramData.serverListening = false;
 }
 
@@ -704,7 +704,7 @@ void apply_json_desc(const mbase::string& in_json_string)
     if(parsedJson.first != mbase::Json::Status::success)
     {
         printf("ERR: JSON parse failed\n");
-        exit(0);
+        exit(1);
     }
 
     gProgramData.jsonDescription = mbase::Json::parse(in_json_string).second;
@@ -713,6 +713,8 @@ void apply_json_desc(const mbase::string& in_json_string)
     if(!tmpJson.isArray())
     {
         // top level entry must be array
+        printf("ERR: Invalid JSON file format");
+        exit(1);
     }
 
     for(mbase::Json& modelObject : tmpJson.getArray())
@@ -772,12 +774,16 @@ void apply_json_desc(const mbase::string& in_json_string)
             systemPromptString = mbase::read_file_as_string(mbase::from_utf8(modelObject["fsys"].getString()));
         }
 
+        mbase::string modelString = modelObject["model_path"].getString();
         mbase::OpenaiModel* newModel = new mbase::OpenaiModel;
+
+        printf("Loading the model: %s\n", modelString.c_str());
         if(newModel->initialize_model_sync(modelPath, 99999999, gpuLayers) != mbase::OpenaiModel::flags::INF_MODEL_INFO_UPDATE_REQUIRED)
         {
-            wprintf(L"ERR: Unable to start initializing model: %s\n", modelObject["model_path"].getString().c_str());
+            printf("ERR: Unable to load the model: %s\n", modelString.c_str());
             exit(1);
         }
+        printf("Model is succesfully loaded!\n");
 
         mbase::inf_sampling_set samplersList;
 
@@ -840,6 +846,9 @@ void apply_json_desc(const mbase::string& in_json_string)
         }
 
         newModel->update();
+        modelString = newModel->get_model_name();
+
+        printf("Initializing (%d) processors for %s\n", processorCount, modelString.c_str());
 
         if(newModel->is_embedding_model())
         {
@@ -868,31 +877,32 @@ void apply_json_desc(const mbase::string& in_json_string)
             mbase::sleep(5);
         }
 
-        gProgramData.diagnostic.print_logs();
-        gProgramData.diagnostic.flush_logs();
+        printf("All processors are successfully initialized!\n");
 
         if(!newModel->is_embedding_model() && systemPromptString.size())
         {
             // means we should cache the system prompt
-            gProgramData.diagnostic.log_stdout(mbase::PcDiagnostics::flags::LOGTYPE_INFO, mbase::PcDiagnostics::flags::LOGIMPORTANCE_MID, "Caching the system prompt on processors. This may take a while...");
+            printf("Caching the system prompt on processors. This may take a while...\n");
             for(mbase::OpenaiModel::context_processor_list::iterator It = newModel->get_registered_processors().begin(); It != newModel->get_registered_processors().end(); ++It)
             {
                 mbase::OpenaiTextToTextProcessor* t2tProc = reinterpret_cast<mbase::OpenaiTextToTextProcessor*>(It->mSubject);
                 mbase::inf_text_token_vector tokVec;
                 if(t2tProc->tokenize_input(systemPromptString.c_str(), systemPromptString.size(), tokVec) == mbase::OpenaiTextToTextProcessor::flags::INF_PROC_ERR_UNABLE_TO_TOKENIZE_INPUT)
                 {
-                    gProgramData.diagnostic.log_stdout(mbase::PcDiagnostics::flags::LOGTYPE_ERROR, mbase::PcDiagnostics::flags::LOGIMPORTANCE_FATAL, "System prompt tokenization failed. This is happens if the system prompt contains a character outside the model's vocabulary");
+                    printf("ERR: System prompt tokenization failed. This is happens if the system prompt contains a character outside the model's vocabulary. Check the documentation of %s\n", modelString.c_str());
+                    exit(1);
                 }
 
                 if(tokVec.size() > t2tProc->get_context_size())
                 {
-                    gProgramData.diagnostic.log_stdout(mbase::PcDiagnostics::flags::LOGTYPE_ERROR, mbase::PcDiagnostics::flags::LOGIMPORTANCE_FATAL, "Tokenized system prompt exceeds context size: given(%d), context(%d)", tokVec.size(), t2tProc->get_context_size());
+                    printf("ERR: Tokenized system prompt exceeds the context size: given(%d), context(%d)\n", tokVec.size(), t2tProc->get_context_size());
+                    exit(2);
                 }
 
                 t2tProc->execute_input_sync(tokVec, true);
                 t2tProc->update();
             }
-            gProgramData.diagnostic.log_stdout(mbase::PcDiagnostics::flags::LOGTYPE_SUCCESS, mbase::PcDiagnostics::flags::LOGIMPORTANCE_MID, "System prompt successfully cached.");
+            printf("System prompt successfully cached!\n");
         }
 
         gProgramData.programModels.push_back(newModel);
@@ -988,8 +998,7 @@ int main(int argc, char** argv)
     jsonFile = mbase::read_file_as_string(fileLocation);
     apply_json_desc(jsonFile);
 
-
-    printf("** Hosted Model Information **\n");
+    printf("** Hosted Models Information **\n");
     for(mbase::vector<mbase::OpenaiModel*>::iterator It = gProgramData.programModels.begin(); It != gProgramData.programModels.end(); ++It)
     {
         mbase::OpenaiModel* tmpModel = *It;
@@ -1039,6 +1048,4 @@ int main(int argc, char** argv)
             n->update();
         }
     }
-
-    gProgramData.diagnostic.print_logs();    
 }
