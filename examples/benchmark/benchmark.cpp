@@ -88,8 +88,15 @@ GENERIC print_usage()
 
 class BenchmarkModel : public InfModelTextToText {
 public:
-    GENERIC on_initialize_fail([[maybe_unused]] init_fail_code out_fail_code) override{}
-    GENERIC on_initialize() override{}
+    GENERIC on_initialize_fail([[maybe_unused]] init_fail_code out_fail_code) override
+    {
+        printf("ERR: Unable to initialize the model\n");
+        exit(1);
+    }
+    GENERIC on_initialize() override
+    {
+        printf("Model is successfully initialized!\n");
+    }
     GENERIC on_destroy() override{}
 private:
 };
@@ -104,7 +111,7 @@ public:
     GENERIC on_initialize_fail([[maybe_unused]] last_fail_code out_code) override
     {
         fflush(stdout);
-        printf("ERR: Context initialization failed.\n");
+        printf("ERR: Processor initialization failed.\n");
         printf("ERR: Insufficent memory.\n");
         exit(1);
     }
@@ -311,14 +318,27 @@ int main(int argc, char** argv)
         processorsList.push_back(new BenchmarkProcessor); // os will release the resource on program termination anyways.
     }
 
-    benchModel.initialize_model_ex_sync(mbase::from_utf8(gSampleParams.mModelFile), 1200000, gSampleParams.mGpuLayer, true, true, deviceDescription);
-    
-    if(!benchModel.is_initialized())
+    mbase::vector<char> loadingCharacters = {'\\', '|', '-', '/'};
+
+    if(benchModel.initialize_model_ex(mbase::from_utf8(gSampleParams.mModelFile), 99999999, gSampleParams.mGpuLayer, true, true, deviceDescription) != BenchmarkModel::flags::INF_MODEL_INFO_INITIALIZING_MODEL)
     {
-        printf("ERR: Unable to initialize model\n");
-        return 1;
+        printf("ERR: Model not found!\n");
+        exit(1);
     }
 
+    while(benchModel.signal_initializing())
+    {
+        for(char& n : loadingCharacters)
+        {
+            fflush(stdout);
+            printf("\rInitializing the model %c", n);
+            mbase::sleep(150);
+        }
+    }
+    fflush(stdout);
+    printf("\n");
+    benchModel.update();
+    printf("Initializing processors...\n");
     for(BenchmarkProcessor* tmpProc : processorsList)
     {
         benchModel.register_context_process(
@@ -338,7 +358,7 @@ int main(int argc, char** argv)
         }
         tmpProc->set_inference_client(&benchClient);
     }
-
+    printf("Processors are initialized!\n");
     signal(SIGINT, catching_interrupt_signal);
     
     SIZE_T modelSize = benchModel.get_size();
@@ -389,6 +409,9 @@ int main(int argc, char** argv)
         }
         printf("\t%s ## Type: %s\n", tmpDescription.get_device_description().c_str(), typeString.c_str());
     }
+
+    printf("Benchmark started!\n\n");
+
     for(BenchmarkProcessor* tmpProc : processorsList)
     {
         mbase::inf_text_token_vector tokVec(gSampleParams.mPromptLength, 1);

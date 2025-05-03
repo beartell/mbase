@@ -50,8 +50,6 @@ OpenaiModel::init_proc_err OpenaiModel::initialize_t2t_processors(
 
     mbase::string outName = this->get_model_name();
 
-    gProgramData.diagnostic.log(PcDiagnostics::flags::LOGTYPE_INFO, PcDiagnostics::flags::LOGIMPORTANCE_MID, "Initializing processors for model: %s", outName.c_str());
-
     for(U32 i = 0; i < in_processor_count; i++)
     {
         OpenaiTextToTextProcessor* newProcessor = new OpenaiTextToTextProcessor(i);
@@ -95,8 +93,6 @@ OpenaiModel::init_proc_err OpenaiModel::initialize_embedder_processors(
     }
 
     mbase::string outName = this->get_model_name();
-
-    gProgramData.diagnostic.log(PcDiagnostics::flags::LOGTYPE_INFO, PcDiagnostics::flags::LOGIMPORTANCE_MID, "Initializing processors for model: %s", outName.c_str());
 
     for(U32 i = 0; i < in_processor_count; i++)
     {
@@ -176,7 +172,7 @@ GENERIC OpenaiModel::_incr_processor_count()
 
 GENERIC OpenaiModel::on_initialize_fail(init_fail_code out_fail_code)
 {
-    printf("ERR: Model initialization failed");
+    printf("ERR: Model initialization failed\n");
     printf("INFO: Make sure you have enough memory to run this model.\n");
     exit(1);
 }
