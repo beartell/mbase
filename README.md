@@ -7,6 +7,7 @@
 
 ![GitHub Version](https://img.shields.io/github/v/release/Emreerdog/mbase)
 ![Static Badge](https://img.shields.io/badge/licence-MIT-blue)
+![SDK Dev build badge](https://github.com/Emreerdog/mbase/actions/workflows/build.yml/badge.svg)
 
 MBASE inference library is a high-level non-blocking LLM inference library written on top
 of the [llama.cpp](https://github.com/ggml-org/llama.cpp) library to provide the necessary tools and APIs to allow developers
