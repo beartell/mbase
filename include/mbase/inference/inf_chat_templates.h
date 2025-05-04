@@ -221,7 +221,7 @@ MBASE_INLINE GENERIC tokenizer_align_instruct_template(const mbase::string& in_t
 		out_assistant_end = chatTemplate.assistantEnd;
 		out_user_end = chatTemplate.userEnd;
 	}
-	else if(in_template == "qwen2")
+	else if(in_template == "qwen2" || in_template == "qwen3")
 	{
 		InfTemplateQwen chatTemplate;
 		out_system_start = chatTemplate.systemStart;
