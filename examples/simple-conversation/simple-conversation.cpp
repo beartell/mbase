@@ -99,15 +99,25 @@ GENERIC print_usage()
 
 class ConversationModel : public InfModelTextToText {
 public:
-    GENERIC on_initialize_fail([[maybe_unused]] init_fail_code out_fail_code) override{}
-    GENERIC on_initialize() override{}
+    GENERIC on_initialize_fail([[maybe_unused]] init_fail_code out_fail_code) override
+    {
+        printf("ERR: Unable to initialize the model\n");
+        exit(1);
+    }
+    GENERIC on_initialize() override
+    {
+        printf("Model succesfully initialized!\n");
+    }
     GENERIC on_destroy() override{}
 private:
 };
 
 class ConversationProcessor : public InfProcessorTextToText {
 public:
-    GENERIC on_initialize() override{}
+    GENERIC on_initialize() override
+    {
+        printf("\nContext is successfully initialized!\n");
+    }
     GENERIC on_initialize_fail([[maybe_unused]] last_fail_code out_code) override
     {
         fflush(stdout);
@@ -377,9 +387,27 @@ int main(int argc, char** argv)
     ConversationModel cnvModel;
     ConversationProcessor cnvProcessor;
     ConversationClient cnvClient(gSampleParams.mSystemPrompt);
-    
-    cnvModel.initialize_model_ex_sync(mbase::from_utf8(gSampleParams.mModelFile), 1200000, gSampleParams.mGpuLayer, true, true, deviceDescription);
-    
+
+    printf("Given model is: %s\n", gSampleParams.mModelFile.c_str());
+
+    if(cnvModel.initialize_model_ex(mbase::from_utf8(gSampleParams.mModelFile), 120000000, gSampleParams.mGpuLayer, true, true, deviceDescription) != ConversationModel::flags::INF_MODEL_INFO_INITIALIZING_MODEL)
+    {
+        printf("ERR: Model not found\n");
+        return 1;
+    }
+    mbase::vector<char> loadingCharacters = {'\\', '|', '-', '/'};
+    while(cnvModel.signal_initializing())
+    {
+        for(char& n : loadingCharacters)
+        {
+            fflush(stdout);
+            printf("\rInitializing the model %c", n);
+            mbase::sleep(150);
+        }
+    }
+    printf("\n");
+    cnvModel.update();
+
     if(!cnvModel.is_initialized())
     {
         printf("ERR: Unable to initialize model\n");
@@ -410,8 +438,13 @@ int main(int argc, char** argv)
     // Waiting for processor registration
     while(!cnvProcessor.is_registered())
     {
+        for(char& n : loadingCharacters)
+        {
+            fflush(stdout);
+            printf("\rInitializing the context %c", n);
+            mbase::sleep(150);
+        }
         cnvProcessor.update();
-        mbase::sleep(2);
     }
 
     signal(SIGINT, catching_interrupt_signal);
@@ -447,8 +480,6 @@ int main(int argc, char** argv)
         //printf("\t%s ## Type: %s\n", tmpDescription.get_device_description().c_str(), typeString.c_str());
         printf("\t%s ## Type: %s\n", tmpDescription.get_device_description().c_str(), tmpDescription.get_device_name().c_str());
     }
-
-    
 
     printf("- Samplers in order: \n");
     if(gSampleParams.mIsGreeady)

@@ -63,15 +63,25 @@ GENERIC print_usage()
 
 class FixerModel : public InfModelTextToText {
 public:
-    GENERIC on_initialize_fail([[maybe_unused]] init_fail_code out_fail_code) override{}
-    GENERIC on_initialize() override{}
+    GENERIC on_initialize_fail([[maybe_unused]] init_fail_code out_fail_code) override
+    {
+        printf("ERR: Unable to initialize the model\n");
+        exit(1);
+    }
+    GENERIC on_initialize() override
+    {
+        printf("Model succesfully initialized!\n");
+    }
     GENERIC on_destroy() override{}
 private:
 };
 
 class FixerProcessor : public InfProcessorTextToText {
 public:
-    GENERIC on_initialize() override{}
+    GENERIC on_initialize() override
+    {
+        printf("\nContext is successfully initialized!\n");
+    }
     GENERIC on_initialize_fail([[maybe_unused]] last_fail_code out_code) override
     {
         fflush(stdout);
@@ -153,7 +163,7 @@ public:
         printf("Fixed text is written to file: %s\n", gSampleParams.mOutputFile.c_str());
         mbase::io_file iof;
         iof.open_file(mbase::from_utf8(gSampleParams.mOutputFile));
-        iof.write_data(mGeneratedOutput);
+        iof.write_data(mGeneratedOutput.c_str(), mGeneratedOutput.size());
         
         gIsProgramRunning = false;
     }
@@ -272,14 +282,22 @@ int main(int argc, char** argv)
     FixerModel fixerModel;
     FixerProcessor fixerProcessor;
     FixerClient fixerClient("You are fixing typos in the given message and returning the corrected version to the user besides that do not add any remarks like or what you fixed in the text, just fix it and return.", gSampleParams.mSourceTextContent);
-    fixerModel.initialize_model_ex_sync(mbase::from_utf8(gSampleParams.mModelFile), 1200000, gSampleParams.mGpuLayer, true, true, deviceDescription);
-    
-    if(!fixerModel.is_initialized())
+    if(fixerModel.initialize_model_ex(mbase::from_utf8(gSampleParams.mModelFile), 512000, gSampleParams.mGpuLayer, true, true, deviceDescription) != FixerModel::flags::INF_MODEL_INFO_INITIALIZING_MODEL)
     {
-        printf("ERR: Unable to initialize model\n");
+        printf("ERR: Model not found\n");
         return 1;
     }
-
+    mbase::vector<char> loadingCharacters = {'\\', '|', '-', '/'};
+    while(fixerModel.signal_initializing())
+    {
+        for(char& n : loadingCharacters)
+        {
+            fflush(stdout);
+            printf("\rInitializing the model %c", n);
+            mbase::sleep(150);
+        }
+    }
+    printf("\n");
     fixerModel.update();
 
     mbase::inf_text_token_vector tokVec;
@@ -288,7 +306,6 @@ int main(int argc, char** argv)
         printf("ERR: Unable to tokenize input\n");
         return 1;
     }
-
     U32 topNearPower = std::pow(2, std::ceil(std::log2(tokVec.size())));
     U32 lowNearPower = std::pow(2, std::floor(std::log2(tokVec.size())));
 
@@ -297,7 +314,7 @@ int main(int argc, char** argv)
 
     fixerModel.register_context_process(
         &fixerProcessor,
-        tmpContextLength,
+        tmpContextLength + 1024,
         tmpBatchLength,
         gSampleParams.mThreadCount,
         gSampleParams.mBatchThreadCount,
@@ -308,8 +325,13 @@ int main(int argc, char** argv)
     // Waiting for processor registration
     while(!fixerProcessor.is_registered())
     {
+        for(char& n : loadingCharacters)
+        {
+            fflush(stdout);
+            printf("\rInitializing the context %c", n);
+            mbase::sleep(150);
+        }
         fixerProcessor.update();
-        mbase::sleep(2);
     }
 
     signal(SIGINT, catching_interrupt_signal);
@@ -317,7 +339,7 @@ int main(int argc, char** argv)
     mbase::string modelName = fixerModel.get_model_name();
     printf("==== Session Information ====\n\n");
     printf("- Model name: %s\n", modelName.c_str());
-    printf("- Context length: %u\n", tmpContextLength);
+    printf("- Context length: %u\n", tmpContextLength + 1024);
     printf("- Batch size: %u\n", tmpBatchLength);
     printf("- Batch processing threads: %u\n", gSampleParams.mBatchThreadCount);
     printf("- Generation threads: %u\n", gSampleParams.mThreadCount);

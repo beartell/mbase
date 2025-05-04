@@ -3,6 +3,22 @@
 
 MBASE_BEGIN
 
+GENERIC inf_llama_logger(ggml_log_level log_lvl, const char* usr_text, void* usr_data)
+{
+    (void)log_lvl;
+    (void)usr_text;
+    (void)usr_data;
+}
+
+struct inf_llama_log_setter {
+    inf_llama_log_setter()
+    {
+        llama_log_set(inf_llama_logger, nullptr);
+    }
+};
+
+static inf_llama_log_setter gInfLogSetter;
+
 GENERIC inf_common_batch_add(
     llama_batch& in_batch,
     inf_text_token in_id,
