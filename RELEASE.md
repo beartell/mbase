@@ -1,25 +1,17 @@
 # MBASE SDK Release
 
-## v0.2.4 Latest - 2025-04-06
+## v0.2.5 Latest - 2025-05-04
 
 ### SDK Fix
 
-- In simple-conversation program, `#include <locale.h>` changed to `#include <clocale>`. Former was causing compiler errors on macOS. f782666
+- pc_diagnostics object methods are fixed 1ba1bf8
 
-- llama kv cache methods names are updated. 0ab7b66
-
-- Fixed a problem in `io_file.h` file which were causing compiler errors on windows. e64c869
-
-- Phi model template fixed. 124e9d2
+- Better logging on example programs: 45ca46e, 2386a07, 68cd585, df013c7
 
 ### SDK Added
 
-- File operations were only accepting wide strings, now they also accept multibyte strings. 7c67a55
+- In json library, const getters are implemented fa32029
 
-- Implemented `mbase::max_element` and `mbase::min_element`. d188bc1
+- STD file handles can be accessed through io_file objects now ddb7fe0
 
-
-
-
-
-
+- llama logger is disabled by default now 74deca7
