@@ -1,6 +1,10 @@
 <div align="center">
-  <a href="" />
-    <img alt="MBASE" height="325px" src="https://github.com/user-attachments/assets/dff9b454-fbab-4be7-a3b9-55bbb0fb2058">
+  <a href="#">
+    <picture>
+      <source srcset="https://github.com/user-attachments/assets/e5429f96-7db7-45bf-955a-a9eea6639fc3" media="(prefers-color-scheme: dark)">
+      <source srcset="https://github.com/user-attachments/assets/2d944103-5bb6-4744-a016-c7103ed3bb61" media="(prefers-color-scheme: light)">
+      <img alt="MBASE" height="325px" src="https://github.com/user-attachments/assets/e5429f96-7db7-45bf-955a-a9eea6639fc3">
+    </picture>
   </a>
 </div>
 <br>
