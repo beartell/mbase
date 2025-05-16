@@ -131,6 +131,7 @@ public:
 	MBASE_INLINE size_type read_data(IBYTEBUFFER in_src, size_type in_length) override;
 	MBASE_INLINE size_type read_data(char_stream& in_src) override;
 	MBASE_INLINE size_type read_data(char_stream& in_src, size_type in_length) override;
+	MBASE_INLINE size_type _read_stdin(IBYTEBUFFER in_src, size_type in_length);
 	/* ===== STATE-MODIFIER METHODS END ===== */
 
 private:
@@ -465,6 +466,24 @@ MBASE_INLINE typename io_file::size_type io_file::read_data(char_stream& in_src)
 MBASE_INLINE typename io_file::size_type io_file::read_data(char_stream& in_src, size_type in_length)
 {
 	return this->read_data(in_src.get_bufferc(), in_length);
+}
+
+MBASE_INLINE typename io_file::size_type io_file::_read_stdin(IBYTEBUFFER in_src, size_type in_length)
+{
+	if(!is_file_open())
+	{
+		return 0;		
+	}
+	size_type readResult = 0;
+#ifdef MBASE_PLATFORM_WINDOWS
+	DWORD dataRead = 0;
+	ReadFile(mRawContext.raw_handle, in_src, in_length, &dataRead, nullptr);
+	readResult = dataRead;
+#endif
+#ifdef MBASE_PLATFORM_UNIX
+	readResult = read(mRawContext.raw_handle, in_src, in_length);
+#endif
+	return readResult;
 }
 
 MBASE_INLINE mbase::string read_file_as_string(mbase::io_file& in_iof)
