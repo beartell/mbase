@@ -10,7 +10,7 @@
 
 MBASE_BEGIN
 
-class MBASE_API processor_signal {
+class processor_signal {
 public:
 	/* ===== BUILDER METHODS BEGIN ===== */
 	MBASE_INLINE processor_signal() noexcept;
@@ -32,11 +32,11 @@ public:
 	/* ===== STATE-MODIFIER METHODS END ===== */
 
 private:
-	volatile bool mSignalState;
-	volatile bool mSignal;
+	volatile bool mSignalState = false;
+	volatile bool mSignal = false;
 };
 
-class MBASE_API logical_processor : public mbase::non_copymovable {
+class logical_processor : public mbase::non_copymovable {
 public:
 	logical_processor() : mProcessorThread(_update_t_static, this), mIsProcessorRunning(false) {}
 	~logical_processor() 
