@@ -37,6 +37,7 @@ public:
     MBASE_INLINE io_file& get_read_pipe1();
     MBASE_INLINE io_file& get_write_pipe1();
     MBASE_INLINE const mbase::string& get_process_name() const noexcept;
+    MBASE_INLINE GENERIC join();
 
 private:
     MBASE_INLINE GENERIC create_new_process(bool in_stdio, mbase::string in_process_name = mbase::string(), process_arguments in_arguments = process_arguments(), process_environment_vars in_environment_variables = process_environment_vars());
@@ -47,6 +48,7 @@ private:
     mbase::io_file mWritePipe;
     mbase::io_file mReadPipe1;
     mbase::io_file mWritePipe1;
+    int mChildPid = 0;
 };
 
 MBASE_INLINE subprocess::subprocess(bool in_stdio)
@@ -71,7 +73,11 @@ MBASE_INLINE subprocess::subprocess(bool in_stdio, const mbase::string& in_proce
 
 MBASE_INLINE subprocess::~subprocess()
 {
-
+    if(mChildPid)
+    {
+        int status = 0;
+        waitpid(mChildPid, &status, 0);
+    }
 }
 
 bool subprocess::is_child() const noexcept
@@ -104,8 +110,21 @@ MBASE_INLINE const mbase::string& subprocess::get_process_name() const noexcept
     return mProcessName;
 }
 
+MBASE_INLINE GENERIC subprocess::join()
+{
+    if(mChildPid)
+    {
+        mWritePipe.close_file();
+        mReadPipe1.close_file();
+        int status = 0;
+        waitpid(mChildPid, &status, 0);
+    }
+}
+
 MBASE_INLINE GENERIC subprocess::create_new_process(bool in_stdio, mbase::string in_process_name, process_arguments in_arguments, process_environment_vars in_environment_variables)
 {
+    mIsChild = true;
+    this->join();
     int pipeFd[2] = {0};
     int pipeFd1[2] = {0};
     pipe(pipeFd);
@@ -115,7 +134,9 @@ MBASE_INLINE GENERIC subprocess::create_new_process(bool in_stdio, mbase::string
     mReadPipe1.set_raw_handle(pipeFd1[0]);
     mWritePipe1.set_raw_handle(pipeFd1[1]);
 
-    if(fork())
+    mChildPid = fork();
+
+    if(mChildPid)
     {
         // the parent process
         mReadPipe.close_file();
@@ -162,6 +183,7 @@ MBASE_INLINE GENERIC subprocess::create_new_process(bool in_stdio, mbase::string
     if(!in_environment_variables.size())
     {
         execvp(in_process_name.c_str(), argumentsArray.data());
+        exit(1);
         return;
     }
 
@@ -176,6 +198,7 @@ MBASE_INLINE GENERIC subprocess::create_new_process(bool in_stdio, mbase::string
         }
         
         execve(in_process_name.c_str(), argumentsArray.data(), environmentVariables.data());
+        exit(1);
         return;
     }
 }

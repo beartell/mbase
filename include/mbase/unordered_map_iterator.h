@@ -324,7 +324,7 @@ MBASE_INLINE const_linear_bucket_iterator<MapContainer, BucketIterator>& const_l
 	{
 		++mBucketIndex;
 		BucketIterator bucketIter;
-		for (mBucketIndex; mBucketIndex < mMapContainer->bucket_count(); ++mBucketIndex)
+		for (; mBucketIndex < mMapContainer->bucket_count(); ++mBucketIndex)
 		{
 			bucketIter = mMapContainer->cbegin(mBucketIndex);
 			if (bucketIter != mMapContainer->cend(mBucketIndex))
