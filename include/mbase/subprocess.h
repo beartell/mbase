@@ -8,7 +8,11 @@
 #include <mbase/io_file.h>
 
 #ifdef MBASE_PLATFORM_UNIX
-#include <unistd.h> // pipe, fork, exec family procedures
+    #include <unistd.h> // pipe, fork, exec family procedures
+#endif
+
+#ifdef MBASE_PLATFORM_WINDOWS
+    #include <Windows.h>
 #endif
 
 MBASE_BEGIN
@@ -42,13 +46,20 @@ public:
 private:
     MBASE_INLINE GENERIC create_new_process(bool in_stdio, mbase::string in_process_name = mbase::string(), process_arguments in_arguments = process_arguments(), process_environment_vars in_environment_variables = process_environment_vars());
 
-    bool mIsChild = true;
+    bool mIsChild = false;
     mbase::string mProcessName;
     mbase::io_file mReadPipe;
     mbase::io_file mWritePipe;
     mbase::io_file mReadPipe1;
     mbase::io_file mWritePipe1;
+    #ifdef MBASE_PLATFORM_UNIX
     int mChildPid = 0;
+    #endif
+    #ifdef MBASE_PLATFORM_WINDOWS
+    STARTUPINFO procStartInformation;
+    PROCESS_INFORMATION procInformation;
+    mbase::wstring commandLineString;
+    #endif
 };
 
 MBASE_INLINE subprocess::subprocess(bool in_stdio)
@@ -73,11 +84,7 @@ MBASE_INLINE subprocess::subprocess(bool in_stdio, const mbase::string& in_proce
 
 MBASE_INLINE subprocess::~subprocess()
 {
-    if(mChildPid)
-    {
-        int status = 0;
-        waitpid(mChildPid, &status, 0);
-    }
+    this->join();
 }
 
 bool subprocess::is_child() const noexcept
@@ -112,6 +119,7 @@ MBASE_INLINE const mbase::string& subprocess::get_process_name() const noexcept
 
 MBASE_INLINE GENERIC subprocess::join()
 {
+    #ifdef MBASE_PLATFORM_UNIX
     if(mChildPid)
     {
         mWritePipe.close_file();
@@ -119,12 +127,33 @@ MBASE_INLINE GENERIC subprocess::join()
         int status = 0;
         waitpid(mChildPid, &status, 0);
     }
+    #endif 
+
+    #ifdef MBASE_PLATFORM_WINDOWS
+    if(mIsChild)
+    {
+        mWritePipe.close_file();
+        mReadPipe1.close_file();
+        WaitForSingleObject(procInformation.hProcess, INFINITE);
+        CloseHandle(procInformation.hProcess);
+        CloseHandle(procInformation.hThread);
+    }
+    #endif
+
+    mIsChild = false;
 }
 
 MBASE_INLINE GENERIC subprocess::create_new_process(bool in_stdio, mbase::string in_process_name, process_arguments in_arguments, process_environment_vars in_environment_variables)
 {
-    mIsChild = true;
     this->join();
+    if(!in_process_name.size())
+    {
+        mIsChild = false;
+        return;
+    }
+
+    mProcessName = in_process_name;
+    #ifdef MBASE_PLATFORM_UNIX
     int pipeFd[2] = {0};
     int pipeFd1[2] = {0};
     pipe(pipeFd);
@@ -156,15 +185,7 @@ MBASE_INLINE GENERIC subprocess::create_new_process(bool in_stdio, mbase::string
         close(pipeFd[0]);
         close(pipeFd1[1]);
     }
-
-    if(!in_process_name.size())
-    {
-        mIsChild = false;
-        return;
-    }
-
-    mProcessName = in_process_name;
-
+    
     mbase::vector<char*> argumentsArray(in_arguments.size() + 2); // + 2 stands for two things. First is the program name, last is the null terminator
     argumentsArray.push_back(in_process_name.data());
 
@@ -179,7 +200,7 @@ MBASE_INLINE GENERIC subprocess::create_new_process(bool in_stdio, mbase::string
         argumentsArray.push_back(tmpArgument.data());
     }
     argumentsArray.push_back(NULL);
-
+    
     if(!in_environment_variables.size())
     {
         execvp(in_process_name.c_str(), argumentsArray.data());
@@ -201,6 +222,83 @@ MBASE_INLINE GENERIC subprocess::create_new_process(bool in_stdio, mbase::string
         exit(1);
         return;
     }
+    #endif
+
+    #ifdef MBASE_PLATFORM_WINDOWS
+    ZeroMemory(&procStartInformation, sizeof(procStartInformation));
+    procStartInformation.cb = sizeof(procStartInformation);
+    ZeroMemory(&procInformation, sizeof(procInformation));
+    commandLineString.clear();
+    for(mbase::string& tmpArgument : in_arguments)
+    {
+        commandLineString += mbase::from_utf8(tmpArgument);
+    }
+    
+    commandLineString.push_back('\0');
+
+    SECURITY_ATTRIBUTES securityAttrs;
+    securityAttrs.nLength = sizeof(SECURITY_ATTRIBUTES);
+    securityAttrs.bInheritHandle = TRUE;
+    securityAttrs.lpSecurityDescriptor = NULL;
+
+    HANDLE parentReadEnd = NULL;
+    HANDLE childWriteEnd = NULL;
+    HANDLE childReadEnd = NULL;
+    HANDLE parentWriteEnd = NULL;
+
+    if(!CreatePipe(&parentReadEnd, &childWriteEnd, &securityAttrs, 0))
+    { 
+        return; 
+    }
+    if(!CreatePipe(&childReadEnd, &parentWriteEnd, &securityAttrs, 0))
+    { 
+        CloseHandle(parentReadEnd);
+        CloseHandle(childWriteEnd);
+        return; 
+    }
+    if(!SetHandleInformation(parentReadEnd, HANDLE_FLAG_INHERIT, 0))
+    {
+        CloseHandle(parentReadEnd);
+        CloseHandle(childWriteEnd);
+        CloseHandle(childReadEnd);
+        CloseHandle(parentWriteEnd);
+        return;
+    }
+    if(!SetHandleInformation(parentWriteEnd, HANDLE_FLAG_INHERIT, 0))
+    {
+        CloseHandle(parentReadEnd);
+        CloseHandle(childWriteEnd);
+        CloseHandle(childReadEnd);
+        CloseHandle(parentWriteEnd);
+        return;
+    }
+
+    procStartInformation.hStdOutput = childWriteEnd;
+    procStartInformation.hStdInput = childReadEnd;
+    procStartInformation.dwFlags |= STARTF_USESTDHANDLES;
+    
+    if(!CreateProcess(
+        mbase::from_utf8(mProcessName).c_str(),
+        commandLineString.data(),
+        NULL,
+        NULL,
+        TRUE,
+        0,
+        NULL,
+        NULL,
+        &procStartInformation,
+        &procInformation
+    ))
+    {
+        // subprocess creation failed
+        return;
+    }
+    CloseHandle(childReadEnd);
+    CloseHandle(childWriteEnd);
+    mWritePipe.set_raw_handle(parentWriteEnd);
+    mReadPipe1.set_raw_handle(parentReadEnd);
+    mIsChild = true;
+    #endif
 }
 
 MBASE_END
