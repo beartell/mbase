@@ -55,6 +55,7 @@ list(APPEND MBASE_STD_INCLUDE_STABLE_FILES
     smart_conversion.h
     stack.h
     string.h
+    subprocess.h
     synchronization.h
     thread.h
     traits.h
