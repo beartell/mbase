@@ -303,4 +303,4 @@ MBASE_INLINE GENERIC subprocess::create_new_process(bool in_stdio, mbase::string
 
 MBASE_END
 
-#endif MBASE_SUBPROCESS_H
+#endif // MBASE_SUBPROCESS_H
