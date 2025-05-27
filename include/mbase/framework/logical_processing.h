@@ -45,7 +45,7 @@ public:
 		mIsProcessorRunning = false;
 	}
 
-	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) bool is_processor_running() { return mIsProcessorRunning; }
+	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) bool is_processor_running() const noexcept { return mIsProcessorRunning; }
 
 	static GENERIC _update_t_static(logical_processor* in_self) 
 	{
