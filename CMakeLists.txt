@@ -36,6 +36,7 @@ include(MBASEJsonSys)
 include(MBASEFrameworkSys)
 include(MBASECoreSys)
 include(MBASEInferenceSys)
+include(MBASEMcpSys)
 
 if(MBASE_BUNDLED_INSTALL STREQUAL "ON")
   install(
