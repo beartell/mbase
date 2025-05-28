@@ -117,12 +117,12 @@ GENERIC InfClientTextToText::clear_chat_history()
 	mMessageIndexer = 0;
 }
 
-GENERIC InfClientTextToText::on_batch_processing(InfProcessorTextToText* out_processor)
+GENERIC InfClientTextToText::on_batch_processing([[maybe_unused]] InfProcessorTextToText* out_processor)
 {
 
 }
 
-GENERIC InfClientTextToText::on_decoding(InfProcessorTextToText* out_processor)
+GENERIC InfClientTextToText::on_decoding([[maybe_unused]] InfProcessorTextToText* out_processor)
 {
 
 }

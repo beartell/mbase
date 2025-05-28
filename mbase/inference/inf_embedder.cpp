@@ -90,7 +90,7 @@ const U32& InfEmbedderProcessor::get_max_token_length() const
     return mContextLength;
 }
 
-const I32& InfEmbedderProcessor::get_batch_thread_count() const
+I32 InfEmbedderProcessor::get_batch_thread_count() const
 {
     return llama_n_threads_batch(mModelContext);
 }
