@@ -49,7 +49,7 @@ Setting up MBASE apt repository:
 .. code-block:: bash
     
     sudo curl -fsSL https://repo.mbasesoftware.com/apt/pgp-key.public -o /etc/apt/keyrings/mbase-apt.public
-    echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/mbase-apt.public] https://repo.mbasesoftware.com/apt/ stable main" > /etc/apt/sources.list.d/mbase.list
+    echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/mbase-apt.public] https://repo.mbasesoftware.com/apt/ stable main" | sudo tee /etc/apt/sources.list.d/mbase.list > /dev/null
     sudo apt-get update
 
 MBASE SDK with CUDA support:
