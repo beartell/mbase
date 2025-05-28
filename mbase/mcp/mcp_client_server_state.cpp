@@ -8,7 +8,7 @@ McpServerRequestTimer::McpServerRequestTimer(McpServerStateBase* in_server) : se
 {
 }
 
-GENERIC McpServerRequestTimer::on_call(user_data in_data)
+GENERIC McpServerRequestTimer::on_call([[maybe_unused]] user_data in_data)
 {
     serverState->mRequestMapSync.acquire();
     mbase::unordered_map<mbase::string, McpServerRequestState>::iterator It = serverState->mRequestMap.begin();
@@ -110,51 +110,51 @@ GENERIC McpServerStateBase::on_empty_processed_t()
 
 }
 
-GENERIC McpServerStateBase::on_initialize_t(McpServerRequestState& in_request, mbase::McpServerResponseObject& in_response_object, mbase::Json& in_response, const mbase::mcp_err_format& in_error)
+GENERIC McpServerStateBase::on_initialize_t([[maybe_unused]] McpServerRequestState& in_request, [[maybe_unused]] mbase::McpServerResponseObject& in_response_object, [[maybe_unused]] mbase::Json& in_response, [[maybe_unused]] const mbase::mcp_err_format& in_error)
 {
 }
 
-GENERIC McpServerStateBase::on_list_resources_t(McpServerRequestState& in_request, mbase::McpServerResponseObject& in_response_object, mbase::Json& in_response, const mbase::mcp_err_format& in_error)
+GENERIC McpServerStateBase::on_list_resources_t([[maybe_unused]] McpServerRequestState& in_request, [[maybe_unused]] mbase::McpServerResponseObject& in_response_object, [[maybe_unused]] mbase::Json& in_response, [[maybe_unused]] const mbase::mcp_err_format& in_error)
 {
 }
 
-GENERIC McpServerStateBase::on_list_prompts_t(McpServerRequestState& in_request, mbase::McpServerResponseObject& in_response_object, mbase::Json& in_response, const mbase::mcp_err_format& in_error)
+GENERIC McpServerStateBase::on_list_prompts_t([[maybe_unused]] McpServerRequestState& in_request, [[maybe_unused]] mbase::McpServerResponseObject& in_response_object, [[maybe_unused]] mbase::Json& in_response, [[maybe_unused]] const mbase::mcp_err_format& in_error)
 {
 }
 
-GENERIC McpServerStateBase::on_list_tools_t(McpServerRequestState& in_request, mbase::McpServerResponseObject& in_response_object, mbase::Json& in_response, const mbase::mcp_err_format& in_error)
+GENERIC McpServerStateBase::on_list_tools_t([[maybe_unused]] McpServerRequestState& in_request, [[maybe_unused]] mbase::McpServerResponseObject& in_response_object, [[maybe_unused]] mbase::Json& in_response, [[maybe_unused]] const mbase::mcp_err_format& in_error)
 {
 }
 
-GENERIC McpServerStateBase::on_read_resource_t(McpServerRequestState& in_request, mbase::McpServerResponseObject& in_response_object, mbase::Json& in_response, const mbase::mcp_err_format& in_error)
+GENERIC McpServerStateBase::on_read_resource_t([[maybe_unused]] McpServerRequestState& in_request, [[maybe_unused]] mbase::McpServerResponseObject& in_response_object, [[maybe_unused]] mbase::Json& in_response, [[maybe_unused]] const mbase::mcp_err_format& in_error)
 {
 }
 
-GENERIC McpServerStateBase::on_prompt_get_result_t(McpServerRequestState& in_request, mbase::McpServerResponseObject& in_response_object, mbase::Json& in_response, const mbase::mcp_err_format& in_error)
+GENERIC McpServerStateBase::on_prompt_get_result_t([[maybe_unused]] McpServerRequestState& in_request, [[maybe_unused]] mbase::McpServerResponseObject& in_response_object, [[maybe_unused]] mbase::Json& in_response, [[maybe_unused]] const mbase::mcp_err_format& in_error)
 {
 }
 
-GENERIC McpServerStateBase::on_tool_call_result_t(McpServerRequestState& in_request, mbase::McpServerResponseObject& in_response_object, mbase::Json& in_response, const mbase::mcp_err_format& in_error)
+GENERIC McpServerStateBase::on_tool_call_result_t([[maybe_unused]] McpServerRequestState& in_request, [[maybe_unused]] mbase::McpServerResponseObject& in_response_object, [[maybe_unused]] mbase::Json& in_response, [[maybe_unused]] const mbase::mcp_err_format& in_error)
 {
 }
 
-GENERIC McpServerStateBase::on_subscribe_t(McpServerRequestState& in_request, mbase::McpServerResponseObject& in_response_object, const mbase::mcp_err_format& in_error)
+GENERIC McpServerStateBase::on_subscribe_t([[maybe_unused]] McpServerRequestState& in_request, [[maybe_unused]] mbase::McpServerResponseObject& in_response_object, [[maybe_unused]] const mbase::mcp_err_format& in_error)
 {
 }
 
-GENERIC McpServerStateBase::on_unsubscribe_t(McpServerRequestState& in_request, mbase::McpServerResponseObject& in_response_object, const mbase::mcp_err_format& in_error)
+GENERIC McpServerStateBase::on_unsubscribe_t([[maybe_unused]] McpServerRequestState& in_request, [[maybe_unused]] mbase::McpServerResponseObject& in_response_object, [[maybe_unused]] const mbase::mcp_err_format& in_error)
 {
 }
 
-GENERIC McpServerStateBase::on_set_log_t(McpServerRequestState& in_request, mbase::McpServerResponseObject& in_response_object, const mbase::mcp_err_format& in_error)
+GENERIC McpServerStateBase::on_set_log_t([[maybe_unused]] McpServerRequestState& in_request, [[maybe_unused]] mbase::McpServerResponseObject& in_response_object, [[maybe_unused]] const mbase::mcp_err_format& in_error)
 {
 }
 
-GENERIC McpServerStateBase::on_ping_t(McpServerRequestState& in_request, mbase::McpServerResponseObject& in_response_object, const mbase::mcp_err_format& in_error)
+GENERIC McpServerStateBase::on_ping_t([[maybe_unused]] McpServerRequestState& in_request, [[maybe_unused]] mbase::McpServerResponseObject& in_response_object, [[maybe_unused]] const mbase::mcp_err_format& in_error)
 {
 }
 
-GENERIC McpServerStateBase::on_prompt_compilation_t(McpServerRequestState& in_request, mbase::McpServerResponseObject& in_response_object, mbase::Json& in_response, const mbase::mcp_err_format& in_error)
+GENERIC McpServerStateBase::on_prompt_compilation_t([[maybe_unused]] McpServerRequestState& in_request, [[maybe_unused]] mbase::McpServerResponseObject& in_response_object, [[maybe_unused]] mbase::Json& in_response, [[maybe_unused]] const mbase::mcp_err_format& in_error)
 {
 }
 
@@ -504,6 +504,7 @@ mbase::string McpServerStateBase::create_request_state(mcp_response_callback in_
     mRequestMapSync.acquire();
     mbase::McpServerRequestState requestState;
     requestState.responseCallback = in_cb;
+    requestState.mTimeoutInSeconds = in_timeout;
     mbase::string messageId = mbase::string::generate_uuid();
     mRequestMap[messageId] = requestState;
     mRequestMapSync.release();
@@ -1376,80 +1377,80 @@ GENERIC McpServerStateBase::update()
     }
 }
 
-GENERIC McpServerStateBase::default_initialize_t(McpServerRequestState& in_request, mbase::McpServerResponseObject& in_response_object, mbase::Json& in_response, const mbase::mcp_err_format& in_error)
+GENERIC McpServerStateBase::default_initialize_t([[maybe_unused]] McpServerRequestState& in_request, mbase::McpServerResponseObject& in_response_object, mbase::Json& in_response, [[maybe_unused]] const mbase::mcp_err_format& in_error)
 {
     if(in_response.isObject()){ in_response_object.mResponseParams = std::move(in_response); }
     mbase::lock_guard responseQueueSync(mQueuedResponsesSync);
     mQueuedResponses.push_back(std::move(in_response_object));
 }
 
-GENERIC McpServerStateBase::default_list_resources_t(McpServerRequestState& in_request, mbase::McpServerResponseObject& in_response_object, mbase::Json& in_response, const mbase::mcp_err_format& in_error)
+GENERIC McpServerStateBase::default_list_resources_t([[maybe_unused]] McpServerRequestState& in_request, mbase::McpServerResponseObject& in_response_object, mbase::Json& in_response, [[maybe_unused]] const mbase::mcp_err_format& in_error)
 {
     if(in_response.isObject()){ in_response_object.mResponseParams = std::move(in_response); }
     mbase::lock_guard responseQueueSync(mQueuedResponsesSync);
     mQueuedResponses.push_back(std::move(in_response_object));
 }
 
-GENERIC McpServerStateBase::default_list_prompts_t(McpServerRequestState& in_request, mbase::McpServerResponseObject& in_response_object, mbase::Json& in_response, const mbase::mcp_err_format& in_error)
+GENERIC McpServerStateBase::default_list_prompts_t([[maybe_unused]] McpServerRequestState& in_request, mbase::McpServerResponseObject& in_response_object, mbase::Json& in_response, [[maybe_unused]] const mbase::mcp_err_format& in_error)
 {
     if(in_response.isObject()){ in_response_object.mResponseParams = std::move(in_response); }
     mbase::lock_guard responseQueueSync(mQueuedResponsesSync);
     mQueuedResponses.push_back(std::move(in_response_object));
 }
 
-GENERIC McpServerStateBase::default_list_tools_t(McpServerRequestState& in_request, mbase::McpServerResponseObject& in_response_object, mbase::Json& in_response, const mbase::mcp_err_format& in_error)
+GENERIC McpServerStateBase::default_list_tools_t([[maybe_unused]] McpServerRequestState& in_request, mbase::McpServerResponseObject& in_response_object, mbase::Json& in_response, [[maybe_unused]] const mbase::mcp_err_format& in_error)
 {
     if(in_response.isObject()){ in_response_object.mResponseParams = std::move(in_response); }
     mbase::lock_guard responseQueueSync(mQueuedResponsesSync);
     mQueuedResponses.push_back(std::move(in_response_object));
 }
 
-GENERIC McpServerStateBase::default_read_resource_t(McpServerRequestState& in_request, mbase::McpServerResponseObject& in_response_object, mbase::Json& in_response, const mbase::mcp_err_format& in_error)
+GENERIC McpServerStateBase::default_read_resource_t([[maybe_unused]] McpServerRequestState& in_request, mbase::McpServerResponseObject& in_response_object, mbase::Json& in_response, [[maybe_unused]] const mbase::mcp_err_format& in_error)
 {
     if(in_response.isObject()){ in_response_object.mResponseParams = std::move(in_response); }
     mbase::lock_guard responseQueueSync(mQueuedResponsesSync);
     mQueuedResponses.push_back(std::move(in_response_object));
 }
 
-GENERIC McpServerStateBase::default_prompt_get_result_t(McpServerRequestState& in_request, mbase::McpServerResponseObject& in_response_object, mbase::Json& in_response, const mbase::mcp_err_format& in_error)
+GENERIC McpServerStateBase::default_prompt_get_result_t([[maybe_unused]] McpServerRequestState& in_request, mbase::McpServerResponseObject& in_response_object, mbase::Json& in_response, [[maybe_unused]] const mbase::mcp_err_format& in_error)
 {
     if(in_response.isObject()){ in_response_object.mResponseParams = std::move(in_response); }
     mbase::lock_guard responseQueueSync(mQueuedResponsesSync);
     mQueuedResponses.push_back(std::move(in_response_object));
 }
 
-GENERIC McpServerStateBase::default_tool_call_result_t(McpServerRequestState& in_request, mbase::McpServerResponseObject& in_response_object, mbase::Json& in_response, const mbase::mcp_err_format& in_error)
+GENERIC McpServerStateBase::default_tool_call_result_t([[maybe_unused]] McpServerRequestState& in_request, mbase::McpServerResponseObject& in_response_object, mbase::Json& in_response, [[maybe_unused]] const mbase::mcp_err_format& in_error)
 {
     if(in_response.isObject()){ in_response_object.mResponseParams = std::move(in_response); }
     mbase::lock_guard responseQueueSync(mQueuedResponsesSync);
     mQueuedResponses.push_back(std::move(in_response_object));
 }
 
-GENERIC McpServerStateBase::default_subscribe_t(McpServerRequestState& in_request, mbase::McpServerResponseObject& in_response_object, const mbase::mcp_err_format& in_error)
+GENERIC McpServerStateBase::default_subscribe_t([[maybe_unused]] McpServerRequestState& in_request, mbase::McpServerResponseObject& in_response_object, [[maybe_unused]] const mbase::mcp_err_format& in_error)
 {
     mbase::lock_guard responseQueueSync(mQueuedResponsesSync);
     mQueuedResponses.push_back(std::move(in_response_object));
 }
 
-GENERIC McpServerStateBase::default_unsubscribe_t(McpServerRequestState& in_request, mbase::McpServerResponseObject& in_response_object, const mbase::mcp_err_format& in_error)
+GENERIC McpServerStateBase::default_unsubscribe_t([[maybe_unused]] McpServerRequestState& in_request, mbase::McpServerResponseObject& in_response_object, [[maybe_unused]] const mbase::mcp_err_format& in_error)
 {
     mbase::lock_guard responseQueueSync(mQueuedResponsesSync);
     mQueuedResponses.push_back(std::move(in_response_object));
 }
 
-GENERIC McpServerStateBase::default_set_log_t(McpServerRequestState& in_request, mbase::McpServerResponseObject& in_response_object, const mbase::mcp_err_format& in_error)
+GENERIC McpServerStateBase::default_set_log_t([[maybe_unused]] McpServerRequestState& in_request, mbase::McpServerResponseObject& in_response_object, [[maybe_unused]] const mbase::mcp_err_format& in_error)
 {
     mbase::lock_guard responseQueueSync(mQueuedResponsesSync);
     mQueuedResponses.push_back(std::move(in_response_object));
 }
 
-GENERIC McpServerStateBase::default_ping_t(McpServerRequestState& in_request, mbase::McpServerResponseObject& in_response_object, const mbase::mcp_err_format& in_error)
+GENERIC McpServerStateBase::default_ping_t([[maybe_unused]] McpServerRequestState& in_request, mbase::McpServerResponseObject& in_response_object, [[maybe_unused]] const mbase::mcp_err_format& in_error)
 {
     mbase::lock_guard responseQueueSync(mQueuedResponsesSync);
     mQueuedResponses.push_back(std::move(in_response_object));
 }
 
-GENERIC McpServerStateBase::default_prompt_compilation_t(McpServerRequestState& in_request, mbase::McpServerResponseObject& in_response_object, mbase::Json& in_response, const mbase::mcp_err_format& in_error)
+GENERIC McpServerStateBase::default_prompt_compilation_t([[maybe_unused]] McpServerRequestState& in_request, mbase::McpServerResponseObject& in_response_object, mbase::Json& in_response, [[maybe_unused]] const mbase::mcp_err_format& in_error)
 {
     if(in_response.isObject()){ in_response_object.mResponseParams = std::move(in_response); }
     mbase::lock_guard responseQueueSync(mQueuedResponsesSync);

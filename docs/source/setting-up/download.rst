@@ -1,4 +1,4 @@
-.. include:: ../../links.rst
+.. include:: ../inference/links.rst
 
 ========
 Download

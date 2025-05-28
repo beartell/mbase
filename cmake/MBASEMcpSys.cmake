@@ -28,6 +28,10 @@ list(APPEND MBASE_MCP_LIB_DEPENDS
     mb_json
 )
 
+list(APPEND MBASE_MCP_COMPILE_DEFINITIONS
+    ${MBASE_COMMON_COMPILE_DEFINITIONS}
+)
+
 list(APPEND MBASE_MCP_INCLUDE_STABLE_FILES
     mcp_client_arguments.h
     mcp_client_base.h
@@ -65,7 +69,26 @@ add_library(mb_mcp
     ${MBASE_MCP_LIB_PATH}/mcp_server_stdio.cpp
 )
 
-target_compile_definitions(mb_mcp PRIVATE ${MBASE_COMMON_COMPILE_DEFINITIONS})
+if(MBASE_MCP_SSL STREQUAL "ON")
+    if(WIN32)
+        set(OPENSSL_MSVC_STATIC_RT "TRUE")
+    endif()
+    set(OPENSSL_USE_STATIC_LIBS "TRUE")
+    find_package(OpenSSL REQUIRED)
+    list(APPEND MBASE_MCP_COMPILE_DEFINITIONS
+        MBASE_MCP_SSL
+        CPPHTTPLIB_OPENSSL_SUPPORT
+    )
+    list(APPEND MBASE_MCP_INCLUDE_DEPENDS
+        ${OPENSSL_INCLUDE_DIR}
+    )
+    list(APPEND MBASE_MCP_LIB_DEPENDS
+        ${OPENSSL_SSL_LIBRARY}
+        ${OPENSSL_CRYPTO_LIBRARY}
+    )
+endif()
+
+target_compile_definitions(mb_mcp PRIVATE ${MBASE_MCP_COMPILE_DEFINITIONS})
 target_include_directories(mb_mcp PUBLIC ${MBASE_MCP_INCLUDE_DEPENDS})
 target_link_libraries(mb_mcp PRIVATE ${MBASE_MCP_LIB_DEPENDS})
 target_compile_options(mb_mcp PRIVATE ${MBASE_COMMON_COMPILE_OPTIONS})

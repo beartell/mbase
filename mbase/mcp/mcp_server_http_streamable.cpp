@@ -8,14 +8,27 @@ McpServerHttpBase::McpServerHttpBase(
     const mbase::string& in_version_string, 
     const mbase::string& in_hostname, 
     const I32& in_port,
-    const mbase::string& in_api_key
+    const mbase::string& in_api_key,
+    const mbase::string& in_public_key_file,
+    const mbase::string& in_private_key_file
 ):
     McpServerBase(in_server_name, in_version_string, mcp_transport_method::HTTP_STREAMBLE)
 {
-    svr = std::make_unique<httplib::Server>();
     mHostname = in_hostname;
     mPort = in_port;
     mApiKey = in_api_key;
+    if(in_public_key_file.size() && in_private_key_file.size())
+    {
+        #ifdef MBASE_MCP_SSL
+            svr = std::make_unique<httplib::SSLServer>(in_public_key_file.c_str(), in_private_key_file.c_str());
+        #else
+            svr = std::make_unique<httplib::Server>();    
+        #endif
+    }
+    else
+    {
+        svr = std::make_unique<httplib::Server>();
+    }
 }
 
 const mbase::string& McpServerHttpBase::get_hostname() const noexcept
@@ -83,8 +96,10 @@ McpServerHttpStreamableStateful::McpServerHttpStreamableStateful(
         const mbase::string& in_version_string, 
         const mbase::string& in_hostname, 
         const I32& in_port,
-        const mbase::string& in_api_key
-) : McpServerHttpBase(in_server_name, in_version_string, in_hostname, in_port, in_api_key)
+        const mbase::string& in_api_key,
+        const mbase::string& in_public_key_file,
+        const mbase::string& in_private_key_file
+) : McpServerHttpBase(in_server_name, in_version_string, in_hostname, in_port, in_api_key, in_public_key_file, in_private_key_file)
 {
 }
 
@@ -100,7 +115,7 @@ bool McpServerHttpStreamableStateful::is_server_running() const noexcept
 
 GENERIC McpServerHttpStreamableStateful::update_t()
 {
-    svr->Get("/mcp", [&](const httplib::Request& in_request, httplib::Response& out_response){
+    svr->Get("/mcp", [&]([[maybe_unused]] const httplib::Request& in_request, httplib::Response& out_response){
         // sse not supported
         out_response.status = 405;
     });
@@ -181,8 +196,10 @@ McpServerHttpStreamableStateless::McpServerHttpStreamableStateless(
     const mbase::string& in_version_string, 
     const mbase::string& in_hostname, 
     const I32& in_port,
-    const mbase::string& in_api_key
-) : McpServerHttpBase(in_server_name, in_version_string, in_hostname, in_port, in_api_key)
+    const mbase::string& in_api_key,
+    const mbase::string& in_public_key_file,
+    const mbase::string& in_private_key_file
+) : McpServerHttpBase(in_server_name, in_version_string, in_hostname, in_port, in_api_key, in_public_key_file, in_private_key_file)
 {
 }
 
@@ -203,7 +220,7 @@ bool McpServerHttpStreamableStateless::is_server_running() const noexcept
 
 GENERIC McpServerHttpStreamableStateless::update_t()
 {
-    svr->Get("/mcp", [&](const httplib::Request& in_request, httplib::Response& out_response){
+    svr->Get("/mcp", [&]([[maybe_unused]] const httplib::Request& in_request, httplib::Response& out_response){
         // sse not supported
         out_response.status = 405;
     });

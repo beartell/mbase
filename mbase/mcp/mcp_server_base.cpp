@@ -5,10 +5,10 @@
 MBASE_BEGIN
 
 McpServerBase::McpServerBase(const mbase::string& in_server_name, const mbase::string& in_version_string, mbase::mcp_transport_method in_method):
+    mPaginationMin(10),
     mServerName(in_server_name),
     mServerVersion(in_version_string),
-    mTransportMethod(in_method),
-    mPaginationMin(10)
+    mTransportMethod(in_method)
 {
 }
 
@@ -75,72 +75,72 @@ GENERIC McpServerBase::set_pagination_min_content(const I32& in_pagination_min) 
     mPaginationMin = in_pagination_min;
 }
 
-bool McpServerBase::on_client_request_t(mbase::McpServerClient* in_client, const mbase::Json& in_msgid, const mbase::string& in_method, const mbase::Json& in_params)
+bool McpServerBase::on_client_request_t([[maybe_unused]] mbase::McpServerClient* in_client, [[maybe_unused]] const mbase::Json& in_msgid, [[maybe_unused]] const mbase::string& in_method, [[maybe_unused]] const mbase::Json& in_params)
 {
     return false;
 }
 
-GENERIC McpServerBase::on_client_notification_t(mbase::McpServerClient* in_client, const mbase::string& in_method, const mbase::Json& in_params)
+GENERIC McpServerBase::on_client_notification_t([[maybe_unused]] mbase::McpServerClient* in_client, [[maybe_unused]] const mbase::string& in_method, [[maybe_unused]] const mbase::Json& in_params)
 {
 }
 
-GENERIC McpServerBase::on_client_response_t(mbase::McpServerClient* in_client, const mbase::string& in_msgid, const mbase::Json& in_params)
+GENERIC McpServerBase::on_client_response_t([[maybe_unused]] mbase::McpServerClient* in_client, [[maybe_unused]] const mbase::string& in_msgid, [[maybe_unused]] const mbase::Json& in_params)
 {
 }
 
-GENERIC McpServerBase::on_client_init(mbase::McpServerClient* in_client)
+GENERIC McpServerBase::on_client_init([[maybe_unused]] mbase::McpServerClient* in_client)
 {   
 }
 
-GENERIC McpServerBase::on_roots_list_changed(mbase::McpServerClient* in_client)
+GENERIC McpServerBase::on_roots_list_changed([[maybe_unused]] mbase::McpServerClient* in_client)
 {   
 }
 
-GENERIC McpServerBase::on_cancellation_t(mbase::McpServerClient* in_client, const mbase::Json& in_msgid, const mbase::string& in_reason)
+GENERIC McpServerBase::on_cancellation_t([[maybe_unused]] mbase::McpServerClient* in_client, [[maybe_unused]] const mbase::Json& in_msgid, [[maybe_unused]] const mbase::string& in_reason)
 {
 }
 
-GENERIC McpServerBase::on_ping_t(mbase::McpServerClient* in_client, const mbase::Json& in_msgid)
+GENERIC McpServerBase::on_ping_t([[maybe_unused]] mbase::McpServerClient* in_client, [[maybe_unused]] const mbase::Json& in_msgid)
 {
 }
 
-GENERIC McpServerBase::on_logging_set_t(mbase::McpServerClient* in_client, const mbase::Json& in_msgid, mcp_log_levels in_log_level)
+GENERIC McpServerBase::on_logging_set_t([[maybe_unused]] mbase::McpServerClient* in_client, [[maybe_unused]] const mbase::Json& in_msgid, [[maybe_unused]] mcp_log_levels in_log_level)
 {
 }
 
-GENERIC McpServerBase::on_resource_subscribe(mbase::McpServerClient* in_client, const mbase::Json& in_msgid, const mbase::string& in_uri)
+GENERIC McpServerBase::on_resource_subscribe([[maybe_unused]] mbase::McpServerClient* in_client, [[maybe_unused]] const mbase::Json& in_msgid, [[maybe_unused]] const mbase::string& in_uri)
 {
 }
 
-GENERIC McpServerBase::on_resource_unsubscribe(mbase::McpServerClient* in_client, const mbase::Json& in_msgid, const mbase::string& in_uri)
+GENERIC McpServerBase::on_resource_unsubscribe([[maybe_unused]] mbase::McpServerClient* in_client, [[maybe_unused]] const mbase::Json& in_msgid, [[maybe_unused]] const mbase::string& in_uri)
 {
 }
 
-GENERIC McpServerBase::on_prompt_compilation_t(mbase::McpServerClient* in_client, const mbase::Json& in_msgid, const mbase::string& in_prompt, const mbase::string& in_argument_name, const mbase::string& in_argument_value)
+GENERIC McpServerBase::on_prompt_compilation_t([[maybe_unused]] mbase::McpServerClient* in_client, [[maybe_unused]] const mbase::Json& in_msgid, [[maybe_unused]] const mbase::string& in_prompt, [[maybe_unused]] const mbase::string& in_argument_name, [[maybe_unused]] const mbase::string& in_argument_value)
 {
 }
 
-GENERIC McpServerBase::on_list_tool_t(mbase::McpServerClient* in_client, const mbase::Json& in_msgid, const mbase::string& in_pagination)
+GENERIC McpServerBase::on_list_tool_t([[maybe_unused]] mbase::McpServerClient* in_client, [[maybe_unused]] const mbase::Json& in_msgid, [[maybe_unused]] const mbase::string& in_pagination)
 {
 }
 
-GENERIC McpServerBase::on_list_prompt_t(mbase::McpServerClient* in_client, const mbase::Json& in_msgid, const mbase::string& in_pagination)
+GENERIC McpServerBase::on_list_prompt_t([[maybe_unused]] mbase::McpServerClient* in_client, [[maybe_unused]] const mbase::Json& in_msgid, [[maybe_unused]] const mbase::string& in_pagination)
 {
 }
 
-GENERIC McpServerBase::on_list_resource_t(mbase::McpServerClient* in_client, const mbase::Json& in_msgid, const mbase::string& in_pagination)
+GENERIC McpServerBase::on_list_resource_t([[maybe_unused]] mbase::McpServerClient* in_client, [[maybe_unused]] const mbase::Json& in_msgid, [[maybe_unused]] const mbase::string& in_pagination)
 {
 }
 
-GENERIC McpServerBase::on_tool_call_t(mbase::McpServerClient* in_client, const mbase::Json& in_msgid, const mbase::Json& in_progress_id, McpToolFeature* in_tool, McpMessageMap& in_arguments)
+GENERIC McpServerBase::on_tool_call_t([[maybe_unused]] mbase::McpServerClient* in_client, [[maybe_unused]] const mbase::Json& in_msgid, [[maybe_unused]] const mbase::Json& in_progress_id, [[maybe_unused]] McpToolFeature* in_tool, [[maybe_unused]] McpMessageMap& in_arguments)
 {
 }
 
-GENERIC McpServerBase::on_prompt_call_t(mbase::McpServerClient* in_client, const mbase::Json& in_msgid, const mbase::Json& in_progress_id, McpPromptFeature*in_prompt, McpMessageMap& in_arguments)
+GENERIC McpServerBase::on_prompt_call_t([[maybe_unused]] mbase::McpServerClient* in_client, [[maybe_unused]] const mbase::Json& in_msgid, [[maybe_unused]] const mbase::Json& in_progress_id, [[maybe_unused]] McpPromptFeature*in_prompt, [[maybe_unused]] McpMessageMap& in_arguments)
 {   
 }
 
-GENERIC McpServerBase::on_resource_call_t(mbase::McpServerClient* in_client, const mbase::Json& in_msgid, const mbase::Json& in_progress_id, McpResourceFeature* in_resource)
+GENERIC McpServerBase::on_resource_call_t([[maybe_unused]] mbase::McpServerClient* in_client, [[maybe_unused]] const mbase::Json& in_msgid, [[maybe_unused]] const mbase::Json& in_progress_id, [[maybe_unused]] McpResourceFeature* in_resource)
 {
 }
 
@@ -194,7 +194,7 @@ GENERIC McpServerBase::send_resource_call_result(McpServerClient* in_client, con
     in_client->send_mcp_payload(mbase::mcp_generate_response(in_msgid, responseData));
 }
 
-GENERIC McpServerBase::send_tool_call_result(McpServerClient* in_client, const mbase::Json& in_msgid, McpToolFeature* in_feature, McpResponseTool& in_result)
+GENERIC McpServerBase::send_tool_call_result(McpServerClient* in_client, const mbase::Json& in_msgid, [[maybe_unused]] McpToolFeature* in_feature, McpResponseTool& in_result)
 {
     mbase::Json responseData;
     responseData["content"].setArray();
@@ -431,7 +431,7 @@ GENERIC McpServerBase::default_client_root_list_changed(mbase::McpServerClient* 
     in_client->on_empty_processed_t();
 }
 
-GENERIC McpServerBase::default_cancellation_t(mbase::McpServerClient* in_client, const mbase::Json& in_msgid, const mbase::string& in_reason)
+GENERIC McpServerBase::default_cancellation_t(mbase::McpServerClient* in_client, const mbase::Json& in_msgid, [[maybe_unused]] const mbase::string& in_reason)
 {
     in_client->on_empty_processed_t();
     mbase::lock_guard featureRequestSync(mFeatureRequestVectorSync);
@@ -471,12 +471,12 @@ GENERIC McpServerBase::default_logging_set_t(mbase::McpServerClient* in_client, 
     in_client->send_mcp_payload(mbase::mcp_generate_response(in_msgid));
 }
 
-GENERIC McpServerBase::default_resource_subscribe_t(mbase::McpServerClient* in_client, const mbase::Json& in_msgid, const mbase::string& in_uri)
+GENERIC McpServerBase::default_resource_subscribe_t(mbase::McpServerClient* in_client, const mbase::Json& in_msgid, [[maybe_unused]] const mbase::string& in_uri)
 {
     in_client->send_mcp_payload(mbase::mcp_generate_response(in_msgid));
 }
 
-GENERIC McpServerBase::default_resource_unsubscribe_t(mbase::McpServerClient* in_client, const mbase::Json& in_msgid, const mbase::string& in_uri)
+GENERIC McpServerBase::default_resource_unsubscribe_t(mbase::McpServerClient* in_client, const mbase::Json& in_msgid, [[maybe_unused]] const mbase::string& in_uri)
 {
     in_client->send_mcp_payload(mbase::mcp_generate_response(in_msgid));
 }
@@ -820,7 +820,7 @@ GENERIC McpServerBase::default_list_resource_t(mbase::McpServerClient* in_client
 
 GENERIC McpServerBase::default_tool_call_t(mbase::McpServerClient* in_client, const mbase::Json& in_msgid, const mbase::Json& in_progress_id, McpToolFeature* in_tool, McpMessageMap& in_arguments)
 {
-    for(const mbase::McpToolArgument tmpArgument : in_tool->get_tool_description().mArguments)
+    for(const mbase::McpToolArgument& tmpArgument : in_tool->get_tool_description().mArguments)
     {
         mbase::McpMessageMap::iterator It = in_arguments.find(tmpArgument.mArgumentName);
         if(It == in_arguments.end() && tmpArgument.mIsRequired)
@@ -899,7 +899,7 @@ GENERIC McpServerBase::default_tool_call_t(mbase::McpServerClient* in_client, co
 
 GENERIC McpServerBase::default_prompt_call_t(mbase::McpServerClient* in_client, const mbase::Json& in_msgid, const mbase::Json& in_progress_id, McpPromptFeature* in_prompt, McpMessageMap& in_arguments)
 {
-    for(const mbase::McpPromptArgument tmpArgument : in_prompt->get_prompt_description().mArguments)
+    for(const mbase::McpPromptArgument& tmpArgument : in_prompt->get_prompt_description().mArguments)
     {
         mbase::McpMessageMap::iterator It = in_arguments.find(tmpArgument.mArgumentName);
         if(It == in_arguments.end() && tmpArgument.mIsRequired)

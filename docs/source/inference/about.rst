@@ -6,8 +6,6 @@ Inference Library
 
 Welcome to the MBASE inference library documentation!
 
-Github link: https://github.com/Emreerdog/mbase
-
 -------------------
 Document Navigation
 -------------------
@@ -15,7 +13,7 @@ Document Navigation
 The document is structured into four chapters where each chapter has a distinct purpose.
 Those chapters are as follows:
 
-* :doc:`Quickstart <quick_start>`: This chapter starts by explaining how to setup your environment, and goes with system requirements identification, library installations and simple project examples to show how to use the inference SDK.
+* :doc:`Quickstart <quick_start>`: This chapter starts by creating a CMake project and linking the inference SDK. Then, implement simple project examples to show how to use the inference SDK.
 
 * :doc:`Programs <programs/index>`: This chapter explains the programs that are developed using the inference library. The programs in that chapter are complete executable programs.
 
@@ -38,18 +36,6 @@ to integrate popular LLMs into their applications with minimal performance loss 
 
 The inference SDK will allow developers the utilize the LLMs and create their own solutions,
 tooling mechanisms etc.
-
-When the phrase "local LLM inference" is thrown around,
-it usually means that hosting an Openai API compatible HTTP server and using the completions API locally.
-The MBASE inference library is expected to change this notion by providing you the LLM inference capability 
-through its low-level objects and procedures so that 
-you can integrate and embedd LLM into your high-performance applications such as games, server applications and many more.
-
-Also you still have the option of hosting Openai server using the :doc:`mbase_openai_server <programs/openai-server/about>` program or you can
-code a similar one yourself!
-
-There also is a benchmarking tool developed for testing the performance of the LLM but more specifically,
-the impact of the inference operation on your main program loop. For further details refer to :doc:`benchmark <programs/benchmark-t2t/about>` documentation.
 
 --------
 Features
@@ -85,22 +71,6 @@ Implementation Matrix
 +------------+--------------------------------------------------+--------------------------------------------------+---------------------------+
 | Embedder   | :octicon:`check-circle-fill;1em;sd-text-success` | :octicon:`check-circle-fill;1em;sd-text-success` | `llama.cpp <llama.cpp_>`_ |
 +------------+--------------------------------------------------+--------------------------------------------------+---------------------------+
-
--------------------
-Supported Platforms
--------------------
-
-* Mac OS
-* Linux
-* Windows
-
------------------------
-Download and Setting up
------------------------
-
-Download page: :doc:`quickstart/setup/download`
-
-SDK setup and compiling from source: :doc:`quickstart/setup/setting_up`
 
 ------------------
 SDK Usage Examples

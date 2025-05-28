@@ -22,7 +22,9 @@ public:
         const mbase::string& in_version_string, 
         const mbase::string& in_hostname, 
         const I32& in_port,
-        const mbase::string& in_api_key = mbase::string()
+        const mbase::string& in_api_key = mbase::string(),
+        const mbase::string& in_public_key_file = mbase::string(),
+        const mbase::string& in_private_key_file = mbase::string()
     );
 
     const mbase::string& get_hostname() const noexcept;
@@ -42,7 +44,9 @@ public:
         const mbase::string& in_version_string, 
         const mbase::string& in_hostname, 
         const I32& in_port,
-        const mbase::string& in_api_key = mbase::string()
+        const mbase::string& in_api_key = mbase::string(),
+        const mbase::string& in_public_key_file = mbase::string(),
+        const mbase::string& in_private_key_file = mbase::string()
     );
     ~McpServerHttpStreamableStateful();
     bool is_server_running() const noexcept;
@@ -58,7 +62,9 @@ public:
         const mbase::string& in_version_string, 
         const mbase::string& in_hostname, 
         const I32& in_port,
-        const mbase::string& in_api_key = mbase::string()
+        const mbase::string& in_api_key = mbase::string(),
+        const mbase::string& in_public_key_file = mbase::string(),
+        const mbase::string& in_private_key_file = mbase::string()
     );
     ~McpServerHttpStreamableStateless();
     bool is_server_running() const noexcept;

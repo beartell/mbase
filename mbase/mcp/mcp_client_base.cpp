@@ -40,64 +40,64 @@ mbase::vector<McpServerStateBase*>& McpClientBase::get_mcp_servers()
     return mMcpServersList;
 }
 
-bool McpClientBase::on_server_request_t(McpServerStateBase* in_server, const mbase::Json& in_msgid, const mbase::string& in_method, const mbase::Json& in_params)
+bool McpClientBase::on_server_request_t([[maybe_unused]] McpServerStateBase* in_server, [[maybe_unused]] const mbase::Json& in_msgid, [[maybe_unused]] const mbase::string& in_method, [[maybe_unused]] const mbase::Json& in_params)
 {
     return false;
 }
 
-GENERIC McpClientBase::on_server_notification_t(McpServerStateBase* in_server, const mbase::string& in_method, const mbase::Json& in_params)
+GENERIC McpClientBase::on_server_notification_t([[maybe_unused]] McpServerStateBase* in_server, [[maybe_unused]] const mbase::string& in_method, [[maybe_unused]] const mbase::Json& in_params)
 {
 
 }
 
-GENERIC McpClientBase::on_server_response_t(McpServerStateBase* in_server, const mbase::string& in_msgid, const mbase::Json& in_params)
+GENERIC McpClientBase::on_server_response_t([[maybe_unused]] McpServerStateBase* in_server, [[maybe_unused]] const mbase::string& in_msgid, [[maybe_unused]] const mbase::Json& in_params)
 {
 
 }
 
-GENERIC McpClientBase::on_log_message_t(McpServerStateBase* in_server, const mbase::McpNotificationLogMessage& in_log_message)
+GENERIC McpClientBase::on_log_message_t([[maybe_unused]] McpServerStateBase* in_server, [[maybe_unused]] const mbase::McpNotificationLogMessage& in_log_message)
 {
 
 }
 
-GENERIC McpClientBase::on_cancellation_t(McpServerStateBase* in_server, const mbase::McpNotificationCancellationIdStr& in_cancellation)
+GENERIC McpClientBase::on_cancellation_t([[maybe_unused]] McpServerStateBase* in_server, [[maybe_unused]] const mbase::McpNotificationCancellationIdStr& in_cancellation)
 {
 
 }
 
-GENERIC McpClientBase::on_prompt_list_changed_t(McpServerStateBase* in_server)
+GENERIC McpClientBase::on_prompt_list_changed_t([[maybe_unused]] McpServerStateBase* in_server)
 {
 
 }
 
-GENERIC McpClientBase::on_resource_list_changed_t(McpServerStateBase* in_server)
+GENERIC McpClientBase::on_resource_list_changed_t([[maybe_unused]] McpServerStateBase* in_server)
 {
 
 }
 
-GENERIC McpClientBase::on_tool_list_changed_t(McpServerStateBase* in_server)
+GENERIC McpClientBase::on_tool_list_changed_t([[maybe_unused]] McpServerStateBase* in_server)
 {
 
 }
 
-GENERIC McpClientBase::on_resource_updated_t(McpServerStateBase* in_server, const mbase::string& in_uri)
+GENERIC McpClientBase::on_resource_updated_t([[maybe_unused]] McpServerStateBase* in_server, [[maybe_unused]] const mbase::string& in_uri)
 {
 
 }
 
-GENERIC McpClientBase::on_progress_notification_t(McpServerStateBase* in_server, const mbase::McpNotificationProgress& in_progress_notif)
+GENERIC McpClientBase::on_progress_notification_t([[maybe_unused]] McpServerStateBase* in_server, [[maybe_unused]] const mbase::McpNotificationProgress& in_progress_notif)
 {
 
 }
 
-GENERIC McpClientBase::on_sampling_request_t(McpServerStateBase* in_server, const mbase::McpSamplingRequestObject& in_sampling_request)
+GENERIC McpClientBase::on_sampling_request_t([[maybe_unused]] McpServerStateBase* in_server, const mbase::McpSamplingRequestObject& in_sampling_request)
 {
     mSamplingRequestsSync.acquire();
     mSamplingRequestsList.push_back(in_sampling_request);
     mSamplingRequestsSync.release();
 }
 
-bool McpClientBase::on_sampling_request(McpServerStateBase* in_server, mbase::McpSamplingRequestObject&& in_sampling_request)
+bool McpClientBase::on_sampling_request([[maybe_unused]] McpServerStateBase* in_server, mbase::McpSamplingRequestObject&& in_sampling_request)
 {
     mbase::McpSamplingResult samplingResult;
     samplingResult.mModel = "qwen2";
