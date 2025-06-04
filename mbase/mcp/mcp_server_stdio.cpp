@@ -5,16 +5,17 @@ MBASE_BEGIN
 
 McpServerStdio::McpServerStdio(const mbase::string& in_server_name, const mbase::string& in_version_string) : McpServerBase(in_server_name, in_version_string, mcp_transport_method::STDIO), mSingleStdioClient(this)
 {
-    mSingleStdioClient.start_processor();
+    //mSingleStdioClient.start_processor();
 }
 
-bool McpServerStdio::is_server_running() const noexcept
+McpServerStdio::~McpServerStdio()
 {
-    return mSingleStdioClient.is_processor_running();
+    this->stop_processor();
 }
 
 GENERIC McpServerStdio::update_t()
 {
+    mSingleStdioClient.update_t();
 }
 
 MBASE_END

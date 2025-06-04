@@ -5,7 +5,7 @@ Quickstart
 ==========
 
 .. tip::
-    It is highly suggested that you read the sections in order since they are not randomly laid out in the document.
+    It is highly recommended that you read the sections in order, as they are not arranged randomly in the document.
     For example, the :doc:`dialogue example<quickstart/dialogue_ex/about>` and :doc:`single-prompt example<quickstart/single_prompt_ex/about>` is inter-connected where we are doing
     improvements to the :doc:`single-prompt example<quickstart/single_prompt_ex/about>`.
 
@@ -24,7 +24,7 @@ and get the detailed explanation.
 Structure
 ---------
 
-This chapter is composed of four sections which cover topics as follows:
+This chapter is composed of five sections which cover topics as follows:
 
 * :doc:`Setting-up<quickstart/setting_up>`: Creating a CMake project and linking the inference library.
 

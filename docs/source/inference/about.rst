@@ -10,7 +10,7 @@ Welcome to the MBASE inference library documentation!
 Document Navigation
 -------------------
 
-The document is structured into four chapters where each chapter has a distinct purpose.
+The document is structured into three chapters where each chapter has a distinct purpose.
 Those chapters are as follows:
 
 * :doc:`Quickstart <quick_start>`: This chapter starts by creating a CMake project and linking the inference SDK. Then, implement simple project examples to show how to use the inference SDK.

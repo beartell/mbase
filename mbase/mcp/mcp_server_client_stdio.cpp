@@ -1,4 +1,5 @@
 #include <mbase/mcp/mcp_server_client_stdio.h>
+#include <mbase/mcp/mcp_server_stdio.h>
 #include <mbase/io_file.h>
 
 MBASE_BEGIN
@@ -9,7 +10,6 @@ McpServerStdioClient::McpServerStdioClient(McpServerBase* in_server_instance) : 
 
 McpServerStdioClient::~McpServerStdioClient()
 {
-    mProcessorThread.exit(1);
 }
 
 GENERIC McpServerStdioClient::send_mcp_payload(const mbase::string& in_payload)
@@ -22,7 +22,7 @@ GENERIC McpServerStdioClient::send_mcp_payload(const mbase::string& in_payload)
 GENERIC McpServerStdioClient::update_t()
 {
     I32 bytesRead = 1;
-    while(bytesRead > 0 && is_processor_running())
+    while(bytesRead > 0 && mServerInstance->is_processor_running())
     {
         char totalMcpRequest[MBASE_MCP_STDIO_BUFFER_LENGTH] = {0};
         bytesRead = gStdin.read_available_data(totalMcpRequest, MBASE_MCP_STDIO_BUFFER_LENGTH - 1);
@@ -35,7 +35,6 @@ GENERIC McpServerStdioClient::update_t()
             this->read_mcp_payload(mcpRequest);
         }
     }
-    mIsProcessorRunning = false;
 }
 
 MBASE_END

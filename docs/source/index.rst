@@ -42,8 +42,8 @@ In order the setup the MBASE SDK, see: :doc:`setting-up <setting-up/about>`
    :caption: Contents:
    
    Setting-up <setting-up/about>
-   Inference <inference/about>
+   Inference Library <inference/about>
+   Model Context Protocol Library <mcp/about>
    Standard Library <std/index>
    JSON Library <json/index>
    Copyright <copyright>
-
