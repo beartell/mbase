@@ -9,6 +9,7 @@
 
 #ifdef MBASE_PLATFORM_UNIX
     #include <unistd.h> // pipe, fork, exec family procedures
+    #include <sys/wait.h>
 #endif
 
 #ifdef MBASE_PLATFORM_WINDOWS
@@ -191,12 +192,6 @@ MBASE_INLINE GENERIC subprocess::create_new_process(bool in_stdio, mbase::string
 
     for(mbase::string& tmpArgument : in_arguments)
     {
-        if(tmpArgument.size() > ARG_MAX)
-        {
-            // argument data length is too long
-            // handle this case
-            return;
-        }
         argumentsArray.push_back(tmpArgument.data());
     }
     argumentsArray.push_back(NULL);
