@@ -85,7 +85,7 @@ After all those operations, your CMakeLists.txt should look like this:
     target_include_directories(mcp_server_sample PUBLIC mbase-mcp)
 
 -------------------
-Setting up main.cpp
+Setting up the code
 -------------------
 
 After we set the CMake configuration, we will print the self name and version of both MCP client and server.
@@ -115,11 +115,11 @@ After we set the CMake configuration, we will print the self name and version of
 
     int main()
     {
-        mbase::McpServerStdio stdioServer(
+        mbase::McpServerStdio mcpServer(
             "MCP Sample Server",
             "1.0.0"
         );
-        std::cout << stdioServer.get_server_name() << " " << stdioServer.get_server_version() << std::endl;
+        std::cout << mcpServer.get_server_name() << " " << mcpServer.get_server_version() << std::endl;
         return 0;
     }
 

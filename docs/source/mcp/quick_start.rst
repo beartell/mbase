@@ -10,7 +10,7 @@ Even if the setting up section covers everything to setup the MCP library,
 the concepts that are implemented in the examples section are just fundamental MCP features which
 are mostly sufficient for every-day usage of MCP.
 
-In order to user and understand the MCP library in detail, make sure you refer to the information reference.
+In order to use and understand the MCP library in detail, make sure you refer to the information reference.
 
 ---------
 Structure

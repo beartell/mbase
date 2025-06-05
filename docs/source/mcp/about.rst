@@ -12,10 +12,9 @@ Document Navigation
 
 The document is structured into two chapters as follows:
 
-* :doc:`Quickstart <quick_start>`: This chapter starts by creating a CMake project and linking the MCP SDK. 
-After that, we implement a simple MCP server with tool/resource/prompt features and communicate with that server through the MCP client we implement.
+* :doc:`Quickstart <quick_start>`: In section, we start by creating a CMake project and linking the MCP SDK to it. Afterwards, we implement a simple MCP server with tool/resource/prompt features and communicate with that server through the MCP client which is also implemented using the SDK.
 
-* :doc:`Information Reference`: This chapter contains useful reference information for an advanced full-featured MCP SDK usage.
+* :doc:`Information Reference`: This chapter contains useful reference information for an advanced, full-featured MCP SDK usage.
 
 .. toctree::
     :hidden:

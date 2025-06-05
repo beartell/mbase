@@ -65,8 +65,8 @@ public:
     bool list_prompts(mcp_list_prompts_cb in_cb, const I64& in_timeout = MBASE_MCP_TIMEOUT_DEFAULT, const mbase::string& in_cursor = mbase::string());
     bool list_tools(mcp_list_tools_cb in_cb, const I64& in_timeout = MBASE_MCP_TIMEOUT_DEFAULT, const mbase::string& in_cursor = mbase::string());
     bool read_resource(const mbase::string& in_uri, mcp_read_resource_cb in_cb, const I64& in_timeout = MBASE_MCP_TIMEOUT_DEFAULT);
-    bool get_prompt(const mbase::string& in_prompt_name, mcp_get_prompt_cb in_cb, const I64& in_timeout, const McpPromptMessageMap& in_arguments);
-    bool tool_call(const mbase::string& in_tool_name, mcp_tool_call_cb in_cb, const I64& in_timeout, const McpToolMessageMap& in_arguments);
+    bool get_prompt(const mbase::string& in_prompt_name, mcp_get_prompt_cb in_cb, const I64& in_timeout = MBASE_MCP_TIMEOUT_DEFAULT, const McpPromptMessageMap& in_arguments = McpPromptMessageMap());
+    bool tool_call(const mbase::string& in_tool_name, mcp_tool_call_cb in_cb, const I64& in_timeout = MBASE_MCP_TIMEOUT_DEFAULT, const McpToolMessageMap& in_arguments = McpToolMessageMap());
     bool read_resource(const mbase::string& in_uri, mcp_read_resource_cb in_cb, mbase::string& out_progress_token, const I64& in_timeout = MBASE_MCP_TIMEOUT_DEFAULT);
     bool get_prompt(const mbase::string& in_prompt_name, mcp_get_prompt_cb in_cb, const I64& in_timeout, const McpPromptMessageMap& in_arguments, mbase::string& out_progress_token);
     bool tool_call(const mbase::string& in_tool_name, mcp_tool_call_cb in_cb, const I64& in_timeout, const McpToolMessageMap& in_arguments, mbase::string& out_progress_token);
