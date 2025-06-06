@@ -12,12 +12,12 @@ Github link: https://github.com/Emreerdog/mbase
 Welcome to the MBASE SDK documentation.
 
 MBASE SDK is a set of mostly LLM related libraries actively being maintained and developed by M. Emre Erdog
-and the MBASE Software. 
+and the `MBASE Yazılım A.Ş. <https://mbasesoftware.com>`_. 
 
 The main purpose of the MBASE SDK is to supply the developer with necessary tools and procedures to easily integrate LLM capabilities into their
 C++ applications.
 
-Here is a list of libraries in MBASE SDK:
+Here is a list of libraries in the MBASE SDK:
 
 * :doc:`Inference Library <inference/about>`: An LLM inference library built over https://github.com/ggerganov/llama.cpp library for integrating LLMs into programs.
 * :doc:`Model Context Protocol Library <inference/about>`: A C++ MCP client/server library that includes all fundamental features, with support for both STDIO and StreamableHTTP transport methods.

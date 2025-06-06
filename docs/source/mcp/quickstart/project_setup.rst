@@ -67,10 +67,10 @@ Total server.cpp
 
     int main()
     {
-        mbase::McpServerStdio stdioServer(
+        mbase::McpServerStdio mcpServer(
             "MCP Sample Server",
             "1.0.0"
         );
-        std::cout << stdioServer.get_server_name() << " " << stdioServer.get_server_version() << std::endl;
+        std::cout << mcpServer.get_server_name() << " " << mcpServer.get_server_version() << std::endl;
         return 0;
     }

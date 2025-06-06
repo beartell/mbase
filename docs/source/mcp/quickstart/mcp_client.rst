@@ -12,9 +12,9 @@ In this chapter, we will:
 6. Implement the program loop.
 7. Compile and run the program.
 
-------------
-STDIO Client
-------------
+---------------------------
+STDIO Client Initialization
+---------------------------
 
 In order to initialize the STDIO client connection, include the following header:
 
@@ -75,10 +75,66 @@ our :code:`mbase::McpServerStdioInit` to its constructor:
         return 0;
     }
 
------------
-HTTP Client
------------
+--------------------------
+HTTP Client Initialization
+--------------------------
 
+In order to initialize the HTTP client connection, include the following header:
+
+.. code-block:: cpp
+    :caption: client.cpp
+
+    #include <mbase/mcp/mcp_client_server_http.h>
+
+Then, you will create the :code:`mbase::McpServerHttpInit` object as follows:
+
+.. code-block:: cpp
+    :caption: client.cpp
+
+    #include <mbase/mcp/mcp_client_base.h>
+    #include <mbase/mcp/mcp_client_server_http.h>
+    #include <iostream>
+
+    int main()
+    {
+        mbase::McpClientBase myMcpClient(
+            "MCP Sample Client",
+            "1.0.0"
+        );
+
+        mbase::McpServerHttpInit initDesc;
+        initDesc.mHostname = "localhost:8080";
+        // initDesc.mApiKey = "..."; /* API KEY IF REQUIRED */
+
+        return 0;
+    }
+
+Now, we will initialize the :code:`mbase::McpClientServerHttp` object
+and give our :code:`mbase::McpServerHttpInit` to its constructor:
+
+.. code-block:: cpp
+    :caption: client.cpp
+
+    #include <mbase/mcp/mcp_client_base.h>
+    #include <mbase/mcp/mcp_client_server_http.h>
+    #include <iostream>
+
+    int main()
+    {
+        mbase::McpClientBase myMcpClient(
+            "MCP Sample Client",
+            "1.0.0"
+        );
+
+        mbase::McpServerHttpInit initDesc;
+        initDesc.mHostname = "localhost:8080";
+        
+        mbase::McpClientServerHttp mcpServerState(initDesc);
+
+        return 0;
+    }
+
+.. _mcp-client-server-registration:
 --------------------------
 Registering the MCP Server
 --------------------------
@@ -271,6 +327,198 @@ Now, we will pass the arguments and display the call result:
 Implementing the Program Loop
 -----------------------------
 
+The client will listen for messages from the client in parallel transport thread after the call:
+
+.. code-block:: cpp
+    :caption: client.cpp
+
+    mcpServerState.start_processor();
+
+The server state will queue the valid MCP messages in its state or discard the received message if the message is invalid.
+
+Queued message will be dispatched and all the corresponding callbacks and :code:`on_*` events
+will be called by the time the :code:`update` method of the server state is called:
+
+.. code-block:: cpp
+    :caption: client.cpp
+
+    mcpServerState.update();
+
+However, since the client may listen for multiple servers in a normal MCP client program, calling the :code:`update` method
+of each server state may be exhausting and difficult to properly synchronize. Fortunately, when we :ref:`register <mcp-client-server-registration>` the 
+server state to the client, a single call to client's :code:`update` method will be sufficient to dispatch all queued messages of all servers:
+
+.. code-block:: cpp
+    :caption: client.cpp
+
+    while(1)
+    {
+        myMcpClient.update();
+        mbase::sleep(5);
+    }
+
+---------------------------
+Compile and Run the Program
+---------------------------
+
+.. important::
+
+    This section assumes the transport method is STDIO.
+
+    If your transport method is HTTP, you must run the :code:`mcp_server_sample` first and then the :code:`mcp_client_sample`.
+
+Configure the CMake:
+
+.. code-block:: bash
+    
+    cmake -B build
+
+Compile the project:
+
+.. code-block:: bash
+
+    cmake --build build --config Release
+
+Run the :code:`mcp_client_sample` executable:
+
+.. code-block:: bash
+
+    cd build
+    ./mcp_client_sample
+
+The expected output is: 
+
+.. code-block:: bash
+
+    Connection successful
+    10 + 20 = 30
+    10.500000 + 20.500000 = 31.000000
+    Hello world!
+    Content: This is the content inside the content.txt
+    Role: assistant
+    Prompt: You must greet the user with the following message: Hello developer!
+    Role: user
+    Prompt: Tell me about MBASE mcp-sdk
+
+The order of the output may differ.
+
 -----
 Done!
 -----
+
+Congratulations! You have implemented your fist MCP client in C++ with all fundamental features.
+In order to work with advanced features of the MCP SDK, refer to the information reference section.
+
+In order to understand what is MCP, where to access resources, community links about the MCP, See: :doc:`what_now`
+
+--------------------
+Complete Source Code
+--------------------
+
+.. code-block:: cpp
+    :caption: client.cpp
+
+    #include <mbase/mcp/mcp_client_base.h>
+    #include <mbase/mcp/mcp_client_server_stdio.h>
+    #include <iostream>
+
+    int main()
+    {
+        mbase::McpClientBase myMcpClient(
+            "MCP Sample Client",
+            "1.0.0"
+        );
+        mbase::McpServerStdioInit initDesc;
+        initDesc.mServerName = "MCP Sample Server";
+        initDesc.mCommand = "./mcp_server_sample";
+
+        mbase::McpClientServerStdio mcpServerState(initDesc);
+        myMcpClient.register_mcp_server(&mcpServerState);
+        mcpServerState.start_processor();
+
+        mcpServerState.initialize(&myMcpClient, [&](const int& errCode, mbase::McpClientBase* self_client_instance, mbase::McpServerStateBase* server_instance){
+            if(errCode == MBASE_MCP_SUCCESS)
+            {
+                std::cout << "Connection successful" << std::endl;
+            }
+            else
+            {
+                std::cout << "Connection failed" << std::endl;
+            }
+
+            mcpServerState.list_tools([&](const int& errCode, mbase::McpClientBase* self_client_instance, mbase::vector<mbase::McpToolDescription>&& tools_list, const mbase::string& pagination_token){
+                // do stuff
+            });
+
+            mcpServerState.list_prompts([&](const int& errCode, mbase::McpClientBase* self_client_instance, mbase::vector<mbase::McpPromptDescription>&& prompts_list, const mbase::string& pagination_token){
+                // do stuff
+            });
+
+            mcpServerState.list_resources([&](const int& errCode, mbase::McpClientBase* self_client_instance, mbase::vector<mbase::McpResourceDescription>&& resources_list, const mbase::string& pagination_token){
+                // do stuff
+            });
+
+            // arbitrary numbers
+            mbase::McpToolMessageArgument intNum1 = 10;
+            mbase::McpToolMessageArgument intNum2 = 20;
+            mbase::McpToolMessageArgument floatNum1 = 10.5f;
+            mbase::McpToolMessageArgument floatNum2 = 20.5f;
+            mbase::McpToolMessageArgument echoMessage = "Hello world!";
+
+            mbase::McpToolMessageMap argMap;
+            argMap["num1"] = intNum1;
+            argMap["num2"] = intNum2;
+
+            mcpServerState.tool_call("add_int64", [](const int& errCode, mbase::McpClientBase* self_client_instance, mbase::vector<mbase::McpResponseTool>&& toolResponse, bool is_error){
+                mbase::McpResponseTextTool textResponse = std::get<mbase::McpResponseTextTool>(toolResponse[0]);
+                std::cout << textResponse.mText << std::endl;
+            }, MBASE_MCP_TIMEOUT_DEFAULT, argMap);
+
+            argMap.clear();
+            argMap["num1"] = floatNum1;
+            argMap["num2"] = floatNum2;
+
+            mcpServerState.tool_call("add_float64", [](const int& errCode, mbase::McpClientBase* self_client_instance, mbase::vector<mbase::McpResponseTool>&& toolResponse, bool is_error){
+                mbase::McpResponseTextTool textResponse = std::get<mbase::McpResponseTextTool>(toolResponse[0]);
+                std::cout << textResponse.mText << std::endl;
+            }, MBASE_MCP_TIMEOUT_DEFAULT, argMap);
+
+            argMap.clear();
+            argMap["user_message"] = echoMessage;
+
+            mcpServerState.tool_call("echo", [](const int& errCode, mbase::McpClientBase* self_client_instance, mbase::vector<mbase::McpResponseTool>&& toolResponse, bool is_error){
+                mbase::McpResponseTextTool textResponse = std::get<mbase::McpResponseTextTool>(toolResponse[0]);
+                std::cout << textResponse.mText << std::endl;            
+            }, MBASE_MCP_TIMEOUT_DEFAULT, argMap);
+
+            mcpServerState.read_resource("file:///content.txt", [](const int& errCode, mbase::McpClientBase* self_client_instance, mbase::vector<mbase::McpResponseResource>&& resourceResponse){
+                mbase::McpResponseTextResource textResponse = std::get<mbase::McpResponseTextResource>(resourceResponse[0]);
+                std::cout << "Content: " << textResponse.mText << std::endl;
+            });
+
+            mbase::McpPromptMessageMap promptArgMap;
+            promptArgMap["greet_text"] = "Hello developer!";
+            promptArgMap["mbase_arg"] = "mcp-sdk";
+
+            mcpServerState.get_prompt("greeting_prompt", [](const int& errCode, mbase::McpClientBase* self_client_instance, const mbase::string& prompt_description, mbase::vector<mbase::McpResponsePrompt>&& promptResponse) {
+                mbase::McpResponseTextPrompt textPromptRes = std::get<mbase::McpResponseTextPrompt>(promptResponse[0]);
+                std::cout << "Role: " << textPromptRes.mRole << std::endl;
+                std::cout << "Prompt: " << textPromptRes.mText << std::endl;
+            }, MBASE_MCP_TIMEOUT_DEFAULT, promptArgMap);
+
+            mcpServerState.get_prompt("mbase_sdk_inform", [](const int& errCode, mbase::McpClientBase* self_client_instance, const mbase::string& prompt_description, mbase::vector<mbase::McpResponsePrompt>&& promptResponse) {
+                mbase::McpResponseTextPrompt textPromptRes = std::get<mbase::McpResponseTextPrompt>(promptResponse[0]);
+                std::cout << "Role: " << textPromptRes.mRole << std::endl;
+                std::cout << "Prompt: " << textPromptRes.mText << std::endl;
+            }, MBASE_MCP_TIMEOUT_DEFAULT, promptArgMap);
+        });
+        
+
+        while(1)
+        {
+            myMcpClient.update();
+            mbase::sleep(5); // prevent resource exhaustion
+        }
+
+        return 0;
+    }

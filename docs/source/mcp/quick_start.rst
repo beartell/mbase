@@ -10,13 +10,13 @@ Even if the setting up section covers everything to setup the MCP library,
 the concepts that are implemented in the examples section are just fundamental MCP features which
 are mostly sufficient for every-day usage of MCP.
 
-In order to use and understand the MCP library in detail, make sure you refer to the information reference.
+In order to use and understand the MCP library in detail, make sure you refer to the :doc:`information_reference`.
 
 ---------
 Structure
 ---------
 
-This chapter is composed of four sections which cover topics as follows:
+This chapter is composed of six sections which cover topics as follows:
 
 * :doc:`Setting-up<quickstart/setting_up>`: Creating a CMake project and linking the MCP library.
 
@@ -26,6 +26,10 @@ This chapter is composed of four sections which cover topics as follows:
 
 * :doc:`MCP STDIO/HTTP Client Usage<quickstart/mcp_client>`: MCP STDIO/HTTP client implementation example. Codes under this section will be written under the :code:`client.cpp`.
 
+* :doc:`Complete Source Code<quickstart/complete_source>`: A Complete source code of both MCP client and server examples.
+
+* :doc:`What Now?<quickstart/what_now>`: Small-talk about MCP, where to find resources and advanced MCP SDK Usage.
+
 .. toctree::
     :hidden:
 
@@ -33,3 +37,5 @@ This chapter is composed of four sections which cover topics as follows:
     Complete Project Setup <quickstart/project_setup>
     MCP STDIO/HTTP Server Usage <quickstart/mcp_server>
     MCP STDIO/HTTP Client Usage <quickstart/mcp_client>
+    Complete Source Code <quickstart/complete_source>
+    What Now? <quickstart/what_now>

@@ -4,8 +4,8 @@ MCP Server
 
 In this chapter, we will:
 
-1. Initialize a STDIO server (if STDIO transport is preferred)
-2. Initialize a HTTP server (if HTTP transport is preferred)
+1. Initialize the STDIO server (if STDIO transport is preferred)
+2. Initialize the HTTP server (if HTTP transport is preferred)
 3. Implement tools such as:
     - **add_int64**: adds two 64 bit integers.
     - **add_float64**: adds two 64 bit floats.
