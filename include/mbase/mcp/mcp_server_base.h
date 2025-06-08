@@ -63,10 +63,13 @@ public:
     virtual GENERIC on_prompt_call_t(mbase::McpServerClient* in_client, const mbase::Json& in_msgid, const mbase::Json& in_progress_id, McpPromptFeature* in_prompt, McpMessageMap& in_arguments); // implemented
     virtual GENERIC on_resource_call_t(mbase::McpServerClient* in_client, const mbase::Json& in_msgid, const mbase::Json& in_progress_id, McpResourceFeature* in_resource); // implemented
 
-    // Feature registration
+    // Feature registration/unregistration
     register_result register_tool(const mbase::McpToolDescription& in_description, mcp_server_tool_cb in_cb);
     register_result register_prompt(const mbase::McpPromptDescription& in_description, mcp_server_prompt_cb in_cb);
     register_result register_resource(const mbase::McpResourceDescription& in_description, mcp_server_resource_cb in_cb);
+    GENERIC unregister_tool(const mbase::string& in_tool);
+    GENERIC unregister_prompt(const mbase::string& in_prompt);
+    GENERIC unregister_resource(const mbase::string& in_resource);
 
     // Client management
     GENERIC register_client(McpServerClient* in_client);

@@ -330,6 +330,43 @@ McpServerBase::register_result McpServerBase::register_resource(const mbase::Mcp
     return rgrRes;
 }
 
+GENERIC McpServerBase::unregister_tool(const mbase::string& in_tool)
+{
+    this->acquire_synchronizer();
+    mbase::McpToolFeature* tmpToolFeature = this->get_tool_feature(in_tool);
+    if(tmpToolFeature)
+    {
+        mToolMap.erase(in_tool);
+        send_tool_list_changed_notification();
+    }
+    this->release_synchronizer();
+}
+
+GENERIC McpServerBase::unregister_prompt(const mbase::string& in_prompt)
+{
+    this->acquire_synchronizer();
+    mbase::McpPromptFeature* tmpPromptFeature = this->get_prompt_feature(in_prompt);
+    if(tmpPromptFeature)
+    {
+        mPromptMap.erase(in_prompt);
+        send_prompt_list_changed_notification();
+    }
+    this->release_synchronizer();
+}
+
+GENERIC McpServerBase::unregister_resource(const mbase::string& in_resource)
+{
+    this->acquire_synchronizer();
+    mbase::McpResourceFeature* tmpResourceFeature = this->get_resource_feature(in_resource);
+    if(tmpResourceFeature)
+    {
+        mResourceMap.erase(in_resource);
+        send_resource_list_changed_notification();
+        send_resource_updated_notification(in_resource);
+    }
+    this->release_synchronizer();
+}
+
 GENERIC McpServerBase::register_client(McpServerClient* in_client)
 {
     mClientListMutex.acquire();

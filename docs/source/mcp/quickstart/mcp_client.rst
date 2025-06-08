@@ -135,6 +135,7 @@ and give our :code:`mbase::McpServerHttpInit` to its constructor:
     }
 
 .. _mcp-client-server-registration:
+
 --------------------------
 Registering the MCP Server
 --------------------------
@@ -207,6 +208,8 @@ that it is the same object we used to register features in the :doc:`mcp_server`
     Pagination is also supported for list operations.
 
     See: TODO, put pagination reference link
+
+.. _mcp-client-quickstart-calling-tools:
 
 -------------
 Calling Tools
@@ -283,6 +286,8 @@ We will read the :code:`file:///content.txt` uri as follows:
         mbase::McpResponseTextResource textResponse = std::get<mbase::McpResponseTextResource>(resourceResponse[0]);
         std::cout << "Content: " << textResponse.mText << std::endl;
     });
+
+.. _mcp-client-quickstart-getting-prompts:
 
 ---------------
 Getting Prompts

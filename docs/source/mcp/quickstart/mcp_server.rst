@@ -236,6 +236,7 @@ Register the feature descriptions to the server:
 
 Next, we will implement a single resource feature with logging and progress tracking.
 
+.. _mcp-server-quickstart-resource:
 ^^^^^^^^
 Resource
 ^^^^^^^^
@@ -250,6 +251,7 @@ Implement the feature callback and respond with a valid response object:
         mbase::McpNotificationLogMessage logMsg;
         logMsg.mLogger = "resource logger";
         logMsg.mError = "Reading content.txt ...";
+        in_client_instance->send_log(logMsg);
         mbase::sleep(500);
         in_client_instance->set_progress(25, in_progress_token, "25%");
         mbase::sleep(500);
@@ -450,6 +452,7 @@ Complete Source Code
         mbase::McpNotificationLogMessage logMsg;
         logMsg.mLogger = "resource logger";
         logMsg.mError = "Reading content.txt ...";
+        in_client_instance->send_log(logMsg);
         mbase::sleep(500);
         in_client_instance->set_progress(25, in_progress_token, "25%");
         mbase::sleep(500);

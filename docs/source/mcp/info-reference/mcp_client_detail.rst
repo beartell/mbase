@@ -27,7 +27,7 @@ These callbacks are called before the MCP message is dispatched to the applicati
 You can override the following callbacks:
 
 .. code-block:: cpp
-    :caption: mcp_client_base.
+    :caption: mcp_client_base.h
 
     class MBASE_API McpClientBase {
     public:
@@ -314,7 +314,7 @@ Calling Tools
 ^^^^^^^^^^^^^
 
 .. important:: 
-    Example is from :doc:`../quickstart/mcp_client`.
+    Example is from :ref:`mcp-client-quickstart-calling-tools`.
 
 Calling tools with arguments:
 
@@ -693,7 +693,7 @@ Getting Prompts
 ^^^^^^^^^^^^^^^
 
 .. important:: 
-    Example is from :doc:`../quickstart/mcp_client`.
+    Example is from :ref:`mcp-client-quickstart-getting-prompts`.
 
 Getting a prompt with arguments:
 
@@ -771,3 +771,118 @@ Here is how you add/remove roots:
 -------------------------
 Sampling Request Handling
 -------------------------
+
+Below are the methods that are related to the sampling request handling:
+
+.. code-block:: cpp
+    :caption: mcp_client_base.h
+
+    class MBASE_API McpClientBase {
+    public:
+        McpClientBase(
+            const mbase::string& in_client_name,
+            const mbase::string& in_client_version,
+            const bool& in_sampling_supported = false // set this as true
+        );
+
+        // Returns true if the sampling is supported
+        const bool& is_sampling_supported() const noexcept;
+        ...
+
+        virtual bool on_sampling_request(McpServerStateBase* in_server, mbase::McpSamplingRequestObject&& in_sampling_request);
+        GENERIC send_sampling_result(const mbase::McpSamplingRequestObject& in_sampling_request, const mbase::McpSamplingResult& in_result);
+        ...
+    };
+
+Where the :code:`McpSamplingRequestObject` and :code:`McpSamplingResult` are defined as: 
+
+.. code-block:: cpp
+    :caption: mcp_server_to_client_requests.h
+
+    struct McpSamplingRequestObject {
+        mbase::Json mRequestId;
+        McpServerStateBase* requestOwner = nullptr;
+        McpSamplingRequest samplingRequest;
+    };
+
+    struct McpSamplingResult {
+        mbase::string mRole;
+        mbase::string mModel;
+        mbase::string mStopReason;
+        mcp_sampling_content_type mContentType = mcp_sampling_content_type::TEXT;
+        mbase::string mTextContent;
+        mbase::string mBase64Content;
+        mbase::string mMimeType;
+    };
+
+The sampling request handling workflow is as follows:
+
+1. Initialize the :code:`McpClientBase` with sampling supported params as true.
+2. Override the :code:`on_sampling_request` method of the :code:`McpClientBase`.
+3. Return false on :code:`on_sampling_request` method if you reject the sampling request.
+4. Return true if you accept the sampling request and own the :code:`McpSamplingRequestObject`.
+5. Call the :code:`send_sampling_result` method of the :code:`McpClientBase` with the :code:`McpSamplingRequestObject` you owned before.
+
+^^^^^^^^^
+In Action
+^^^^^^^^^
+
+Let's derive from the :code:`McpClientBase` and declare the class as follows:
+
+.. code-block:: cpp
+    :caption: client.cpp
+
+    class ExampleClientDerivation : public mbase::McpClientBase {
+    public:
+        ExampleClientDerivation() : mbase::McpClientBase("MCP Example Client", "1.0.0", true){}
+    };
+
+Override the :code:`on_sampling_request`:
+
+.. code-block:: cpp
+    :caption: client.cpp
+
+    class ExampleClientDerivation : public mbase::McpClientBase {
+    public:
+        ExampleClientDerivation() : mbase::McpClientBase("MCP Example Client", "1.0.0"){}
+        bool on_sampling_request(mbase::McpServerStateBase* in_server, mbase::McpSamplingRequestObject&& in_sampling_request) override
+        {
+            /*
+                Return false if you want to reject the sampling request
+            */
+        }
+    };
+
+Call the :code:`send_sampling_result`:
+
+.. code-block:: cpp
+    :caption: client.cpp
+
+    class ExampleClientDerivation : public mbase::McpClientBase {
+    public:
+        ExampleClientDerivation() : mbase::McpClientBase("MCP Example Client", "1.0.0"){}
+        bool on_sampling_request(mbase::McpServerStateBase* in_server, mbase::McpSamplingRequestObject&& in_sampling_request) override
+        {
+            mbase::McpSamplingResult samplingResult;
+            samplingResult.mTextContent = "This is a sampling response from LLM";
+            samplingResult.mContentType = mbase::mcp_sampling_content_type::TEXT;
+            samplingResult.mMimeType = "text/plain";
+            samplingResult.mRole = "assistant";
+            samplingResult.mStopReason = "EOT";
+            samplingResult.mModel = "<some_llm_model>";
+
+            this->send_sampling_result(in_sampling_request, samplingResult);
+
+            return true;
+        }
+    };
+
+^^^^^^^^^^^^^^^^^
+Important Remarks
+^^^^^^^^^^^^^^^^^
+
+* The :code:`on_sampling_request` method is called on the application thread so that you don't need to worry about thread synchronization.
+
+* While your client application is running, you may send the sampling response at any time, provided you still own the :code:`McpSamplingRequestObject`.
+
+* If you return true from the :code:`on_sampling_request` but don't own the :code:`McpSamplingRequestObject`, the request will stale on the server side which will inevitably result in request timeout.

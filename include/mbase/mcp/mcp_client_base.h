@@ -41,9 +41,9 @@ public:
     virtual GENERIC on_progress_notification_t(McpServerStateBase* in_server, const mbase::McpNotificationProgress& in_progress_notif);
 
     // Sampling request callbacks
-    // first the on_sampling_request_t is called on the transport thread
-    // second the on_sampling_request is called on the application thread
-    // if user returns false on on_sampling_request, the sampling rejected response will return to the server
+    // firstly, the on_sampling_request_t is called on the transport thread
+    // secondly, the on_sampling_request is called on the application thread
+    // if the user returns false on on_sampling_request, the sampling rejected response will return to the server
     GENERIC on_sampling_request_t(McpServerStateBase* in_server, const mbase::McpSamplingRequestObject& in_sampling_request);
     virtual bool on_sampling_request(McpServerStateBase* in_server, mbase::McpSamplingRequestObject&& in_sampling_request);
 
