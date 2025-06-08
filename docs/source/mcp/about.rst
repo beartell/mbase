@@ -75,7 +75,7 @@ Feature Support Matrix
 +------------------------------+--------------------------------------------------+-------------------------------------------------+-----+
 | Sampling                     | :octicon:`check-circle-fill;1em;sd-text-success` | :octicon:`check-circle-fill;1em;sd-text-success`| TBD |
 +------------------------------+--------------------------------------------------+-------------------------------------------------+-----+
-| Resource Templates           | :octicon:`x-circle-fill;1em;sd-text-danger`      | :octicon:`x-circle-fill;1em;sd-text-danger`     | TBD |
+| Resource Templates           | :octicon:`x-circle-fill;1em;sd-text-danger`      | :octicon:`x-circle-fill;1em;sd-text-danger`     |     |
 +------------------------------+--------------------------------------------------+-------------------------------------------------+-----+
 
 -------------------
