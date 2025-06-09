@@ -248,6 +248,8 @@ You can override the following callbacks:
         ...
     };
 
+.. _mcp-server-working-with-tools:
+
 ------------------
 Working with Tools
 ------------------
@@ -396,6 +398,8 @@ Unregistration:
     mcpServer.unregister_tool("example_image_res");
     mcpServer.unregister_tool("example_audio_res");
 
+.. _mcp-server-working-with-resources:
+
 ----------------------
 Working with Resources
 ----------------------
@@ -507,6 +511,8 @@ Unregistration:
 
     mcpServer.unregister_resource("example_text_resource");
     mcpServer.unregister_resource("example_binary_resource");
+
+.. _mcp-server-working-with-prompts:
 
 --------------------
 Working with Prompts
@@ -671,6 +677,7 @@ Unregistration:
     mcpServer.unregister_prompt("example_image_prompt");
     mcpServer.unregister_prompt("example_audio_prompt");
 
+.. _mcp-server-listing-roots:
 
 --------------------
 Listing Client Roots
@@ -732,6 +739,8 @@ For example, listing the client roots when the client is initialized:
     };
 
 For more information: https://modelcontextprotocol.io/specification/2025-03-26/client/roots
+
+.. _mcp-server-sending-sampling-requests:
 
 -------------------------
 Sending Sampling Requests

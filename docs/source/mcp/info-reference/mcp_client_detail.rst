@@ -156,6 +156,8 @@ You can override the following callbacks:
 
     };
 
+.. _mcp-client-working-with-tools:
+
 ------------------
 Working with Tools
 ------------------
@@ -192,6 +194,8 @@ And :code:`McpToolMessageMap` as:
 
     using McpToolMessageArgument = std::variant<I64, F64, bool, mbase::string, mbase::vector<mbase::Json>, std::map<mbase::string, mbase::Json>>;
     using McpToolMessageMap = mbase::unordered_map<mbase::string, McpToolMessageArgument>;
+
+.. _mcp-client-listing-tools:
 
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 Listing Tools with/without Pagination
@@ -394,6 +398,8 @@ Where the :code:`McpResponseTool` variant defined as:
 
     using McpResponseTool = std::variant<McpResponseTextTool, McpResponseImageTool, McpResponseAudioTool>;
 
+.. _mcp-client-working-with-resources:
+
 ----------------------
 Working with Resources
 ----------------------
@@ -547,6 +553,8 @@ Where the :code:`McpResponseResource` variant is defined as:
     };
 
     using McpResponseResource = std::variant<McpResponseTextResource, McpResponseBinaryResource>;
+
+.. _mcp-client-working-with-prompts:
 
 --------------------
 Working with Prompts
@@ -729,6 +737,8 @@ Without arguments:
         
     });
 
+.. _mcp-client-prompt-compilation-request:
+
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 Sending Prompt Compilation Requests
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -746,6 +756,8 @@ Sending Prompt Compilation Requests
             // There are more strings to be completed   
         }
     }, "example_prompt_get_1", "prompt_arg_1", "random_value");
+
+.. _mcp-client-add-remove-roots:
 
 ---------------------
 Adding/Removing Roots
@@ -767,6 +779,8 @@ Here is how you add/remove roots:
     myMcpClient.remove_root("file:///example2.txt");
     myMcpClient.remove_root("http://www.example.com");
     myMcpClient.remove_root("git://example.git");
+
+.. _mcp-client-handle-sampling:
 
 -------------------------
 Sampling Request Handling

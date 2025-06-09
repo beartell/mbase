@@ -12,6 +12,8 @@ In this chapter, we will:
 6. Implement the program loop.
 7. Compile and run the program.
 
+.. _mcp-client-stdio-init:
+
 ---------------------------
 STDIO Client Initialization
 ---------------------------
@@ -74,6 +76,8 @@ our :code:`mbase::McpServerStdioInit` to its constructor:
 
         return 0;
     }
+
+.. _mcp-client-http-init:
 
 --------------------------
 HTTP Client Initialization
@@ -328,11 +332,13 @@ Now, we will pass the arguments and display the call result:
         std::cout << "Prompt: " << textPromptRes.mText << std::endl;
     }, MBASE_MCP_TIMEOUT_DEFAULT, promptArgMap);
 
+.. _mcp-client-quickstart-program-loop:
+
 -----------------------------
 Implementing the Program Loop
 -----------------------------
 
-The client will listen for messages from the client in parallel transport thread after the call:
+The client will listen for messages from the server in a parallel transport thread after the call:
 
 .. code-block:: cpp
     :caption: client.cpp
@@ -341,7 +347,7 @@ The client will listen for messages from the client in parallel transport thread
 
 The server state will queue the valid MCP messages in its state or discard the received message if the message is invalid.
 
-Queued message will be dispatched and all the corresponding callbacks and :code:`on_*` events
+Queued messages will be dispatched and all the corresponding callbacks and :code:`on_*` events
 will be called by the time the :code:`update` method of the server state is called:
 
 .. code-block:: cpp

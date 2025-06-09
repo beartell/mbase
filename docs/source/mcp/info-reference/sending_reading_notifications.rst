@@ -51,6 +51,8 @@ Following notification callbacks are defined under the :code:`McpServerBase` cla
         ...
     };
 
+.. _mcp-server-sending-log-message:
+
 ^^^^^^^^^^^^^^^^^^^^
 Sending Log Messages
 ^^^^^^^^^^^^^^^^^^^^
@@ -118,6 +120,8 @@ Or:
         ...
     };
 
+.. _mcp-server-progress-notification:
+
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 Sending Progress Notifications
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -172,6 +176,8 @@ The list changed notification will be sent automatically when you register or un
 ----------
 MCP Client
 ----------
+
+.. _mcp-client-reading-notifications:
 
 ^^^^^^^^^^^^^^^^^^^^^^
 Notification Callbacks

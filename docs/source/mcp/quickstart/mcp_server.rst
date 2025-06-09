@@ -18,6 +18,8 @@ In this chapter, we will:
 6. Register those features
 7. Implement the program loop.
 
+.. _mcp-server-stdio-init:
+
 ---------------------------
 STDIO Server Initialization
 ---------------------------
@@ -55,6 +57,8 @@ Which will make the server read stdin in parallel thread waiting for parent proc
 
 Since it runs on parallel, we will need to synchronize with the transport thread at some point in the program 
 which will be mentioned in the :ref:`mcp-server-implement-program-loop`.
+
+.. _mcp-server-http-init:
 
 --------------------------
 HTTP Server Initialization
@@ -237,6 +241,7 @@ Register the feature descriptions to the server:
 Next, we will implement a single resource feature with logging and progress tracking.
 
 .. _mcp-server-quickstart-resource:
+
 ^^^^^^^^
 Resource
 ^^^^^^^^
@@ -350,6 +355,7 @@ Register the feature descriptions to the server:
     mcpServer.register_prompt(mbasePromptDescription, mbase_sdk_inform_cb);
 
 .. _mcp-server-implement-program-loop:
+
 -----------------------------
 Implementing the Program Loop
 -----------------------------
