@@ -77,6 +77,61 @@ our :code:`mbase::McpServerStdioInit` to its constructor:
         return 0;
     }
 
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Important Remarks Regarding Windows Subprocess Creation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Giving an "npx", "uv" or "docker" as a :code:`mCommand` will work in both macOS and linux:
+
+.. code-block:: cpp
+    :caption: client.cpp
+
+    #include <mbase/mcp/mcp_client_base.h>
+    #include <mbase/mcp/mcp_client_server_stdio.h>
+    #include <iostream>
+
+    int main()
+    {
+        mbase::McpClientBase myMcpClient(
+            "MCP Sample Client",
+            "1.0.0"
+        );
+        mbase::McpServerStdioInit initDesc;
+        initDesc.mServerName = "MCP Sample Server";
+        initDesc.mCommand = "npx"; 
+        // initDesc.mArguments = {arg1, arg2 ...} /* if you want to start the subprocess with arguments */
+        // initDesc.mEnvironmentVariables = mbase::unordered_map<mbase::string, mbase::string>  /* if you want to pass environment variables */
+
+        return 0;
+    }
+
+In windows, the call may differ in which the command being :code:`.bat` file or :code:`.cmd` script etc. will make the subprocess creation fail.
+
+The workaround for that is that if the command is internally a :code:`.bat` file, prefixing the command with :code:`cmd.exe /C` will be sufficient.
+For the :code:`.cmd` scripts, specifying the extension will be sufficient.
+
+For example, for :code:`.bat` scripts:
+
+.. code-block:: cpp
+    :caption: client.cpp
+
+    mbase::McpServerStdioInit initDesc;
+    initDesc.mServerName = "MCP Sample Server";
+    initDesc.mCommand = "cmd.exe /C npx"; 
+    // initDesc.mArguments = {arg1, arg2 ...} /* if you want to start the subprocess with arguments */
+    // initDesc.mEnvironmentVariables = mbase::unordered_map<mbase::string, mbase::string>  /* if you want to pass environment variables */
+
+For :code:`.cmd`:
+
+.. code-block:: cpp
+    :caption: client.cpp
+
+    mbase::McpServerStdioInit initDesc;
+    initDesc.mServerName = "MCP Sample Server";
+    initDesc.mCommand = "npx.cmd"; 
+    // initDesc.mArguments = {arg1, arg2 ...} /* if you want to start the subprocess with arguments */
+    // initDesc.mEnvironmentVariables = mbase::unordered_map<mbase::string, mbase::string>  /* if you want to pass environment variables */
+
 .. _mcp-client-http-init:
 
 --------------------------
