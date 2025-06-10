@@ -291,21 +291,3 @@ Detailed documentation: :doc:`info-reference/gguf-files`
 
         return 0;
     }
-
------------------------
-Project State and Goals
------------------------
-
-The MBASE SDK is in its baby-steps for now and it is expected
-to err on some scenarios because not all cases are tested and the product
-is not yet fully-polished.
-
-The project has been developed only by me and I was planning to open-source
-in the near future. However, the complication and the workload forced me to open-source the project much earlier
-before being perfectly tested and polished. In other words, I am once again asking for your contribution to this project.
-
-The company is being established to accelerate the development of the MBASE SDK and for creating both proprietary and open-source products
-built using the MBASE SDK.
-
-The goal of the MBASE SDK is expected to provide non-blocking LLM inference to both beginner and advanced users of the C++ library
-and very useful tools and programs to non-programmer users.

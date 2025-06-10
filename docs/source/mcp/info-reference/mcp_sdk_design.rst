@@ -67,7 +67,7 @@ All header files are prefixed with :code:`mbase/mcp` in the MCP SDK. Below are t
 +-------------------------------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+---------------+------------------------------------------------------------------------+
 | mcp_server_http_streamable.h        | Contains both the :code:`McpServerHttpStreamableStateful` and :code:`McpServerHttpStreamableStateless` objects which are used to initialize an MCP HTTP server.                                                                                                               | Server        | :code:`mcp_server_base.h`, :code:`mcp_server_client_http_streamable.h` |
 +-------------------------------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+---------------+------------------------------------------------------------------------+
-| mcp_server_responses.h              | Defines the feature response objects and expose them as variant objects such as :code:`McpResponseResource`, :code:`McpResponsePrompt` and :code:`McpResponseTool`. This header is used to send and read responses.                                                           | Client/Server |                                                                        |
+| mcp_server_responses.h              | Defines the feature response objects and expose them as variant object  such as :code:`McpResponseResource`, :code:`McpResponsePrompt` and :code:`McpResponseTool`. This header is used to send and read responses.                                                           | Client/Server |                                                                        |
 +-------------------------------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+---------------+------------------------------------------------------------------------+
 | mcp_server_stdio.h                  | Contains the :code:`McpServerStdio` object which is used to initialize an MCP STDIO server.                                                                                                                                                                                   | Server        | :code:`mcp_server_base.h`, :code:`mcp_server_client_stdio.h`           |
 +-------------------------------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+---------------+------------------------------------------------------------------------+
@@ -78,6 +78,10 @@ All header files are prefixed with :code:`mbase/mcp` in the MCP SDK. Below are t
 ----------------
 Object Hierarchy
 ----------------
+
+.. image:: mcp_object_diagram.png
+  :width: 1920
+  :alt: Alternative text
 
 -----------
 Error Codes

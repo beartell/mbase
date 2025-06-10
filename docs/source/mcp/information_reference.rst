@@ -10,4 +10,4 @@ Information Reference
     MCP HTTP Server Details <info-reference/mcp_http_stateful>
     Sending/Reading Notifications <info-reference/sending_reading_notifications>
     Implementing Custom MCP Methods <info-reference/custom_mcp_methods>
-    Application Thread vs Transport Thread <info-reference/transport_thread_details>
+    Overwriting the Dispatcher <info-reference/transport_thread_details>
