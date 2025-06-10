@@ -201,11 +201,15 @@ MBASE_INLINE_EXPR unordered_map<Key, Value, Hash, KeyEqual, Allocator>::unordere
 template<typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator>
 MBASE_INLINE_EXPR unordered_map<Key, Value, Hash, KeyEqual, Allocator>::unordered_map(unordered_map&& in_rhs) noexcept : mBucketCount(in_rhs.mBucketCount), mHash(in_rhs.mHash), mKeyEqual(in_rhs.mKeyEqual), mBucket(std::move(in_rhs.mBucket)), mSize(in_rhs.mSize)
 {
+	in_rhs.mBucketCount = 0;
+	in_rhs.mSize = 0;
 }
 
 template<typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator>
 MBASE_INLINE_EXPR unordered_map<Key, Value, Hash, KeyEqual, Allocator>::unordered_map(unordered_map&& in_rhs, [[maybe_unused]] const Allocator& in_alloc) noexcept : mBucketCount(in_rhs.mBucketCount), mHash(in_rhs.mHash), mKeyEqual(in_rhs.mKeyEqual), mBucket(std::move(in_rhs.mBucket)), mSize(in_rhs.mSize)
 {
+	in_rhs.mBucketCount = 0;
+	in_rhs.mSize = 0;
 }
 
 template<typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator>
