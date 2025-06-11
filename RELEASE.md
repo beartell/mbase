@@ -1,17 +1,19 @@
 # MBASE SDK Release
 
-## v0.2.5 Latest - 2025-05-04
+## v0.3.0 Latest - 2025-06-11
 
 ### SDK Fix
 
-- pc_diagnostics object methods are fixed 1ba1bf8
+- unordered_map bugfix 4c6366a, a999d89, 1b79fb0111bf3ae44c7b0c9f3aab4db407be6792
 
-- Better logging on example programs: 45ca46e, 2386a07, 68cd585, df013c7
+- timers bugfix 1b79fb0111bf3ae44c7b0c9f3aab4db407be6792
+
+- Removed MBASE_API macros from inline classes and functions 8abe52eb8e36333d62b6e1d9db58d06089a430e6
 
 ### SDK Added
 
-- In json library, const getters are implemented fa32029
+- MBASE MCP library has been implemented
 
-- STD file handles can be accessed through io_file objects now ddb7fe0
+- `mbase::subprocess` class is implemented 19fcb2069e6ae4ff667950ee5d76dcb24013fbf7,  cfe5b4d4eafa3b44071394973ecbb34ca9632735
 
-- llama logger is disabled by default now 74deca7
+- Added a special `_read_stdin` method to `io_file` object 29a649d09ab536c531b9ab5942e6a79811981995
