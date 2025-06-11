@@ -2,12 +2,6 @@
 About Single-Prompt Example
 ===========================
 
-.. important::
-    Before you proceed with the example, make sure you followed all steps
-    for setting up the environment.
-
-    :doc:`Setting Up<../setup/setting_up>`
-
 In this example, we will write a program that will read user input (prompt in our context)
 from stdin and supply it to the LLM. Then, the LLM will give the response.
 

@@ -1,0 +1,36 @@
+include_guard(GLOBAL)
+
+@PACKAGE_INIT@
+
+set_and_check(MBASE_MCP_BIN_DIR "@PACKAGE_MBASE_MCP_BIN_INSTALL_DIR@")
+set_and_check(MBASE_MCP_LIB_DIR "@PACKAGE_MBASE_MCP_LIB_INSTALL_DIR@")
+set_and_check(MBASE_MCP_INCLUDE_DIRS "@PACKAGE_MBASE_MCP_INCLUDE_INSTALL_DIR@")
+
+set(MBASE_MCP_NAME_DESCRIPTIVE "MBASE @MBASE_MCP_LIB_NAME@ library @MBASE_MCP_VERSION@")
+
+find_library(
+    MBASE_MCP_LIBRARIES
+    NAMES mb_mcp
+    HINTS ${MBASE_MCP_LIB_DIR}
+    REQUIRED
+)
+
+include(FindPackageHandleStandardArgs)
+find_package_handle_standard_args(
+    MBASE_MCP
+    DEFAULT_MSG
+    MBASE_MCP_LIBRARIES
+    MBASE_MCP_INCLUDE_DIRS
+)
+
+if(MBASE_MCP_FOUND)
+    find_package(mbase-json HINTS ${MBASE_CURRENT_CONFIG_DIRECTORY})
+
+    list(APPEND MBASE_MCP_LIBRARIES ${MBASE_JSON_LIBRARIES})
+
+    add_library(mbase-mcp INTERFACE)
+    target_link_libraries(mbase-mcp INTERFACE ${MBASE_MCP_LIBRARIES})
+    target_include_directories(mbase-mcp INTERFACE ${MBASE_MCP_INCLUDE_DIRS})
+
+    set_property(TARGET mbase-mcp PROPERTY POSITION_INDEPENDENT_CODE ON)
+endif()

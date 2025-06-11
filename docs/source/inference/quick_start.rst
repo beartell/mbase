@@ -5,7 +5,7 @@ Quickstart
 ==========
 
 .. tip::
-    It is highly suggested that you read the sections in order since they are not randomly laid out in the document.
+    It is highly recommended that you read the sections in order, as they are not arranged randomly in the document.
     For example, the :doc:`dialogue example<quickstart/dialogue_ex/about>` and :doc:`single-prompt example<quickstart/single_prompt_ex/about>` is inter-connected where we are doing
     improvements to the :doc:`single-prompt example<quickstart/single_prompt_ex/about>`.
 
@@ -13,8 +13,8 @@ Quickstart
 About
 -----
 
-In this chapter, we will cover everything to install, run and develop using MBASE library.
-Even if the setting up section covers everything to setup the MBASE library,
+In this chapter, we will cover everything to setup, run and develop using MBASE inference library.
+Even if the setting up section covers everything to setup the inference library,
 the concepts that are implemented in the examples section may require further clarification.
 
 For that reason, when you have confusion at some parts, make sure to refer to its :doc:`info-reference/index`
@@ -24,9 +24,11 @@ and get the detailed explanation.
 Structure
 ---------
 
-This chapter is composed of four sections which cover topics as follows:
+This chapter is composed of five sections which cover topics as follows:
 
-* :doc:`Setting-up<quickstart/setup/setting_up>`: Setting up the environment, installing `llama.cpp <llama.cpp_>`_ and `MBASE <mbase_main_>`_.
+* :doc:`Setting-up<quickstart/setting_up>`: Creating a CMake project and linking the inference library.
+
+* :doc:`Complete Project Setup<quickstart/project_setup>`: Properly configured :code:`CMakeLists.txt` and :code:`main.cpp` for reference. Those files are used as a base in subsequent examples.
 
 * :doc:`Single-Prompt Example<quickstart/single_prompt_ex/about>`: An application example where we read stdin from user and send it to the LLM and get a response.
 
@@ -39,7 +41,8 @@ In every example, the complete source code and the cmake file will be provided f
 .. toctree::
     :hidden:
 
-    Setting-up <quickstart/setup/setting_up>
+    Setting-up <quickstart/setting_up>
+    Complete Project Setup <quickstart/project_setup>
     Single-Prompt Example <quickstart/single_prompt_ex/about>
     Dialogue Example <quickstart/dialogue_ex/about>
     Embeddings Example <quickstart/embeddings_ex/about>

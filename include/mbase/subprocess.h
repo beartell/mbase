@@ -9,6 +9,7 @@
 
 #ifdef MBASE_PLATFORM_UNIX
     #include <unistd.h> // pipe, fork, exec family procedures
+    #include <sys/wait.h>
 #endif
 
 #ifdef MBASE_PLATFORM_WINDOWS
@@ -191,12 +192,6 @@ MBASE_INLINE GENERIC subprocess::create_new_process(bool in_stdio, mbase::string
 
     for(mbase::string& tmpArgument : in_arguments)
     {
-        if(tmpArgument.size() > ARG_MAX)
-        {
-            // argument data length is too long
-            // handle this case
-            return;
-        }
         argumentsArray.push_back(tmpArgument.data());
     }
     argumentsArray.push_back(NULL);
@@ -228,12 +223,13 @@ MBASE_INLINE GENERIC subprocess::create_new_process(bool in_stdio, mbase::string
     ZeroMemory(&procStartInformation, sizeof(procStartInformation));
     procStartInformation.cb = sizeof(procStartInformation);
     ZeroMemory(&procInformation, sizeof(procInformation));
-    commandLineString.clear();
+    //commandLineString.clear();
+    commandLineString = mbase::from_utf8(mProcessName);
+
     for(mbase::string& tmpArgument : in_arguments)
     {
-        commandLineString += mbase::from_utf8(tmpArgument);
+        commandLineString += ' ' + mbase::from_utf8(tmpArgument);
     }
-    
     commandLineString.push_back('\0');
 
     SECURITY_ATTRIBUTES securityAttrs;
@@ -273,26 +269,63 @@ MBASE_INLINE GENERIC subprocess::create_new_process(bool in_stdio, mbase::string
         return;
     }
 
-    procStartInformation.hStdOutput = childWriteEnd;
-    procStartInformation.hStdInput = childReadEnd;
-    procStartInformation.dwFlags |= STARTF_USESTDHANDLES;
+    if(in_stdio)
+    {
+        procStartInformation.hStdOutput = childWriteEnd;
+        procStartInformation.hStdInput = childReadEnd;
+        procStartInformation.dwFlags |= STARTF_USESTDHANDLES;
+    }
+
+    mbase::vector<wchar_t> environmentBlockData;
+
+    for(auto& envKval : in_environment_variables)
+    {
+        mbase::wstring wEnvKey = mbase::from_utf8(envKval.first);
+        mbase::wstring wEnvVal = mbase::from_utf8(envKval.second);
+
+        for(const wchar_t& tmpWch : wEnvKey)
+        {
+            environmentBlockData.push_back(tmpWch);
+        }
+        environmentBlockData.push_back(L'=');
+        for(const wchar_t& tmpWch : wEnvVal)
+        {
+            environmentBlockData.push_back(tmpWch);
+        }
+        environmentBlockData.push_back(L'\0');
+    }
+
+    wchar_t* envStrings = GetEnvironmentStrings();
+    wchar_t* current = envStrings;
+    while (*current) {
+        mbase::SIZE_T currentRowSize = wcslen(current) + 1;
+        for(mbase::SIZE_T i = 0; i < currentRowSize; i++)
+        {
+            environmentBlockData.push_back(*current);
+            current++;
+        }
+    }
+
+    environmentBlockData.push_back('\0');
     
     if(!CreateProcess(
-        mbase::from_utf8(mProcessName).c_str(),
+        NULL,
         commandLineString.data(),
         NULL,
         NULL,
         TRUE,
-        0,
-        NULL,
+        CREATE_UNICODE_ENVIRONMENT,
+        environmentBlockData.data(),
         NULL,
         &procStartInformation,
         &procInformation
     ))
     {
         // subprocess creation failed
+        FreeEnvironmentStrings(envStrings);
         return;
     }
+    FreeEnvironmentStrings(envStrings);
     CloseHandle(childReadEnd);
     CloseHandle(childWriteEnd);
     mWritePipe.set_raw_handle(parentWriteEnd);
