@@ -5,10 +5,8 @@ of the MBASE project.
 
 This document will briefly explain how the project is structured, branches, PR formatting, and information in general.
 
-Since the CI is not implemented yet, please be patient if your PR becomes stale, as reviews may take some time.
-
 > [!IMPORTANT]
-> If you are planning to contribute to core MBASE SDK C++ library, make sure to read the [modules documentation](https://github.com/Emreerdog/mbase/blob/main/MODULAR.md)
+> If you are planning to contribute to the core MBASE SDK C++ library, make sure to read the [modules documentation](https://github.com/Emreerdog/mbase/blob/main/MODULAR.md)
 
 ## About Examples
 
@@ -17,10 +15,9 @@ branches assigned to them.
 
 They are not expected to expose a public API to the user so that the CMake library install rules won't be written for example applications except binary install rules.
 
-The example applications will be located in the `examples` directory, each with its own corresponding development branch.
+The example applications will be located under the `examples` directory, each with its own corresponding development branch.
 
-For instance, an example application named `test` will be found under `examples/test`. All related content, including markdown documentation, will be housed within this directory. A dedicated development branch, `examples/test`, will also be created by the repository maintainers. Pull requests related to the `test` application should be submitted to this branch.
-
+For instance, an example application named `test` will be found under the `examples/test` branch. All related content, including markdown documentation, will be housed within this directory. A dedicated development branch, `examples/test`, will also be created by the repository maintainers. Pull requests related to the `test` application should be submitted to this branch.
 
 ## Branch-based Development and Branches
 
@@ -34,6 +31,7 @@ Contributors shouldn't open a PR to the `main` branch since it will be used as a
 - `pc/devel`: Program core SDK module implementations.
 - `std/devel`: Standard library SDK module implementations.
 - `json/devel`: JSON library SDK module implementations.
+- `mcp/devel`: MCP library SDK module implementations.
 - `examples/benchmark`: Benchmark application implementations.
 - `examples/embedding`: Embedding application implementations.
 - `examples/retrieval`: Retrieval application implementations.
@@ -69,17 +67,10 @@ Here is the format:
 ```
 Issue: { NO ISSUE | <ISSUE_NUMBER> }
 Target Branch: <branch>
-Review Complexity: { High | Moderate | Low | Very low }
 Importance: { Critical | High | Moderate | Low }
 
 <description_here>
 ```
-
-## Project TODO List
-
-There is a project TODO list that is open to everyone's attention and contribution.
-
-[TODO list](https://github.com/Emreerdog/mbase/issues/2)
 
 ### Release Workflow
 
