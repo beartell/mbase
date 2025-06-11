@@ -24,11 +24,8 @@ public:
     GENERIC update_t() override;
 private:
     mbase::string mHostname;
-    std::string _mHostname;
     mbase::string mApiKey;
-    std::string _mApiKey;
     mbase::string mMcpEndpoint;
-    std::string _mMcpEndpoint;
     mbase::unordered_map<mbase::string, mbase::string> mHeadersMap;
     mbase::vector<mbase::string> mPayloadList;
     mbase::mutex mPayloadListSync;

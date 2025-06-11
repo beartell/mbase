@@ -40,13 +40,11 @@ const mbase::unordered_map<mbase::string, mbase::string>& McpClientServerHttp::g
 GENERIC McpClientServerHttp::set_mcp_endpoint(const mbase::string& in_endpoint)
 {
     mMcpEndpoint = in_endpoint;
-    _mMcpEndpoint = std::string(mMcpEndpoint.c_str(), mMcpEndpoint.size());
 }
 
 GENERIC McpClientServerHttp::set_hostname(const mbase::string& in_hostname)
 {
     mHostname = in_hostname;
-    _mHostname = std::string(mHostname.c_str(), mHostname.size());
 }
 
 GENERIC McpClientServerHttp::set_api_key(const mbase::string& in_api_key)
@@ -56,7 +54,6 @@ GENERIC McpClientServerHttp::set_api_key(const mbase::string& in_api_key)
         remove_header(in_api_key);
     }
     mApiKey = in_api_key;
-    _mApiKey = std::string(mApiKey.c_str(), mApiKey.size());
 }
 
 GENERIC McpClientServerHttp::add_header(const mbase::string& in_header, const mbase::string& in_value)
@@ -95,14 +92,17 @@ GENERIC McpClientServerHttp::update_t()
         }
         mPayloadList = mbase::vector<mbase::string>();
         mPayloadListSync.release();
+        std::string _mHostname = std::string(mHostname.c_str(), mHostname.size());
         httplib::Client clientInstance(_mHostname);
-        if(_mApiKey.size())
+        if(mApiKey.size())
         {
+            std::string _mApiKey = std::string(mApiKey.c_str(), mApiKey.size());
             clientInstance.set_bearer_token_auth(_mApiKey);
         }
 
         for(const mbase::string& currentPayload : payloadList)
         {
+            std::string _mMcpEndpoint = std::string(mMcpEndpoint.c_str(), mMcpEndpoint.size());
             httplib::Result requestResult = clientInstance.Post(_mMcpEndpoint, requestHeaders, currentPayload.c_str(), currentPayload.size(), "application/json");
             if(requestResult.error() != httplib::Error::Success)
             {
