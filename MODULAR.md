@@ -135,7 +135,6 @@ MBASE standard library is a library to be used by all MBASE modules. The standar
 | Name                   | Acronym     | Library Name | Description                                                             | State            | 
 | ---------------------- | ----------- | ------------ | ----------------------------------------------------------------------- | ---------------- |
 | MBASE Standard Library | std         | std          | Common standard utility objects and procedures module                   | Active, Stable   |
-| MBASE Core Library     | core        | pc           | Core functionality such as non-blocking io, networking diagnostics etc. | Active           |
-| MBASE Json Library     | json        | json         | JSON parser module                                                      | Stable, Inactive |
-| MBASE Inference Library| inf         | inference    | Non-blocking inference module                                           | Unstable, Active |
-| MBASE Framework Library| framework   | framework    | Necessary utilites for parallel state-machine and useful timers         | Active Stable    |
+| MBASE Json Library     | json        | json         | JSON parser module                                                      | Inactive, Stable |
+| MBASE Inference Library| inf         | inference    | Non-blocking inference module                                           | Active, Unstable |
+| MBASE MCP Library      | mcp         | mcp          | An MCP Client/Server module                                             | Active, Stable   | 
