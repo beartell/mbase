@@ -1,4 +1,4 @@
-.. include:: ../../links.rst
+.. include:: ../links.rst
 
 =========================
 Creating an Empty Project
@@ -14,11 +14,12 @@ In this page, you will create an empty CMake project and link the inference libr
 Setting up CMake 
 ----------------
 
-Now in your working directory, create a directory named 'mbase_simple_project' and go into that directory:
+In your working directory, create a directory named 'mbase_simple_project' and go into that directory:
 
 .. code-block:: bash
 
     mkdir mbase_simple_project
+    cd mbase_simple_project
 
 In that directory, open your favorite IDE or using terminal, create two files given as:
 
@@ -27,7 +28,6 @@ In that directory, open your favorite IDE or using terminal, create two files gi
 
 .. code-block:: bash
     
-    cd mbase_simple_project
     touch CMakeLists.txt
     touch main.cpp
 
@@ -107,8 +107,7 @@ After you run this program, you will see the available devices in your system fo
     If you have an NVIDIA GPU and its is not being displayed by the program,
     make sure you have installed the necessary drivers and installed the `llama.cpp <llama.cpp_>`_ library with proper configuration.
 
-    Refer to: :doc:`Setting up<setting_up>`
-    For bundled install: :doc:`Download <download>`
+    Refer to: :doc:`Setting up<../../setting-up/about>`
 
 ------------------------------
 Possible Shared Library Errors
@@ -140,7 +139,7 @@ line there. Open your :code:`~/.bashrc` and put that line:
 
     export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
 
-Too apply changes and keep your session:
+To apply changes and keep your session:
 
 .. code-block:: bash
 

@@ -189,25 +189,27 @@ unordered_map<Key, Value, Hash, KeyEqual, Allocator>::unordered_map([[maybe_unus
 }
 /* InputIt versions does not exist for now */
 template<typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator>
-MBASE_INLINE_EXPR unordered_map<Key, Value, Hash, KeyEqual, Allocator>::unordered_map(const unordered_map& in_rhs) noexcept : mBucketCount(in_rhs.mBucketCount), mHash(in_rhs.mHash), mKeyEqual(in_rhs.mKeyEqual), mBucket(in_rhs.mBucket), mSize(0)
+MBASE_INLINE_EXPR unordered_map<Key, Value, Hash, KeyEqual, Allocator>::unordered_map(const unordered_map& in_rhs) noexcept : mBucketCount(in_rhs.mBucketCount), mHash(in_rhs.mHash), mKeyEqual(in_rhs.mKeyEqual), mBucket(in_rhs.mBucket), mSize(in_rhs.mSize)
 {
 }
 
 template<typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator>
-MBASE_INLINE_EXPR unordered_map<Key, Value, Hash, KeyEqual, Allocator>::unordered_map(const unordered_map& in_rhs, [[maybe_unused]] const Allocator& in_alloc) noexcept : mBucketCount(in_rhs.mBucketCount), mHash(in_rhs.mHash), mKeyEqual(in_rhs.mKeyEqual), mBucket(in_rhs.mBucket), mSize(0)
+MBASE_INLINE_EXPR unordered_map<Key, Value, Hash, KeyEqual, Allocator>::unordered_map(const unordered_map& in_rhs, [[maybe_unused]] const Allocator& in_alloc) noexcept : mBucketCount(in_rhs.mBucketCount), mHash(in_rhs.mHash), mKeyEqual(in_rhs.mKeyEqual), mBucket(in_rhs.mBucket), mSize(in_rhs.mSize)
 {
 }
 
 template<typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator>
-MBASE_INLINE_EXPR unordered_map<Key, Value, Hash, KeyEqual, Allocator>::unordered_map(unordered_map&& in_rhs) noexcept : mBucketCount(in_rhs.mBucketCount), mHash(in_rhs.mHash), mKeyEqual(in_rhs.mKeyEqual), mBucket(std::move(in_rhs.mBucket)), mSize(0)
+MBASE_INLINE_EXPR unordered_map<Key, Value, Hash, KeyEqual, Allocator>::unordered_map(unordered_map&& in_rhs) noexcept : mBucketCount(in_rhs.mBucketCount), mHash(in_rhs.mHash), mKeyEqual(in_rhs.mKeyEqual), mBucket(std::move(in_rhs.mBucket)), mSize(in_rhs.mSize)
 {
-	
+	in_rhs.mBucketCount = 0;
+	in_rhs.mSize = 0;
 }
 
 template<typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator>
-MBASE_INLINE_EXPR unordered_map<Key, Value, Hash, KeyEqual, Allocator>::unordered_map(unordered_map&& in_rhs, [[maybe_unused]] const Allocator& in_alloc) noexcept : mBucketCount(in_rhs.mBucketCount), mHash(in_rhs.mHash), mKeyEqual(in_rhs.mKeyEqual), mBucket(std::move(in_rhs.mBucket)), mSize(0)
+MBASE_INLINE_EXPR unordered_map<Key, Value, Hash, KeyEqual, Allocator>::unordered_map(unordered_map&& in_rhs, [[maybe_unused]] const Allocator& in_alloc) noexcept : mBucketCount(in_rhs.mBucketCount), mHash(in_rhs.mHash), mKeyEqual(in_rhs.mKeyEqual), mBucket(std::move(in_rhs.mBucket)), mSize(in_rhs.mSize)
 {
-
+	in_rhs.mBucketCount = 0;
+	in_rhs.mSize = 0;
 }
 
 template<typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator>
@@ -246,7 +248,10 @@ MBASE_INLINE_EXPR unordered_map<Key, Value, Hash, KeyEqual, Allocator>::unordere
 template<typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator>
 MBASE_INLINE unordered_map<Key, Value, Hash, KeyEqual, Allocator>::~unordered_map()
 {
-	clear();
+	if(mSize)
+	{
+		clear();
+	}
 }
 
 template<typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator>
@@ -271,6 +276,7 @@ MBASE_INLINE_EXPR unordered_map<Key, Value, Hash, KeyEqual, Allocator>& unordere
 	mSize = in_rhs.mSize;
 
 	in_rhs.mSize = 0;
+	in_rhs.mBucketCount = 0;
 
 	return *this;
 }
@@ -736,7 +742,7 @@ typename unordered_map<Key, Value, Hash, KeyEqual, Allocator>::iterator unordere
 			}
 			else
 			{
-				for(bucketIndex; bucketIndex < mBucketCount; ++bucketIndex)
+				for(; bucketIndex < mBucketCount; ++bucketIndex)
 				{
 					if(mBucket[bucketIndex].size())
 					{

@@ -1,8 +1,8 @@
 from dataclasses import asdict
 
-project = 'MBASE Software Documentation'
+project = 'MBASE Software Documentation Center'
 copyright = '2025, MBASE Yazılım A.Ş.'
-author = 'Saul Emre Erdog'
+author = 'M. Emre Erdog'
 
 extensions = [
     "sphinx.ext.extlinks",
@@ -17,8 +17,10 @@ html_static_path = ['_static']
 html_favicon = 'favicon.png'
 
 html_title = project
-html_logo = "mbase_logo.svg"
 html_theme_options = {
+    "sidebar_hide_name": True,
+    "light_logo": "mbase_sdk_logo_white.svg",
+    "dark_logo": "mbase_sdk_logo_dark.svg",
     "source_repository": "https://github.com/Emreerdog/mbase",
     "source_branch": "documents/docs/source",
     "footer_icons": [

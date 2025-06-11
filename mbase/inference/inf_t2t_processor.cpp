@@ -543,13 +543,13 @@ InfProcessorTextToText::flags InfProcessorTextToText::set_inference_client(InfCl
 	return flags::INF_PROC_SUCCESS;
 }
 
-InfProcessorTextToText::flags InfProcessorTextToText::declare_lora_assign(const inf_lora_adapter& in_adapter)
+InfProcessorTextToText::flags InfProcessorTextToText::declare_lora_assign([[maybe_unused]] const inf_lora_adapter& in_adapter)
 {
 	MBASE_INF_T2T_PROC_RETURN_UNREGISTERED;
 	return flags::INF_PROC_SUCCESS;
 }
 
-InfProcessorTextToText::flags InfProcessorTextToText::declare_lora_remove(const inf_lora_adapter& in_adapter)
+InfProcessorTextToText::flags InfProcessorTextToText::declare_lora_remove([[maybe_unused]] const inf_lora_adapter& in_adapter)
 {
 	MBASE_INF_T2T_PROC_RETURN_UNREGISTERED;
 	return flags::INF_PROC_SUCCESS;
@@ -691,7 +691,7 @@ GENERIC InfProcessorTextToText::set_manual_caching(bool in_manual_cache, cache_m
 	mCacheMode = in_cache_mode;
 }
 
-GENERIC InfProcessorTextToText::on_lora_operate(const mbase::vector<inf_lora_adapter>& out_adapters)
+GENERIC InfProcessorTextToText::on_lora_operate([[maybe_unused]] const mbase::vector<inf_lora_adapter>& out_adapters)
 {
 	
 }

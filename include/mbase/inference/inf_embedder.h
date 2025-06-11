@@ -31,7 +31,7 @@ public:
     MBASE_ND(MBASE_OBS_IGNORE) bool signal_embedding_process() const;
     MBASE_ND(MBASE_OBS_IGNORE) const U32& get_embedding_length() const;
     MBASE_ND(MBASE_OBS_IGNORE) const U32& get_max_token_length() const;
-    MBASE_ND(MBASE_OBS_IGNORE) const I32& get_batch_thread_count() const;
+    MBASE_ND(MBASE_OBS_IGNORE) I32 get_batch_thread_count() const;
     flags get_processor_status() const;
     /* ===== OBSERVATION METHODS END ===== */
 

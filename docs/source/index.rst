@@ -1,41 +1,44 @@
-.. mbase_docs_sphinx documentation master file, created by
-   sphinx-quickstart on Sun Jan  5 11:13:28 2025.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
+=======================
+MBASE SDK Documentation
+=======================
 
-=============================
-MBASE Libraries Documentation
-=============================
+Github link: https://github.com/Emreerdog/mbase
 
-.. important::
+Welcome to the MBASE SDK documentation.
 
-   If you are looking for MBASE Inference library documentation,
-   refer to: :doc:`Inference library <inference/about>`.
+MBASE SDK is a set of mostly LLM related libraries actively being maintained and developed by M. Emre Erdog
+and the `MBASE Yazılım A.Ş. <https://mbasesoftware.com>`_. 
 
-.. important::
+The main purpose of the MBASE SDK is to supply the developer with necessary tools and procedures to easily integrate LLM capabilities into their
+C++ applications.
 
-   The libraries besides the inference library are not documented yet.
+Here is a list of libraries in the MBASE SDK:
 
-Welcome to the MBASE libraries documentation.
-
-MBASE libraries are a set of libraries actively being maintained and developed by Saul Emre Erdog
-and the MBASE Software. 
-
-Its job is to supply the necessary tools and functionalities to develop high-quality programs
-in the MBASE ecosystem. 
-
-Here is the list of libraries:
-
-* :doc:`Inference Library <inference/about>`: Non-blocking LLM inference library for integrating LLMs into programs.
-* :doc:`Core <core/index>`: Non-blocking networking and file io, state file api for fast data storage.
-* :doc:`Standard Library <std/index>` : A standard library containing STL compatible containers with default serialization support.
+* :doc:`Inference Library <inference/about>`: An LLM inference library built over https://github.com/ggerganov/llama.cpp library for integrating LLMs into programs.
+* :doc:`Model Context Protocol Library <inference/about>`: A C++ MCP client/server library that includes all fundamental features, with support for both STDIO and StreamableHTTP transport methods.
+* :doc:`Standard Library <std/index>` : A standard library containing STL compatible containers with default serialization support and useful utilities such as built-in uuid generation, timers etc.
 * :doc:`JSON Library <json/index>`: A light-weight json library. 
+
+-------------------
+Supported Platforms
+-------------------
+
+* Mac OS
+* Linux
+* Windows
+
+----------
+Setting-Up
+----------
+
+In order the setup the MBASE SDK, see: :doc:`setting-up <setting-up/about>`
 
 .. toctree::
    :caption: Contents:
    
-   Inference <inference/about>
-   Core <core/index>
+   Setting-up <setting-up/about>
+   Inference Library <inference/about>
+   Model Context Protocol Library <mcp/about>
    Standard Library <std/index>
    JSON Library <json/index>
    Copyright <copyright>

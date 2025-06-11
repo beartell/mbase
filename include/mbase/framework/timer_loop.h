@@ -313,7 +313,7 @@ MBASE_INLINE GENERIC timer_loop::halt() noexcept
 
 MBASE_INLINE GENERIC timer_loop::clear_timers() noexcept
 {
-	for (timer_container::iterator It = mRegisteredTimers.begin(); It != mRegisteredTimers.end(); ++It)
+	for (timer_container::iterator It = mRegisteredTimers.begin(); It != mRegisteredTimers.end();)
 	{
 		timer_base* ti = *It;
 		ti->mLoopId = 0;

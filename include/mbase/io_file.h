@@ -119,6 +119,7 @@ public:
 	/* ===== OBSERVATION METHODS END ===== */
 
 	/* ===== STATE-MODIFIER METHODS BEGIN ===== */
+	MBASE_INLINE GENERIC set_raw_handle(os_file_handle in_file_handle) noexcept;
 	MBASE_INLINE os_file_handle open_file(const mbase::wstring& in_filename, access_mode in_accmode = access_mode::RW_ACCESS, disposition in_disp = disposition::OVERWRITE) noexcept;
 	MBASE_INLINE os_file_handle open_file(const mbase::string& in_filename, access_mode in_accmode = access_mode::RW_ACCESS, disposition in_disp = disposition::OVERWRITE) noexcept;
 	MBASE_INLINE GENERIC close_file() noexcept;
@@ -131,6 +132,7 @@ public:
 	MBASE_INLINE size_type read_data(IBYTEBUFFER in_src, size_type in_length) override;
 	MBASE_INLINE size_type read_data(char_stream& in_src) override;
 	MBASE_INLINE size_type read_data(char_stream& in_src, size_type in_length) override;
+	MBASE_INLINE size_type read_available_data(IBYTEBUFFER in_src, size_type in_length);
 	/* ===== STATE-MODIFIER METHODS END ===== */
 
 private:
@@ -143,8 +145,7 @@ MBASE_INLINE io_file::io_file() noexcept : mFileName()
 
 MBASE_INLINE io_file::io_file(os_file_handle in_file_handle) noexcept
 {
-	mOperateReady = true;
-	_set_raw_context(in_file_handle);
+	this->set_raw_handle(in_file_handle);
 }
 
 MBASE_INLINE io_file::io_file(const mbase::wstring& in_filename, access_mode in_accmode, disposition in_disp) noexcept : mFileName(in_filename)
@@ -188,6 +189,12 @@ MBASE_ND(MBASE_OBS_IGNORE) MBASE_INLINE typename io_file::size_type io_file::get
 	
 	return fileSize;
 #endif
+}
+
+MBASE_INLINE GENERIC io_file::set_raw_handle(os_file_handle in_file_handle) noexcept
+{
+	mOperateReady = true;
+	_set_raw_context(in_file_handle);
 }
 
 MBASE_INLINE io_base::os_file_handle io_file::open_file(const mbase::wstring& in_filename, access_mode in_accmode, disposition in_disp) noexcept
@@ -465,6 +472,24 @@ MBASE_INLINE typename io_file::size_type io_file::read_data(char_stream& in_src)
 MBASE_INLINE typename io_file::size_type io_file::read_data(char_stream& in_src, size_type in_length)
 {
 	return this->read_data(in_src.get_bufferc(), in_length);
+}
+
+MBASE_INLINE typename io_file::size_type io_file::read_available_data(IBYTEBUFFER in_src, size_type in_length)
+{
+	if(!is_file_open())
+	{
+		return 0;		
+	}
+	size_type readResult = 0;
+#ifdef MBASE_PLATFORM_WINDOWS
+	DWORD dataRead = 0;
+	ReadFile(mRawContext.raw_handle, in_src, in_length, &dataRead, nullptr);
+	readResult = dataRead;
+#endif
+#ifdef MBASE_PLATFORM_UNIX
+	readResult = read(mRawContext.raw_handle, in_src, in_length);
+#endif
+	return readResult;
 }
 
 MBASE_INLINE mbase::string read_file_as_string(mbase::io_file& in_iof)

@@ -730,7 +730,7 @@ InfModelTextToText::flags InfModelTextToText::tokenize_input(CBYTEBUFFER in_data
 	return flags::INF_MODEL_SUCCESS;
 }
 
-GENERIC InfModelTextToText::on_lora_operate(const mbase::vector<inf_lora_adapter>& out_active_loras)
+GENERIC InfModelTextToText::on_lora_operate([[maybe_unused]] const mbase::vector<inf_lora_adapter>& out_active_loras)
 {
 }
 

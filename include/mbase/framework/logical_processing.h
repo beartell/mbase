@@ -10,7 +10,7 @@
 
 MBASE_BEGIN
 
-class MBASE_API processor_signal {
+class processor_signal {
 public:
 	/* ===== BUILDER METHODS BEGIN ===== */
 	MBASE_INLINE processor_signal() noexcept;
@@ -32,11 +32,11 @@ public:
 	/* ===== STATE-MODIFIER METHODS END ===== */
 
 private:
-	volatile bool mSignalState;
-	volatile bool mSignal;
+	volatile bool mSignalState = false;
+	volatile bool mSignal = false;
 };
 
-class MBASE_API logical_processor : public mbase::non_copymovable {
+class logical_processor : public mbase::non_copymovable {
 public:
 	logical_processor() : mProcessorThread(_update_t_static, this), mIsProcessorRunning(false) {}
 	~logical_processor() 
@@ -45,7 +45,7 @@ public:
 		mIsProcessorRunning = false;
 	}
 
-	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) bool is_processor_running() { return mIsProcessorRunning; }
+	MBASE_ND(MBASE_IGNORE_NONTRIVIAL) bool is_processor_running() const noexcept { return mIsProcessorRunning; }
 
 	static GENERIC _update_t_static(logical_processor* in_self) 
 	{

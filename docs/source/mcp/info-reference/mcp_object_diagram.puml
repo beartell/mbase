@@ -1,0 +1,259 @@
+@startuml
+
+scale 800 width
+scale 600 height
+
+package mcp_common <<Folder>> {
+    enum mcp_log_log_levels {
+        + L_DEBUG
+        + L_INFO
+        + L_NOTICE
+        + L_WARNING
+        + L_ERROR
+        + L_CRITICAL
+        + L_ALERT
+        + L_EMERGENC
+    }
+}
+
+package mcp_client_base <<Folder>>{
+    class McpClientBase
+}
+
+package mcp_server_features <<Folder>>{
+    class McpToolFeature
+    class McpPromptFeature
+    class McpResourceFeature
+}
+
+package mcp_client_server_http <<Folder>> {
+    class McpClientServerHttp
+}
+
+package mcp_client_server_stdio <<Folder>> {
+    class McpClientServerStdio
+}
+
+package mcp_client_server_state <<Folder>> {
+    class McpServerStateBase
+}
+
+package mcp_server_base <<Folder>> {
+    class McpServerBase
+}
+
+package mcp_server_stdio <<Folder>> {
+    class McpServerStdio
+}
+
+package mcp_server_http_streamable <<Folder>> {
+    class McpServerHttpBase
+    class McpServerHttpStreambleStateful
+    class McpServerHttpStreamableStateless
+}
+
+package mcp_server_client_state <<Folder>> {
+    class McpServerClient
+}
+
+package mcp_server_client_stdio <<Folder>> {
+    class McpServerStdioClient
+}
+
+package mcp_server_client_http_streamable <<Folder>> {
+    class McpServerClientHttpStreamable
+}
+
+package mcp_client_arguments <<Folder>> {
+    struct McpServerStdioInit {
+        + string mServerName
+        + string mCommand
+        + vector<string> mArguments
+        + unordered_map<string, string> mEnvironmentVariables
+    }
+    struct McpServerHttpInit{
+        + string mHostname
+        + string mMcpEndpoint
+        + string mApiKey
+    }
+}
+
+package mcp_notifications <<Folder>> {
+    struct McpNotificationLogMessage {
+        + mcp_log_levels mLevel
+        + string mLogger
+        + string mError
+        + Json mDetails
+    }
+    struct McpNotificationProgress {
+        + string mProgressToken
+        + F64 mProgress
+        + F64 mProgressTotal
+        + string mProgressMessage
+    }
+}
+
+package mcp_server_arguments <<Folder>> {
+    enum McpValueType {
+        + NUMBER
+        + BOOL
+        + STRING
+        + ARRAY
+        + Json
+    }
+    struct McpPromptArgument {
+        + string mArgumentName
+        + string mDescription
+        + vector<string> mCompletionStrings
+        + bool mIsRequired
+    }
+    struct McpToolArgument {
+        + string mArgumentName
+        + string mDescription
+        + McpValueType mArgType
+        + bool mIsRequired = false
+    }
+}
+
+package mcp_server_descriptions <<Folder>> {
+    struct McpResourceDescription {
+        + string mUri
+        + string mName
+        + string mDescription
+        + string mMimeType
+        + SIZE_T mSize
+    }
+
+    struct McpPromptDescription {
+        + string mName;
+        + string mDescription
+        + vector<McpPromptArgument> mArguments
+    }
+
+    struct McpToolDescription {
+        + string mName
+        + string mDescription
+        + vector<mbase::McpToolArgument> mArguments
+    }
+}
+
+package mcp_server_responses <<Folder>> {
+    enum mcp_response_type {
+        + TEXT
+        + IMAGE
+        + BINARY
+    }
+
+    struct McpResponseTextResource {
+        + string mUri
+        + string mMimeType
+        + string mText
+    }
+
+    struct McpResponseBinaryResource {
+        + string mUri
+        + string mMimeType
+        + string mBlob
+    }
+
+    struct McpResponseTextPrompt {
+        + string mRole
+        + string mType
+        + string mText
+    }
+
+    struct McpResponseImagePrompt {
+        + string mRole
+        + string mType
+        + string mMimeType
+        + string mData
+    }
+
+    struct McpResponseAudioPrompt {
+        + string mRole
+        + string mType
+        + string mMimeType
+        + string mData
+    }
+
+    struct McpResponseTextTool {
+        + string mType
+        + string mText
+    }
+
+    struct McpResponseImageTool {
+        + string mType
+        + string mMimeType
+        + string mData
+    }
+
+    struct McpResponseAudioTool {
+        + string mType
+        + string mMimeType
+        + string mData
+    }
+
+    struct McpPromptCompilationResult {
+        vector<string> mValues
+        I32 mTotal
+        bool mHasMore
+    }
+}
+
+package mcp_server_to_client_requests <<Folder>> {
+    enum mcp_sampling_content_type {
+        + IMAGE
+        + TEXT
+        + AUDIO
+    }
+
+    struct McpSamplingMessage {
+        + string mRole
+        + mcp_sampling_content_type mContentType
+        + string mTextContent
+        + string mBase64Data
+        + string mMimeType
+    }
+
+    struct McpSamplingModelPreferences {
+        + vector<string> mModelHintsList
+        + F64 mIntelligencePriority
+        + F64 mSpeedPriority
+    }
+
+    struct McpSamplingRequest {
+        vector<McpSamplingMessage> mMessages
+        McpSamplingModelPreferences mModelPreferences
+        string mSystemPrompt
+        I32 mMaxTokens
+    }
+
+    struct McpRootsResult {
+        string mUri
+        string mName
+    }
+
+    struct McpSamplingResult {
+        + string mRole
+        + string mModel
+        + string mStopReason
+        + mcp_sampling_content_type mContentType
+        + string mTextContent
+        + string mBase64Content
+        + string mMimeType
+    }
+}
+
+McpServerStateBase <|-- McpClientServerHttp
+McpServerStateBase <|-- McpClientServerStdio
+
+McpServerBase <|-- McpServerStdio
+McpServerBase <|-- McpServerHttpBase
+
+McpServerHttpBase <|-- McpServerHttpStreambleStateful
+McpServerHttpBase <|-- McpServerHttpStreamableStateless
+
+McpServerClient <|-- McpServerStdioClient
+McpServerClient <|-- McpServerClientHttpStreamable
+
+@enduml
