@@ -42,7 +42,7 @@ MBASE SDK documentation can be found [here](https://docs.mbasesoftware.com/index
 
 ## Contributing
 
-Before you submit a change, make sure to read the contribution guidelines.
+Before you submit a change, make sure you read the [contribution guidelines](https://github.com/Emreerdog/mbase/blob/main/CONTRIBUTING.md).
 
 ## Company
 
