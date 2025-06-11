@@ -26,7 +26,7 @@ The document is structured into two chapters as follows:
 About
 -----
 
-MBASE MCP Library is an MCP Client/Server SDK implementation in C++ with near full-featured implementation with the exception of resource templates and SSE.
+MBASE MCP Library is an MCP client/server SDK written in C++ with all fundamental features implemented.
 
 A full MCP documentation can be found in their official documentation website: https://modelcontextprotocol.io/introduction
 
@@ -41,7 +41,7 @@ Transport Methods
 +-----------------------------+--------------------------------------------------+----------------------------------------------------------------------------------------+
 | Streamable HTTP Stateless   | :octicon:`check-circle-fill;1em;sd-text-success` | HTTP Init :ref:`Client <mcp-client-http-init>`/:ref:`Server <mcp-server-http-init>`    |
 +-----------------------------+--------------------------------------------------+----------------------------------------------------------------------------------------+
-| Streamable HTTP Stateful    | :octicon:`check-circle-fill;1em;sd-text-success` | TBD                                                                                    |
+| Streamable HTTP Stateful    | :octicon:`gear;1em`                              |                                                                                        |
 +-----------------------------+--------------------------------------------------+----------------------------------------------------------------------------------------+
 | SSE                         | :octicon:`x-circle-fill;1em;sd-text-danger`      |                                                                                        |
 +-----------------------------+--------------------------------------------------+----------------------------------------------------------------------------------------+

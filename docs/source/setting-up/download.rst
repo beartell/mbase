@@ -4,6 +4,12 @@
 Download
 ========
 
+.. danger::
+    
+    Version of the given pre-compiled binaries is 0.2.4 which lacks the MCP SDK.
+
+    Until the binaries are updated, refer to the :doc:`cfs` method.
+
 For github release page, refer to: https://github.com/Emreerdog/mbase/releases/tag/v0.2.4
 
 MBASE SDK v0.2.4 download page. 

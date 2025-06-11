@@ -509,8 +509,8 @@ Unregistration:
 .. code-block:: cpp
     :caption: server.cpp
 
-    mcpServer.unregister_resource("example_text_resource");
-    mcpServer.unregister_resource("example_binary_resource");
+    mcpServer.unregister_resource("file://...");
+    mcpServer.unregister_resource("http://...");
 
 .. _mcp-server-working-with-prompts:
 
