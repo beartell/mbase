@@ -23,7 +23,7 @@ Here is a list of libraries in the MBASE SDK:
 
 - [Inference Library](https://docs.mbasesoftware.com/inference/about.html): An LLM inference library built over https://github.com/ggerganov/llama.cpp library for integrating LLMs into programs.
 - [Model Context Protocol Library](https://docs.mbasesoftware.com/mcp/about.html): A C++ MCP client/server library that includes all fundamental features, with support for both STDIO and StreamableHTTP transport methods.
-- [Standard Library](https://docs.mbasesoftware.com/std/index.html): A standard library containing STL compatible containers with default serialization support and useful utilities such as built-in uuid generation, timers etc.
+- [Standard Library](https://docs.mbasesoftware.com/std/index.html): A standard library containing fundamental data-structures and useful utilities such as built-in uuid generation and timers.
 - [JSON Library](https://docs.mbasesoftware.com/json/index.html): A light-weight json library. 
 
 ## Supported Platforms
