@@ -419,7 +419,6 @@ InfProcessorTextToText::flags InfProcessorTextToText::execute_input(const inf_te
 	}
 
 	start_processor();
-	release_synchronizer();
 	return flags::INF_PROC_SUCCESS;
 }
 
@@ -485,7 +484,6 @@ InfProcessorTextToText::flags InfProcessorTextToText::next(const decode_behavior
 	mDecodeSignal.set_signal();
 
 	start_processor();
-	release_synchronizer();
 	return flags::INF_PROC_SUCCESS;
 }
 
@@ -593,7 +591,6 @@ InfProcessorTextToText::flags InfProcessorTextToText::initialize(
 
 	mInitializeSignal.set_signal();
 	start_processor();
-	release_synchronizer();
 	return flags::INF_PROC_INFO_INITIALIZING;
 }
 
@@ -643,7 +640,6 @@ InfProcessorTextToText::flags InfProcessorTextToText::destroy()
 	mDestroySignal.set_signal();
 	
 	start_processor();
-	release_synchronizer();
 	return flags::INF_PROC_INFO_DESTROYING;
 }
 
@@ -1208,7 +1204,6 @@ GENERIC InfProcessorTextToText::update()
 
 	if(signal_state_initializing())
 	{
-		acquire_synchronizer();
 		mInitializeSignal.reset_signal_state();
 		if(is_init_failed())
 		{
@@ -1226,7 +1221,6 @@ GENERIC InfProcessorTextToText::update()
 
 	if(signal_state_lora_operate())
 	{
-		acquire_synchronizer();
 		mLoraOperationSignal.reset_signal_state();
 		on_lora_operate(mAssignedAdapters);
 		return;
@@ -1234,7 +1228,6 @@ GENERIC InfProcessorTextToText::update()
 
 	if(signal_state_input_process())
 	{
-		acquire_synchronizer();
 		mInputSignal.reset_signal_state();
 		InfClientTextToText* t2tClient = static_cast<InfClientTextToText*>(get_assigned_client());
 		if(t2tClient)
@@ -1246,7 +1239,6 @@ GENERIC InfProcessorTextToText::update()
 
 	if(signal_state_kv_locked_process())
 	{
-		acquire_synchronizer();
 		mInputKvLockedSignal.reset_signal_state();
 		InfClientTextToText* t2tClient = static_cast<InfClientTextToText*>(get_assigned_client());
 		if(t2tClient)
@@ -1258,7 +1250,6 @@ GENERIC InfProcessorTextToText::update()
 
 	if(signal_state_decode_process())
 	{
-		acquire_synchronizer();
 		mDecodeSignal.reset_signal_state();		
 		bool isFinish = false;
 
@@ -1288,50 +1279,43 @@ GENERIC InfProcessorTextToText::update()
 
 GENERIC InfProcessorTextToText::update_t()
 {
-	while(is_processor_running())
+	if(is_registered())
 	{
-		release_synchronizer();
-
-		if(is_registered())
+		if (signal_destroying())
 		{
-			if (signal_destroying())
+			_destroy_context();
+		}
+
+		if (is_running())
+		{
+			if(signal_lora_operate_process())
 			{
-				_destroy_context();
+				_lora_operate();
 			}
 
-			if (is_running())
+			if(signal_kv_locked_process())
 			{
-				if(signal_lora_operate_process())
-				{
-					_lora_operate();
-				}
+				_decode_kv_locked_input();
+			}
 
-				if(signal_kv_locked_process())
-				{
-					_decode_kv_locked_input();
-				}
-
-				if (signal_input_process())
-				{
-					_decode_input();
-				}
-				
-				if (signal_decode_process())
-				{
-					_decode_next();
-				}
+			if (signal_input_process())
+			{
+				_decode_input();
+			}
+			
+			if (signal_decode_process())
+			{
+				_decode_next();
 			}
 		}
-		else
-		{
-			if(signal_initializing())
-			{
-				_initialize_context();
-			}
-		}
-		acquire_synchronizer();
 	}
-	release_synchronizer();
+	else
+	{
+		if(signal_initializing())
+		{
+			_initialize_context();
+		}
+	}
 }
 
 MBASE_END
