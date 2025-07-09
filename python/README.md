@@ -16,3 +16,6 @@ python setup.py bdist_wheel
 
 The build requires a valid MBASE C++ build environment. Missing dependencies
 (such as the `llama.cpp` submodule) will cause the build to fail.
+The extension needs a compiler with C++17 support. If you get errors about an
+invalid C++ version, ensure your compiler is invoked with the `-std=c++17` (or
+`/std:c++17` on Windows) flag.

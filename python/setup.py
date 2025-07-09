@@ -10,7 +10,10 @@ ext = Extension(
     'mbasepy._core',
     sources=['mbasepy/_core.cpp'],
     include_dirs=[str(mbase_include)],
-    language='c++'
+    language='c++',
+    extra_compile_args=(
+        ['/std:c++17'] if sys.platform == 'win32' else ['-std=c++17']
+    )
 )
 
 setup(
